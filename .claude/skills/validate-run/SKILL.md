@@ -1,11 +1,11 @@
 ---
 name: validate-run
-description: WF7.5 训练链路验证。在进入 WF8 迭代前，先 Codex 审查代码与 baseline 等价性，再执行 100-step smoke test 验证全链路可用。
+description: WF7.5 training pipeline validation. Before entering WF8 iteration, first use Codex to review code for baseline equivalence, then run a 100-step smoke test to verify end-to-end pipeline functionality.
 argument-hint: "[config_path]"
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
-# WF7.5: 训练链路验证（代码审查 + Smoke Test）
+# WF7.5: Training Pipeline Validation (Code Review + Smoke Test)
 
 <role>
 You are a DevOps/ML Engineer and Code Reviewer who validates that the codebase
@@ -30,191 +30,191 @@ On PASS → WF8 (iterate). On FAIL → fix issues via /code-debug.
 </context>
 
 <instructions>
-1. **确定配置与定位文件**
+1. **Determine configuration and locate files**
 
-   从 $ARGUMENTS 获取 config_path，或从 CLAUDE.md 推断默认配置。
-   读取配置文件确认训练参数。
+   Get config_path from $ARGUMENTS, or infer the default config from CLAUDE.md.
+   Read the config file to confirm training parameters.
 
-   定位三组审查材料：
+   Locate three sets of review materials:
 
-   **① WF7 新代码**（被审查对象）：
-   - 从 `project_map.json` 的 `src/` 节点读取所有 stable 模块路径
-   - 按职责分类读取：模型定义（forward pass）、数据加载（transforms, dataset）、
-     loss 函数、评估指标计算（metrics）、预处理脚本
-   - 从 CLAUDE.md `## Entry Scripts` 读取训练脚本 `{TRAIN_SCRIPT}` 和评估脚本 `{EVAL_SCRIPT}`
+   **① WF7 new code** (subject of review):
+   - Read all stable module paths from the `src/` node in `project_map.json`
+   - Read by responsibility category: model definition (forward pass), data loading (transforms, dataset),
+     loss functions, evaluation metric computation (metrics), preprocessing scripts
+   - Read the training script `{TRAIN_SCRIPT}` and evaluation script `{EVAL_SCRIPT}` from CLAUDE.md `## Entry Scripts`
 
-   **② Baseline 参考代码**（等价性基准）：
-   - 从 `project_map.json` 的 `baselines/` 节点读取每个 baseline 的 `entry_point`
-   - 从 baseline entry_point 出发，沿 import 链定位其对应模块：
-     模型定义、数据加载、loss 计算、评估指标、训练循环
-   - 优先选取 `status: verified` 的 baseline 作为参照
+   **② Baseline reference code** (equivalence benchmark):
+   - Read each baseline's `entry_point` from the `baselines/` node in `project_map.json`
+   - Starting from the baseline entry_point, follow the import chain to locate corresponding modules:
+     model definition, data loading, loss computation, evaluation metrics, training loop
+   - Prefer baselines with `status: verified` as reference
 
-   **③ 设计文档**（实现意图参照）：
-   - `docs/Technical_Spec.md`（WF2 的架构设计，说明哪些部分应与 baseline 等价、哪些是新增）
+   **③ Design documents** (implementation intent reference):
+   - `docs/Technical_Spec.md` (architecture design from WF2, specifying which parts should be equivalent to baseline and which are new additions)
 
-2. **Codex 代码审查**（始终尝试）
+2. **Codex code review** (always attempt)
 
-   WF7.5 是代码进入迭代前的**唯一审查机会**，始终尝试 Codex 审查。
+   WF7.5 is the **only review gate** before code enters iteration, so always attempt Codex review.
 
-   如果 Codex MCP 可用（`mcp__codex__codex` 工具存在）：
+   If Codex MCP is available (`mcp__codex__codex` tool exists):
 
-   a. **收集审查材料**：读取步骤 1 定位的三组文件内容。
-      对于每个审查维度（数据、模型、loss、eval），将新代码和 baseline 对应模块
-      **成对组织**，方便 Codex 逐对比较。
+   a. **Collect review materials**: Read the three sets of files located in step 1.
+      For each review dimension (data, model, loss, eval), organize the new code and baseline
+      corresponding modules **in pairs** for easy side-by-side comparison by Codex.
 
-   b. **提交审查请求**，调用 `mcp__codex__codex`，prompt 结构：
+   b. **Submit review request**, call `mcp__codex__codex`, prompt structure:
       ```
-      ## 审查任务
-      检查新代码与 baseline 的等价性，逐项回答审查清单。
+      ## Review Task
+      Check equivalence between new code and baseline, answering the review checklist item by item.
 
-      ## 新代码（WF7 实现）
-      ### 数据加载: src/data/...
-      {文件内容}
-      ### 模型: src/models/...
-      {文件内容}
+      ## New Code (WF7 Implementation)
+      ### Data Loading: src/data/...
+      {file contents}
+      ### Model: src/models/...
+      {file contents}
       ### Loss: src/losses/...
-      {文件内容}
-      ### 评估: scripts/{EVAL_SCRIPT} + src/utils/metrics.py
-      {文件内容}
-      ### 训练循环: scripts/{TRAIN_SCRIPT}
-      {文件内容}
+      {file contents}
+      ### Evaluation: scripts/{EVAL_SCRIPT} + src/utils/metrics.py
+      {file contents}
+      ### Training Loop: scripts/{TRAIN_SCRIPT}
+      {file contents}
 
-      ## Baseline 参考实现
-      ### 数据加载: baselines/{name}/...
-      {文件内容}
-      ### 模型: baselines/{name}/...
-      {文件内容}
+      ## Baseline Reference Implementation
+      ### Data Loading: baselines/{name}/...
+      {file contents}
+      ### Model: baselines/{name}/...
+      {file contents}
       ### Loss: baselines/{name}/...
-      {文件内容}
-      ### 评估: baselines/{name}/...
-      {文件内容}
+      {file contents}
+      ### Evaluation: baselines/{name}/...
+      {file contents}
 
-      ## 设计意图
-      {Technical_Spec.md 关键段落}
+      ## Design Intent
+      {Key paragraphs from Technical_Spec.md}
 
-      ## 审查清单（逐项回答）
-      {见下方}
+      ## Review Checklist (answer each item)
+      {see below}
       ```
 
-   c. **审查清单**（Codex 需要逐项回答）：
+   c. **Review checklist** (Codex must answer each item):
 
-      **数据管道等价性**：
-      - 图像归一化方式是否一致（[0,1] vs [0,255]、RGB vs BGR 通道顺序）
-      - 数据增强（或无增强）是否与 baseline 一致
-      - 相机参数解析（内参、外参、坐标系约定）是否等价
-      - Train/test split 逻辑是否一致
+      **Data pipeline equivalence**:
+      - Is image normalization consistent ([0,1] vs [0,255], RGB vs BGR channel order)
+      - Is data augmentation (or lack thereof) consistent with baseline
+      - Is camera parameter parsing (intrinsics, extrinsics, coordinate system conventions) equivalent
+      - Is train/test split logic consistent
 
-      **模型/渲染等价性**：
-      - 模型初始化策略是否与 baseline 一致（随机初始化、点云初始化等）
-      - Forward pass 的核心计算逻辑是否等价（保留的 baseline 部分）
-      - 新增模块（如去雾/增强）是否正确集成，不破坏梯度流
+      **Model/rendering equivalence**:
+      - Is model initialization strategy consistent with baseline (random init, point cloud init, etc.)
+      - Is the core computation logic of the forward pass equivalent (preserved baseline portions)
+      - Are new modules (e.g., dehazing/enhancement) correctly integrated without breaking gradient flow
 
-      **Loss 计算等价性**：
-      - 与 baseline 共享的 loss 项（如 L1、SSIM）计算方式是否一致
-      - Loss 权重默认值是否合理
-      - 新增 loss 项的梯度是否能正确回传
+      **Loss computation equivalence**:
+      - Are shared loss terms with baseline (e.g., L1, SSIM) computed in the same way
+      - Are default loss weight values reasonable
+      - Can gradients from new loss terms backpropagate correctly
 
-      **评估指标等价性**（关键，直接影响竞赛排名）：
-      - PSNR 计算方式是否与 baseline/竞赛评估一致（值域、clamp、边界处理）
-      - SSIM 的窗口大小、data_range 参数是否一致
-      - LPIPS 的网络选择（alex vs vgg）是否与竞赛一致
-      - 输出图像的后处理（clamp、dtype 转换、保存格式）是否与 baseline 一致
+      **Evaluation metric equivalence** (critical, directly affects competition ranking):
+      - Is PSNR computation consistent with baseline/competition evaluation (value range, clamping, boundary handling)
+      - Are SSIM window size and data_range parameters consistent
+      - Is LPIPS network choice (alex vs vgg) consistent with the competition
+      - Is output image post-processing (clamping, dtype conversion, save format) consistent with baseline
 
-      **常见 ML Bug 检查**：
-      - 是否有 tensor detach 导致的梯度流断裂
-      - 是否有 in-place 操作破坏 autograd 图
-      - 是否有 CPU/GPU device 混用
-      - 学习率 scheduler 的 step 调用时机是否正确
+      **Common ML bug checks**:
+      - Are there gradient flow breaks caused by tensor detach
+      - Are there in-place operations breaking the autograd graph
+      - Is there CPU/GPU device mixing
+      - Is the learning rate scheduler step call timing correct
 
-   d. **解析审查结果**，分类为：
-      - `critical`: 必定导致错误结果（如指标计算不一致、归一化错误）
-      - `warning`: 可能导致性能差异（如初始化策略不同、loss 权重偏差）
-      - `info`: 风格差异，不影响正确性
+   d. **Parse review results**, classify as:
+      - `critical`: will definitely produce incorrect results (e.g., inconsistent metric computation, normalization errors)
+      - `warning`: may cause performance differences (e.g., different initialization strategy, loss weight deviations)
+      - `info`: style differences, does not affect correctness
 
-   e. 如果有 critical/warning 级别的 concern：
-      - WebSearch 验证相关问题（如 SSIM 参数的正确用法）
-      - `mcp__codex__codex-reply` 回复验证结果，确认或排除 concern
-      - 最多 3 轮迭代
+   e. If there are critical/warning level concerns:
+      - WebSearch to verify related issues (e.g., correct usage of SSIM parameters)
+      - `mcp__codex__codex-reply` to reply with verification results, confirming or dismissing concerns
+      - Maximum 3 rounds of iteration
 
-   f. 记录 `codex_review: "used"` + 审查结果
+   f. Record `codex_review: "used"` + review results
 
-   **如果 Codex MCP 不可用**：
-   Claude 自行执行简化版审查（只检查评估指标等价性和数据归一化），
-   记录 `codex_review: "unavailable"`。
+   **If Codex MCP is unavailable**:
+   Claude performs a simplified self-review (only checking evaluation metric equivalence and data normalization),
+   recording `codex_review: "unavailable"`.
 
-3. **执行 100-step 训练**
+3. **Run 100-step training**
 
-   从 CLAUDE.md `## Entry Scripts` 读取 `{TRAIN_SCRIPT}`：
+   Read `{TRAIN_SCRIPT}` from CLAUDE.md `## Entry Scripts`:
    ```bash
    python {TRAIN_SCRIPT} --config {config_path} --max_steps 100 --exp_name smoke_test
    ```
-   记录：
-   - 是否成功启动（import 错误？）
-   - 是否成功完成 100 步（crash？OOM？NaN？）
-   - Loss 是否在合理范围（非 NaN, 非 Inf, 有下降趋势）
-   - GPU 内存使用量
+   Record:
+   - Whether it started successfully (import errors?)
+   - Whether it completed 100 steps (crash? OOM? NaN?)
+   - Whether loss is in a reasonable range (not NaN, not Inf, shows a decreasing trend)
+   - GPU memory usage
 
-4. **验证 Checkpoint 保存**
+4. **Verify checkpoint saving**
 
-   检查 smoke test 是否生成了 checkpoint 文件：
-   - 文件是否存在
-   - 是否可加载（`torch.load` 不报错）
-   - 是否包含必需字段（model, optimizer, step, git_commit）
+   Check whether the smoke test generated checkpoint files:
+   - Does the file exist
+   - Can it be loaded (`torch.load` does not error)
+   - Does it contain required fields (model, optimizer, step, git_commit)
 
-5. **验证评估流程**
+5. **Verify evaluation pipeline**
 
-   从 CLAUDE.md `## Entry Scripts` 读取 `{EVAL_SCRIPT}`：
+   Read `{EVAL_SCRIPT}` from CLAUDE.md `## Entry Scripts`:
    ```bash
    python {EVAL_SCRIPT} --checkpoint {smoke_test_checkpoint} --split val
    ```
-   检查：
-   - 评估是否完成
-   - 指标是否在合理范围（PSNR > 5 dB 即可，smoke test 不要求性能）
-   - 输出图像是否生成
+   Check:
+   - Whether evaluation completed
+   - Whether metrics are in a reasonable range (PSNR > 5 dB is sufficient; smoke test does not require performance)
+   - Whether output images are generated
 
-6. **验证 wandb 连接**（如果启用）
+6. **Verify wandb connection** (if enabled)
 
-   检查 smoke test 训练日志中 wandb 是否成功初始化。
+   Check whether wandb initialized successfully in the smoke test training logs.
 
-7. **验证 git_snapshot**
+7. **Verify git_snapshot**
 
-   检查 smoke test 训练日志中 git_snapshot 是否成功执行。
+   Check whether git_snapshot executed successfully in the smoke test training logs.
 
-8. **输出报告**
+8. **Output report**
 
-   向用户报告：
+   Report to the user:
 
-   **代码审查结果**：
-   - Codex 审查状态（used / unavailable）
-   - Critical 级别发现（如有，列出具体差异和建议修复）
-   - Warning 级别发现（列出潜在风险）
-   - Info 级别发现（仅供参考）
+   **Code review results**:
+   - Codex review status (used / unavailable)
+   - Critical-level findings (if any, list specific differences and suggested fixes)
+   - Warning-level findings (list potential risks)
+   - Info-level findings (for reference only)
 
-   **Smoke Test 结果**：
-   - ✓/✗ 训练 100 步
-   - ✓/✗ Checkpoint 保存/加载
-   - ✓/✗ 评估流程
-   - ✓/✗ wandb 连接
+   **Smoke test results**:
+   - ✓/✗ 100-step training
+   - ✓/✗ Checkpoint save/load
+   - ✓/✗ Evaluation pipeline
+   - ✓/✗ wandb connection
    - ✓/✗ git_snapshot
-   - GPU 内存使用量
+   - GPU memory usage
 
-   **最终判定**：
-   - **PASS**: Smoke test 全通过 且 代码审查无 critical（warning 记录但不阻塞）
-   - **REVIEW**: Smoke test 通过 但 代码审查有 critical — 列出需确认的问题，用户决定是否继续
-   - **FAIL**: Smoke test 有失败项 — 必须修复
+   **Final verdict**:
+   - **PASS**: Smoke test all passed AND code review has no critical findings (warnings are recorded but do not block)
+   - **REVIEW**: Smoke test passed BUT code review has critical findings — list issues needing confirmation, user decides whether to proceed
+   - **FAIL**: Smoke test has failed items — must be fixed
 
-9. **清理**
+9. **Cleanup**
 
-   删除 smoke test 生成的临时文件（checkpoint, 日志），避免污染实验目录。
+   Delete temporary files generated by the smoke test (checkpoints, logs) to avoid polluting the experiment directory.
 
-10. **更新项目状态**
+10. **Update project state**
 
-   如果 PASS 或 REVIEW（用户确认继续）：
-   - 更新 PROJECT_STATE.json: current_stage → WF7.5 completed
-   - history 追加 validate_run 通过记录（含代码审查摘要）
-   如果 FAIL 或 REVIEW（用户要求修复）：
-   - 列出失败项 + critical 审查发现
-   - 建议 `/code-debug` 修复
+   If PASS or REVIEW (user confirms to proceed):
+   - Update PROJECT_STATE.json: current_stage → WF7.5 completed
+   - Append validate_run pass record to history (including code review summary)
+   If FAIL or REVIEW (user requests fixes):
+   - List failed items + critical review findings
+   - Suggest `/code-debug` for fixes
 </instructions>
 
 <constraints>

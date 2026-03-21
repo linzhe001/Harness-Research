@@ -1,5 +1,5 @@
 ---
-description: project_map.json 维护规则 — 文件新增或删除时必须同步更新
+description: project_map.json maintenance rules — must sync updates when files are added or removed
 globs:
   - "src/**/*.py"
   - "baselines/**/*"
@@ -11,60 +11,60 @@ globs:
   - "tests/**/*.py"
 ---
 
-# project_map.json 维护规则
+# project_map.json Maintenance Rules
 
-## Stable vs Volatile 分层
+## Stable vs Volatile Layering
 
-project_map.json 只追踪 **stable 架构文件**（长期存在、定义模块接口的文件）。
-**Volatile 实验资产**（per-iteration configs, ablation scripts, one-off utilities）不需要在 project_map.json 中维护。
+project_map.json only tracks **stable architecture files** (long-lived files that define module interfaces).
+**Volatile experiment assets** (per-iteration configs, ablation scripts, one-off utilities) do not need to be maintained in project_map.json.
 
-### Stable（必须追踪）
-- `src/**/*.py` — 主研究代码（模型、数据、loss、utils）
-- `baselines/` — 每个 baseline 子目录（brief 级别）
-- CLAUDE.md `## Entry Scripts` 中列出的核心入口脚本
-- CLAUDE.md 中引用的核心配置文件
+### Stable (must track)
+- `src/**/*.py` — main research code (models, data, losses, utils)
+- `baselines/` — each baseline subdirectory (brief level)
+- Core entry scripts listed in CLAUDE.md `## Entry Scripts`
+- Core config files referenced in CLAUDE.md
 
-### Volatile（不需追踪）
-- `scripts/run_*.sh` — per-iteration 训练脚本
-- `scripts/run_ablation_*.py` — 消融实验脚本
-- `configs/` 下的临时实验配置
-- `experiments/` 下所有内容
+### Volatile (no need to track)
+- `scripts/run_*.sh` — per-iteration training scripts
+- `scripts/run_ablation_*.py` — ablation experiment scripts
+- Temporary experiment configs under `configs/`
+- Everything under `experiments/`
 
-判断标准：如果文件只在 1-2 次迭代中使用，它是 volatile 的。
+Rule of thumb: if a file is only used in 1-2 iterations, it is volatile.
 
-## 修改代码的正确方式
-- **非 trivial 的代码修改**（改逻辑、改接口、改 loss、加模块等）→ 必须调用 `/code-debug`
-- **trivial 修改**（typo、注释、import 顺序）→ 可以直接改，但仍须执行以下验证：
+## Correct Way to Modify Code
+- **Non-trivial code changes** (logic, interfaces, losses, new modules, etc.) → must invoke `/code-debug`
+- **Trivial changes** (typos, comments, import order) → can edit directly, but must still run these checks:
   1. `python -m py_compile <file>`
   2. `ruff check --select=E,F,I <file>`
-  3. 如涉及接口变更 → 更新 project_map.json（见下方规则）
+  3. If interface changes are involved → update project_map.json (see rules below)
 
-## project_map.json 何时更新
-- **新增 stable 文件** → 在 project_map.json 对应目录下添加节点
-- **删除 stable 文件** → 移除对应节点
-- **修改接口**（函数签名、tensor shape 变化）→ 更新对应字段
-- 仅修改内部实现、不改变接口时，不需要更新
-- **新增/删除 volatile 文件** → 不需要更新 project_map.json
+## When to Update project_map.json
+- **New stable file added** → add a node under the corresponding directory in project_map.json
+- **Stable file deleted** → remove the corresponding node
+- **Interface changed** (function signature, tensor shape changes) → update the corresponding fields
+- Internal implementation changes only, no interface changes — no update needed
+- **Volatile file added/deleted** → no update to project_map.json needed
 
-## 按目录的描述详细度
+## Description Detail Level by Directory
 
-### src/ — detailed（主研究代码）
-每个文件必须包含：
-- `exports`: 导出的类/函数名列表
-- `io`: 输入输出 tensor shape（模型相关文件）
-- `dependencies`: 依赖的项目内其他模块路径
+### src/ — detailed (main research code)
+Each file must include:
+- `exports`: list of exported class/function names
+- `io`: input/output tensor shapes (for model-related files)
+- `dependencies`: paths to other project-internal modules it depends on
 
-### baselines/ — brief（复现对比方法）
-每个 baseline 子目录只需：
-- `description`: 一句话说明
-- `source`: 代码来源 URL
-- `paper`: 论文引用（作者+会议+年份）
+### baselines/ — brief (reproduced comparison methods)
+Each baseline subdirectory only needs:
+- `description`: one-line summary
+- `source`: code source URL
+- `paper`: paper citation (author + venue + year)
 - `status`: verified / untested / modified / broken / partial
-- `entry_point`: 训练入口文件
-不列出 baseline 内部每个文件的 exports 或 tensor shape。
+- `entry_point`: training entry file
+Do not list exports or tensor shapes for files inside baselines.
 
-### configs/, scripts/, docs/ — medium（仅 stable 文件）
-每个 stable 文件只需 `description`（用途，1-2句话）。
+### configs/, scripts/, docs/ — medium (stable files only)
+Each stable file only needs `description` (purpose, 1-2 sentences).
 
 ### experiments/ — minimal
-只记录子目录用途和存放规则，不列出具体的日志/checkpoint/结果文件。
+Only record subdirectory purposes and storage rules; do not list specific log/checkpoint/result files.

@@ -1,12 +1,12 @@
 ---
 name: release
-description: WF10 提交/发布工具。多场景训练、结果打包、文件名校验、dry-run submission 检查。在消融实验完成后、竞赛提交前使用。
+description: WF10 Submission/Release Tool. Multi-scene training, result packaging, filename validation, dry-run submission checks. Used after ablation experiments are complete and before competition submission.
 argument-hint: "[submit|package|validate] [details]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# WF10: 提交与发布
+# WF10: Submission and Release
 
 <role>
 You are a Release Engineer who ensures the final submission package is correct,
@@ -18,62 +18,62 @@ This is the final stage of the CV research workflow.
 Input: Best checkpoint from WF8/WF9 + evaluation results.
 Output: Submission-ready package.
 
-竞赛/发布要求从 PROJECT_STATE.json `project_meta` 或 CLAUDE.md `## Challenge Quick Ref` 读取。
-典型要求包括：提交文件格式、文件名约定、评估指标等。
+Competition/release requirements are read from PROJECT_STATE.json `project_meta` or CLAUDE.md `## Challenge Quick Ref`.
+Typical requirements include: submission file format, filename conventions, evaluation metrics, etc.
 </context>
 
 <instructions>
-## 子命令
+## Subcommands
 
-### 1. `validate` — 检查提交包完整性
+### 1. `validate` — Check submission package completeness
 
-1. 读取 `transforms_test.json` 确定所有需要渲染的测试视角
-2. 列出所有 competition scenes
-3. 对每个 scene 检查：
-   - 是否有对应的 checkpoint（best 或指定）
-   - 测试视角图像是否已全部渲染
-   - 文件名格式是否符合要求
-   - 图像分辨率是否正确
-   - 图像格式（PNG/JPG）是否正确
-4. 输出验证报告：
-   - ✓/✗ 每个 scene 的完整性
-   - 缺失文件列表
-   - 格式错误列表
+1. Read `transforms_test.json` to determine all test viewpoints that need to be rendered
+2. List all competition scenes
+3. For each scene, check:
+   - Whether a corresponding checkpoint exists (best or specified)
+   - Whether all test viewpoint images have been rendered
+   - Whether filename format meets requirements
+   - Whether image resolution is correct
+   - Whether image format (PNG/JPG) is correct
+4. Output validation report:
+   - Pass/Fail for each scene's completeness
+   - List of missing files
+   - List of format errors
 
-### 2. `package` — 生成提交包
+### 2. `package` — Generate submission package
 
-1. 读取最佳 checkpoint 列表（从 iteration_log.json 的 best_iteration 或用户指定）
-2. 对每个 scene 执行：
-   从 CLAUDE.md `## Entry Scripts` 读取 `{EVAL_SCRIPT}`：
+1. Read the best checkpoint list (from iteration_log.json's best_iteration or user-specified)
+2. For each scene, execute:
+   Read `{EVAL_SCRIPT}` from CLAUDE.md `## Entry Scripts`:
    ```bash
    python {EVAL_SCRIPT} --checkpoint {best_ckpt} --split test --output_dir submission/
    ```
-3. 按竞赛要求组织目录结构
-4. 生成 `submission/README.md`（方法描述）
-5. 打包为 zip/tar.gz
-6. 执行 `validate` 确认完整性
+3. Organize directory structure per competition requirements
+4. Generate `submission/README.md` (method description)
+5. Package as zip/tar.gz
+6. Execute `validate` to confirm completeness
 
-### 3. `submit` — 多场景训练 + 打包（全流程）
+### 3. `submit` — Multi-scene training + packaging (full pipeline)
 
-1. 读取需要训练的 scene 列表
-2. 对每个 scene 执行：
-   a. 检查是否已有满意的 checkpoint
-   b. 如果没有，使用 best config 训练：
-      从 CLAUDE.md `## Entry Scripts` 读取 `{MULTI_SCENE_SCRIPT}`：
+1. Read the list of scenes to train
+2. For each scene, execute:
+   a. Check whether a satisfactory checkpoint already exists
+   b. If not, train using the best config:
+      Read `{MULTI_SCENE_SCRIPT}` from CLAUDE.md `## Entry Scripts`:
       ```bash
       python {MULTI_SCENE_SCRIPT} --scenes {scene_list} --config {best_config}
       ```
-   c. 评估并记录指标
-3. 所有 scene 训练完成后，调用 `package`
-4. 调用 `validate`
-5. 输出最终提交摘要
+   c. Evaluate and record metrics
+3. After all scenes are trained, call `package`
+4. Call `validate`
+5. Output final submission summary
 
-## 更新项目状态
+## Update project state
 
-更新 PROJECT_STATE.json：
+Update PROJECT_STATE.json:
 - `current_stage.status` → "completed"
-- `artifacts.submission_package` → package 路径
-- `history` 追加完成记录
+- `artifacts.submission_package` → package path
+- `history` append completion record
 </instructions>
 
 <constraints>

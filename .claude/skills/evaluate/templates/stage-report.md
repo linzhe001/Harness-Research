@@ -1,105 +1,105 @@
-# Stage Report 模板
+# Stage Report Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF7 - 结果分析
-- **前置输入:** 训练日志, metrics.json
-- **本次产出:** Stage_Report.md
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF7 - Results Analysis
+- **Prior Inputs:** Training logs, metrics.json
+- **Deliverables:** Stage_Report.md
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** WF9 final-exp (CONTINUE) / /iterate plan (DEBUG) / WF2 (PIVOT)
+- **Open Issues:** {open_issues}
+- **Next Step:** WF9 final-exp (CONTINUE) / /iterate plan (DEBUG) / WF2 (PIVOT)
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
 ### 1. training_analysis
 
 ```markdown
-## 训练分析
+## Training Analysis
 
-### Loss 曲线
+### Loss Curves
 | Epoch | Train Loss | Val Loss | mAP |
 |-------|------------|----------|-----|
 | 1 | | | |
 | ... | | | |
 
 ### Learning Rate
-- 初始 LR:
-- 最终 LR:
+- Initial LR:
+- Final LR:
 - Warmup epochs:
 
 ### Gradient Norm
-- 平均:
-- 最大:
-- 是否稳定:
+- Mean:
+- Max:
+- Stable:
 ```
 
 ### 2. performance_comparison
 
 ```markdown
-## 性能对比
+## Performance Comparison
 
-| 指标 | Baseline | 本方法 | 差异 | 显著性 |
+| Metric | Baseline | Ours | Difference | Significance |
 |------|----------|--------|------|--------|
 | mAP | | | | |
 | mAP50 | | | | |
 | FPS | | | | |
-| 参数量 | | | | |
+| Parameters | | | | |
 ```
 
 ### 3. issue_diagnosis
 
 ```markdown
-## 问题诊断
+## Issue Diagnosis
 
-### 发现的问题
-1. [问题描述] → [严重程度] → [建议措施]
+### Identified Issues
+1. [Issue description] → [Severity] → [Recommended action]
 
-### 检查清单
-- [ ] Loss 收敛?
-- [ ] 无过拟合?
-- [ ] Gradient norm 稳定?
-- [ ] 无 NaN/Inf?
+### Checklist
+- [ ] Loss converged?
+- [ ] No overfitting?
+- [ ] Gradient norm stable?
+- [ ] No NaN/Inf?
 ```
 
 ### 4. scaling_prediction
 
 ```markdown
-## 全量训练预测
+## Full-Scale Training Prediction
 
-基于 scaling law:
-- 当前 (10% 数据): {current_metric}
-- 预计 (100% 数据): {predicted_metric}
-- 置信区间: [{lower}, {upper}]
-- 参考: [类似工作的 10%→100% 提升幅度]
+Based on scaling law:
+- Current (10% data): {current_metric}
+- Predicted (100% data): {predicted_metric}
+- Confidence interval: [{lower}, {upper}]
+- Reference: [10%→100% improvement ratio from similar work]
 ```
 
 ### 5. recommendation
 
 ```markdown
-## 建议
+## Recommendation
 
-**决策: CONTINUE / DEBUG / PIVOT / ABORT**
+**Decision: CONTINUE / DEBUG / PIVOT / ABORT**
 
-**理由:**
+**Rationale:**
 1. ...
 2. ...
 
-**下一步:**
+**Next steps:**
 - ...
 ```
 
-## 决策矩阵
+## Decision Matrix
 
-| 情况 | 决策 | 下一步 |
+| Scenario | Decision | Next Step |
 |------|------|--------|
-| 性能达标 + 训练稳定 | CONTINUE | WF8 |
-| 存在可修复 bug | DEBUG | WF6 (带错误信息) |
-| 性能差距 >5% | PIVOT | WF2 (备选方案) |
-| 理论失败 / 资源不足 | ABORT | 记录经验终止 |
+| Performance on target + training stable | CONTINUE | WF8 |
+| Fixable bug found | DEBUG | WF6 (with error info) |
+| Performance gap >5% | PIVOT | WF2 (alternative approach) |
+| Theoretical failure / insufficient resources | ABORT | Record lessons learned and terminate |

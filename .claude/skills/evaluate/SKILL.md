@@ -1,11 +1,11 @@
 ---
 name: evaluate
-description: 结果分析工具（utility）。解析训练日志，诊断训练问题，对比 Baseline 性能，预测全量训练效果，给出 CONTINUE/DEBUG/PIVOT/ABORT 决策。可被 /iterate eval 调用或独立使用。
+description: Result analysis tool (utility). Parses training logs, diagnoses training issues, compares against baseline performance, predicts full-training results, and provides CONTINUE/DEBUG/PIVOT/ABORT decisions. Can be called by /iterate eval or used standalone.
 argument-hint: "[log_path]"
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
-# 结果分析与 Pivot 决策（Utility）
+# Result Analysis and Pivot Decision (Utility)
 
 <role>
 You are a Machine Learning Research Scientist who specializes in
@@ -24,99 +24,99 @@ When called from /iterate, the decision is recorded in iteration_log.json (by it
 When called standalone, the decision is recorded in PROJECT_STATE.json.
 
 **Context sources** (check in order):
-1. `.claude/current_iteration.json` — 当被 /iterate eval 调用时存在（symlink to persistent context）。
-   包含 iteration_id、hypothesis、baseline_metrics、best_iteration、previous_iteration。
-   如果存在，**优先使用其中的 baseline 和 best 信息**进行对比。
-2. `PROJECT_STATE.json` — fallback，获取 baseline metrics 和 experiment context。
+1. `.claude/current_iteration.json` — exists when called by /iterate eval (symlink to persistent context).
+   Contains iteration_id, hypothesis, baseline_metrics, best_iteration, previous_iteration.
+   If present, **prioritize the baseline and best info within it** for comparison.
+2. `PROJECT_STATE.json` — fallback, to get baseline metrics and experiment context.
 </context>
 
 <instructions>
-1. **解析训练日志**
+1. **Parse Training Logs**
 
-   从 $ARGUMENTS 获取日志路径，提取关键信息：
-   - Loss 曲线 (train loss, val loss per epoch)
-   - Learning rate schedule 实际值
+   Get the log path from $ARGUMENTS, extract key information:
+   - Loss curves (train loss, val loss per epoch)
+   - Learning rate schedule actual values
    - Gradient norms (if available)
    - GPU Memory usage
    - Training speed (iterations/sec)
-   - 最终指标（以 WF5 固化的 evaluation protocol 为准）
+   - Final metrics (based on the evaluation protocol established in WF5)
 
-2. **诊断训练问题**
+2. **Diagnose Training Issues**
 
    <thinking>
-   系统性检查训练过程中的潜在问题：
-   - Loss 是否收敛？(最后 10 epoch 的 loss 变化趋势)
-   - 是否存在过拟合？(train loss ↓ but val loss ↑)
-   - Gradient norm 是否稳定？(突变可能意味着数值问题)
-   - 是否有 NaN/Inf？(检查 loss 值)
-   - 学习率调度是否正常？
-   - 如果存在问题，是代码 bug 还是方法本身的问题？
+   Systematically check for potential issues during training:
+   - Is the loss converging? (loss change trend in the last 10 epochs)
+   - Is there overfitting? (train loss ↓ but val loss ↑)
+   - Is gradient norm stable? (sudden spikes may indicate numerical issues)
+   - Are there NaN/Inf? (check loss values)
+   - Is the learning rate schedule working properly?
+   - If issues exist, are they code bugs or inherent method limitations?
    </thinking>
 
-3. **性能对比**
+3. **Performance Comparison**
 
-   与 Baseline 对比（按 protocol 中定义的 metric set）：
+   Compare against baseline (using the metric set defined in the protocol):
 
-   | 指标 | Baseline | 本方法 | 差异 | 显著性 |
-   |------|----------|--------|------|--------|
-   | {metric_1} | X | Y | +/-Z | 是/否 |
+   | Metric | Baseline | Our Method | Difference | Significant |
+   |--------|----------|------------|------------|-------------|
+   | {metric_1} | X | Y | +/-Z | Yes/No |
    | {metric_2} | A | B | +/-C | - |
    | {metric_3} | D | E | +/-F | - |
 
-4. **全量训练预测**
+4. **Full Training Prediction**
 
-   基于 subset/低分辨率数据的结果，预估全量训练后的性能：
-   - 使用 scaling law 外推 (如果有参考)
-   - 参考类似工作的 subset → full 提升幅度
-   - 给出置信区间
+   Based on subset/low-resolution data results, predict full-training performance:
+   - Extrapolate using scaling laws (if references are available)
+   - Reference subset → full improvement margins from similar works
+   - Provide confidence intervals
 
-5. **决策建议**
+5. **Decision Recommendation**
 
    <thinking>
-   综合分析后做出决策：
-   - 性能差距是由于代码问题还是方法局限？
-   - 如果是方法局限，备选方案能否解决？
-   - 全量训练后性能能否达到投稿标准？
-   - 继续投入的风险收益比如何？
+   Make a decision based on comprehensive analysis:
+   - Is the performance gap due to code issues or method limitations?
+   - If it's a method limitation, can alternative approaches resolve it?
+   - Can full training reach submission-worthy performance?
+   - What is the risk-reward ratio of continued investment?
    </thinking>
 
-   - **CONTINUE**: 性能符合 protocol 设定的成功标准，建议进入 WF9 消融实验
-   - **DEBUG**: 存在可修复的技术问题（bug, 配置错误），在 WF8 内通过 `/code-debug` 修复
-   - **PIVOT**: 性能差距过大（< baseline 5%+），建议回退 WF2 选择备选方案
-   - **ABORT**: 理论上失败（证明核心假设不成立），放弃该 Idea
+   - **CONTINUE**: Performance meets the success criteria set by the protocol; recommend proceeding to WF9 ablation experiments
+   - **DEBUG**: Fixable technical issues exist (bugs, config errors); fix within WF8 via `/code-debug`
+   - **PIVOT**: Performance gap too large (< baseline by 5%+); recommend rolling back to WF2 for alternative approach
+   - **ABORT**: Theoretical failure (core hypothesis disproven); abandon this idea
 
-   给出详细理由和具体行动建议。
+   Provide detailed reasoning and specific actionable recommendations.
 
-6. **输出报告**
+6. **Output Report**
 
-   **Per-iteration 报告**（当从 /iterate eval 调用时）：
-   - 检查 `.claude/current_iteration.json` 获取 iteration_id
-   - 写入 `docs/iterations/iter{N}.md`（如目录不存在则创建 `docs/iterations/`）
-   - 同时更新 `docs/Stage_Report.md` 为指向最新 iteration 报告的摘要索引
+   **Per-iteration report** (when called from /iterate eval):
+   - Check `.claude/current_iteration.json` to get iteration_id
+   - Write to `docs/iterations/iter{N}.md` (create `docs/iterations/` if directory doesn't exist)
+   - Also update `docs/Stage_Report.md` as a summary index pointing to the latest iteration report
 
-   **独立调用报告**：
-   - 直接写入 `docs/Stage_Report.md`
+   **Standalone invocation report**:
+   - Write directly to `docs/Stage_Report.md`
 
-   报告内容：
-   - context_summary (≤20 行)
-   - training_analysis (loss/lr/gradient 分析)
-   - metric_protocol (本轮沿用的 baseline/evaluation protocol)
-   - performance_comparison (对比表格)
-   - issue_diagnosis (发现的问题)
-   - scaling_prediction (全量训练预测)
-   - recommendation (决策 + 理由 + 下一步)
+   Report contents:
+   - context_summary (≤20 lines)
+   - training_analysis (loss/lr/gradient analysis)
+   - metric_protocol (baseline/evaluation protocol used in this round)
+   - performance_comparison (comparison table)
+   - issue_diagnosis (issues found)
+   - scaling_prediction (full training prediction)
+   - recommendation (decision + reasoning + next steps)
 
-7. **更新项目状态**（仅独立调用时）
+7. **Update Project State** (standalone invocation only)
 
-   当**不是**从 /iterate eval 调用时（即 `.claude/current_iteration.json` 不存在）：
-   更新 PROJECT_STATE.json：
+   When **not** called from /iterate eval (i.e., `.claude/current_iteration.json` does not exist):
+   Update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
-   - `artifacts.stage_report` → 文件路径
-   - `history` 追加记录
-   - `decisions` 记录 CONTINUE/DEBUG/PIVOT/ABORT 决策
+   - `artifacts.stage_report` → file path
+   - `history` append record
+   - `decisions` record CONTINUE/DEBUG/PIVOT/ABORT decision
 
-   当从 /iterate eval 调用时：
-   **不更新 PROJECT_STATE.json**（iterate 负责写 iteration_log.json，orchestrator 负责阶段流转）。
+   When called from /iterate eval:
+   **Do not update PROJECT_STATE.json** (iterate is responsible for writing iteration_log.json; orchestrator handles stage transitions).
 </instructions>
 
 <constraints>

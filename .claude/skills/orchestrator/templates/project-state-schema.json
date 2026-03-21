@@ -1,64 +1,64 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PROJECT_STATE",
-  "description": "CV 研究项目状态文件 Schema。注意：此为参考 Schema，实际 PROJECT_STATE.json 可使用简化的扁平结构（如 project_name 代替 project_meta.name）。Schema 用于指导字段含义，不做 runtime 验证。",
+  "description": "CV research project state file schema. Note: this is a reference schema; the actual PROJECT_STATE.json may use a simplified flat structure (e.g., project_name instead of project_meta.name). The schema guides field semantics and is not used for runtime validation.",
   "type": "object",
   "required": ["project_meta", "current_stage", "artifacts", "decisions", "history"],
   "properties": {
     "project_meta": {
       "type": "object",
-      "description": "项目元信息",
+      "description": "Project metadata",
       "required": ["name", "idea_summary", "target_venue", "deadline", "created_at", "updated_at"],
       "properties": {
         "name": {
           "type": "string",
-          "description": "项目代号（英文，允许 PascalCase 或 kebab-case）",
+          "description": "Project codename (English, PascalCase or kebab-case allowed)",
           "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$"
         },
         "idea_summary": {
           "type": "string",
-          "description": "Idea 一句话描述"
+          "description": "One-sentence idea description"
         },
         "target_venue": {
           "type": "string",
-          "description": "目标会议/期刊",
+          "description": "Target conference/journal",
           "enum": ["CVPR", "ICCV", "ECCV", "NeurIPS", "ICLR", "AAAI", "Other"]
         },
         "deadline": {
           "type": "string",
           "format": "date",
-          "description": "投稿截止日期 (YYYY-MM-DD)"
+          "description": "Submission deadline (YYYY-MM-DD)"
         },
         "codebase_path": {
           "type": ["string", "null"],
-          "description": "基础代码库路径（可选）"
+          "description": "Base codebase path (optional)"
         },
         "dataset_name": {
           "type": "string",
-          "description": "主要数据集名称"
+          "description": "Primary dataset name"
         },
         "created_at": {
           "type": "string",
           "format": "date-time",
-          "description": "项目创建时间"
+          "description": "Project creation time"
         },
         "updated_at": {
           "type": "string",
           "format": "date-time",
-          "description": "最后更新时间"
+          "description": "Last update time"
         }
       }
     },
     "current_stage": {
       "type": "object",
-      "description": "当前工作流阶段",
+      "description": "Current workflow stage",
       "required": ["workflow_id", "workflow_name", "status"],
       "properties": {
         "workflow_id": {
           "type": "integer",
           "minimum": 1,
           "maximum": 10,
-          "description": "当前阶段 ID (1-10, 7.5 maps to 7)"
+          "description": "Current stage ID (1-10, 7.5 maps to 7)"
         },
         "workflow_name": {
           "type": "string",
@@ -75,102 +75,102 @@
             "final_exp",
             "release"
           ],
-          "description": "当前阶段名称"
+          "description": "Current stage name"
         },
         "status": {
           "type": "string",
           "enum": ["not_started", "in_progress", "completed", "blocked"],
-          "description": "阶段状态"
+          "description": "Stage status"
         },
         "started_at": {
           "type": ["string", "null"],
           "format": "date-time",
-          "description": "阶段开始时间"
+          "description": "Stage start time"
         },
         "completed_at": {
           "type": ["string", "null"],
           "format": "date-time",
-          "description": "阶段完成时间"
+          "description": "Stage completion time"
         },
         "iteration_count": {
           "type": ["integer", "null"],
-          "description": "WF8 时的迭代计数"
+          "description": "Iteration count during WF8"
         },
         "latest_iteration": {
           "type": ["string", "null"],
-          "description": "WF8 时最新迭代 ID"
+          "description": "Latest iteration ID during WF8"
         }
       }
     },
     "artifacts": {
       "type": "object",
-      "description": "各阶段产出文件路径",
+      "description": "Output file paths for each stage",
       "properties": {
         "feasibility_report": {
           "type": ["string", "null"],
-          "description": "WF1 产出: docs/Feasibility_Report.md"
+          "description": "WF1 output: docs/Feasibility_Report.md"
         },
         "technical_spec": {
           "type": ["string", "null"],
-          "description": "WF2 产出: docs/Technical_Spec.md"
+          "description": "WF2 output: docs/Technical_Spec.md"
         },
         "sanity_check_log": {
           "type": ["string", "null"],
-          "description": "WF3 产出: docs/Sanity_Check_Log.md"
+          "description": "WF3 output: docs/Sanity_Check_Log.md"
         },
         "data_pipeline_script": {
           "type": ["string", "null"],
-          "description": "WF4 产出: src/data/Data_Pipeline_Script.py"
+          "description": "WF4 output: src/data/Data_Pipeline_Script.py"
         },
         "dataset_stats": {
           "type": ["string", "null"],
-          "description": "WF4 产出: docs/Dataset_Stats.md"
+          "description": "WF4 output: docs/Dataset_Stats.md"
         },
         "implementation_roadmap": {
           "type": ["string", "null"],
-          "description": "WF6 产出: docs/Implementation_Roadmap.md"
+          "description": "WF6 output: docs/Implementation_Roadmap.md"
         },
         "code_modules": {
           "type": ["array", "null"],
           "items": { "type": "string" },
-          "description": "WF7 产出: 代码文件路径列表"
+          "description": "WF7 output: list of code file paths"
         },
         "baseline_report": {
           "type": ["string", "null"],
-          "description": "WF5 产出: docs/Baseline_Report.md"
+          "description": "WF5 output: docs/Baseline_Report.md"
         },
         "stage_report": {
           "type": ["string", "null"],
-          "description": "evaluate 产出: docs/Stage_Report.md"
+          "description": "evaluate output: docs/Stage_Report.md"
         },
         "iteration_log": {
           "type": ["string", "null"],
-          "description": "WF8 产出: iteration_log.json (迭代记录，持续更新)"
+          "description": "WF8 output: iteration_log.json (iteration records, continuously updated)"
         },
         "experiment_matrix": {
           "type": ["string", "null"],
-          "description": "WF9 产出: docs/Final_Experiment_Matrix.md"
+          "description": "WF9 output: docs/Final_Experiment_Matrix.md"
         },
         "project_map": {
           "type": ["string", "null"],
-          "description": "WF6 产出: project_map.json (项目文件结构蓝图，持续维护)"
+          "description": "WF6 output: project_map.json (project file structure blueprint, continuously maintained)"
         }
       }
     },
     "baseline_metrics": {
       "type": "object",
-      "description": "WF5 产出: 每个 scene 的 baseline 指标，用于后续迭代对比",
+      "description": "WF5 output: per-scene baseline metrics, used for comparison in subsequent iterations",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": { "type": ["number", "string", "null"] },
         "properties": {
-          "source": { "type": "string", "description": "产出该指标的方法名称" }
+          "source": { "type": "string", "description": "Name of the method that produced these metrics" }
         }
       }
     },
     "evaluation_protocol": {
       "type": ["object", "null"],
-      "description": "WF5 固化的评估协议，供 WF8 run/eval 继承",
+      "description": "Evaluation protocol established in WF5, inherited by WF8 run/eval",
       "properties": {
         "primary_metric": { "type": ["string", "null"] },
         "tracked_metrics": {
@@ -187,12 +187,12 @@
     },
     "dataset_paths": {
       "type": ["object", "null"],
-      "description": "WF4 固化的数据集地址，需与 CLAUDE.md 同步",
+      "description": "Dataset paths established in WF4, must be synced with CLAUDE.md",
       "additionalProperties": { "type": "string" }
     },
     "decisions": {
       "type": "array",
-      "description": "关键决策记录",
+      "description": "Key decision records",
       "items": {
         "type": "object",
         "required": ["timestamp", "stage", "decision", "rationale"],
@@ -203,27 +203,27 @@
           },
           "stage": {
             "type": "string",
-            "description": "做出决策时的阶段"
+            "description": "Stage when the decision was made"
           },
           "decision": {
             "type": "string",
-            "description": "决策内容"
+            "description": "Decision content"
           },
           "rationale": {
             "type": "string",
-            "description": "决策理由"
+            "description": "Decision rationale"
           },
           "alternatives": {
             "type": "array",
             "items": { "type": "string" },
-            "description": "考虑过的替代方案"
+            "description": "Alternative options that were considered"
           }
         }
       }
     },
     "history": {
       "type": "array",
-      "description": "阶段历史记录",
+      "description": "Stage history records",
       "items": {
         "type": "object",
         "required": ["timestamp", "event", "stage"],
@@ -235,22 +235,22 @@
           "event": {
             "type": "string",
             "enum": ["started", "completed", "rollback", "blocked", "unblocked"],
-            "description": "事件类型"
+            "description": "Event type"
           },
           "stage": {
             "type": "string",
-            "description": "相关阶段"
+            "description": "Related stage"
           },
           "details": {
             "type": "string",
-            "description": "附加说明"
+            "description": "Additional details"
           }
         }
       }
     },
     "active_experiments": {
       "type": "array",
-      "description": "当前进行中的实验",
+      "description": "Currently running experiments",
       "items": {
         "type": "object",
         "properties": {
@@ -267,7 +267,7 @@
     },
     "tracking": {
       "type": "object",
-      "description": "实验追踪配置",
+      "description": "Experiment tracking configuration",
       "properties": {
         "backend": {
           "type": "string",
@@ -276,11 +276,11 @@
         },
         "project": {
           "type": "string",
-          "description": "追踪项目名称"
+          "description": "Tracking project name"
         },
         "entity": {
           "type": "string",
-          "description": "追踪团队/用户名"
+          "description": "Tracking team/user name"
         },
         "tags": {
           "type": "array",
@@ -289,7 +289,7 @@
         "config_sync": {
           "type": "boolean",
           "default": false,
-          "description": "是否同步配置到追踪后端"
+          "description": "Whether to sync config to the tracking backend"
         }
       }
     }

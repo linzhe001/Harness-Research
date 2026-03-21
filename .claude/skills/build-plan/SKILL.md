@@ -1,12 +1,12 @@
 ---
 name: build-plan
-description: WF6 代码架构与执行计划。设计项目文件结构（含主研究代码与复现 baseline 分离）、模块伪代码、配置 Schema 和训练流水线。输出 Implementation_Roadmap.md + project_map.json。
+description: WF6 Code Architecture and Execution Plan. Design the project file structure (separating main research code from reproduced baselines), module pseudocode, configuration schema, and training pipeline. Outputs Implementation_Roadmap.md + project_map.json.
 argument-hint: "[project_path]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep
 ---
 
-# WF6: 代码架构与执行计划
+# WF6: Code Architecture and Execution Plan
 
 <role>
 You are a Software Architect who designs project structure and creates
@@ -29,125 +29,125 @@ For the project map schema, see [templates/project-map-schema.json](templates/pr
 </context>
 
 <instructions>
-1. **读取前置材料**
-   - Technical_Spec.md: 架构设计、MVP 定义、选择的方案
-   - Dataset_Stats.md: 数据统计信息
-   - 代码库结构: 现有文件和模块
-   - 识别哪些是**主研究代码**（你的创新），哪些是**复现 baseline**（对比方法）
+1. **Read prerequisite materials**
+   - Technical_Spec.md: Architecture design, MVP definition, chosen approach
+   - Dataset_Stats.md: Data statistics
+   - Codebase structure: Existing files and modules
+   - Identify which parts are **main research code** (your innovation) and which are **reproduced baselines** (comparison methods)
 
-2. **设计项目文件结构**
+2. **Design the project file structure**
 
-   核心原则：**主研究代码与复现 baseline 分离**。
+   Core principle: **Separate main research code from reproduced baselines**.
 
-   根据项目类型调整目录结构。以下为通用模板，实际应根据 Technical_Spec.md 定制：
+   Adapt the directory structure based on the project type. The following is a generic template; the actual structure should be customized based on Technical_Spec.md:
 
    ```
    project_root/
-   ├── src/                          # [detailed] 主研究代码
-   │   ├── models/                   # 核心模型（按项目需求命名）
-   │   ├── data/                     # 数据加载和预处理
-   │   ├── losses/                   # 损失函数
-   │   ├── preprocessing/            # 离线预处理脚本（可选）
-   │   └── utils/                    # 工具函数（含 git_snapshot.py）
-   ├── baselines/                    # [brief] 复现对比方法
-   │   └── {method_name}/            # 每个 baseline 独立子目录
-   ├── configs/                      # [medium] 配置文件
-   ├── scripts/                      # [medium] 训练/评估入口脚本
-   ├── tests/                        # [brief] 单元测试
-   ├── experiments/                  # [minimal] 实验输出
+   ├── src/                          # [detailed] Main research code
+   │   ├── models/                   # Core models (named per project needs)
+   │   ├── data/                     # Data loading and preprocessing
+   │   ├── losses/                   # Loss functions
+   │   ├── preprocessing/            # Offline preprocessing scripts (optional)
+   │   └── utils/                    # Utility functions (including git_snapshot.py)
+   ├── baselines/                    # [brief] Reproduced comparison methods
+   │   └── {method_name}/            # Each baseline in its own subdirectory
+   ├── configs/                      # [medium] Configuration files
+   ├── scripts/                      # [medium] Training/evaluation entry scripts
+   ├── tests/                        # [brief] Unit tests
+   ├── experiments/                  # [minimal] Experiment outputs
    │   ├── logs/
    │   ├── checkpoints/
    │   └── results/
-   └── docs/                         # [medium] 文档
+   └── docs/                         # [medium] Documentation
    ```
 
-   **关键原则**: 目录结构由 Technical_Spec.md 中的架构设计驱动，不要套用固定模板。
+   **Key principle**: The directory structure is driven by the architecture design in Technical_Spec.md — do not apply a fixed template.
 
-3. **生成 project_map.json**
+3. **Generate project_map.json**
 
-   根据 [templates/project-map-schema.json](templates/project-map-schema.json) 生成 `project_map.json`（放在项目根目录）。
+   Generate `project_map.json` (placed in the project root) following the [templates/project-map-schema.json](templates/project-map-schema.json) schema.
 
-   分级描述策略：
-   - **detailed** — `src/`: 每个文件列出 exports、输入输出 tensor shape、模块依赖
-   - **medium** — `configs/`, `scripts/`, `docs/`: 每个文件的用途和关键参数
-   - **brief** — `baselines/`, `tests/`: baseline 仅列出来源/论文/状态/入口；测试仅列出覆盖范围
-   - **minimal** — `experiments/`: 仅说明目录用途和存放规则，不列出具体文件
+   Tiered description strategy:
+   - **detailed** — `src/`: List exports, input/output tensor shapes, and module dependencies for each file
+   - **medium** — `configs/`, `scripts/`, `docs/`: Purpose and key parameters for each file
+   - **brief** — `baselines/`, `tests/`: Baselines only list source/paper/status/entry point; tests only list coverage scope
+   - **minimal** — `experiments/`: Only describe directory purpose and storage rules, do not list specific files
 
-   对于每个 baseline 子目录，必须包含：
-   - `source`: 代码来源 URL
-   - `paper`: 论文引用
+   For each baseline subdirectory, must include:
+   - `source`: Code source URL
+   - `paper`: Paper citation
    - `status`: verified / untested / modified / broken
-   - `entry_point`: 训练入口文件
+   - `entry_point`: Training entry file
 
-4. **编写模块伪代码**
+4. **Write module pseudocode**
 
-   对 `src/` 下每个**新增**文件提供：
-   - 类/函数签名 (含 Type Hints)
-   - 核心逻辑的伪代码描述
-   - 输入输出示例 (含 tensor shapes)
-   - 依赖关系说明
+   For each **new** file under `src/`, provide:
+   - Class/function signatures (with Type Hints)
+   - Pseudocode description of core logic
+   - Input/output examples (with tensor shapes)
+   - Dependency descriptions
 
-   **必须包含 `src/utils/git_snapshot.py` 的伪代码**：
+   **Must include pseudocode for `src/utils/git_snapshot.py`**:
    - `git_snapshot(training_type, auto_push)` → dict
-   - 职责：检查未提交更改、auto-commit（安全网）、push、返回版本信息
-   - 返回字段：commit_hash, commit_message, branch, is_initial, training_type, timestamp
+   - Responsibilities: Check uncommitted changes, auto-commit (safety net), push, return version info
+   - Return fields: commit_hash, commit_message, branch, is_initial, training_type, timestamp
 
-5. **定义配置 Schema**
+5. **Define configuration schema**
 
-   使用 dataclass 或 YAML 格式定义所有超参数：
-   - DataConfig: 数据集相关配置
-   - ModelConfig: 模型架构配置
-   - TrainConfig: 训练超参数
-   - TrackingConfig: wandb 追踪配置（project, entity, tags）
-   - ExperimentConfig: 实验根配置（包含以上所有子配置）
+   Define all hyperparameters using dataclass or YAML format:
+   - DataConfig: Dataset-related configuration
+   - ModelConfig: Model architecture configuration
+   - TrainConfig: Training hyperparameters
+   - TrackingConfig: wandb tracking configuration (project, entity, tags)
+   - ExperimentConfig: Root experiment configuration (contains all sub-configs above)
 
-6. **设计训练流水线**
+6. **Design training pipeline**
 
-   明确三个阶段：
-   - Stage 1: Smoke Test — 验证 Baseline 在 10% 数据上能跑通
-   - Stage 2: Module Integration — 添加新模块，验证梯度流动
-   - Stage 3: Full Training — 完整训练，收集 metrics
+   Define three stages:
+   - Stage 1: Smoke Test — Verify baseline runs on 10% of data
+   - Stage 2: Module Integration — Add new modules, verify gradient flow
+   - Stage 3: Full Training — Full training, collect metrics
 
-   每个阶段定义：
-   - 输入条件
-   - 执行步骤
-   - 验证检查点 (什么条件算通过)
-   - 失败处理
+   For each stage, define:
+   - Input conditions
+   - Execution steps
+   - Validation checkpoints (what constitutes a pass)
+   - Failure handling
 
-   **每个阶段的训练脚本必须遵循以下启动流程**：
+   **Every stage's training script must follow this startup flow**:
 
    ```
    main():
-     1. git_snapshot(training_type) → snapshot    # 版本快照 + push
-     2. wandb.init(config, notes=snapshot)        # 实验追踪
-     3. 训练循环
-     4. checkpoint 保存（含 snapshot.commit_hash）
+     1. git_snapshot(training_type) → snapshot    # Version snapshot + push
+     2. wandb.init(config, notes=snapshot)        # Experiment tracking
+     3. Training loop
+     4. Checkpoint saving (includes snapshot.commit_hash)
    ```
 
-   对于 **baseline 训练**，训练脚本可以复用同样的流程，
-   只需将 `training_type` 设为 `"baseline/{method_name}"`。
+   For **baseline training**, training scripts can reuse the same flow,
+   just set `training_type` to `"baseline/{method_name}"`.
 
-7. **输出文件**
+7. **Output files**
 
-   生成两个文件：
+   Generate two files:
 
-   a. `docs/Implementation_Roadmap.md`，包含：
-      - context_summary (≤20 行)
-      - module_pseudocode (每个模块的签名和伪代码，含 git_snapshot)
-      - config_schema (配置定义，含 TrackingConfig)
-      - training_pipeline (三阶段流水线，含启动流程)
-      - validation_checkpoints (每阶段检查点)
+   a. `docs/Implementation_Roadmap.md`, containing:
+      - context_summary (≤20 lines)
+      - module_pseudocode (signatures and pseudocode for each module, including git_snapshot)
+      - config_schema (configuration definitions, including TrackingConfig)
+      - training_pipeline (three-stage pipeline, including startup flow)
+      - validation_checkpoints (checkpoints for each stage)
 
-   b. `project_map.json`（项目根目录），包含完整的分级文件结构描述。
-      这是 WF7 code-expert 的**架构蓝图**，code-expert 必须严格按照此文件的结构生成代码。
+   b. `project_map.json` (project root), containing the complete tiered file structure description.
+      This is the **architectural blueprint** for WF7 code-expert; code-expert must strictly generate code according to this file's structure.
 
-8. **更新项目状态**
+8. **Update project state**
 
-   更新 PROJECT_STATE.json：
+   Update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
-   - `artifacts.implementation_roadmap` → 文件路径
+   - `artifacts.implementation_roadmap` → file path
    - `artifacts.project_map` → "project_map.json"
-   - `history` 追加完成记录
+   - `history` append completion record
 </instructions>
 
 <constraints>

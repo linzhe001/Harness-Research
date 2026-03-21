@@ -1,12 +1,12 @@
 ---
 name: survey-idea
-description: WF1 灵感调研与差距分析。接收用户的研究 Idea，执行文献检索、Gap 分析、竞品分析和可行性评分，输出 Feasibility_Report.md。当用户有新的 CV 研究想法需要评估可行性时使用。
+description: WF1 Inspiration survey and gap analysis. Takes the user's research idea, performs literature search, gap analysis, competitor analysis, and feasibility scoring, then outputs Feasibility_Report.md. Use when the user has a new CV research idea that needs a feasibility assessment.
 argument-hint: "[idea description]"
 disable-model-invocation: true
 allowed-tools: WebSearch, WebFetch, Read, Write, Bash, Glob
 ---
 
-# WF1: 灵感调研与差距分析
+# WF1: Inspiration Survey and Gap Analysis
 
 <role>
 You are a Senior CV Research Scientist with expertise in literature review
@@ -25,133 +25,133 @@ For the output format, see [templates/feasibility-report.md](templates/feasibili
 </context>
 
 <instructions>
-1. **解析用户输入**
+1. **Parse User Input**
 
-   从 $ARGUMENTS 或用户消息中提取：
-   - `idea_description`: 核心 Idea 描述 (100-500 字)
-   - `keywords`: 3-5 个核心关键词
-   - `target_venue`: 目标会议/期刊
-   - `time_range_months`: 检索时间范围，默认 24 个月
+   Extract from $ARGUMENTS or the user message:
+   - `idea_description`: Core idea description (100-500 words)
+   - `keywords`: 3-5 core keywords
+   - `target_venue`: Target conference/journal
+   - `time_range_months`: Search time range, default 24 months
 
-   如果信息不完整，使用 AskUserQuestion 询问。
+   If information is incomplete, use AskUserQuestion to ask.
 
-2. **理解 Idea**
+2. **Understand the Idea**
 
    <thinking>
-   在给出任何评价前，必须先完成以下分析：
-   - 核心创新点 (Novel Contribution) 是什么？
-   - 解决的问题类型：精度/速度/鲁棒性/泛化性？
-   - 依赖的技术栈是什么？
-   - 核心假设是什么？是否存在物理/数学上的硬约束？
-   - 这个想法的潜在风险点在哪里？
+   Before giving any evaluation, the following analysis must be completed:
+   - What is the core novel contribution?
+   - What type of problem does it solve: accuracy / speed / robustness / generalization?
+   - What tech stack does it depend on?
+   - What is the core assumption? Are there hard physical/mathematical constraints?
+   - Where are the potential risk points for this idea?
    </thinking>
 
-3. **文献检索**
+3. **Literature Search**
 
-   使用 WebSearch 工具进行多轮检索，建议查询策略：
-   - Query 1: `{keywords} arxiv {year}` — 搜索预印本
-   - Query 2: `{keywords} CVPR ICCV ECCV {year}` — 搜索顶会论文
-   - Query 3: `{keywords} limitation failure challenge` — 搜索失败案例
+   Use the WebSearch tool to perform multiple rounds of search. Suggested query strategies:
+   - Query 1: `{keywords} arxiv {year}` — search preprints
+   - Query 2: `{keywords} CVPR ICCV ECCV {year}` — search top venue papers
+   - Query 3: `{keywords} limitation failure challenge` — search failure cases
 
-   注意: `site:` 等高级搜索操作符可能不被支持，使用自然语言关键词组合。
+   Note: Advanced search operators like `site:` may not be supported; use natural language keyword combinations.
 
-   收集至少 10 篇高度相关论文。对于每篇关键论文，使用 WebFetch 获取摘要详情。
+   Collect at least 10 highly relevant papers. For each key paper, use WebFetch to get abstract details.
 
 4. **Gap Analysis**
 
-   构建 Gap 矩阵：
+   Build a gap matrix:
 
-   | 维度 | 当前 SOTA | 该 Idea 的改进点 | 改进幅度预估 | 置信度 |
-   |------|----------|-----------------|-------------|--------|
-   | 精度 (Accuracy) | ... | ... | +X% | 高/中/低 |
-   | 速度 (Speed) | ... | ... | Yx faster | 高/中/低 |
-   | 鲁棒性 (Robustness) | ... | ... | ... | 高/中/低 |
-   | 泛化性 (Generalization) | ... | ... | ... | 高/中/低 |
+   | Dimension | Current SOTA | Improvement by This Idea | Estimated Improvement | Confidence |
+   |-----------|-------------|--------------------------|----------------------|------------|
+   | Accuracy | ... | ... | +X% | High/Medium/Low |
+   | Speed | ... | ... | Yx faster | High/Medium/Low |
+   | Robustness | ... | ... | ... | High/Medium/Low |
+   | Generalization | ... | ... | ... | High/Medium/Low |
 
-5. **竞品分析**
+5. **Competitor Analysis**
 
-   列出 Top 5 最相关的竞争方法，每个包含：
-   - 方法名、论文标题、发表会议和年份
-   - 核心方法简述
-   - 与本 Idea 的关键差异
-   - 该方法的已知局限性
+   List the Top 5 most relevant competing methods, each including:
+   - Method name, paper title, venue and year
+   - Brief description of core method
+   - Key differences from this idea
+   - Known limitations of that method
 
-6. **可行性评分**
+6. **Feasibility Scoring**
 
    <thinking>
-   在给出可行性评分前，必须完成以下分析：
-   - 该 Idea 的核心假设是什么？
-   - 是否存在物理/数学上的硬约束？
-   - 近 2 年是否有类似尝试？结果如何？
-   - 文献检索中发现的失败案例说明了什么？
-   - 与 Top 5 竞品相比，本 Idea 的差异化优势是否足够？
+   Before giving the feasibility score, the following analysis must be completed:
+   - What is the core assumption of this idea?
+   - Are there hard physical/mathematical constraints?
+   - Have there been similar attempts in the past 2 years? What were the results?
+   - What do the failure cases found during literature search indicate?
+   - Is this idea's differentiation advantage sufficient compared to the Top 5 competitors?
    </thinking>
 
-   评分维度 (各 1-10 分):
-   - 新颖性 (Novelty): 是否有足够差异化？权重 0.30
-   - 技术可行性 (Feasibility): 是否存在理论障碍？权重 0.25
-   - 影响力 (Impact): 解决的问题是否重要？权重 0.25
-   - 实现难度 (Difficulty): 预估开发周期。权重 0.10 (取倒数)
-   - 资源需求 (Resource): GPU/数据需求。权重 0.10 (取倒数)
+   Scoring dimensions (1-10 each):
+   - Novelty: Is there sufficient differentiation? Weight 0.30
+   - Technical Feasibility: Are there theoretical barriers? Weight 0.25
+   - Impact: Is the problem being solved important? Weight 0.25
+   - Difficulty: Estimated development timeline. Weight 0.10 (use inverse)
+   - Resource Requirements: GPU/data needs. Weight 0.10 (use inverse)
 
-   综合评分 = 加权平均
+   Overall score = weighted average
 
-7. **前置依赖清单**
+7. **Prerequisites Checklist**
 
-   列出必须先完成的工作：
-   - 必须复现的 Baseline
-   - 必须准备的数据集
-   - 必须阅读的论文
-   - 必须掌握的技术点
+   List work that must be completed first:
+   - Baselines that must be reproduced
+   - Datasets that must be prepared
+   - Papers that must be read
+   - Technical skills that must be mastered
 
-8. **风险评估**
+8. **Risk Assessment**
 
-   | 风险项 | 概率 (高/中/低) | 影响 (高/中/低) | 缓解措施 |
-   |--------|----------------|----------------|----------|
+   | Risk Item | Probability (High/Medium/Low) | Impact (High/Medium/Low) | Mitigation Strategy |
+   |-----------|------------------------------|--------------------------|---------------------|
 
-9. **输出报告**
+9. **Output Report**
 
-   将完整分析写入 `docs/Feasibility_Report.md`，格式如下：
+   Write the complete analysis to `docs/Feasibility_Report.md` in the following format:
 
    ```
    # Feasibility Report: {project_name}
 
    <context_summary>
-   - Idea 概述: ...
-   - 检索时间范围: ...
-   - 检索关键词: ...
-   - 相关论文数量: ...
-   - 最相关竞品: ...
+   - Idea overview: ...
+   - Search time range: ...
+   - Search keywords: ...
+   - Number of relevant papers: ...
+   - Most relevant competitor: ...
    </context_summary>
 
-   ## 1. 可行性评分
-   综合评分: X/10
-   [评分表格]
+   ## 1. Feasibility Score
+   Overall score: X/10
+   [Score table]
 
-   ## 2. Gap 矩阵
-   [Gap 表格]
+   ## 2. Gap Matrix
+   [Gap table]
 
-   ## 3. Top 5 竞品分析
-   [逐个分析]
+   ## 3. Top 5 Competitor Analysis
+   [Individual analyses]
 
-   ## 4. 前置依赖清单
+   ## 4. Prerequisites Checklist
    [Checklist]
 
-   ## 5. 风险评估
-   [风险表格]
+   ## 5. Risk Assessment
+   [Risk table]
 
-   ## 6. 建议
-   决策: PROCEED / PIVOT / ABANDON
-   理由: ...
-   下一步: ...
+   ## 6. Recommendation
+   Decision: PROCEED / PIVOT / ABANDON
+   Rationale: ...
+   Next steps: ...
    ```
 
-10. **更新项目状态**
+10. **Update Project State**
 
-    更新 PROJECT_STATE.json：
+    Update PROJECT_STATE.json:
     - `current_stage.status` → "completed"
-    - `artifacts.feasibility_report` → 报告文件路径
-    - `history` 追加完成记录
+    - `artifacts.feasibility_report` → report file path
+    - `history` append completion record
 </instructions>
 
 <constraints>
@@ -165,16 +165,16 @@ For the output format, see [templates/feasibility-report.md](templates/feasibili
 <example type="output_summary">
 # Feasibility Report: Adaptive FPN Layer Selection
 
-综合评分: 7.2/10
+Overall score: 7.2/10
 
-| 维度 | 分数 | 说明 |
-|------|-----|------|
-| 新颖性 | 7 | 现有工作多为静态选择，动态选择较少 |
-| 技术可行性 | 8 | 可基于现有 NAS 技术实现 |
-| 影响力 | 7 | 小目标检测是持续热点 |
-| 实现难度 | 6 | 需要修改 FPN 和检测头 |
-| 资源需求 | 7 | 预估需要 4x V100 训练 3 天 |
+| Dimension | Score | Explanation |
+|-----------|-------|-------------|
+| Novelty | 7 | Most existing work uses static selection; dynamic selection is rare |
+| Technical Feasibility | 8 | Can be implemented based on existing NAS techniques |
+| Impact | 7 | Small object detection is an ongoing hot topic |
+| Difficulty | 6 | Requires modifying FPN and detection head |
+| Resource Requirements | 7 | Estimated to need 4x V100 training for 3 days |
 
-建议: PROCEED with caution
-理由: 技术可行性高，但需注意训练稳定性问题。
+Recommendation: PROCEED with caution
+Rationale: Technical feasibility is high, but training stability issues need attention.
 </example>

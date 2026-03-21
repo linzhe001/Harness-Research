@@ -1,5 +1,5 @@
 ---
-description: 依赖文件变更后提醒用户刷新 CLAUDE.md 的 Environment 部分
+description: Remind user to refresh CLAUDE.md Environment section after dependency file changes
 globs:
  - "requirements*.txt"
  - "environment*.yml"

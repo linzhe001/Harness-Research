@@ -1,383 +1,386 @@
-# CV 研究工作流完整指南
+# CV Research Workflow Complete Guide
 
-本文档详细介绍基于 Claude Code Skills 构建的 CV 研究工作流系统。
-该系统将一个 CV 研究项目从"想法"推进到"竞赛提交/论文就绪"的完整过程，自动化管理并保证每一步的质量。
+This document provides a detailed introduction to the CV research workflow system built on Claude Code Skills.
+The system drives a CV research project from "idea" to "competition submission / paper-ready" through a fully automated process, managing and ensuring quality at every step.
 
 ---
 
-## 1. 系统架构概览
+## 1. System Architecture Overview
 
-### 1.1 三层配置体系
+### 1.1 Three-Layer Configuration System
 
-系统采用 Claude Code 的三层配置机制，按加载频率和作用范围分层：
+The system uses Claude Code's three-layer configuration mechanism, layered by loading frequency and scope:
 
-| 层级 | 位置 | 加载方式 | 用途 |
-|------|------|---------|------|
-| **CLAUDE.md** | 项目根目录 | 每次会话自动加载 | 全局上下文：项目名、环境、技术栈、当前阶段 |
-| **Rules** | `.claude/rules/` | 编辑匹配 `globs` 的文件时自动加载 | 行为约束：代码修改规范、训练前 git 操作、依赖变更提醒 |
-| **Skills** | `.claude/skills/` | 用户通过 `/skill-name` 手动调用 | 阶段执行器：每个工作流阶段的完整逻辑 |
+| Layer | Location | Loading Method | Purpose |
+|-------|----------|----------------|---------|
+| **CLAUDE.md** | Project root | Auto-loaded every session | Global context: project name, environment, tech stack, current stage |
+| **Rules** | `.claude/rules/` | Auto-loaded when editing files matching `globs` | Behavioral constraints: code modification standards, pre-training git operations, dependency change reminders |
+| **Skills** | `.claude/skills/` | Manually invoked by user via `/skill-name` | Stage executors: complete logic for each workflow stage |
 
-**设计理念**：CLAUDE.md 极简（≤80 行），只放"每次都需要知道的"稳定信息；Rules 按路径条件加载（通过 globs frontmatter），避免无关信息污染上下文；Skills 按需调用，执行具体工作。Stage skills 设置 `disable-model-invocation: true`，必须由用户或 orchestrator 显式触发。
+**Design philosophy**: CLAUDE.md is minimal (≤80 lines), containing only stable information "needed every time"; Rules load conditionally by path (via globs frontmatter), avoiding context pollution from irrelevant info; Skills are invoked on demand to execute specific work. Stage skills set `disable-model-invocation: true` and must be explicitly triggered by the user or orchestrator.
 
-### 1.2 状态归属（State Ownership）
+### 1.2 State Ownership
 
-每个状态文件有唯一的写入责任方，避免多源分歧：
+Each state file has a single write-responsible owner to avoid multi-source divergence:
 
-| 文件 | 唯一写入者 | 作用 |
-|------|-----------|------|
-| `PROJECT_STATE.json` | orchestrator + 各 WF skill | 阶段流转（唯一阶段真相源） |
-| `iteration_log.json` | iterate skill | 实验历史（唯一实验真相源） |
-| `project_map.json` | build-plan 生成，code-debug 维护 | 代码结构（唯一架构真相源，仅 stable 文件） |
-| `CLAUDE.md` | init-project 分阶段生成 | Claude Code 每次会话的全局上下文 |
+| File | Sole Writer | Purpose |
+|------|------------|---------|
+| `PROJECT_STATE.json` | orchestrator + each WF skill | Stage transitions (single source of truth for stages) |
+| `iteration_log.json` | iterate skill | Experiment history (single source of truth for experiments) |
+| `project_map.json` | build-plan generates, code-debug maintains | Code structure (single source of truth for architecture, stable files only) |
+| `CLAUDE.md` | init-project generates in stages | Global context for each Claude Code session |
 
-**关键规则**：iterate **不写** PROJECT_STATE.json；orchestrator **不写** iteration_log.json。需要跨文件信息时通过**读取**获得。
+**Key rule**: iterate **does not write** PROJECT_STATE.json; orchestrator **does not write** iteration_log.json. Cross-file information is obtained through **reading**.
 
-### 1.3 工作流全景
+### 1.3 Workflow Overview
 
 ```
-┌─────────────────────── 前期调研与设计 ───────────────────────┐
-│                                                              │
-│  ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐       │
-│  │ WF1 │ →  │ WF2 │ →  │ WF3 │ →  │ WF4 │ →  │ WF5 │       │
-│  │ 调研 │    │ 架构 │    │ 论证 │    │ 数据 │    │ base│       │
-│  │      │    │      │ ←──│NO-GO│    │      │    │ line│       │
-│  └─────┘    └──↑───┘    └─────┘    └─────┘    └─────┘       │
-│                │                                              │
-└────────────────│──────────────────────────────────────────────┘
-                 │
-┌────────────────│──── 实现与验证 ─────────────────────────┐
+┌──────────────── Early Research & Design ────────────────┐
+│                                                          │
+│  ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐   │
+│  │ WF1 │ →  │ WF2 │ →  │ WF3 │ →  │ WF4 │ →  │ WF5 │   │
+│  │survey│    │ arch│    │check│    │ data│    │ base│   │
+│  │      │    │      │ ←──│NO-GO│    │      │    │ line│   │
+│  └─────┘    └──↑───┘    └─────┘    └─────┘    └─────┘   │
 │                │                                          │
-│  ┌─────┐    ┌──┴──┐    ┌──────┐                          │
-│  │ WF6 │ →  │ WF7 │ →  │WF7.5 │                          │
-│  │ 规划 │    │ 编码 │    │ 验证  │                          │
-│  └─────┘    └─────┘    └──┬───┘                          │
-│                        FAIL│→ /code-debug → 重试          │
-│                            │                              │
-└────────────────────────────│──────────────────────────────┘
+└────────────────│──────────────────────────────────────────┘
+                 │
+┌────────────────│──── Implementation & Validation ────┐
+│                │                                      │
+│  ┌─────┐    ┌──┴──┐    ┌──────┐                      │
+│  │ WF6 │ →  │ WF7 │ →  │WF7.5 │                      │
+│  │ plan│    │ code│    │valid │                      │
+│  └─────┘    └─────┘    └──┬───┘                      │
+│                        FAIL│→ /code-debug → retry     │
+│                            │                          │
+└────────────────────────────│──────────────────────────┘
                           PASS│
-┌─────────────────────────────│── 迭代优化 ──────────────────────────────┐
-│                             ▼                                          │
-│  ┌──────────────────────────────────────────────────────┐              │
-│  │                      WF8 迭代                         │              │
-│  │                                                       │              │
-│  │    /plan ──→ /code ──→ /run ──→ /eval ──→ 决策       │              │
-│  │      ↑                                     │          │              │
-│  │      │              DEBUG                  │          │              │
-│  │      └─────────────────────────────────────┘          │              │
-│  │                                                       │              │
-│  │    可选: /ablate (组件贡献度分析)                       │              │
-│  └───────────────────────┬───────────────────────────────┘              │
-│                          │                                              │
-│           ┌──────────────┼──────────────┐                              │
-│        CONTINUE        PIVOT          ABORT                            │
-│           │              │              │                               │
-│           ▼              │              ▼                               │
-│  ┌─────┐    ┌─────┐     │           终止项目                           │
-│  │ WF9 │ →  │WF10 │     │                                              │
-│  │ 消融 │    │ 提交 │     └──→ 回退 WF2（重新架构）                      │
-│  └─────┘    └─────┘                                                    │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────│── Iterative Optimization ──────────────┐
+│                             ▼                                        │
+│  ┌──────────────────────────────────────────────────────┐            │
+│  │                    WF8 Iteration                      │            │
+│  │                                                       │            │
+│  │    /plan ──→ /code ──→ /run ──→ /eval ──→ decision   │            │
+│  │      ↑                                     │          │            │
+│  │      │              DEBUG                  │          │            │
+│  │      └─────────────────────────────────────┘          │            │
+│  │                                                       │            │
+│  │    Optional: /ablate (component contribution analysis)│            │
+│  └───────────────────────┬───────────────────────────────┘            │
+│                          │                                            │
+│           ┌──────────────┼──────────────┐                            │
+│        CONTINUE        PIVOT          ABORT                          │
+│           │              │              │                             │
+│           ▼              │              ▼                             │
+│  ┌──────┐   ┌──────┐    │           Terminate project                │
+│  │ WF9  │ → │ WF10 │    │                                            │
+│  │ablate│   │submit│    └──→ Rollback to WF2 (re-architect)          │
+│  └──────┘   └──────┘                                                 │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-Utility skills（非编号阶段）：
-- `/code-debug` — 代码修复（被 /iterate code 调用或独立使用）
-- `/evaluate` — 结果分析（被 /iterate eval 调用或独立使用）
-- `/env-setup` — 维护型工具；用于依赖变化后的环境刷新，不是主流程前置步骤
+Utility skills (non-numbered stages):
+- `/code-debug` — Code fixes (called by /iterate code or used independently)
+- `/evaluate` — Result analysis (called by /iterate eval or used independently)
+- `/env-setup` — Maintenance tool; used for environment refresh after dependency changes, not a main workflow prerequisite
 
 ---
 
-## 2. Orchestrator — 中央调度器
+## 2. Orchestrator — Central Dispatcher
 
-**调用方式**: `/orchestrator [init|status|next|rollback|decision]`
+**Invocation**: `/orchestrator [init|status|next|rollback|decision]`
 
-Orchestrator 不执行具体研究工作，而是管理整个工作流的状态流转：
+The orchestrator does not perform specific research work, but manages the state transitions of the entire workflow:
 
-- **`init`** — 初始化项目：创建目录结构、生成 PROJECT_STATE.json、调用 `/init-project init` 生成最小版 CLAUDE.md
-- **`status`** — 查看当前进度：含阶段一致性校验，WF8 时额外读取 iteration_log.json
-- **`next`** — 推进到下一阶段：验证前置条件（artifact 是否齐全、是否有 blocker），通过后调用对应 skill
-- **`rollback`** — 回退到指定阶段：保留历史记录，不删除任何 artifact
-- **`decision`** — 记录关键决策：内容、理由、考虑过的替代方案
+- **`init`** — Initialize project: create directory structure, generate PROJECT_STATE.json, call `/init-project init` to generate minimal CLAUDE.md
+- **`status`** — View current progress: includes stage consistency checks, reads iteration_log.json additionally during WF8
+- **`next`** — Advance to next stage: verify prerequisites (are artifacts complete, any blockers), then call the corresponding skill
+- **`rollback`** — Roll back to a specified stage: preserves history, does not delete any artifacts
+- **`decision`** — Record key decisions: content, reasoning, alternatives considered
 
-**自动触发**：`next` 命令在阶段完成后会自动调用 `/init-project update` 更新 CLAUDE.md（WF1/WF2/WF4/WF5/WF6 完成时）。
+**Auto-trigger**: The `next` command automatically calls `/init-project update` to update CLAUDE.md after stage completion (upon WF1/WF2/WF4/WF5/WF6 completion).
 
 ---
 
-## 3. 阶段详解
+## 3. Stage Details
 
-### WF1–WF4: 调研→架构→论证→数据
+### WF1–WF4: Survey → Architecture → Deep Check → Data
 
-| 阶段 | Skill | 输出 | 决策 |
-|------|-------|------|------|
+| Stage | Skill | Output | Decision |
+|-------|-------|--------|----------|
 | WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md | PROCEED/PIVOT/ABANDON |
 | WF2 refine-arch | `/refine-arch` | docs/Technical_Spec.md | — |
 | WF3 deep-check | `/deep-check` | docs/Sanity_Check_Log.md | GO/CONDITIONAL GO/NO-GO |
-| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + 数据管道 + CLAUDE.md 数据集路径同步 | — |
+| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + data pipeline + CLAUDE.md dataset path sync | — |
 
-### WF5: Baseline 复现（含强制门控）
+### WF5: Baseline Reproduction (with Mandatory Gate)
 
 | | |
 |---|---|
 | **Skill** | `/baseline-repro [baseline_name or 'all']` |
-| **输出** | `docs/Baseline_Report.md` + baseline_metrics + evaluation_protocol |
-| **门控** | Baseline_Report.md 必须存在，每个 baseline 的 status 必须为 verified/partial（不可为 untested） |
+| **Output** | `docs/Baseline_Report.md` + baseline_metrics + evaluation_protocol |
+| **Gate** | Baseline_Report.md must exist, each baseline's status must be verified/partial (cannot be untested) |
 
-如果有意跳过某些 baseline，必须标记为 `partial` 并在报告中说明原因。
-WF5 同时负责创建首个可运行环境，并把 `CLAUDE.md` 的 `## Environment` 与 baseline 摘要同步到位。
+If intentionally skipping certain baselines, they must be marked as `partial` with reasons explained in the report.
+WF5 is also responsible for creating the first runnable environment and syncing `CLAUDE.md`'s `## Environment` and baseline summary.
 
-### WF6–WF7: 规划→编码
+### WF6–WF7: Planning → Coding
 
-| 阶段 | Skill | 输出 |
-|------|-------|------|
+| Stage | Skill | Output |
+|-------|-------|--------|
 | WF6 build-plan | `/build-plan` | docs/Implementation_Roadmap.md + project_map.json |
-| WF7 code-expert | `/code-expert` | 全部项目代码 |
+| WF7 code-expert | `/code-expert` | Complete project code |
 
-### WF7.5: 代码审查 + 训练链路验证（门控）
+### WF7.5: Code Review + Training Pipeline Validation (Gate)
 
 | | |
 |---|---|
 | **Skill** | `/validate-run [config_path]` |
-| **审查项** | Codex 代码审查（新代码 vs baseline 等价性：数据管道、模型、loss、评估指标、常见 ML bug） |
-| **验证项** | 100-step 训练、checkpoint 保存/加载、eval 流程、wandb 连接、git_snapshot |
-| **门控** | PASS → WF8，REVIEW → 用户确认后继续或修复，FAIL → /code-debug 修复 |
+| **Review Items** | Codex code review (new code vs baseline equivalence: data pipeline, model, loss, evaluation metrics, common ML bugs) |
+| **Validation Items** | 100-step training, checkpoint save/load, eval pipeline, wandb connection, git_snapshot |
+| **Gate** | PASS → WF8, REVIEW → user confirms then continue or fix, FAIL → /code-debug to fix |
 
-确保不会在迭代中遇到代码正确性问题和基础设施问题。
+Ensures no code correctness or infrastructure issues are encountered during iteration.
 
-### WF8: 结构化实验迭代（核心）
+### WF8: Structured Experiment Iteration (Core)
 
 | | |
 |---|---|
 | **Skill** | `/iterate [plan|code|run|eval|ablate|status|log]` |
-| **输出** | iteration_log.json（持续更新），最佳 checkpoint |
-| **决策** | CONTINUE → WF9 / DEBUG → 新迭代 / PIVOT → WF2 / ABORT |
+| **Output** | iteration_log.json (continuously updated), best checkpoint |
+| **Decision** | CONTINUE → WF9 / DEBUG → new iteration / PIVOT → WF2 / ABORT |
 
-**七个子命令**：
+**Seven subcommands**:
 
-| 子命令 | 用途 | 调用的 utility |
-|--------|------|---------------|
-| `plan [hypothesis]` | 记录假设，重复教训检查，设计变更，选择性 Codex 审查 | — |
-| `code [description]` | 实现代码变更，强制 git commit | `/code-debug` |
-| `run [config_path]` | 执行训练 + 运行 eval + 收集指标（自动化） | — |
-| `eval [log_path]` | 评估结果，对比 baseline + best，做出决策 | `/evaluate` |
-| `ablate [iter_id] --components "..."` | 迭代内消融实验，确定各组件贡献度 | — |
-| `status` | 查看当前迭代 + 最近 5 次 + best | — |
-| `log` | 完整迭代历史表格 | — |
+| Subcommand | Purpose | Utility Called |
+|------------|---------|---------------|
+| `plan [hypothesis]` | Record hypothesis, check for repeated lessons, design changes, selective Codex review | — |
+| `code [description]` | Implement code changes, enforce git commit | `/code-debug` |
+| `run [config_path]` | Execute training + run eval + collect metrics (automated) | — |
+| `eval [log_path]` | Evaluate results, compare against baseline + best, make decision | `/evaluate` |
+| `ablate [iter_id] --components "..."` | Intra-iteration ablation experiment, determine component contributions | — |
+| `status` | View current iteration + last 5 + best | — |
+| `log` | Complete iteration history table | — |
 
-**典型迭代循环**：
+**Typical iteration loop**:
 ```
-/iterate plan "将 backbone 从 ResNet-50 升级到 ResNet-101 以增强特征表达"
-  → 重复教训检查（警告已知失败模式）
-  → 记录 hypothesis, 设计 config_diff
-  → (选择性) Codex 审查方案
+/iterate plan "Upgrade backbone from ResNet-50 to ResNet-101 to enhance feature representation"
+  → Repeated lessons check (warn about known failure patterns)
+  → Record hypothesis, design config_diff
+  → (Selective) Codex review of the approach
 
-/iterate code "升级 backbone 到 ResNet-101"
-  → 写入持久化 context (.claude/iterations/iter{N}/context.json)
-  → 调用 /code-debug 修改代码 + 强制 git commit
-  → 移除 symlink（保留持久化 context）
-  → status 变为 "training"
+/iterate code "Upgrade backbone to ResNet-101"
+  → Write persistent context (.claude/iterations/iter{N}/context.json)
+  → Call /code-debug to modify code + enforce git commit
+  → Remove symlink (preserve persistent context)
+  → Status becomes "training"
 
 /iterate run {config_path}
-  → 自动执行训练（background task）
-  → 训练完成后自动运行 {EVAL_SCRIPT}
-  → 解析 stdout 提取 metrics，更新 iteration_log.json
-  → status 变为 "running"，输出指标摘要
+  → Auto-execute training (background task)
+  → After training completes, auto-run {EVAL_SCRIPT}
+  → Parse stdout to extract metrics, update iteration_log.json
+  → Status becomes "running", output metrics summary
 
 /iterate eval experiments/{exp_prefix}_iter27/
-  → 调用 /evaluate 解析 metrics → per-iteration 报告 (docs/iterations/iter27.md)
-  → 对比 baseline + best, 做出决策
-  → 输出推荐下一步命令
+  → Call /evaluate to parse metrics → per-iteration report (docs/iterations/iter27.md)
+  → Compare against baseline + best, make decision
+  → Output recommended next command
 
-# 可选：消融实验（确定各组件贡献度）
+# Optional: ablation experiment (determine component contributions)
 /iterate ablate iter27 --components "aux_loss:loss.lambda_aux=0.0,lr_warmup:train.warmup_steps=0"
-  → 对每个组件运行 w/o 训练
-  → 输出对比表（component / primary_metric / Delta / Contribution）
+  → Run w/o training for each component
+  → Output comparison table (component / primary_metric / Delta / Contribution)
 ```
 
-**`run` 自动执行流程**：
+**`run` automated execution flow**:
 
-`run` 子命令自动完成训练全链路，取代之前的手动训练流程：
+The `run` subcommand automates the full pipeline from code to metrics, replacing the previous manual training flow:
 
 ```
-构建训练命令 → Bash(run_in_background) → 解析 stdout 指标 → 运行 {EVAL_SCRIPT} → 更新 iteration_log.json
+Build training command → Bash(run_in_background) → Parse stdout metrics → Run {EVAL_SCRIPT} → Update iteration_log.json
 ```
 
-- 从 config_diff 自动构建 `python {TRAIN_SCRIPT} --config ... --no_snapshot` 命令
-- 使用 `run_in_background: true` 支持 10-60 分钟长训练
-- 训练完成后解析 stdout 中的训练轨迹字段（如 best step、final step、中间验证摘要）
-- 自动运行 `{EVAL_SCRIPT}`，按 WF5 固化的 evaluation protocol 抽取最终指标
-- 错误处理：OOM/NaN/crash 时保持 status="training" 并报错，不会静默失败
-- `--manual` 回退：集群训练等场景退化为元数据登记模式
+- Auto-builds `python {TRAIN_SCRIPT} --config ... --no_snapshot` command from config_diff
+- Uses `run_in_background: true` to support 10-60 minute long training runs
+- After training completes, parses training trajectory fields from stdout (e.g., best step, final step, intermediate validation summaries)
+- Auto-runs `{EVAL_SCRIPT}`, extracting final metrics per the evaluation protocol established in WF5
+- Error handling: on OOM/NaN/crash, keeps status="training" and reports error; never fails silently
+- `--manual` fallback: for cluster training scenarios, degrades to metadata registration mode
 
-**`ablate` 消融实验**：
+**`ablate` ablation experiments**:
 
-快速确定各组件贡献度，生成对比表：
+Quickly determine component contributions, generating a comparison table:
 
 ```
 /iterate ablate {base_iter} --components "name1:override1,name2:override2"
 ```
 
-组件通过 `--components` 参数传入 `name:override` 对。
-对每个组件生成 `{base_iter}_no_{component}` 子迭代，训练后自动 eval 并按 delta 分类：
+Components are passed via `--components` as `name:override` pairs.
+For each component, generates a `{base_iter}_no_{component}` sub-iteration, auto-evaluates after training, and classifies by delta:
 
-| Delta 范围 | 分类 |
-|-----------|------|
-| < -1.0 dB | `significant` — 核心组件 |
-| < -0.3 dB | `moderate` — 有贡献 |
-| >= -0.3 dB | `minimal` — 可简化 |
-| > 0 dB | `negative` — 移除反而更好 |
+| Delta Range | Classification |
+|-------------|----------------|
+| < -1.0 dB | `significant` — core component |
+| < -0.3 dB | `moderate` — contributes |
+| >= -0.3 dB | `minimal` — can be simplified |
+| > 0 dB | `negative` — better without it |
 
-支持断点续跑：已完成的 sub-iteration 自动跳过。
+Supports resumption: already completed sub-iterations are automatically skipped.
 
-**其他关键特性**：
-- **持久化 context**: 存储到 `.claude/iterations/iter{N}/context.json`，symlink 作为兼容层
-- **强制 git commit**: code 子命令完成后若无 commit hash，保持 coding 状态不推进
-- **重复教训检查**: plan 阶段扫描已知 lessons，警告重复失败模式
-- **Screening protocol**: 非架构/loss 变更建议先做 5K-10K proxy run
+**Other key features**:
+- **Persistent context**: stored at `.claude/iterations/iter{N}/context.json`, symlink as compatibility layer
+- **Enforced git commit**: if no commit hash after code subcommand completes, stays in coding status without advancing
+- **Repeated lessons check**: plan phase scans known lessons, warns about repeated failure patterns
+- **Screening protocol**: non-architecture/loss changes should do a 5K-10K proxy run first
 
-### WF9: 正式消融实验
+### WF9: Formal Ablation Experiments
 
 | | |
 |---|---|
 | **Skill** | `/final-exp [stage_report_path]` |
-| **输出** | docs/Final_Experiment_Matrix.md |
-| **前置** | WF8 最终 iteration 决策为 CONTINUE |
+| **Output** | docs/Final_Experiment_Matrix.md |
+| **Prerequisite** | WF8 final iteration decision is CONTINUE |
 
-设计符合顶会标准的完整实验矩阵：
-- **消融实验**：每个创新组件 ON/OFF，隔离各组件贡献（可复用 WF8 `/iterate ablate` 的初步结果）
-- **超参搜索**：关键超参数的搜索空间和策略
-- **鲁棒性测试**：不同分辨率、极端场景、OOD 数据
-- **跨数据集评估**：验证泛化性
-- **计算预算**：估算总 GPU 小时数，规划执行顺序
+Design a complete experiment matrix meeting top-venue standards:
+- **Ablation experiments**: each innovation component ON/OFF, isolating individual contributions (can reuse preliminary results from WF8 `/iterate ablate`)
+- **Hyperparameter search**: search space and strategy for key hyperparameters
+- **Robustness tests**: different resolutions, extreme scenarios, OOD data
+- **Cross-dataset evaluation**: verify generalizability
+- **Compute budget**: estimate total GPU hours, plan execution order
 
-### WF10: 提交与发布
+### WF10: Submission & Release
 
 | | |
 |---|---|
 | **Skill** | `/release [submit|package|validate]` |
-| **输出** | 提交包（多场景渲染 + 打包 + 文件名校验） |
-| **前置** | WF9 消融实验完成 |
+| **Output** | Submission package (multi-scene rendering + packaging + filename validation) |
+| **Prerequisite** | WF9 ablation experiments completed |
 
-三个子命令：
-- **`validate`** — 检查提交包完整性（文件名格式、分辨率、场景覆盖）
-- **`package`** — 生成符合竞赛/会议要求的提交包
-- **`submit`** — 多场景训练 + 渲染 + 打包 + dry-run 检查
+Three subcommands:
+- **`validate`** — Check submission package completeness (filename format, resolution, scene coverage)
+- **`package`** — Generate submission package conforming to competition/conference requirements
+- **`submit`** — Multi-scene training + rendering + packaging + dry-run check
 
 ---
 
 ## 4. Utility Skills
 
-### 4.1 env-setup — 维护型环境刷新
+### 4.1 env-setup — Maintenance Environment Refresh
 
-**调用方式**: `/env-setup [create|refresh]`
+**Invocation**: `/env-setup [create|refresh]`
 
-- 不属于主流程前置步骤
-- 首次可运行环境由 WF5 `/baseline-repro` 创建
-- 仅在依赖变化、机器切换或 `CLAUDE.md` 环境节过期时使用
+- Not a main workflow prerequisite
+- First runnable environment is created by WF5 `/baseline-repro`
+- Only used when dependencies change, machines are switched, or `CLAUDE.md` environment section is outdated
 
-当 `requirements*.txt`、`environment*.yml`、`pyproject.toml` 变更时，`deps-update` rule 会自动提醒运行 refresh。
+When `requirements*.txt`, `environment*.yml`, or `pyproject.toml` change, the `deps-update` rule automatically reminds to run refresh.
 
-### 4.2 code-debug — 代码修复
+### 4.2 code-debug — Code Fixes
 
-**调用方式**: `/code-debug [error_log_path or issue description]`
+**Invocation**: `/code-debug [error_log_path or issue description]`
 
-**Operation modes**（由 `.claude/current_iteration.json` context 决定）：
-- `planned_change`: 由 /iterate code 调用，按 hypothesis 实现变更，完成后语义化 commit
-- `bugfix`: 独立调用，诊断修复 crash/error
-- `perf_tuning`: 独立调用，性能优化
+**Operation modes** (determined by `.claude/current_iteration.json` context):
+- `planned_change`: called by /iterate code, implements changes per hypothesis, semantic commit upon completion
+- `bugfix`: called independently, diagnoses and fixes crashes/errors
+- `perf_tuning`: called independently, performance optimization
 
-修改代码后自动执行 `py_compile` + `ruff check`，接口变更时同步更新 `project_map.json`。
+After modifying code, automatically runs `py_compile` + `ruff check`; syncs `project_map.json` when interfaces change.
 
-### 4.3 evaluate — 结果分析
+### 4.3 evaluate — Result Analysis
 
-**调用方式**: `/evaluate [log_path]`
+**Invocation**: `/evaluate [log_path]`
 
-核心功能：
-- 解析训练日志，提取 baseline/evaluation protocol 定义的目标指标
-- 诊断训练问题（过拟合、梯度消失、loss 发散等）
-- 对比 Baseline 性能 + 历史最佳
-- 给出 CONTINUE/DEBUG/PIVOT/ABORT 决策
+Core features:
+- Parse training logs, extract target metrics defined by baseline/evaluation protocol
+- Diagnose training issues (overfitting, vanishing gradients, loss divergence, etc.)
+- Compare against baseline performance + historical best
+- Provide CONTINUE/DEBUG/PIVOT/ABORT decision
 
-**Per-iteration 报告**: 从 /iterate eval 调用时写入 `docs/iterations/iter{N}.md`。
-`docs/Stage_Report.md` 作为最新摘要索引。
+**Per-iteration reports**: when called from /iterate eval, writes to `docs/iterations/iter{N}.md`.
+`docs/Stage_Report.md` serves as the latest summary index.
 
 ---
 
-## 5. 关键功能详解
+## 5. Key Feature Details
 
-### 5.1 Stable vs Volatile 文件分层
+### 5.1 Stable vs Volatile File Layering
 
-project_map.json 只追踪 **stable 架构文件**：
-- src/ 核心模块
-- baselines/ 子目录
-- 核心 configs 和 scripts（在 CLAUDE.md Entry Scripts 中列出的）
+project_map.json only tracks **stable architecture files**:
+- src/ core modules
+- baselines/ subdirectories
+- Core configs and scripts (listed in CLAUDE.md Entry Scripts)
 
-**Volatile 实验资产**不需追踪：
+**Volatile experiment assets** are not tracked:
 - per-iteration scripts (run_*.sh, run_ablation_*.py)
-- 临时实验配置
-- experiments/ 下所有内容
+- Temporary experiment configs
+- Everything under experiments/
 
-### 5.2 训练前 Git + wandb 集成
+### 5.2 Pre-Training Git + wandb Integration
 
-三层保障确保每次训练都有完整版本记录：
+Three layers of safeguards ensure complete version records for every training run:
 
-1. **Claude 的语义化 Commit**（rule 约束）
-2. **git_snapshot.py 安全网**（代码中）
-3. **wandb + checkpoint 记录**（代码中）
+1. **Claude's semantic commits** (rule-enforced)
+2. **git_snapshot.py safety net** (in code)
+3. **wandb + checkpoint records** (in code)
 
 ### 5.3 Codex Cross-Validation
 
-| 触发点 | 触发条件 | 审查对象 | 审查重点 |
-|--------|---------|---------|---------|
-| WF3 deep-check | **始终触发**（关键门禁） | Technical_Spec 技术方案 | 找遗漏风险和失败模式 |
-| WF7.5 validate-run | **始终触发**（代码入口门禁） | src/ 新代码 vs baselines/ 参考实现 | Baseline 等价性：数据管道、模型计算、loss、评估指标 |
-| WF8 /iterate plan | **选择性触发**：新 loss 族、架构变更、PIVOT 后、连续 3 次 DEBUG | 单次迭代 hypothesis | 假设验证，避免重复失败 |
+| Trigger Point | Trigger Condition | Review Target | Review Focus |
+|---------------|-------------------|---------------|--------------|
+| WF3 deep-check | **Always triggered** (critical gate) | Technical_Spec technical approach | Find missed risks and failure modes |
+| WF7.5 validate-run | **Always triggered** (code entry gate) | src/ new code vs baselines/ reference impl | Baseline equivalence: data pipeline, model computation, loss, evaluation metrics |
+| WF8 /iterate plan | **Selectively triggered**: new loss family, architecture changes, post-PIVOT, 3 consecutive DEBUGs | Single iteration hypothesis | Hypothesis validation, avoid repeated failures |
 
-记录值：`"used"` / `"skipped_low_value"` / `"unavailable"`（不再使用 null）
+Recorded values: `"used"` / `"skipped_low_value"` / `"unavailable"` (no longer using null)
 
-### 5.4 CLAUDE.md 分阶段生成
+### 5.4 CLAUDE.md Staged Generation
 
-CLAUDE.md 保持为**稳定操作指南**（≤80 行），不放快变实验内容。
-快变内容（当前最佳、当前风险、下次实验）存在 iteration_log.json 和 MEMORY.md 中。
+CLAUDE.md is maintained as a **stable operations guide** (≤80 lines), without fast-changing experiment content.
+Fast-changing content (current best, current risks, next experiment) resides in iteration_log.json and MEMORY.md.
 
-| 时机 | 填入内容 |
-|------|---------|
-| `init` | Environment 占位 + Workflow 概览 |
-| WF1 完成后 | Idea 描述 |
-| WF2 完成后 | Tech Stack 细节 |
-| WF4 完成后 | Dataset 路径和统计 |
-| WF5 完成后 | Baseline 指标参考 |
-| WF6 完成后 | Project Structure + Core Artifacts |
-| WF7 首次实验后 | Entry Scripts（锁定入口脚本） |
+| Timing | Content Added |
+|--------|--------------|
+| `init` | Environment placeholder + Workflow overview |
+| After WF1 | Idea description |
+| After WF2 | Tech Stack details |
+| After WF4 | Dataset paths and statistics |
+| After WF5 | Baseline metrics reference |
+| After WF6 | Project Structure + Core Artifacts |
+| After WF7 first experiment | Entry Scripts (lock entry scripts) |
 
-### 5.5 自动化训练执行
+### 5.5 Automated Training Execution
 
-`/iterate run` 实现了从代码到指标的全链路自动化：
+`/iterate run` implements full pipeline automation from code to metrics:
 
 ```
                      /iterate run [config_path]
                                │
                                ▼
                 ┌────────────────────────────┐
-                │ ① 读取 iteration_log.json   │
-                │    找 status="training" 迭代 │
-                │    提取 config_diff          │
+                │ ① Read iteration_log.json   │
+                │    Find status="training"   │
+                │    iteration                │
+                │    Extract config_diff      │
                 └──────────────┬─────────────┘
                                │
                                ▼
                 ┌────────────────────────────┐
-                │ ② 构建训练命令               │
+                │ ② Build training command    │
                 │    python {TRAIN_SCRIPT}    │
                 │      --config {config_path} │
                 │      --no_snapshot          │
                 │      {dotlist overrides}    │
-                │    确定 exp_dir              │
+                │    Determine exp_dir        │
                 └──────────────┬─────────────┘
                                │
                                ▼
                 ┌────────────────────────────┐
                 │ ③ Bash(run_in_background)   │
-                │    执行训练，⏱ 10-60 min     │
-                │    记录 started_at 时间戳    │
+                │    Execute training,        │
+                │    ⏱ 10-60 min              │
+                │    Record started_at        │
+                │    timestamp                │
                 └──────────────┬─────────────┘
                                │
                        ┌───────┴───────┐
@@ -386,164 +389,176 @@ CLAUDE.md 保持为**稳定操作指南**（≤80 行），不放快变实验内
                        │               │
                        │               ▼
                        │    ┌────────────────────────┐
-                       │    │ 错误诊断                 │
+                       │    │ Error diagnosis          │
                        │    │ ┌──────────────────────┐│
                        │    │ │ "CUDA out of memory" ││
-                       │    │ │ → OOM, 建议降分辨率   ││
+                       │    │ │ → OOM, suggest lower  ││
+                       │    │ │   resolution          ││
                        │    │ ├──────────────────────┤│
-                       │    │ │ "nan" in loss 行     ││
-                       │    │ │ → NaN, 建议降 LR     ││
+                       │    │ │ "nan" in loss line   ││
+                       │    │ │ → NaN, suggest lower  ││
+                       │    │ │   LR                  ││
                        │    │ ├──────────────────────┤│
-                       │    │ │ 其他非零 exit code    ││
-                       │    │ │ → crash, 输出 stderr ││
+                       │    │ │ Other non-zero exit   ││
+                       │    │ │ → crash, output stderr││
                        │    │ └──────────────────────┘│
-                       │    │ status 保持 "training"   │
-                       │    │ 报错给用户，终止流程      │
+                       │    │ Status stays "training"  │
+                       │    │ Report error, terminate  │
                        │    └────────────────────────┘
                        │
                        ▼
                 ┌────────────────────────────┐
-                │ ④ 解析训练 stdout            │
-                │    提取 training_trace       │
-                │    如 best_step/final_step   │
-                │    和训练脚本暴露的中间指标    │
+                │ ④ Parse training stdout     │
+                │    Extract training_trace   │
+                │    e.g., best_step/         │
+                │    final_step and           │
+                │    intermediate metrics     │
+                │    exposed by training      │
+                │    script                   │
                 └──────────────┬─────────────┘
                                │
                                ▼
                 ┌────────────────────────────┐
-                │ ⑤ 定位最佳 checkpoint        │
-                │    扫描 exp_dir/checkpoints/ │
-                │    按 step 排序取最新        │
+                │ ⑤ Locate best checkpoint    │
+                │    Scan exp_dir/checkpoints/│
+                │    Sort by step, take latest│
                 └──────────────┬─────────────┘
                                │
                                ▼
                 ┌────────────────────────────┐
-                │ ⑥ 运行 {EVAL_SCRIPT}        │
+                │ ⑥ Run {EVAL_SCRIPT}         │
                 │    --checkpoint {best_ckpt} │
                 │    --output_dir {exp}/eval  │
-                │    按 WF5 固定下来的         │
-                │    evaluation protocol 取数 │
+                │    Extract metrics per      │
+                │    evaluation protocol      │
+                │    established in WF5       │
                 └──────────────┬─────────────┘
                                │
                        ┌───────┴───────┐
                        │               │
-                   eval 成功        eval 失败
+                   eval success    eval failure
                        │               │
                        ▼               ▼
               ┌──────────────┐  ┌──────────────────┐
-              │ 记录全部指标   │  │ 仅记录训练指标     │
-              │ (train+eval) │  │ 提示用户手动 eval  │
+              │ Record all    │  │ Record training   │
+              │ metrics       │  │ metrics only      │
+              │ (train+eval)  │  │ Prompt user to    │
+              │               │  │ run eval manually │
               └──────┬───────┘  └────────┬─────────┘
                      │                   │
                      └─────────┬─────────┘
                                │
                                ▼
                 ┌────────────────────────────┐
-                │ ⑦ 更新 iteration_log.json   │
+                │ ⑦ Update iteration_log.json │
                 │    run_manifest:            │
                 │      command, config_path,  │
                 │      exp_dir, duration,     │
                 │      exit_code, ckpt_path   │
                 │    metrics:                 │
-                │      仅写 protocol 定义的    │
-                │      tracked metrics        │
+                │      Only write protocol-   │
+                │      defined tracked metrics│
                 │    training_trace:          │
-                │      best_step/final_step等 │
+                │      best_step/final_step   │
+                │      etc.                   │
                 │    status → "running"       │
                 └──────────────┬─────────────┘
                                │
                                ▼
-                    输出指标摘要 + 推荐
-                    `/iterate eval`
+                    Output metrics summary +
+                    recommend `/iterate eval`
 ```
 
-**`--manual` 回退**：如果训练需要在集群上运行或用户传 `--manual`，退化为元数据登记模式
-（只记录 command, config_path, exp_dir, expected_steps），status→"running"，用户训练完成后调用 `/iterate eval`。
+**`--manual` fallback**: If training needs to run on a cluster or user passes `--manual`, degrades to metadata registration mode
+(only records command, config_path, exp_dir, expected_steps), status→"running", user calls `/iterate eval` after training completes.
 
-### 5.6 Per-iteration 报告
+### 5.6 Per-iteration Reports
 
-评估报告按迭代存储：
+Evaluation reports are stored per iteration:
 - `docs/iterations/iter1.md`, `docs/iterations/iter2.md`, ...
-- `docs/Stage_Report.md` 作为最新摘要索引
-- code-debug 读取最新 iteration 报告而非过时的单例
+- `docs/Stage_Report.md` serves as the latest summary index
+- code-debug reads the latest iteration report rather than an outdated singleton
 
 ---
 
-## 6. Rules 详解
+## 6. Rules Details
 
 ### 6.1 project-map.md
 
-**触发条件**：编辑 `src/`, `baselines/`, `configs/`, `scripts/`, `tests/` 下的文件时。
-**覆盖格式**：`*.py`, `*.yaml`, `*.yml`, `*.json`, `*.sh`
-**区分 stable/volatile**：仅 stable 文件需要更新 project_map.json。
+**Trigger condition**: when editing files under `src/`, `baselines/`, `configs/`, `scripts/`, `tests/`.
+**Covered formats**: `*.py`, `*.yaml`, `*.yml`, `*.json`, `*.sh`
+**Distinguishes stable/volatile**: only stable files need project_map.json updates.
 
 ### 6.2 pre-training.md
 
-**触发条件**：编辑 `scripts/train*.py`, `src/**/*.py`, `baselines/**/train*.py` 时。
+**Trigger condition**: when editing `scripts/train*.py`, `src/**/*.py`, `baselines/**/train*.py`.
 
 ### 6.3 deps-update.md
 
-**触发条件**：编辑 `requirements*.txt`, `environment*.yml`, `pyproject.toml`, `setup.py` 时。
+**Trigger condition**: when editing `requirements*.txt`, `environment*.yml`, `pyproject.toml`, `setup.py`.
 
 ---
 
-## 7. 状态流转总览
+## 7. State Transition Overview
 
-### 7.1 工作流阶段流转（PROJECT_STATE.json 管理）
+### 7.1 Workflow Stage Transitions (Managed by PROJECT_STATE.json)
 
 ```
-┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌─────┐  ┌────┐  ┌────┐  ┌────┐
-│WF1 │→ │WF2 │→ │WF3 │→ │WF4 │→ │WF5 │→ │WF6 │→ │WF7 │→ │WF7.5│→ │WF8 │→ │WF9 │→ │WF10│
-│调研│  │架构│  │论证│  │数据│  │base│  │规划│  │编码│  │验证 │  │迭代│  │消融│  │提交│
-└────┘  └─┬──┘  └─┬──┘  └────┘  └────┘  └────┘  └────┘  └──┬──┘  └─┬──┘  └────┘  └────┘
+┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌─────┐  ┌────┐  ┌──────┐  ┌──────┐
+│WF1 │→ │WF2 │→ │WF3 │→ │WF4 │→ │WF5 │→ │WF6 │→ │WF7 │→ │WF7.5│→ │WF8 │→ │ WF9  │→ │ WF10 │
+│surv│  │arch│  │chck│  │data│  │base│  │plan│  │code│  │valid│  │iter│  │ablate│  │submit│
+└────┘  └─┬──┘  └─┬──┘  └────┘  └────┘  └────┘  └────┘  └──┬──┘  └─┬──┘  └──────┘  └──────┘
           ↑       │                                          │       │
-          │    NO-GO → 回退 WF2                              │       │
+          │    NO-GO → rollback to WF2                       │       │
           │                                            FAIL → fix    │
           ↑                                                          │
           │  PIVOT                                                   │
           └──────────────────────────────────────────────────────────┘
 ```
 
-每个阶段完成后 orchestrator 自动触发 `/init-project update` 更新 CLAUDE.md。
+After each stage completes, the orchestrator auto-triggers `/init-project update` to update CLAUDE.md.
 
-### 7.2 WF8 迭代内部状态机（iteration_log.json 管理）
+### 7.2 WF8 Internal Iteration State Machine (Managed by iteration_log.json)
 
 ```
                         /iterate plan "hypothesis"
                                     │
                                     ▼
                     ┌───────────────────────────────┐
-                    │           planned              │  重复教训检查
-                    │  hypothesis + config_diff 已记录│  (选择性) Codex 审查
+                    │           planned              │  Repeated lessons check
+                    │  hypothesis + config_diff      │  (Selective) Codex review
+                    │  recorded                      │
                     └───────────────┬───────────────┘
                                     │
                                     │  /iterate code "description"
                                     ▼
                     ┌───────────────────────────────┐
-                    │           coding               │  写入持久化 context
-                    │  调用 /code-debug 修改代码      │  → .claude/iterations/iter{N}/
-                    │  执行 py_compile + ruff check  │
-                    │  语义化 git commit              │
+                    │           coding               │  Write persistent context
+                    │  Call /code-debug to modify    │  → .claude/iterations/iter{N}/
+                    │  code                          │
+                    │  Run py_compile + ruff check   │
+                    │  Semantic git commit            │
                     └───────────────┬───────────────┘
                                     │
-                            commit 成功?
+                            commit succeeded?
                            ┌────────┴────────┐
                            │                 │
-                          失败              成功
+                        failed            succeeded
                            │                 │
                            ▼                 ▼
-                 保持 "coding"    ┌──────────────────────────┐
-                 报错给用户       │        training           │
-                 等待手动修复     │  代码就绪，等待训练登记     │
-                                 └────────────┬─────────────┘
-                                              │
-                                              │  /iterate run [config_path]
-                                              ▼
+                 Stay "coding"    ┌──────────────────────────┐
+                 Report error     │        training           │
+                 to user          │  Code ready, awaiting     │
+                 Await manual fix │  training registration    │
+                                  └────────────┬─────────────┘
+                                               │
+                                               │  /iterate run [config_path]
+                                               ▼
                          ┌─────────────────────────────────────────────┐
-                         │              训练执行阶段                     │
+                         │              Training Execution Phase        │
                          │                                              │
                          │  ┌──────────────────────────────────────┐   │
-                         │  │ 构建命令 → Bash(background) → 等待完成 │   │
+                         │  │ Build cmd → Bash(background) → wait  │   │
                          │  │ {TRAIN_SCRIPT} --config ... ⏱10-60min│   │
                          │  └──────────────────┬───────────────────┘   │
                          │                     │                        │
@@ -553,23 +568,26 @@ CLAUDE.md 保持为**稳定操作指南**（≤80 行），不放快变实验内
                          │             │               │                │
                          │             │               ▼                │
                          │             │     ┌───────────────────┐      │
-                         │             │     │ OOM → 建议降分辨率 │      │
-                         │             │     │ NaN → 建议降 LR   │      │
-                         │             │     │ crash → stderr    │      │
-                         │             │     │ 保持 "training"   │      │
-                         │             │     │ 报错，终止流程 ✗   │      │
+                         │             │     │ OOM → suggest lower│      │
+                         │             │     │   resolution       │      │
+                         │             │     │ NaN → suggest lower│      │
+                         │             │     │   LR               │      │
+                         │             │     │ crash → stderr     │      │
+                         │             │     │ Stay "training"    │      │
+                         │             │     │ Report error,      │      │
+                         │             │     │ terminate ✗        │      │
                          │             │     └───────────────────┘      │
                          │             ▼                                │
                          │  ┌────────────────────────────────────┐     │
-                         │  │ 解析 stdout → peak/final metrics   │     │
-                         │  │ 定位最佳 checkpoint                 │     │
-                │  │ 运行 {EVAL_SCRIPT} → protocol-defined │     │
-                │  │ final metrics                         │     │
+                         │  │ Parse stdout → peak/final metrics  │     │
+                         │  │ Locate best checkpoint              │     │
+                         │  │ Run {EVAL_SCRIPT} → protocol-       │     │
+                         │  │ defined final metrics               │     │
                          │  └──────────────────┬─────────────────┘     │
                          │                     │                        │
                          │                     ▼                        │
                          │  ┌────────────────────────────────────┐     │
-                         │  │ 更新 iteration_log.json             │     │
+                         │  │ Update iteration_log.json           │     │
                          │  │   run_manifest + metrics            │     │
                          │  │   status → "running"                │     │
                          │  └────────────────────────────────────┘     │
@@ -578,16 +596,18 @@ CLAUDE.md 保持为**稳定操作指南**（≤80 行），不放快变实验内
                                               │  /iterate eval [exp_dir]
                                               ▼
                     ┌───────────────────────────────┐
-                    │           running              │  调用 /evaluate 解析
-                    │  对比 baseline + 历史最佳       │  生成 per-iteration 报告
-                    │  提取 lessons learned           │  docs/iterations/iter{N}.md
-                    │  做出决策                       │
+                    │           running              │  Call /evaluate to parse
+                    │  Compare against baseline +    │  Generate per-iteration
+                    │  historical best               │  report
+                    │  Extract lessons learned        │  docs/iterations/iter{N}.md
+                    │  Make decision                  │
                     └───────────────┬───────────────┘
                                     │
                                     ▼
                     ┌───────────────────────────────┐
                     │         completed              │
-                    │  status="completed", 决策已记录 │
+                    │  status="completed",           │
+                    │  decision recorded              │
                     └───────────────┬───────────────┘
                                     │
                   ┌─────────┬───────┴───────┬─────────┐
@@ -595,113 +615,117 @@ CLAUDE.md 保持为**稳定操作指南**（≤80 行），不放快变实验内
                CONTINUE   DEBUG           PIVOT     ABORT
                   │         │               │         │
                   ▼         ▼               ▼         ▼
-               → WF9     回到 plan       → WF2      终止
-              (消融实验)  (新 hypothesis)  (重新架构)  项目
+               → WF9     Back to plan    → WF2    Terminate
+              (ablation) (new hypothesis) (re-arch)  project
                             │
-                            └──→ /iterate plan "基于 lessons 的新假设"
+                            └──→ /iterate plan "new hypothesis based on lessons"
                                         │
                                         ▼
-                                   (循环回到 planned)
+                                   (loop back to planned)
 
             ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-            可选支线: /iterate ablate (在 completed 后)
+            Optional branch: /iterate ablate (after completed)
             ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
               /iterate ablate {base_iter} --components "..."
                                 │
                         ┌───────┴────────┐
-                        │ 对每个组件:     │
-                        │  训练 w/o comp  │
-                        │  运行 eval       │
-                        │  记录 sub-iter  │
+                        │ For each        │
+                        │ component:      │
+                        │  Train w/o comp │
+                        │  Run eval       │
+                        │  Record sub-iter│
                         └───────┬────────┘
                                 │
                                 ▼
                 ┌───────────────────────────────────┐
-                │ 输出对比表                          │
-                │ Component | Metric | Delta | 分类  │
+                │ Output comparison table             │
+                │ Component | Metric | Delta | Class  │
                 │ ─────────────────────────────────  │
-                │ < -1.0 dB → significant (核心)     │
-                │ < -0.3 dB → moderate (有贡献)      │
-                │ >= -0.3  → minimal (可简化)        │
-                │ > 0 dB   → negative (移除更好)     │
+                │ < -1.0 dB → significant (core)     │
+                │ < -0.3 dB → moderate (contributes) │
+                │ >= -0.3  → minimal (simplifiable)  │
+                │ > 0 dB   → negative (better w/o)   │
                 └───────────────────────────────────┘
 ```
 
-### 7.3 状态文件归属
+### 7.3 State File Ownership
 
 ```
 ┌─────────────────────────┐     ┌─────────────────────────┐
 │   PROJECT_STATE.json    │     │   iteration_log.json    │
-│   唯一阶段真相源         │     │   唯一实验真相源         │
+│   Single source of truth│     │   Single source of truth│
+│   for stages            │     │   for experiments       │
 │                         │     │                         │
-│   写入者:               │     │   写入者:               │
+│   Writer:               │     │   Writer:               │
 │     orchestrator        │     │     /iterate skill      │
-│     各 WF skill         │     │                         │
-│                         │     │   内容:                 │
-│   内容:                 │     │     iterations[]        │
+│     each WF skill       │     │                         │
+│                         │     │   Contents:             │
+│   Contents:             │     │     iterations[]        │
 │     current_stage       │     │     best_iteration      │
 │     history[]           │     │     baseline_metrics    │
 │     artifacts           │     │                         │
 ├─────────────────────────┤     ├─────────────────────────┤
 │   project_map.json      │     │   CLAUDE.md             │
-│   唯一架构真相源         │     │   全局上下文             │
+│   Single source of truth│     │   Global context        │
+│   for architecture      │     │                         │
+│                         │     │   Writer:               │
+│   Writer:               │     │     /init-project       │
+│     build-plan generates│     │     staged incremental  │
+│     code-debug maintains│     │     population          │
 │                         │     │                         │
-│   写入者:               │     │   写入者:               │
-│     build-plan 生成      │     │     /init-project       │
-│     code-debug 维护      │     │     分阶段增量填充       │
-│                         │     │                         │
-│   仅追踪 stable 文件     │     │   ≤80 行，稳定操作指南   │
+│   Tracks stable files   │     │   ≤80 lines, stable     │
+│   only                  │     │   operations guide      │
 └─────────────────────────┘     └─────────────────────────┘
 
-关键规则: /iterate 不写 PROJECT_STATE.json
-         orchestrator 不写 iteration_log.json
-         需要跨文件信息时通过「读取」获得
+Key rule: /iterate does not write PROJECT_STATE.json
+         orchestrator does not write iteration_log.json
+         Cross-file information is obtained through "reading"
 ```
 
-### 7.4 一致性防漂移规则
+### 7.4 Consistency Anti-Drift Rules
 
-- 始终使用单一定义：`WF5=baseline`、`WF6=build-plan`、`WF7=code-expert`、`WF7.5=validate-run`、`WF8=iterate`。
-- WF4 完成后，`PROJECT_STATE.json.dataset_paths` 与 `CLAUDE.md` 的 `### Dataset Paths` 必须立即同步。
-- WF5 完成后，`CLAUDE.md` 的 `## Environment` 不能再保留占位内容。
-- WF8 的 `run/eval` 必须以 WF5 产出的 baseline/evaluation protocol 决定要记录哪些指标；训练轨迹和最终评估指标分开存。
-- WF8 任一子命令完成后，`PROJECT_STATE.json.current_stage.latest_iteration`、`iteration_count` 和 `CLAUDE.md Current stage` 必须与 `iteration_log.json` 最新迭代一致。
-- 缺少语义化 commit、`run_manifest` 或 `lessons` 的 iteration 不得标记为 completed。
+- Always use single definitions: `WF5=baseline`, `WF6=build-plan`, `WF7=code-expert`, `WF7.5=validate-run`, `WF8=iterate`.
+- After WF4 completes, `PROJECT_STATE.json.dataset_paths` and `CLAUDE.md`'s `### Dataset Paths` must be immediately synced.
+- After WF5 completes, `CLAUDE.md`'s `## Environment` must no longer contain placeholder content.
+- WF8's `run/eval` must use the baseline/evaluation protocol from WF5 output to determine which metrics to record; training traces and final evaluation metrics are stored separately.
+- After any WF8 subcommand completes, `PROJECT_STATE.json.current_stage.latest_iteration`, `iteration_count`, and `CLAUDE.md Current stage` must be consistent with the latest iteration in `iteration_log.json`.
+- Iterations missing semantic commits, `run_manifest`, or `lessons` must not be marked as completed.
 
 ---
 
-## 8. 快速参考
+## 8. Quick Reference
 
-**常用命令**：
+**Common commands**:
 ```
-/orchestrator init          # 初始化项目
-/orchestrator status        # 查看当前状态
-/orchestrator next          # 推进到下一阶段
-/orchestrator rollback 2    # 回退到 WF2
-/orchestrator decision      # 记录关键决策
+/orchestrator init          # Initialize project
+/orchestrator status        # View current status
+/orchestrator next          # Advance to next stage
+/orchestrator rollback 2    # Roll back to WF2
+/orchestrator decision      # Record key decision
 
-/baseline-repro all         # 复现所有 baseline
-/validate-run               # WF7.5 训练链路验证
+/baseline-repro all         # Reproduce all baselines
+/validate-run               # WF7.5 training pipeline validation
 
-/iterate plan "hypothesis"  # 规划新迭代（含重复教训检查）
-/iterate code "description" # 实现变更（强制 git commit）
-/iterate run config.yaml    # 执行训练 + 自动收集指标
-/iterate eval path/to/exp   # 评估结果 + 做出决策
-/iterate ablate {base_iter} --components "name:override,..."  # 消融实验
-/iterate status             # 查看迭代进度
-/iterate log                # 完整迭代历史
+/iterate plan "hypothesis"  # Plan new iteration (with repeated lessons check)
+/iterate code "description" # Implement changes (enforced git commit)
+/iterate run config.yaml    # Execute training + auto-collect metrics
+/iterate eval path/to/exp   # Evaluate results + make decision
+/iterate ablate {base_iter} --components "name:override,..."  # Ablation experiment
+/iterate status             # View iteration progress
+/iterate log                # Complete iteration history
 
-/code-debug [error info]    # 修复代码问题（可独立使用）
-/evaluate [log_path]        # 分析结果（可独立使用）
-/env-setup refresh          # 依赖变化后刷新环境快照
+/code-debug [error info]    # Fix code issues (can be used independently)
+/evaluate [log_path]        # Analyze results (can be used independently)
+/env-setup refresh          # Refresh environment snapshot after dependency changes
 
-/release validate           # 检查提交包完整性
-/release package            # 生成提交包
-/release submit             # 多场景训练 + 打包
+/release validate           # Check submission package completeness
+/release package            # Generate submission package
+/release submit             # Multi-scene training + packaging
 ```
 
-**Git 分支策略**：单人项目可直接在 master/main 开发。团队协作时可按阶段建分支（可选）。
+**Git branching strategy**: Single-person projects can develop directly on master/main. Team collaboration can optionally use per-stage branches.
 
-**Commit 规范**（按场景选择格式）：
-- 训练相关代码变更: `train(research): {描述}` 或 `train(baseline/{name}): {描述}`
-- 工作流文档/配置: `[WF{n}] {type}: {message}`，type = feat / fix / docs / refactor / exp
+**Commit conventions** (choose format by scenario):
+- Training-related code changes: `train(research): {description}` or `train(baseline/{name}): {description}`
+- Workflow docs/configs: `[WF{n}] {type}: {message}`, type = feat / fix / docs / refactor / exp

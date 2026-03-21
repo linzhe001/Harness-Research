@@ -1,11 +1,11 @@
 ---
 name: env-setup
-description: 环境创建与刷新工具。create 模式创建新 conda 环境，refresh 模式检测当前环境并同步 CLAUDE.md 的 Environment 部分。当依赖变化或需要初始化环境时使用。
+description: Environment creation and refresh tool. Create mode sets up a new conda environment; refresh mode detects the current environment and syncs the Environment section of CLAUDE.md. Use when dependencies change or the environment needs initialization.
 argument-hint: "[create|refresh]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 ---
 
-# 环境创建与刷新工具
+# Environment Creation and Refresh Tool
 
 <role>
 You are a DevOps Engineer who manages Python environments for ML research projects.
@@ -24,48 +24,48 @@ Sub-commands:
 </context>
 
 <instructions>
-## `create` 模式（$ARGUMENTS 包含 "create"）
+## `create` Mode ($ARGUMENTS contains "create")
 
-1. 向用户询问（AskUserQuestion）：
-   - conda 环境名称
-   - Python 版本（默认 3.12）
-   - 是否有 requirements.txt / environment.yml / pyproject.toml
+1. Ask the user (AskUserQuestion):
+   - conda environment name
+   - Python version (default 3.12)
+   - Whether there is a requirements.txt / environment.yml / pyproject.toml
 
-2. 创建 conda 环境：
+2. Create the conda environment:
    ```bash
    conda create -n {env_name} python={python_version} -y
    conda activate {env_name}
    ```
 
-3. 如果有依赖文件：
+3. If dependency files exist:
    ```bash
-   pip install -r requirements.txt  # 或 conda env update -f environment.yml
+   pip install -r requirements.txt  # or conda env update -f environment.yml
    ```
 
-4. **设置 wandb**：
+4. **Set up wandb**:
    ```bash
-   # 检查 wandb 是否已安装
+   # Check if wandb is installed
    pip show wandb 2>/dev/null
    ```
-   - 如果未安装 → `pip install wandb`
-   - 检查登录状态：
+   - If not installed → `pip install wandb`
+   - Check login status:
      ```bash
      python -c "import wandb; wandb.Api()" 2>&1
      ```
-   - 如果未登录 → 提示用户运行 `wandb login`，或通过 AskUserQuestion 询问 API key 后执行：
+   - If not logged in → prompt the user to run `wandb login`, or use AskUserQuestion to get the API key and then run:
      ```bash
      wandb login {api_key}
      ```
-   - 验证登录成功：
+   - Verify login succeeded:
      ```bash
      python -c "import wandb; api = wandb.Api(); print(f'wandb logged in as: {api.default_entity}')"
      ```
 
-5. 运行 `refresh` 逻辑（见下方）更新 CLAUDE.md。
+5. Run the `refresh` logic (see below) to update CLAUDE.md.
 
-## `refresh` 模式（$ARGUMENTS 包含 "refresh" 或无参数）
+## `refresh` Mode ($ARGUMENTS contains "refresh" or no arguments)
 
-1. **自动检测环境**（不询问用户）：
+1. **Auto-detect the environment** (do not ask the user):
    ```bash
    # Python version
    python --version 2>/dev/null || python3 --version 2>/dev/null
@@ -89,11 +89,11 @@ Sub-commands:
    python -c "import wandb; api = wandb.Api(); print(f'wandb: {api.default_entity}')" 2>/dev/null || echo "wandb: not logged in"
    ```
 
-2. **读取现有 CLAUDE.md**
+2. **Read the existing CLAUDE.md**
 
-3. **使用 Edit 工具替换 `## Environment` section**
-   仅替换从 `## Environment` 到下一个 `##` 之间的内容。
-   格式：
+3. **Use the Edit tool to replace the `## Environment` section**
+   Only replace the content between `## Environment` and the next `##`.
+   Format:
    ```markdown
    ## Environment
    ```bash
@@ -106,7 +106,7 @@ Sub-commands:
    - GPU: {gpu_name} ({vram})
    ```
 
-4. 不触碰 CLAUDE.md 的其他 section。
+4. Do not touch any other sections of CLAUDE.md.
 </instructions>
 
 <constraints>

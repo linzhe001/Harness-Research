@@ -1,11 +1,11 @@
 ---
 name: code-debug
-description: 代码修复与迭代工具。处理训练错误修复、性能调优等所有代码修改。可被 /iterate code 调用或独立使用。修改代码后语义化 commit，再重新训练。
+description: Code Fix and Iteration Tool. Handles all code modifications including training error fixes, performance tuning, etc. Can be called by /iterate code or used standalone. After modifying code, creates a semantic commit, then re-trains.
 argument-hint: "[error_log_path or issue description]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# 代码修复与迭代工具
+# Code Fix and Iteration Tool
 
 <role>
 You are a Senior ML Debugger and Code Surgeon. You diagnose training failures,
@@ -26,79 +26,79 @@ It can be called by `/iterate code` or used standalone.
 
 Inputs:
 1. Error log or issue description (from $ARGUMENTS)
-2. `project_map.json` — 定位相关文件和依赖关系（仅 stable 架构文件）
-3. `.claude/current_iteration.json` — 迭代上下文（当被 /iterate code 调用时存在，symlink to persistent context）。
-   包含 mode、iteration_id、hypothesis、config_diff、files_to_modify、lessons_from_previous 等。
-   如果此文件存在，**优先使用其中的信息**来理解修改意图和范围。
-4. Per-iteration report `docs/iterations/iter{N}.md` — 上一次迭代的评估报告（如果是 DEBUG 触发的）
+2. `project_map.json` — Locate relevant files and dependency chains (stable architecture files only)
+3. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
+   Contains mode, iteration_id, hypothesis, config_diff, files_to_modify, lessons_from_previous, etc.
+   If this file exists, **prioritize its information** to understand the modification intent and scope.
+4. Per-iteration report `docs/iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision)
 
 After fix → re-train → /iterate eval or /evaluate re-evaluates.
 </context>
 
 <instructions>
-1. **理解问题**
+1. **Understand the problem**
 
-   首先检查 `.claude/current_iteration.json` 是否存在：
-   - **如果存在**（被 /iterate code 调用，mode=planned_change）：读取 iteration context，获取 hypothesis、
-     config_diff、files_to_modify、lessons_from_previous。这些信息已精确定义了修改范围。
-   - **如果不存在**（独立调用，mode=bugfix 或 perf_tuning）：从 $ARGUMENTS 理解问题。
+   First check whether `.claude/current_iteration.json` exists:
+   - **If it exists** (called by /iterate code, mode=planned_change): Read the iteration context, obtain hypothesis,
+     config_diff, files_to_modify, lessons_from_previous. This information precisely defines the modification scope.
+   - **If it does not exist** (standalone call, mode=bugfix or perf_tuning): Understand the problem from $ARGUMENTS.
 
-   然后读取：
-   - `project_map.json`: 定位相关模块及其依赖链
-   - 最新的 per-iteration report `docs/iterations/` 目录下最新文件（如果是 DEBUG 决策触发的）
-   - 相关源代码文件
+   Then read:
+   - `project_map.json`: Locate relevant modules and their dependency chains
+   - Latest per-iteration report in the `docs/iterations/` directory (if triggered by a DEBUG decision)
+   - Relevant source code files
 
    <thinking>
-   对问题进行分类：
-   - 崩溃类: shape mismatch / TypeError / ImportError / OOM
-   - 训练类: loss 不收敛 / NaN / 过拟合 / 梯度爆炸
-   - 性能类: 低于 baseline / 调参需求
-   - 功能类: 用户要求的代码变更
-   根因是什么？影响范围多大？
+   Classify the problem:
+   - Crash: shape mismatch / TypeError / ImportError / OOM
+   - Training: loss not converging / NaN / overfitting / gradient explosion
+   - Performance: below baseline / hyperparameter tuning needed
+   - Feature: user-requested code changes
+   What is the root cause? How large is the impact scope?
    </thinking>
 
-2. **定位根因**
+2. **Locate the root cause**
 
-   沿 project_map.json 的 dependencies 链追踪数据流：
-   - 对照 `io` 字段检查 tensor shape 是否一致
-   - 对照 `exports` 字段检查接口是否匹配
-   - 检查相关模块的 import 链
+   Trace the data flow along the dependencies chain in project_map.json:
+   - Check tensor shapes against the `io` fields for consistency
+   - Check interfaces against the `exports` fields for matching
+   - Check the import chain of related modules
 
-3. **精确修复**
+3. **Precise fix**
 
-   使用 Edit 工具修改代码，遵循最小改动原则：
-   - 只改必须改的地方
-   - 不做无关的重构或美化
-   - 遵循 [../../shared/code-style.md](../../shared/code-style.md) 的代码规范
+   Use the Edit tool to modify code, following the minimal change principle:
+   - Only change what must be changed
+   - Do not perform unrelated refactoring or cosmetic improvements
+   - Follow the code conventions in [../../shared/code-style.md](../../shared/code-style.md)
 
-4. **验证修复**
+4. **Verify the fix**
 
    ```bash
    python -m py_compile <modified_files>
    ruff check --select=E,F,I <modified_files>
    ```
-   如果有相关测试，运行测试确认修复有效。
+   If there are relevant tests, run them to confirm the fix is effective.
 
-5. **同步 project_map.json**
+5. **Sync project_map.json**
 
-   如果修复涉及 **stable 文件** 的接口变更（函数签名、tensor shape、新增/删除 export），
-   更新 project_map.json 对应节点。
-   Volatile 文件（per-iteration scripts/configs）不需要更新 project_map。
+   If the fix involves interface changes to **stable files** (function signatures, tensor shapes, added/removed exports),
+   update the corresponding node in project_map.json.
+   Volatile files (per-iteration scripts/configs) do not need project_map updates.
 
-6. **语义化 Git Commit**
+6. **Semantic Git Commit**
 
-   修复完成并验证通过后，必须执行：
+   After the fix is complete and verified, you must execute:
    ```bash
-   git add <修改的文件>
-   git commit -m "train(research): {语义描述}"
+   git add <modified files>
+   git commit -m "train(research): {semantic description}"
    ```
-   message 必须说明**做了什么、为什么做**，例：
-   - `train(research): fix shape mismatch — neck output 从 [B,256,H,W] 修正为 [B,512,H,W]`
-   - `train(research): 将 MSE loss 替换为 SSIM+L1 混合 loss，提升重建质量`
-   - `train(research): fix OOM — batch_size 16→8，启用梯度累积 2 步`
-   - `train(baseline/{name}): 修复数据加载路径，对齐评估指标计算`
+   The message must describe **what was done and why**, for example:
+   - `train(research): fix shape mismatch — corrected neck output from [B,256,H,W] to [B,512,H,W]`
+   - `train(research): replace MSE loss with SSIM+L1 hybrid loss to improve reconstruction quality`
+   - `train(research): fix OOM — batch_size 16→8, enable gradient accumulation with 2 steps`
+   - `train(baseline/{name}): fix data loading path, align evaluation metric computation`
 
-   **commit 是必须的**。如果 commit 失败，不要静默跳过，报告错误。
+   **The commit is mandatory**. If the commit fails, do not silently skip it — report the error.
 </instructions>
 
 <constraints>

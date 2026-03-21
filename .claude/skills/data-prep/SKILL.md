@@ -1,12 +1,12 @@
 ---
 name: data-prep
-description: WF4 数据工程与子集生成。分析数据集格式和分布，按项目类型（NVS/检测/分割等）生成合适的训练子集策略，创建数据管道脚本，输出统计报告。
+description: WF4 Data engineering and subset generation. Analyzes dataset format and distribution, generates appropriate training subset strategies by project type (NVS/detection/segmentation, etc.), creates data pipeline scripts, and outputs a statistics report.
 argument-hint: "[dataset_path] [subset_strategy]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
-# WF4: 数据工程与子集生成
+# WF4: Data Engineering and Subset Generation
 
 <role>
 You are a Data Engineer specialized in CV datasets. You understand
@@ -27,85 +27,85 @@ For the output format, see [templates/dataset-stats.md](templates/dataset-stats.
 </context>
 
 <instructions>
-1. **解析输入**
+1. **Parse Input**
 
-   从 PROJECT_STATE.json 和 $ARGUMENTS 中获取：
-   - `dataset_name`: 数据集名称
-   - `dataset_path`: 数据集存储路径
-   - `subset_strategy`: 子集策略（可选，自动推断）
+   Obtain from PROJECT_STATE.json and $ARGUMENTS:
+   - `dataset_name`: Dataset name
+   - `dataset_path`: Dataset storage path
+   - `subset_strategy`: Subset strategy (optional, auto-inferred)
 
-2. **自动识别数据格式**
+2. **Auto-detect Data Format**
 
-   检查 dataset_path 中的文件类型，判断项目类型：
+   Check file types in dataset_path to determine the project type:
 
-   | 格式标志 | 项目类型 | 推荐子集策略 |
-   |---------|---------|------------|
-   | `transforms_*.json` (Blender JSON) | NVS / 3DGS | 降分辨率 / 选场景 |
-   | `instances_*.json` (COCO) | 目标检测 | 分层采样 10% |
-   | `images/` + `labels/` (YOLO) | 目标检测 | 分层采样 10% |
-   | `point_cloud/` + `images/` | 3D 重建 | 降分辨率 / 选视角 |
-   | COLMAP `sparse/` | SfM / NeRF | 降分辨率 / 选场景 |
-   | 其他 | 向用户确认 | 自定义 |
+   | Format Indicator | Project Type | Recommended Subset Strategy |
+   |-----------------|-------------|---------------------------|
+   | `transforms_*.json` (Blender JSON) | NVS / 3DGS | Downscale resolution / select scenes |
+   | `instances_*.json` (COCO) | Object Detection | Stratified sampling 10% |
+   | `images/` + `labels/` (YOLO) | Object Detection | Stratified sampling 10% |
+   | `point_cloud/` + `images/` | 3D Reconstruction | Downscale resolution / select viewpoints |
+   | COLMAP `sparse/` | SfM / NeRF | Downscale resolution / select scenes |
+   | Other | Confirm with user | Custom |
 
-3. **分析原始数据分布**
+3. **Analyze Raw Data Distribution**
 
-   根据数据类型生成不同统计信息：
+   Generate different statistics depending on data type:
 
-   **NVS / 3DGS 项目** (Blender JSON / COLMAP):
-   - 场景列表和每个场景的视角数（train/test）
-   - 图像分辨率（原始 + 可用缩放级别）
-   - 相机参数分布（FOV、位置分布）
-   - 场景特征（如光照条件、遮挡程度等，如果有标注）
+   **NVS / 3DGS Projects** (Blender JSON / COLMAP):
+   - Scene list and number of views per scene (train/test)
+   - Image resolution (original + available scale levels)
+   - Camera parameter distribution (FOV, position distribution)
+   - Scene characteristics (e.g., lighting conditions, occlusion levels, if annotated)
 
-   **目标检测项目** (COCO/YOLO):
-   - 类别分布
-   - BBox 尺寸分布 (small/medium/large)
-   - 图像尺寸分布
-   - 每图目标数量分布
+   **Object Detection Projects** (COCO/YOLO):
+   - Category distribution
+   - BBox size distribution (small/medium/large)
+   - Image size distribution
+   - Objects per image distribution
 
-4. **生成子集策略**
+4. **Generate Subset Strategy**
 
-   **NVS / 3DGS 子集策略**（不能随机丢视角，会破坏重建质量）：
-   - **降分辨率** (推荐 MVP): 1/4 或 1/2 分辨率训练，加速 4-16x，不损失视角覆盖
-   - **选场景**: 从多场景中选代表性子集（简单/中等/困难各一）
-   - **降采样点云**: 减少初始 SfM 点云密度
-   - 保存策略到 `configs/subset_config.json`
+   **NVS / 3DGS Subset Strategy** (cannot randomly drop views, as it would break reconstruction quality):
+   - **Downscale resolution** (recommended for MVP): Train at 1/4 or 1/2 resolution, 4-16x speedup, no loss of view coverage
+   - **Select scenes**: Choose a representative subset from multiple scenes (one easy/medium/hard each)
+   - **Downsample point cloud**: Reduce initial SfM point cloud density
+   - Save strategy to `configs/subset_config.json`
 
-   **目标检测子集策略**:
-   - 分层采样（按 category + bbox_size），确保分布偏差 < 5%
-   - 保存索引到 `configs/subset_indices.json`
+   **Object Detection Subset Strategy**:
+   - Stratified sampling (by category + bbox_size), ensuring distribution deviation < 5%
+   - Save indices to `configs/subset_indices.json`
 
-5. **生成数据管道脚本**
+5. **Generate Data Pipeline Script**
 
-   将脚本保存到 `src/data/Data_Pipeline_Script.py`（或适配已有数据加载代码）。
-   脚本必须包含：
-   - 数据加载函数（适配识别出的数据格式）
-   - 预处理 Transform（含分辨率缩放选项）
-   - 子集/降分辨率配置加载
-   - 可复现的随机种子
+   Save the script to `src/data/Data_Pipeline_Script.py` (or adapt existing data loading code).
+   The script must include:
+   - Data loading functions (adapted to the detected data format)
+   - Preprocessing transforms (with resolution scaling options)
+   - Subset/downscale config loading
+   - Reproducible random seed
 
-6. **输出统计报告**
+6. **Output Statistics Report**
 
-   写入 `docs/Dataset_Stats.md`，包含：
-   - context_summary (≤20 行)
-   - 数据格式和项目类型
-   - 全集统计信息
-   - 子集策略说明和配置
-   - 预计加速比
+   Write to `docs/Dataset_Stats.md`, including:
+   - context_summary (<= 20 lines)
+   - Data format and project type
+   - Full dataset statistics
+   - Subset strategy description and configuration
+   - Estimated speedup ratio
 
-7. **更新项目状态**
+7. **Update Project State**
 
-   更新 PROJECT_STATE.json：
+   Update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
-   - `artifacts.data_pipeline_script` → 脚本路径
-   - `artifacts.dataset_stats` → 统计报告路径
-   - `dataset_paths` → 规范化后的数据集地址
-   - `history` 追加完成记录
+   - `artifacts.data_pipeline_script` → script path
+   - `artifacts.dataset_stats` → statistics report path
+   - `dataset_paths` → normalized dataset paths
+   - `history` append completion record
 
-8. **同步 CLAUDE.md**
+8. **Sync CLAUDE.md**
 
-   在 WF4 结束前，触发 `/init-project update` 或等价的 section-safe 更新，
-   确保 `CLAUDE.md` 的 `### Dataset Paths` 与 `PROJECT_STATE.json.dataset_paths` 一致。
+   Before WF4 concludes, trigger `/init-project update` or an equivalent section-safe update
+   to ensure `CLAUDE.md`'s `### Dataset Paths` is consistent with `PROJECT_STATE.json.dataset_paths`.
 </instructions>
 
 <constraints>

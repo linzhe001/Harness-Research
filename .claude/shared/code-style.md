@@ -1,29 +1,29 @@
-# CV 研究代码风格规范
+# CV Research Code Style Guide
 
-本规范定义所有 CV 研究项目代码必须遵循的风格标准。
+This guide defines the style standards that all CV research project code must follow.
 
-## 1. 分阶段 Linting 规则
+## 1. Staged Linting Rules
 
-### MVP 阶段 (快速验证)
+### MVP Stage (Quick Validation)
 ```bash
 ruff check --select=E,F,I
 python -m py_compile *.py
 ```
 
-### 主实验阶段
+### Main Experiment Stage
 ```bash
 ruff check --select=E,W,F,I,N,D,UP --ignore=D100,D104
 ```
 
-### 发布阶段
+### Release Stage
 ```bash
 ruff check --select=E,W,F,I,N,D,UP,ANN --ignore=ANN101,ANN102,D100,D104
 mypy --strict --ignore-missing-imports
 ```
 
-## 2. Type Hints 规范
+## 2. Type Hints Guidelines
 
-### 注释说明方案 (推荐 MVP 使用)
+### Comment Annotation Approach (Recommended for MVP)
 
 ```python
 def forward(
@@ -39,7 +39,7 @@ def forward(
     """
 ```
 
-### jaxtyping 方案 (推荐正式项目使用)
+### jaxtyping Approach (Recommended for Production Projects)
 
 ```python
 from jaxtyping import Float, Int
@@ -51,7 +51,7 @@ PointPositions: TypeAlias = Float[Tensor, "num_points 3"]
 PointFeatures: TypeAlias = Float[Tensor, "num_points feat_dim 3"]
 ```
 
-## 3. Docstring 模板 (Google Style)
+## 3. Docstring Template (Google Style)
 
 ```python
 def forward_pass(
@@ -75,7 +75,7 @@ def forward_pass(
     """
 ```
 
-## 4. Config 管理 (dataclass-based)
+## 4. Config Management (dataclass-based)
 
 ```python
 from dataclasses import dataclass, field
@@ -105,20 +105,20 @@ class ExperimentConfig:
     train: TrainConfig = field(default_factory=TrainConfig)
 ```
 
-## 5. 文件长度限制
+## 5. File Length Limits
 
-| 文件类型 | 最大行数 | 超出后拆分方式 |
-|---------|---------|-------------|
-| 模型定义 | 300 | 按功能拆分 (model.py, rendering.py, etc.) |
-| 数据处理 | 200 | dataset.py, transforms.py, samplers.py |
-| 训练脚本 | 300 | train.py, trainer.py, callbacks.py |
-| 工具函数 | 200 | utils/ 子目录按功能拆分 |
+| File Type | Max Lines | Split Strategy When Exceeded |
+|-----------|-----------|------------------------------|
+| Model definition | 300 | Split by functionality (model.py, rendering.py, etc.) |
+| Data processing | 200 | dataset.py, transforms.py, samplers.py |
+| Training script | 300 | train.py, trainer.py, callbacks.py |
+| Utility functions | 200 | Split into utils/ subdirectories by functionality |
 
-## 6. 训练脚本必备要素
+## 6. Required Elements in Training Scripts
 
-- `set_seed()`: 设置所有随机种子
+- `set_seed()`: Set all random seeds
 - Gradient clipping
 - Learning rate scheduler
-- Checkpoint saving (定期)
+- Checkpoint saving (periodic)
 - Logging (tensorboard / wandb)
-- 支持 `--config` 参数驱动
+- Support `--config` parameter-driven execution

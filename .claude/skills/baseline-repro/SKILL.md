@@ -1,12 +1,12 @@
 ---
 name: baseline-repro
-description: WF5 Baseline 复现。克隆对比方法代码，适配本地环境，训练并记录指标，输出 Baseline_Report.md。在数据准备完成后、代码规划之前使用，为研究方法提供对比基准。
+description: WF5 Baseline Reproduction. Clone comparison method code, adapt to local environment, train and record metrics, output Baseline_Report.md. Used after data preparation and before code planning to provide comparison baselines for the research method.
 argument-hint: "[baseline_name or 'all']"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# WF5: Baseline 复现
+# WF5: Baseline Reproduction
 
 <role>
 You are a Reproducibility Engineer who specializes in faithfully reproducing
@@ -25,76 +25,76 @@ For the output format, see [templates/baseline-report.md](templates/baseline-rep
 </context>
 
 <instructions>
-1. **读取前置材料**
+1. **Read prerequisite materials**
 
-   - `docs/Technical_Spec.md`: 提取需要复现的 baseline 列表（含 repo URL、论文引用）
-   - `docs/Dataset_Stats.md` / WF4 产出: 数据路径和格式
-   - PROJECT_STATE.json: 项目上下文
-   - 如果 `$ARGUMENTS` 指定了具体 baseline 名称，只复现该方法
+   - `docs/Technical_Spec.md`: Extract the list of baselines to reproduce (including repo URLs, paper citations)
+   - `docs/Dataset_Stats.md` / WF4 output: Data paths and formats
+   - PROJECT_STATE.json: Project context
+   - If `$ARGUMENTS` specifies a particular baseline name, only reproduce that method
 
-2. **逐一复现 Baseline**
+2. **Reproduce baselines one by one**
 
-   在逐一复现前，先创建或确认首个可运行环境：
-   - 解析依赖文件或 baseline README
-   - 创建 conda 环境并安装必要依赖
-   - 将真实环境信息同步写入 `CLAUDE.md` 的 `## Environment`
-   - 这个环境创建动作属于 WF5 的一部分，不再依赖 `/env-setup` 作为主流程前置步骤
+   Before reproducing each one, first create or confirm the initial runnable environment:
+   - Parse dependency files or baseline README
+   - Create a conda environment and install necessary dependencies
+   - Synchronize the actual environment info into the `## Environment` section of `CLAUDE.md`
+   - This environment creation step is part of WF5, and no longer depends on `/env-setup` as a prerequisite in the main workflow
 
-   对每个 baseline 执行以下步骤：
+   For each baseline, perform the following steps:
 
-   a. **获取代码**
+   a. **Obtain code**
       ```bash
       cd baselines/
-      git clone {repo_url} {method_name}/  # 或使用已有的 submodule
+      git clone {repo_url} {method_name}/  # or use existing submodule
       ```
 
-   b. **适配本地环境**
-      - 检查依赖冲突（Python 版本、CUDA 版本、PyTorch 版本）
-      - 最小化修改以适配本地环境（API 变更、弃用接口等）
-      - 记录所有适配修改
+   b. **Adapt to local environment**
+      - Check for dependency conflicts (Python version, CUDA version, PyTorch version)
+      - Make minimal modifications to adapt to the local environment (API changes, deprecated interfaces, etc.)
+      - Document all adaptation changes
 
-   c. **训练**
-      - 使用与论文相同的配置（或最接近的配置）
-      - 遵循 pre-training 规则：
+   c. **Train**
+      - Use the same configuration as the paper (or the closest available)
+      - Follow pre-training rules:
         ```bash
         git add baselines/{method_name}/
-        git commit -m "train(baseline/{method_name}): {语义描述}"
+        git commit -m "train(baseline/{method_name}): {semantic description}"
         ```
-      - 训练脚本应集成 git_snapshot（如果可行）
+      - Training scripts should integrate git_snapshot (if feasible)
 
-   d. **评估**
-      - 使用统一的评估指标（PSNR / SSIM / LPIPS 等，按项目需求）
-      - 在所有相关 scene 上评估
-      - 记录 paper-reported vs reproduced 的指标
+   d. **Evaluate**
+      - Use unified evaluation metrics (PSNR / SSIM / LPIPS etc., per project requirements)
+      - Evaluate on all relevant scenes
+      - Record paper-reported vs reproduced metrics
 
-3. **对比分析**
+3. **Comparative analysis**
 
-   - 复现指标 vs 论文报告指标：差异是否在合理范围（±1 dB PSNR）？
-   - 如果差异过大，分析原因：数据差异？训练配置？评估方式？
-   - 确定哪个 baseline 作为主要对比目标
-   - 固化后续 WF8 要沿用的 evaluation protocol：metric names、方向（max/min）、主指标、比较阈值
+   - Reproduced metrics vs paper-reported metrics: Is the difference within a reasonable range (±1 dB PSNR)?
+   - If the difference is too large, analyze the cause: data differences? training configuration? evaluation method?
+   - Determine which baseline serves as the primary comparison target
+   - Finalize the evaluation protocol to be used in subsequent WF8: metric names, direction (max/min), primary metric, comparison thresholds
 
-4. **输出报告**
+4. **Output report**
 
-   写入 `docs/Baseline_Report.md`（按 [templates/baseline-report.md](templates/baseline-report.md) 格式），包含：
-   - 所有 baseline 的复现结果表格
-   - 逐 baseline 的适配说明和训练配置
-   - 与论文报告数值的差异分析
+   Write to `docs/Baseline_Report.md` (following the [templates/baseline-report.md](templates/baseline-report.md) format), including:
+   - Reproduction results table for all baselines
+   - Per-baseline adaptation notes and training configurations
+   - Discrepancy analysis against paper-reported values
 
-5. **更新 project_map.json**
+5. **Update project_map.json**
 
-   更新 `baselines/` 下每个复现的 baseline 节点：
+   Update each reproduced baseline node under `baselines/`:
    - `status`: "verified" / "partial" / "failed"
-   - `entry_point`: 训练入口文件
+   - `entry_point`: Training entry file
 
-6. **更新项目状态**
+6. **Update project state**
 
-   更新 PROJECT_STATE.json：
+   Update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
    - `artifacts.baseline_report` → "docs/Baseline_Report.md"
-   - `baseline_metrics` → 每个 scene 的 baseline 指标（用于后续 /iterate eval 对比）
-   - `evaluation_protocol` 或等价 tracked metric 定义 → 供 WF8 run/eval 使用
-   - `history` 追加完成记录
+   - `baseline_metrics` → Baseline metrics for each scene (for comparison in subsequent /iterate eval)
+   - `evaluation_protocol` or equivalent tracked metric definitions → for use by WF8 run/eval
+   - `history` append completion record
 </instructions>
 
 <constraints>

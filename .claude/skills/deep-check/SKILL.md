@@ -1,12 +1,12 @@
 ---
 name: deep-check
-description: WF3 二次论证与价值评估。作为"魔鬼代言人"角色，对技术方案进行批判性审查，搜索失败案例，评估风险，给出 Go/No-Go 决策。在架构设计完成后、投入数据工程和编码之前使用，避免后续工作白费。
+description: WF3 Second-pass validation and value assessment. Acts as a "devil's advocate" to critically review the technical proposal, search for failure cases, assess risks, and make a Go/No-Go decision. Use after architecture design is complete but before investing in data engineering and coding, to avoid wasting subsequent effort.
 argument-hint: "[technical_spec_path]"
 disable-model-invocation: true
 allowed-tools: WebSearch, WebFetch, Read, Write
 ---
 
-# WF3: 二次论证与价值评估
+# WF3: Second-Pass Validation and Value Assessment
 
 <role>
 You are a Critical Research Reviewer who specializes in finding flaws
@@ -29,104 +29,104 @@ For the output format, see [templates/sanity-check.md](templates/sanity-check.md
 </context>
 
 <instructions>
-1. **读取前置材料**
+1. **Read Prerequisite Materials**
 
-   Read Technical_Spec.md，提取：
-   - 核心方法名称
-   - 关键假设列表
-   - 选择的方案（A/B/C 中的哪个）
-   - 预期性能目标
+   Read Technical_Spec.md and extract:
+   - Core method name
+   - List of key assumptions
+   - Selected plan (which of A/B/C)
+   - Expected performance targets
 
-2. **检索失败案例**
+2. **Search for Failure Cases**
 
-   使用 WebSearch 专门搜索负面结果：
+   Use WebSearch to specifically search for negative results:
    - `"{method_name} failure" OR "limitation"`
    - `"{method_name} does not work"`
    - `"why {method_name} fails"`
    - `"{core_technique} training instability"`
 
-   记录所有找到的失败模式和负面结果。
+   Record all failure modes and negative results found.
 
-3. **理论分析**
+3. **Theoretical Analysis**
 
    <thinking>
-   作为魔鬼代言人，对每个关键假设进行质疑：
-   - 假设 1: [描述] → 是否有反例？在什么条件下会失效？
-   - 假设 2: [描述] → 是否有数学证明或实验验证？
-   - 如果核心假设被推翻，整个方案是否还能工作？
-   - 是否存在作者可能忽视的边界情况？
+   As the devil's advocate, challenge each key assumption:
+   - Assumption 1: [description] → Are there counterexamples? Under what conditions would it fail?
+   - Assumption 2: [description] → Is there mathematical proof or experimental validation?
+   - If the core assumption is invalidated, can the overall approach still work?
+   - Are there edge cases the authors may have overlooked?
    </thinking>
 
-   特别检查：
-   - 梯度流动是否通畅？
-   - 是否存在优化困难（非凸、鞍点、梯度消失/爆炸）？
-   - 计算复杂度是否可接受？
+   Specifically check:
+   - Is the gradient flow unobstructed?
+   - Are there optimization difficulties (non-convexity, saddle points, vanishing/exploding gradients)?
+   - Is the computational complexity acceptable?
 
-4. **性能预估**
+4. **Performance Estimation**
 
-   基于类似工作的结果，预估本方法的：
-   - 上界 (最好情况): 基于最乐观假设
-   - 期望值 (最可能情况): 基于合理假设
-   - 下界 (最差情况): 基于悲观假设
+   Based on results from similar work, estimate this method's:
+   - Upper bound (best case): based on the most optimistic assumptions
+   - Expected value (most likely case): based on reasonable assumptions
+   - Lower bound (worst case): based on pessimistic assumptions
 
-5. **风险矩阵**
+5. **Risk Matrix**
 
-   | 风险项 | 概率 (1-5) | 影响 (1-5) | 风险值 | 缓解措施 |
-   |--------|-----------|-----------|--------|----------|
-   | 训练不收敛 | ... | ... | ... | ... |
-   | 性能不达预期 | ... | ... | ... | ... |
-   | 计算资源不足 | ... | ... | ... | ... |
+   | Risk Item | Probability (1-5) | Impact (1-5) | Risk Score | Mitigation Strategy |
+   |-----------|-------------------|-------------|------------|---------------------|
+   | Training divergence | ... | ... | ... | ... |
+   | Performance below expectations | ... | ... | ... | ... |
+   | Insufficient compute resources | ... | ... | ... | ... |
    | ... | ... | ... | ... | ... |
 
-6. **Go/No-Go 决策**
+6. **Go/No-Go Decision**
 
    <thinking>
-   综合所有分析，做出最终判断：
-   - 失败案例搜索中是否发现了致命的负面证据？
-   - 风险矩阵中是否存在高概率且高影响的风险？
-   - 如果继续，最可能的失败模式是什么？
-   - 如果回退，备选方案是否更有前景？
+   Synthesize all analyses to make a final judgment:
+   - Did the failure case search reveal any fatal negative evidence?
+   - Does the risk matrix contain any high-probability and high-impact risks?
+   - If proceeding, what is the most likely failure mode?
+   - If rolling back, are the alternative plans more promising?
    </thinking>
 
-   - **GO**: 所有风险可控，无致命缺陷。建议继续。
-   - **CONDITIONAL GO**: 存在特定问题需要先解决。列出必须完成的前置条件。
-   - **NO-GO**: 发现致命缺陷或风险过高。建议回退 WF2 选择备选方案。
+   - **GO**: All risks are manageable, no fatal flaws. Recommend proceeding.
+   - **CONDITIONAL GO**: Specific issues need to be resolved first. List required preconditions.
+   - **NO-GO**: Fatal flaws found or risks are too high. Recommend rolling back to WF2 to choose an alternative plan.
 
-7. **Codex Cross-Validation**（始终尝试）
+7. **Codex Cross-Validation** (always attempt)
 
-   WF3 是关键门禁，**始终尝试** Codex 交叉验证（不同于 WF8 的选择性触发）。
+   WF3 is a critical gate, so **always attempt** Codex cross-validation (unlike WF8's selective triggering).
 
-   如果 Codex MCP 可用（`mcp__codex__codex` 工具存在）：
-   a. 将 Technical_Spec 核心方案 + 上述风险分析格式化为 prompt：
+   If Codex MCP is available (`mcp__codex__codex` tool exists):
+   a. Format the Technical_Spec core plan + the above risk analysis into a prompt:
       "Review this CV research approach. Find risks or failure modes I may have missed."
-   b. 调用 `mcp__codex__codex` MCP 工具提交审查请求
-   c. 解析返回的 concerns/suggestions
-   d. 如果发现新问题：WebSearch 研究 → 更新风险矩阵 → `mcp__codex__codex-reply` 回复确认
-   e. 最多 3 轮迭代，直到达成共识或轮次用完
-   f. 记录 `codex_review: "used"` + 内容
+   b. Call the `mcp__codex__codex` MCP tool to submit the review request
+   c. Parse the returned concerns/suggestions
+   d. If new issues are found: WebSearch to investigate → update risk matrix → `mcp__codex__codex-reply` to confirm
+   e. Maximum 3 iteration rounds, until consensus is reached or rounds are exhausted
+   f. Record `codex_review: "used"` + content
 
-   **如果 Codex MCP 不可用**：记录 `codex_review: "unavailable"`，在报告中注明。
+   **If Codex MCP is unavailable**: Record `codex_review: "unavailable"` and note it in the report.
 
-   输出增加 `## Codex Cross-Validation` section。
+   Add a `## Codex Cross-Validation` section to the output.
 
-8. **输出报告**
+8. **Output Report**
 
-   写入 `docs/Sanity_Check_Log.md`，包含：
-   - context_summary (≤20 行)
+   Write to `docs/Sanity_Check_Log.md`, including:
+   - context_summary (<= 20 lines)
    - failure_case_search_results
    - theoretical_analysis
-   - performance_estimation (上界/期望/下界)
+   - performance_estimation (upper bound / expected / lower bound)
    - risk_matrix
-   - codex_cross_validation (used/unavailable + 内容)
-   - go_nogo_recommendation (含详细理由)
+   - codex_cross_validation (used/unavailable + content)
+   - go_nogo_recommendation (with detailed rationale)
 
-9. **更新项目状态**
+9. **Update Project State**
 
-   更新 PROJECT_STATE.json：
+   Update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
-   - `artifacts.sanity_check_log` → 文件路径
-   - `history` 追加完成记录
-   - `decisions` 记录 Go/No-Go 决策
+   - `artifacts.sanity_check_log` → file path
+   - `history` append completion record
+   - `decisions` record Go/No-Go decision
 </instructions>
 
 <constraints>

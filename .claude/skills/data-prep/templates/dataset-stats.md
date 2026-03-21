@@ -1,62 +1,62 @@
-# Dataset Stats 模板
+# Dataset Stats Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF4 - 数据工程
-- **前置输入:** Sanity_Check_Log.md (GO)
-- **本次产出:** Dataset_Stats.md, Data_Pipeline_Script.py, subset_indices.json
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF4 - Data Engineering
+- **Prior Inputs:** Sanity_Check_Log.md (GO)
+- **Deliverables:** Dataset_Stats.md, Data_Pipeline_Script.py, subset_indices.json
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** WF5 baseline-repro
+- **Open Issues:** {open_issues}
+- **Next Step:** WF5 baseline-repro
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
-### 1. 全集统计
+### 1. Full Dataset Statistics
 
 ```markdown
-## 原始数据集: {dataset_name}
+## Original Dataset: {dataset_name}
 
-- 图像总数: {total_images}
-- 类别数: {num_classes}
-- 标注总数: {total_annotations}
+- Total images: {total_images}
+- Number of classes: {num_classes}
+- Total annotations: {total_annotations}
 
-### 类别分布
-| 类别 | 样本数 | 占比 |
+### Class Distribution
+| Class | Sample Count | Proportion |
 |------|--------|------|
 
-### BBox 尺寸分布
-| 尺寸 | 数量 | 占比 |
+### BBox Size Distribution
+| Size | Count | Proportion |
 |------|------|------|
 | Small (<32²) | | |
 | Medium (32²-96²) | | |
 | Large (>96²) | | |
 ```
 
-### 2. 子集统计
+### 2. Subset Statistics
 
 ```markdown
-## 子集 (ratio={subset_ratio})
+## Subset (ratio={subset_ratio})
 
-- 图像数: {subset_images}
-- 标注数: {subset_annotations}
+- Number of images: {subset_images}
+- Number of annotations: {subset_annotations}
 ```
 
-### 3. 分布对比
+### 3. Distribution Comparison
 
-| 指标 | 全集 | 子集 | 偏差 |
+| Metric | Full Dataset | Subset | Deviation |
 |------|------|------|------|
-| 类别分布 | | | <5% |
-| 尺寸分布 | | | <5% |
+| Class distribution | | | <5% |
+| Size distribution | | | <5% |
 
-### 4. 验证结果
+### 4. Validation Results
 
-- [ ] 子集分布偏差 < 5%
-- [ ] 随机种子已固定
-- [ ] subset_indices.json 已保存
+- [ ] Subset distribution deviation < 5%
+- [ ] Random seed fixed
+- [ ] subset_indices.json saved
