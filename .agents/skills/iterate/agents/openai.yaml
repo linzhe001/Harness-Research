@@ -1,0 +1,7 @@
+interface:
+  display_name: "Iterate"
+  short_description: "Codex wrapper for WF8 iteration loop"
+  default_prompt: "Use $iterate to inspect the current iteration and decide the next WF8 action."
+
+policy:
+  allow_implicit_invocation: false

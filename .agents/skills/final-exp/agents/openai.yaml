@@ -1,0 +1,7 @@
+interface:
+  display_name: "Final Exp"
+  short_description: "Codex wrapper for WF9 experiment planning"
+  default_prompt: "Use $final-exp to plan the final experiment matrix from the best WF8 outcome."
+
+policy:
+  allow_implicit_invocation: false

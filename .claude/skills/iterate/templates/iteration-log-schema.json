@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Iteration Log",
+  "description": "Structured iteration tracking for research experiments",
+  "type": "object",
+  "required": ["project", "baseline_metrics", "iterations", "best_iteration"],
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "evaluation_protocol": {
+      "type": ["object", "null"],
+      "description": "Canonical metric protocol inherited from WF5 baseline reproduction",
+      "properties": {
+        "primary_metric": { "type": ["string", "null"] },
+        "tracked_metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "goal": { "type": "string", "enum": ["max", "min"] },
+              "source": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "comparison_rule": { "type": ["string", "null"] }
+      }
+    },
+    "baseline_metrics": {
+      "type": "object",
+      "description": "Per-scene baseline metrics for comparison",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": ["number", "string", "null"] },
+        "properties": {
+          "source": { "type": "string", "description": "Method name that produced these metrics" }
+        }
+      }
+    },
+    "iterations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "date", "hypothesis", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^iter\\d+[a-z]?(_no_[a-z_]+)?$",
+            "description": "Iteration identifier, e.g. iter1, iter22b, iter26a_no_satloss"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when iteration was started"
+          },
+          "hypothesis": {
+            "type": "string",
+            "description": "What we expect to learn or improve"
+          },
+          "changes_summary": {
+            "type": "string",
+            "description": "Brief description of what was changed"
+          },
+          "config_diff": {
+            "type": "object",
+            "description": "Key config changes from previous iteration"
+          },
+          "git_commit": {
+            "type": ["string", "null"],
+            "description": "Git commit hash"
+          },
+          "git_message": {
+            "type": ["string", "null"],
+            "description": "Git commit message"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "coding", "training", "running", "completed", "abandoned", "debug"],
+            "description": "Current status of this iteration"
+          },
+          "metrics": {
+            "type": "object",
+            "description": "Final evaluation metrics defined by the active evaluation protocol",
+            "additionalProperties": { "type": ["number", "string", "null"] }
+          },
+          "training_trace": {
+            "type": ["object", "null"],
+            "description": "Training-only trace values, separate from final evaluation metrics",
+            "properties": {
+              "best_step": { "type": ["integer", "null"] },
+              "final_step": { "type": ["integer", "null"] }
+            },
+            "additionalProperties": { "type": ["number", "string", "null"] }
+          },
+          "decision": {
+            "type": ["string", "null"],
+            "enum": ["CONTINUE", "DEBUG", "PIVOT", "ABORT", null],
+            "description": "Post-evaluation decision"
+          },
+          "lessons": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Key takeaways from this iteration"
+          },
+          "codex_review": {
+            "description": "Cross-validation result from external AI review",
+            "anyOf": [
+              { "type": "string", "enum": ["used", "skipped_low_value", "unavailable"] },
+              {
+                "type": "object",
+                "properties": {
+                  "approved": { "type": "boolean" },
+                  "rounds": { "type": "integer" },
+                  "feedback": { "type": "string" }
+                }
+              },
+              { "type": "null" }
+            ]
+          },
+          "run_manifest": {
+            "type": ["object", "null"],
+            "description": "Training run metadata, populated by /iterate run",
+            "properties": {
+              "command": { "type": "string", "description": "Full training command executed" },
+              "config_path": { "type": ["string", "null"], "description": "Config file path" },
+              "exp_dir": { "type": "string", "description": "Experiment output directory" },
+              "wandb_url": { "type": ["string", "null"], "description": "wandb run URL" },
+              "checkpoint_path": { "type": ["string", "null"], "description": "Best/final checkpoint path" },
+              "started_at": { "type": ["string", "null"], "format": "date-time" },
+              "duration_seconds": { "type": ["number", "null"], "description": "Training wall time in seconds" },
+              "expected_steps": { "type": ["integer", "null"] },
+              "exit_code": { "type": ["integer", "null"], "description": "Process exit code (0=success)" },
+              "error": { "type": ["string", "null"], "description": "Error message if training failed" }
+            }
+          },
+          "parent_iteration": {
+            "type": ["string", "null"],
+            "description": "For ablation sub-iterations: ID of the parent iteration being ablated"
+          },
+          "ablation_component": {
+            "type": ["string", "null"],
+            "description": "For ablation sub-iterations: component being removed (e.g. saturation_loss)"
+          },
+          "ablation_summary": {
+            "type": ["object", "null"],
+            "description": "For parent iterations: summary of ablation results",
+            "properties": {
+              "components_tested": { "type": "array", "items": { "type": "string" } },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "component": { "type": "string" },
+                    "psnr": { "type": "number" },
+                    "delta": { "type": "number" },
+                    "contribution": { "type": "string", "enum": ["significant", "moderate", "minimal", "negative"] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "best_iteration": {
+      "type": ["string", "null"],
+      "description": "ID of the best-performing iteration"
+    }
+  }
+}

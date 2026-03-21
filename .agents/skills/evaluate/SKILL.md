@@ -1,0 +1,45 @@
+---
+name: evaluate
+description: Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a CONTINUE, DEBUG, PIVOT, or ABORT recommendation.
+---
+
+# Evaluate
+
+## References
+
+Read these first:
+- `../../../.agents/references/workflow-guide.md`
+- `./references/stage-report.md`
+- `../../../iteration_log.json`
+- `../../../PROJECT_STATE.json`
+
+## When To Use
+
+Use this skill when the user wants training or evaluation results interpreted and turned into a decision.
+
+## Required Work
+
+1. Parse the relevant logs, metrics, or checkpoint metadata.
+2. Analyze:
+   - training stability
+   - convergence
+   - overfitting
+   - gradient and numerical issues
+3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
+4. Produce the canonical report using `./references/stage-report.md`.
+5. Recommend exactly one of:
+   - `CONTINUE`
+   - `DEBUG`
+   - `PIVOT`
+   - `ABORT`
+6. If invoked from `$iterate`, do not take over stage-transition ownership.
+
+## Codex Adaptation
+
+- Treat natural-language requests as the canonical `$evaluate` flow or the evaluation sub-step of `$iterate`.
+- Use `.agents/state/current_iteration.json` as the active iteration context path.
+- Preserve the original decision vocabulary and per-iteration reporting behavior, but do not assume a fixed metric family.
+
+## Execution Rule
+
+Follow the local evaluation prompt and stage-report template rather than collapsing this into a brief metrics summary.

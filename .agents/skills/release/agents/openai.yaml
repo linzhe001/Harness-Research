@@ -1,0 +1,7 @@
+interface:
+  display_name: "Release"
+  short_description: "Codex wrapper for validation and packaging"
+  default_prompt: "Use $release to validate the submission package and list any issues."
+
+policy:
+  allow_implicit_invocation: false

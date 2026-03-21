@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Debug"
+  short_description: "Codex wrapper for planned changes and fixes"
+  default_prompt: "Use $code-debug to apply the scoped change and validate it."
+
+policy:
+  allow_implicit_invocation: false

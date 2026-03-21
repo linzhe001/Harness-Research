@@ -1,0 +1,7 @@
+interface:
+  display_name: "Init Project"
+  short_description: "Codex wrapper for CLAUDE.md maintenance"
+  default_prompt: "Use $init-project to initialize or refresh the compact project snapshot."
+
+policy:
+  allow_implicit_invocation: false

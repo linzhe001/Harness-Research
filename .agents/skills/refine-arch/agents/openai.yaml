@@ -1,0 +1,7 @@
+interface:
+  display_name: "Refine Arch"
+  short_description: "Codex wrapper for WF2 architecture refinement"
+  default_prompt: "Use $refine-arch to turn the idea into a concrete technical spec."
+
+policy:
+  allow_implicit_invocation: false

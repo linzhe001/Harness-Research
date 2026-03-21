@@ -1,0 +1,54 @@
+# {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Environment
+```bash
+conda activate {{ENV_NAME}}
+```
+- Python {{PYTHON_VERSION}}
+- PyTorch {{TORCH_VERSION}} (CUDA {{CUDA_VERSION}})
+- Key deps: (run /env-setup refresh to fill)
+- Tracking: wandb, tensorboard
+- GPU: {{GPU_INFO}}
+
+### Dataset Paths
+<!-- Filled by /init-project update after WF4 -->
+
+## Tech Stack
+<!-- Filled by /init-project update after WF2 -->
+
+## Project Structure
+<!-- Filled by /init-project update after WF6 -->
+
+## Core Artifacts
+- `PROJECT_STATE.json` — Stage progression (single source of truth for stages)
+- `iteration_log.json` — Experiment history (single source of truth for iterations)
+- `project_map.json` — Code architecture (single source of truth for structure, stable files only)
+
+## Entry Scripts
+<!-- Filled by /init-project update after WF7 first run -->
+<!-- Core entry scripts are locked here after first successful training -->
+
+## Global Rule: project_map.json Maintenance
+Only **stable architecture files** (src/, baselines/, core configs/scripts) are tracked in project_map.json.
+Volatile experiment assets (per-iteration scripts/configs) are not tracked.
+See `.agents/references/project-map-rule.md` for detailed rules.
+
+## Challenge Quick Ref
+<!-- Fill in competition details -->
+- Competition: {{COMPETITION_URL}}
+- Dataset paper: {{DATASET_PAPER_URL}}
+- Baseline code: {{BASELINE_CODE_URL}}
+- Metrics: {{METRICS}}
+- Data format: {{DATA_FORMAT}}
+- Deadline: {{DEADLINE}}
+
+## Workflow
+WF1(survey) -> WF2(arch) -> WF3(check) -> WF4(data) -> WF5(baseline) -> WF6(plan) -> WF7(code) -> WF7.5(validate) -> WF8(iterate) -> WF9(final-exp) -> WF10(release)
+WF8 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (CONTINUE->WF9 | DEBUG->repeat | PIVOT->WF2)
+Current stage: WF1 (not started)
+
+## Custom
+### Codex MCP
+- When calling `mcp__codex__codex`, **do not pass the `model` parameter**. The user's `~/.codex/config.toml` has a custom provider configured; passing any model override causes 503 errors.

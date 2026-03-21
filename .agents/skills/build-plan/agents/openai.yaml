@@ -1,0 +1,7 @@
+interface:
+  display_name: "Build Plan"
+  short_description: "Codex wrapper for WF6 planning"
+  default_prompt: "Use $build-plan to update the roadmap and stable project blueprint."
+
+policy:
+  allow_implicit_invocation: false

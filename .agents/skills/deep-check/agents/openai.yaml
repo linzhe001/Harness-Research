@@ -1,0 +1,7 @@
+interface:
+  display_name: "Deep Check"
+  short_description: "Codex wrapper for WF3 sanity checks"
+  default_prompt: "Use $deep-check to review technical risk and gate the project before implementation."
+
+policy:
+  allow_implicit_invocation: false

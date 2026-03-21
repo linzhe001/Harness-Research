@@ -1,0 +1,7 @@
+interface:
+  display_name: "Validate Run"
+  short_description: "Codex wrapper for WF7.5 validation"
+  default_prompt: "Use $validate-run to review and smoke-test the current training pipeline."
+
+policy:
+  allow_implicit_invocation: false

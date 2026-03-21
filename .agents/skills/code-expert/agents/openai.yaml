@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Expert"
+  short_description: "Codex wrapper for WF7 initial generation"
+  default_prompt: "Use $code-expert to generate the requested roadmap-defined code modules."
+
+policy:
+  allow_implicit_invocation: false

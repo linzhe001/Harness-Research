@@ -1,0 +1,7 @@
+interface:
+  display_name: "Workflow Orchestrator"
+  short_description: "Codex wrapper for workflow control"
+  default_prompt: "Use $orchestrator to inspect the current workflow stage, blockers, and next action."
+
+policy:
+  allow_implicit_invocation: false

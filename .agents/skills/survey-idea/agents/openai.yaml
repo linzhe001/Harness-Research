@@ -1,0 +1,7 @@
+interface:
+  display_name: "Survey Idea"
+  short_description: "Codex wrapper for WF1 idea survey"
+  default_prompt: "Use $survey-idea to assess feasibility and record the initial research direction."
+
+policy:
+  allow_implicit_invocation: false

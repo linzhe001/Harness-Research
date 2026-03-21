@@ -1,0 +1,7 @@
+interface:
+  display_name: "Baseline Repro"
+  short_description: "Codex wrapper for WF5 baseline reproduction"
+  default_prompt: "Use $baseline-repro to reproduce the selected baseline and update the tracked report and metrics."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Data Prep"
+  short_description: "Codex wrapper for WF4 data preparation"
+  default_prompt: "Use $data-prep to document dataset readiness, paths, and split artifacts."
+
+policy:
+  allow_implicit_invocation: false

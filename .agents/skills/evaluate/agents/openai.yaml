@@ -1,0 +1,7 @@
+interface:
+  display_name: "Evaluate"
+  short_description: "Codex wrapper for result analysis"
+  default_prompt: "Use $evaluate to analyze the latest results and recommend the next action."
+
+policy:
+  allow_implicit_invocation: false

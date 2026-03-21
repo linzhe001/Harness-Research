@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project_Map",
+  "description": "项目文件结构地图。分级描述项目中每个文件/目录的用途。",
+  "type": "object",
+  "required": ["version", "updated_at", "detail_policy", "structure"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "detail_policy": {
+      "type": "object",
+      "description": "各目录类型的描述详细度策略",
+      "properties": {
+        "detailed": {
+          "type": "string",
+          "default": "主研究代码 — 每个文件列出: 类/函数签名、输入输出 tensor shape、模块依赖关系"
+        },
+        "medium": {
+          "type": "string",
+          "default": "配置和文档 — 每个文件列出: 用途说明、关键参数"
+        },
+        "brief": {
+          "type": "string",
+          "default": "复现 baseline — 每个子目录列出: 论文来源、复现状态、入口文件"
+        },
+        "minimal": {
+          "type": "string",
+          "default": "日志和输出 — 仅说明目录用途和存放规则，不列出具体文件"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "description": "项目目录结构，key 为目录/文件名",
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["type", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["directory", "file"]
+        },
+        "detail_level": {
+          "type": "string",
+          "enum": ["detailed", "medium", "brief", "minimal"],
+          "description": "仅目录节点需要。决定该目录下文件的描述详细度。"
+        },
+        "description": {
+          "type": "string",
+          "description": "目录/文件的功能描述"
+        },
+        "exports": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "[detailed] 文件导出的主要类/函数名"
+        },
+        "io": {
+          "type": "object",
+          "description": "[detailed] 模型文件的输入输出 tensor shape",
+          "properties": {
+            "input": { "type": "string" },
+            "output": { "type": "string" }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "[detailed] 该文件依赖的项目内其他模块路径"
+        },
+        "source": {
+          "type": "string",
+          "description": "[brief] baseline 代码来源 URL"
+        },
+        "paper": {
+          "type": "string",
+          "description": "[brief] baseline 对应论文引用"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["verified", "untested", "modified", "broken"],
+          "description": "[brief] baseline 复现状态"
+        },
+        "entry_point": {
+          "type": "string",
+          "description": "[brief] baseline 的训练/推理入口文件"
+        },
+        "children": {
+          "type": "object",
+          "description": "子目录/文件，key 为名称",
+          "additionalProperties": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    }
+  }
+}

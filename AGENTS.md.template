@@ -1,0 +1,52 @@
+# {{PROJECT_NAME}}
+
+## Project
+
+- {{PROJECT_DESCRIPTION}}
+- Main direction: {{MAIN_DIRECTION}}
+
+## Environment and Dataset Paths
+
+- Refer to `CLAUDE.md` for the current environment snapshot and dataset addresses.
+- Keep `AGENTS.md` focused on stable rules rather than volatile environment details.
+
+## Canonical State
+
+- `PROJECT_STATE.json`: stage and milestone state. Stage transitions require explicit user confirmation.
+- `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
+- `project_map.json`: stable architecture map for core code and configs.
+- These canonical state files must stay at the repository root, not under `.agents/`.
+
+## Skills
+
+- Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.
+- Use `$iterate` for WF8 `plan -> code -> run -> eval`.
+- Use `$code-expert` only for first-pass implementation from the roadmap and project map.
+- Use `$code-debug` for post-WF7 code changes, bug fixes, or iteration-driven edits.
+- Use `$evaluate` for experiment analysis and per-iteration reports.
+- Use the stage-specific skills only for their intended outputs.
+
+## Entry Scripts
+
+- Refer to `CLAUDE.md` for the locked core entry scripts.
+- Auxiliary scripts may exist under `scripts/`, but they must not fork or duplicate the core train/eval path.
+
+## Stable Code Rules
+
+- Read `project_map.json` before any non-trivial stable-code change.
+- Update `project_map.json` when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
+- Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
+
+## Training Rules
+
+- Before running training after training-related code changes, create a semantic commit:
+  - `train(research): {what changed and why}`
+  - `train(baseline/<name>): {what changed and why}`
+- After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files.
+- Preserve core train/eval logic in the locked entry scripts referenced from `CLAUDE.md`.
+- Use `.agents/references/pre-training-rule.md` for run-traceability requirements.
+
+## Workflow Control
+
+- Never auto-advance a workflow stage without explicit user confirmation.
+- Use `.agents/references/workflow-guide.md` for the full stage flow and detailed skill behavior.

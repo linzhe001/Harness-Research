@@ -1,0 +1,7 @@
+interface:
+  display_name: "Env Setup"
+  short_description: "Codex wrapper for environment setup"
+  default_prompt: "Use $env-setup to refresh or create the documented project environment."
+
+policy:
+  allow_implicit_invocation: false
