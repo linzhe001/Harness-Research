@@ -51,12 +51,23 @@ git clone <harness-repo-url> .
 ```bash
 # Option B: Clone into a subdirectory (if project dir is not empty)
 cd /path/to/my-research-project
-git clone <harness-repo-url> harness-tmp
+git clone <harness-repo-url> <clone-dir>
+# <clone-dir> can be any name: harness-tmp, Harness-Research, etc.
+```
+
+### Detecting Which Option Was Used
+
+Before starting setup, determine the clone method:
+
+```bash
+# If .claude/ and .agents/ exist at project root AND .git/ exists → Option A
+# If a subdirectory contains .claude/, .agents/, and .git/ → Option B
+#   Identify the clone directory name (e.g., harness-tmp, Harness-Research)
 ```
 
 ### Step-by-Step Setup
 
-Execute these steps **in order**. Detect which option the user used and follow the corresponding path.
+Execute these steps **in order**.
 
 #### Step 1: Arrange files and create `.harness`
 
@@ -67,23 +78,27 @@ Execute these steps **in order**. Detect which option the user used and follow t
 mv .git .harness
 ```
 
-**If Option B** (`git clone <url> harness-tmp` — files are in a subdirectory):
+**If Option B** (clone is in a subdirectory — replace `$CLONE_DIR` with the actual name):
 
 ```bash
+CLONE_DIR="harness-tmp"  # ← set to actual clone directory name
+
 # Copy framework files to project root
-cp -r harness-tmp/.claude .
-cp -r harness-tmp/.agents .
-cp harness-tmp/CLAUDE.md.template .
-cp harness-tmp/AGENTS.md.template .
-cp harness-tmp/settings.local.json.template .
-cp harness-tmp/README.md .
+cp -r "$CLONE_DIR/.claude" .
+cp -r "$CLONE_DIR/.agents" .
+cp "$CLONE_DIR/CLAUDE.md.template" .
+cp "$CLONE_DIR/AGENTS.md.template" .
+cp "$CLONE_DIR/settings.local.json.template" .
+cp "$CLONE_DIR/README.md" .
 
 # Move harness .git to .harness
-mv harness-tmp/.git .harness
+mv "$CLONE_DIR/.git" .harness
 
-# Remove the now-empty clone directory
-rm -rf harness-tmp
+# ⚠️ CRITICAL: Remove the clone directory — it is now dead weight
+rm -rf "$CLONE_DIR"
 ```
+
+> **Warning**: The clone directory MUST be deleted after extracting `.harness`. If it remains, it wastes disk space with duplicate files and confuses project structure. Verify deletion before proceeding.
 
 **Then, for both options**, configure `.harness`:
 
@@ -92,11 +107,16 @@ git --git-dir=.harness --work-tree=. config core.bare false
 git --git-dir=.harness --work-tree=. config status.showUntrackedFiles no
 ```
 
-Verify:
+**Verify Step 1 is complete:**
 
 ```bash
+# .harness exists and works
 git --git-dir=.harness --work-tree=. status        # should be clean
 git --git-dir=.harness --work-tree=. log --oneline  # should show harness commits
+
+# Clone directory is gone (Option B only)
+# If this directory still exists, delete it now: rm -rf <clone-dir>
+ls -d harness-tmp Harness-Research 2>/dev/null && echo "ERROR: clone dir not cleaned up!" || echo "OK: no leftover clone dir"
 ```
 
 #### Step 2: Generate project files from templates
@@ -127,6 +147,14 @@ mkdir -p .agents/state/iterations
 ```bash
 git init
 ```
+
+#### Step 4.5: Handle pre-existing files (if any)
+
+If the project directory already contains files from a previous project or data downloads, decide how to handle them **before** creating `.gitignore`:
+
+- **Data directories** (datasets, large binaries): Add to `.gitignore` under a `# === Project-specific ignores ===` section
+- **Previous code/docs**: Move to a clearly named directory (e.g., `legacy/`) and add to `.gitignore`, or incorporate into the new project structure
+- **Do not** leave orphan directories unaccounted for — every non-framework directory should be either tracked by git or explicitly ignored
 
 #### Step 5: Create research `.gitignore`
 
@@ -160,6 +188,9 @@ wandb/
 .DS_Store
 *.swp
 *~
+
+# === Project-specific ignores ===
+# Add any pre-existing directories or files that should not be tracked here
 ```
 
 #### Step 6: Initial commit for research repo
@@ -188,31 +219,60 @@ Remind the user to run `source ~/.bashrc` (or restart the shell) for the alias t
 
 #### Step 8: Fill in project details
 
-Replace `{{placeholders}}` in `CLAUDE.md` with actual project information, or run:
+Replace `{{placeholders}}` in `CLAUDE.md` and `AGENTS.md` with actual project information.
+
+**Placeholders to fill** (gather this info from the user before starting):
+
+| Placeholder | Where | Example |
+|-------------|-------|---------|
+| `{{PROJECT_NAME}}` | CLAUDE.md, AGENTS.md | `GeoMamba` |
+| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md, AGENTS.md | `Point cloud registration with Mamba backbone` |
+| `{{ENV_NAME}}` | CLAUDE.md | `geomamba` |
+| `{{PYTHON_VERSION}}` | CLAUDE.md | `3.10` |
+| `{{TORCH_VERSION}}` | CLAUDE.md | `2.1.0` |
+| `{{CUDA_VERSION}}` | CLAUDE.md | `11.8` |
+| `{{GPU_INFO}}` | CLAUDE.md | `1x RTX 4090 24GB` |
+| `{{COMPETITION_URL}}` | CLAUDE.md | URL or `N/A` |
+| `{{DATASET_PAPER_URL}}` | CLAUDE.md | arXiv URL |
+| `{{BASELINE_CODE_URL}}` | CLAUDE.md | GitHub URL |
+| `{{METRICS}}` | CLAUDE.md | `RR, RRE, RTE` |
+| `{{DATA_FORMAT}}` | CLAUDE.md | `point cloud .ply` |
+| `{{DEADLINE}}` | CLAUDE.md | `2026-06-01` or `N/A` |
+
+Alternatively, run an interactive fill:
 - Claude Code: `/orchestrator init`
 - Codex: `$orchestrator init`
 
 ### Verification Checklist
 
-After all steps are complete, run these checks:
+After all steps are complete, run **every** check below. Do not skip any.
 
 ```bash
-# 1. Research repo — should only track project files
+# 1. No leftover clone directory
+ls -d harness-tmp Harness-Research 2>/dev/null && echo "FAIL: clone dir exists" || echo "PASS"
+
+# 2. Research repo — should only track project files
 git status                # clean
 git log --oneline         # shows "init: project scaffold"
 git ls-files              # should list: CLAUDE.md, AGENTS.md, .gitignore
                           # should NOT list: .claude/*, .agents/*
 
-# 2. Harness repo — should only track framework files
+# 3. Harness repo — should only track framework files
 hgit status               # clean (or use: git --git-dir=.harness --work-tree=. status)
 hgit log --oneline        # shows harness framework commits
 hgit remote -v            # points to harness-research-loop repo
 hgit ls-files | head -5   # should list: .agents/*, .claude/*
                           # should NOT list: CLAUDE.md, AGENTS.md
 
-# 3. No cross-contamination
+# 4. No cross-contamination
 # Editing src/foo.py → only visible in `git status`, NOT in `hgit status`
 # Editing .claude/skills/iterate/SKILL.md → only visible in `hgit status`, NOT in `git status`
+
+# 5. CLAUDE.md has no remaining placeholders
+grep -c '{{' CLAUDE.md && echo "FAIL: unfilled placeholders" || echo "PASS"
+
+# 6. hgit alias works
+type hgit &>/dev/null && echo "PASS" || echo "FAIL: hgit alias not set"
 ```
 
 ---
