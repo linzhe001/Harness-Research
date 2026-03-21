@@ -54,6 +54,12 @@ if [ ! -f ".gitignore" ]; then
     cat > .gitignore << 'GITIGNORE'
 # === Harness framework (managed by hgit) ===
 .harness
+.claude/
+.agents/
+.vscode/
+*.template
+bootstrap.sh
+README.md
 
 # === Build / Runtime ===
 __pycache__/
