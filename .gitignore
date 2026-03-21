@@ -1,0 +1,30 @@
+# === Research project files (not part of harness framework) ===
+src/
+scripts/
+configs/
+baselines/
+experiments/
+docs/
+tests/
+PROJECT_STATE.json
+iteration_log.json
+project_map.json
+CLAUDE.md
+AGENTS.md
+.claude/settings.local.json
+.claude/iterations/
+.agents/state/iterations/
+.agents/state/current_iteration.json
+
+# === Runtime / Generated ===
+__pycache__/
+*.pyc
+wandb/
+*.ckpt
+*.pth
+*.pt
+
+# === System ===
+.DS_Store
+*.swp
+*~
