@@ -169,7 +169,6 @@ The research repo must ignore all harness-managed files. Create `.gitignore` wit
 .agents/
 .vscode/
 *.template
-README.md
 
 # === Build / Runtime ===
 __pycache__/
@@ -194,6 +193,8 @@ wandb/
 # === Project-specific ignores ===
 # Add any pre-existing directories or files that should not be tracked here
 ```
+
+> **Important**: Do **not** ignore `README.md` in the research repo. The bootstrap `README.md` copied from Harness is removed in Step 9, and the project will typically create its own `README.md` later. That project README should be tracked by normal `git`, not ignored.
 
 #### Step 6: Initial commit for research repo
 
@@ -254,6 +255,8 @@ rm -f README.md CLAUDE.md.template AGENTS.md.template settings.local.json.templa
 ```
 
 This avoids confusing the Harness setup README with the research project's own README.
+
+When the project later creates its own `README.md`, that new file belongs to the research repo and should be tracked by normal `git`.
 
 These files remain available in `.harness` and can be inspected at any time:
 
