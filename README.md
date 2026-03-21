@@ -245,6 +245,25 @@ Alternatively, run an interactive fill:
 - Claude Code: `/orchestrator init`
 - Codex: `$orchestrator init`
 
+#### Step 9: Remove bootstrap-only README/template copies
+
+After initialization is complete and the real project files are in place, the copied bootstrap refs are no longer needed in the worktree:
+
+```bash
+rm -f README.md CLAUDE.md.template AGENTS.md.template settings.local.json.template
+```
+
+This avoids confusing the Harness setup README with the research project's own README.
+
+These files remain available in `.harness` and can be inspected at any time:
+
+```bash
+hgit show HEAD:README.md
+hgit show HEAD:CLAUDE.md.template
+hgit show HEAD:AGENTS.md.template
+hgit show HEAD:settings.local.json.template
+```
+
 ### Verification Checklist
 
 After all steps are complete, run **every** check below. Do not skip any.
