@@ -98,7 +98,9 @@ mv "$CLONE_DIR/.git" .harness
 rm -rf "$CLONE_DIR"
 ```
 
-> **Warning**: The clone directory MUST be deleted after extracting `.harness`. If it remains, it wastes disk space with duplicate files and confuses project structure. Verify deletion before proceeding.
+> **Warning**: The clone directory MUST be deleted after extracting `.harness`. If it remains, it wastes disk space with duplicate files and confuses project structure.
+>
+> **If `rm -rf` fails due to insufficient permissions**: Do NOT silently skip this step. Ask the user for permission to delete the directory, explaining that it contains only duplicate framework files and is safe to remove. Never proceed to the next step with the clone directory still present.
 
 **Then, for both options**, configure `.harness`:
 
@@ -223,21 +225,21 @@ Replace `{{placeholders}}` in `CLAUDE.md` and `AGENTS.md` with actual project in
 
 **Placeholders to fill** (gather this info from the user before starting):
 
-| Placeholder | Where | Example |
-|-------------|-------|---------|
-| `{{PROJECT_NAME}}` | CLAUDE.md, AGENTS.md | `GeoMamba` |
-| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md, AGENTS.md | `Point cloud registration with Mamba backbone` |
-| `{{ENV_NAME}}` | CLAUDE.md | `geomamba` |
-| `{{PYTHON_VERSION}}` | CLAUDE.md | `3.10` |
-| `{{TORCH_VERSION}}` | CLAUDE.md | `2.1.0` |
-| `{{CUDA_VERSION}}` | CLAUDE.md | `11.8` |
-| `{{GPU_INFO}}` | CLAUDE.md | `1x RTX 4090 24GB` |
-| `{{COMPETITION_URL}}` | CLAUDE.md | URL or `N/A` |
-| `{{DATASET_PAPER_URL}}` | CLAUDE.md | arXiv URL |
-| `{{BASELINE_CODE_URL}}` | CLAUDE.md | GitHub URL |
-| `{{METRICS}}` | CLAUDE.md | `RR, RRE, RTE` |
-| `{{DATA_FORMAT}}` | CLAUDE.md | `point cloud .ply` |
-| `{{DEADLINE}}` | CLAUDE.md | `2026-06-01` or `N/A` |
+| Placeholder | Where |
+|-------------|-------|
+| `{{PROJECT_NAME}}` | CLAUDE.md, AGENTS.md |
+| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md, AGENTS.md |
+| `{{ENV_NAME}}` | CLAUDE.md |
+| `{{PYTHON_VERSION}}` | CLAUDE.md |
+| `{{TORCH_VERSION}}` | CLAUDE.md |
+| `{{CUDA_VERSION}}` | CLAUDE.md |
+| `{{GPU_INFO}}` | CLAUDE.md |
+| `{{COMPETITION_URL}}` | CLAUDE.md |
+| `{{DATASET_PAPER_URL}}` | CLAUDE.md |
+| `{{BASELINE_CODE_URL}}` | CLAUDE.md |
+| `{{METRICS}}` | CLAUDE.md |
+| `{{DATA_FORMAT}}` | CLAUDE.md |
+| `{{DEADLINE}}` | CLAUDE.md |
 
 Alternatively, run an interactive fill:
 - Claude Code: `/orchestrator init`
