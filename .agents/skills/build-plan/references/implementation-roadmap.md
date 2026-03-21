@@ -1,22 +1,22 @@
-# Implementation Roadmap 模板
+# Implementation Roadmap Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF5 - 代码执行计划
-- **前置输入:** Technical_Spec.md, Dataset_Stats.md
-- **本次产出:** Implementation_Roadmap.md
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF5 - Implementation Planning
+- **Prior Inputs:** Technical_Spec.md, Dataset_Stats.md
+- **Deliverables:** Implementation_Roadmap.md
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** WF7 code-expert
+- **Open Issues:** {open_issues}
+- **Next Step:** WF7 code-expert
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
 ### 1. file_tree
 
@@ -46,11 +46,11 @@ project_root/
 
 ### 2. module_pseudocode
 
-对每个新增文件提供:
-- 类/函数签名 (含 Type Hints)
-- 核心逻辑伪代码
-- 输入输出示例 (含 tensor shapes)
-- 依赖关系说明
+For each new file, provide:
+- Class/function signatures (with Type Hints)
+- Core logic pseudocode
+- Input/output examples (with tensor shapes)
+- Dependency relationships
 
 ### 3. config_schema
 
@@ -76,27 +76,27 @@ train:
 ### 4. training_pipeline
 
 #### Stage 1: Smoke Test
-- 输入条件: ...
-- 执行步骤: ...
-- 验证检查点: ...
-- 失败处理: ...
+- Entry conditions: ...
+- Execution steps: ...
+- Validation checkpoints: ...
+- Failure handling: ...
 
 #### Stage 2: Module Integration
-- 输入条件: ...
-- 执行步骤: ...
-- 验证检查点: ...
-- 失败处理: ...
+- Entry conditions: ...
+- Execution steps: ...
+- Validation checkpoints: ...
+- Failure handling: ...
 
 #### Stage 3: Full Training
-- 输入条件: ...
-- 执行步骤: ...
-- 验证检查点: ...
-- 失败处理: ...
+- Entry conditions: ...
+- Execution steps: ...
+- Validation checkpoints: ...
+- Failure handling: ...
 
 ### 5. validation_checkpoints
 
-| 阶段 | 检查项 | 通过条件 |
+| Stage | Check Item | Pass Criteria |
 |------|--------|----------|
-| Smoke Test | 训练可以启动 | 无报错 |
-| Module Integration | 梯度流动正常 | grad_norm > 0 |
-| Full Training | 收敛 | val_loss 下降 |
+| Smoke Test | Training can start | No errors |
+| Module Integration | Gradient flow is normal | grad_norm > 0 |
+| Full Training | Convergence | val_loss decreasing |

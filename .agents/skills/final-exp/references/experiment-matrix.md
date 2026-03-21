@@ -1,38 +1,38 @@
-# Final Experiment Matrix 模板
+# Final Experiment Matrix Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF8 - 消融实验计划
-- **前置输入:** Stage_Report.md (CONTINUE)
-- **本次产出:** Final_Experiment_Matrix.md
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF8 - Ablation Experiment Plan
+- **Prior Inputs:** Stage_Report.md (CONTINUE)
+- **Deliverables:** Final_Experiment_Matrix.md
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** 执行实验 → 论文撰写
+- **Open Issues:** {open_issues}
+- **Next Step:** Execute experiments → Paper writing
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
 ### 1. ablation_table
 
 ```markdown
-## 消融实验
+## Ablation Experiments
 
-| 实验 ID | Component A | Component B | Component C | 预期结果 |
+| Experiment ID | Component A | Component B | Component C | Expected Result |
 |---------|-------------|-------------|-------------|----------|
-| Baseline | OFF | OFF | OFF | 基准性能 |
-| Exp-1 | ON | OFF | OFF | 验证 A 的贡献 |
-| Exp-2 | OFF | ON | OFF | 验证 B 的贡献 |
-| Exp-3 | OFF | OFF | ON | 验证 C 的贡献 |
-| Exp-AB | ON | ON | OFF | 验证 A+B 的协同 |
-| Full | ON | ON | ON | 完整方法 |
+| Baseline | OFF | OFF | OFF | Baseline performance |
+| Exp-1 | ON | OFF | OFF | Validate A's contribution |
+| Exp-2 | OFF | ON | OFF | Validate B's contribution |
+| Exp-3 | OFF | OFF | ON | Validate C's contribution |
+| Exp-AB | ON | ON | OFF | Validate A+B synergy |
+| Full | ON | ON | ON | Complete method |
 
-原则: 每个实验只改变一个变量
+Principle: Each experiment changes only one variable
 ```
 
 ### 2. hyperparameter_search
@@ -42,7 +42,7 @@ search_space:
   learning_rate: [1e-4, 5e-4, 1e-3]
   weight_decay: [0, 1e-4, 1e-3]
   batch_size: [8, 16, 32]
-  # 其他关键超参数
+  # Other key hyperparameters
 
 search_strategy: grid  # or random
 total_trials: N
@@ -51,52 +51,52 @@ total_trials: N
 ### 3. robustness_tests
 
 ```markdown
-## 鲁棒性测试
+## Robustness Tests
 
-| 测试场景 | 描述 | 预期行为 |
+| Test Scenario | Description | Expected Behavior |
 |---------|------|---------|
-| 分辨率变化 | 输入 [640, 800, 1024] | 性能平稳下降 |
-| 极端光照 | 过曝/欠曝图像 | 检测仍有效 |
-| 严重遮挡 | >50% 遮挡 | 部分检出 |
-| OOD 数据 | 训练集外类别 | 合理拒绝 |
+| Resolution variation | Input [640, 800, 1024] | Graceful performance degradation |
+| Extreme lighting | Overexposed/underexposed images | Detection still effective |
+| Heavy occlusion | >50% occlusion | Partial detection |
+| OOD data | Classes outside training set | Reasonable rejection |
 ```
 
 ### 4. cross_dataset_evaluation
 
 ```markdown
-## 跨数据集评估
+## Cross-Dataset Evaluation
 
-| 数据集 | 用途 | 预期指标 |
+| Dataset | Purpose | Expected Metric |
 |--------|------|---------|
-| COCO | 主数据集，完整评估 | mAP ≥ X |
-| VOC | 迁移验证 | mAP ≥ Y |
-| Objects365 | 泛化性验证 | mAP ≥ Z |
+| COCO | Primary dataset, full evaluation | mAP ≥ X |
+| VOC | Transfer validation | mAP ≥ Y |
+| Objects365 | Generalization validation | mAP ≥ Z |
 ```
 
 ### 5. computation_budget
 
 ```markdown
-## 计算预算
+## Computation Budget
 
-| 实验类型 | 数量 | 单次时长 | GPU 类型 | 总计 |
+| Experiment Type | Count | Duration per Run | GPU Type | Total |
 |----------|------|----------|---------|------|
-| 消融实验 | N | Xh | V100 | NXh |
-| 超参搜索 | M | Yh | V100 | MYh |
-| 鲁棒性测试 | K | Zh | V100 | KZh |
-| 跨数据集 | J | Wh | V100 | JWh |
-| **总计** | | | | **XXh** |
+| Ablation experiments | N | Xh | V100 | NXh |
+| Hyperparameter search | M | Yh | V100 | MYh |
+| Robustness tests | K | Zh | V100 | KZh |
+| Cross-dataset | J | Wh | V100 | JWh |
+| **Total** | | | | **XXh** |
 
-预计总成本: $YYY (基于云 GPU 价格)
+Estimated total cost: $YYY (based on cloud GPU pricing)
 ```
 
 ### 6. execution_order
 
 ```markdown
-## 执行顺序
+## Execution Order
 
-1. **Phase 1 (并行):** 消融实验 Exp-1, Exp-2, Exp-3
-2. **Phase 2 (串行):** 根据 Phase 1 结果选择最佳组合
-3. **Phase 3 (并行):** 超参搜索
-4. **Phase 4 (串行):** 最终模型全量训练
-5. **Phase 5 (并行):** 鲁棒性测试 + 跨数据集评估
+1. **Phase 1 (parallel):** Ablation experiments Exp-1, Exp-2, Exp-3
+2. **Phase 2 (sequential):** Select best combination based on Phase 1 results
+3. **Phase 3 (parallel):** Hyperparameter search
+4. **Phase 4 (sequential):** Final model full-scale training
+5. **Phase 5 (parallel):** Robustness tests + cross-dataset evaluation
 ```

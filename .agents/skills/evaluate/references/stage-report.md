@@ -1,52 +1,52 @@
-# Iteration / Stage Report 模板
+# Iteration / Stage Report Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF8 - 结果分析
-- **前置输入:** 训练日志, eval 输出, baseline protocol
-- **本次产出:** `docs/iterations/iter{N}.md` 或 `Stage_Report.md`
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF8 - Results Analysis
+- **Prior Inputs:** Training logs, eval output, baseline protocol
+- **Deliverables:** `docs/iterations/iter{N}.md` or `Stage_Report.md`
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** WF9 final-exp (CONTINUE) / $iterate plan (DEBUG) / WF2 (PIVOT)
+- **Open Issues:** {open_issues}
+- **Next Step:** WF9 final-exp (CONTINUE) / $iterate plan (DEBUG) / WF2 (PIVOT)
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
 ### 1. training_analysis
 
 ```markdown
-## 训练分析
+## Training Analysis
 
-### Loss 曲线
-| Step/Epoch | Train Loss | Val Loss | 关键训练轨迹 |
-|------------|------------|----------|-------------|
+### Loss Curves
+| Step/Epoch | Train Loss | Val Loss | Key Training Trace |
+|------------|------------|----------|--------------------|
 | 1 | | | |
 | ... | | | |
 
 ### Learning Rate
-- 初始 LR:
-- 最终 LR:
+- Initial LR:
+- Final LR:
 - Warmup epochs:
 
 ### Gradient Norm
-- 平均:
-- 最大:
-- 是否稳定:
+- Mean:
+- Max:
+- Stable:
 ```
 
 ### 2. performance_comparison
 
 ```markdown
-## 性能对比
+## Performance Comparison
 
-| 指标 | Baseline | 本方法 | 差异 | 显著性 |
-|------|----------|--------|------|--------|
+| Metric | Baseline | Ours | Difference | Significance |
+|--------|----------|------|------------|-------------|
 | {metric_1} | | | | |
 | {metric_2} | | | | |
 | {metric_3} | | | | |
@@ -55,50 +55,50 @@
 ### 3. issue_diagnosis
 
 ```markdown
-## 问题诊断
+## Issue Diagnosis
 
-### 发现的问题
-1. [问题描述] → [严重程度] → [建议措施]
+### Identified Issues
+1. [Issue description] → [Severity] → [Recommended action]
 
-### 检查清单
-- [ ] Loss 收敛?
-- [ ] 无过拟合?
-- [ ] Gradient norm 稳定?
-- [ ] 无 NaN/Inf?
+### Checklist
+- [ ] Loss converging?
+- [ ] No overfitting?
+- [ ] Gradient norm stable?
+- [ ] No NaN/Inf?
 ```
 
 ### 4. scaling_prediction
 
 ```markdown
-## 全量训练预测
+## Full-Scale Training Prediction
 
-基于当前 protocol 与已有实验：
-- 当前 proxy 结果: {current_metric_summary}
-- 预计 full run: {predicted_metric_summary}
-- 置信区间: [{lower}, {upper}]
-- 参考: {reference_or_reasoning}
+Based on current protocol and existing experiments:
+- Current proxy results: {current_metric_summary}
+- Predicted full run: {predicted_metric_summary}
+- Confidence interval: [{lower}, {upper}]
+- Reference: {reference_or_reasoning}
 ```
 
 ### 5. recommendation
 
 ```markdown
-## 建议
+## Recommendation
 
-**决策: CONTINUE / DEBUG / PIVOT / ABORT**
+**Decision: CONTINUE / DEBUG / PIVOT / ABORT**
 
-**理由:**
+**Rationale:**
 1. ...
 2. ...
 
-**下一步:**
+**Next Steps:**
 - ...
 ```
 
-## 决策矩阵
+## Decision Matrix
 
-| 情况 | 决策 | 下一步 |
-|------|------|--------|
-| 性能达标 + 训练稳定 | CONTINUE | WF9 |
-| 存在可修复 bug | DEBUG | WF8 新迭代 |
-| 性能差距 >5% | PIVOT | WF2 (备选方案) |
-| 理论失败 / 资源不足 | ABORT | 记录经验终止 |
+| Situation | Decision | Next Step |
+|-----------|----------|-----------|
+| Performance on target + stable training | CONTINUE | WF9 |
+| Fixable bugs exist | DEBUG | WF8 new iteration |
+| Performance gap >5% | PIVOT | WF2 (alternative approach) |
+| Theoretical failure / insufficient resources | ABORT | Record lessons and terminate |

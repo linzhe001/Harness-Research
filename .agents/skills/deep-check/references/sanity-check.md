@@ -1,56 +1,56 @@
-# Sanity Check Log 模板
+# Sanity Check Log Template
 
-## context_summary 标准格式
+## context_summary Standard Format
 
 ```markdown
 <context_summary>
-- **项目:** {project_name}
-- **当前阶段:** WF3 - 二次论证
-- **前置输入:** Technical_Spec.md
-- **本次产出:** Sanity_Check_Log.md
-- **关键结论:**
+- **Project:** {project_name}
+- **Current Stage:** WF3 - Second-Pass Validation
+- **Prior Inputs:** Technical_Spec.md
+- **Deliverables:** Sanity_Check_Log.md
+- **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
-- **待解决问题:** {open_issues}
-- **下一步:** WF4 data-prep (如果 GO) / WF2 rollback (如果 NO-GO)
+- **Open Issues:** {open_issues}
+- **Next Step:** WF4 data-prep (if GO) / WF2 rollback (if NO-GO)
 </context_summary>
 ```
 
-## 必须包含的 Sections
+## Required Sections
 
 ### 1. failure_case_search_results
-- 搜索到的负面结果
-- 失败案例及原因
+- Negative findings from the search
+- Failure cases and their causes
 
 ### 2. theoretical_analysis
-对每个关键假设的质疑:
-- 假设 1: [描述] → 反例? 失效条件?
-- 假设 2: [描述] → 数学证明? 实验验证?
+Challenges to each key assumption:
+- Assumption 1: [Description] → Counterexample? Failure conditions?
+- Assumption 2: [Description] → Mathematical proof? Experimental validation?
 
 ### 3. performance_estimation
 
-| 场景 | 预估性能 | 依据 |
+| Scenario | Estimated Performance | Basis |
 |------|---------|------|
-| 上界 (乐观) | | |
-| 期望值 (最可能) | | |
-| 下界 (悲观) | | |
+| Upper bound (optimistic) | | |
+| Expected value (most likely) | | |
+| Lower bound (pessimistic) | | |
 
 ### 4. risk_matrix
 
-| 风险项 | 概率 (1-5) | 影响 (1-5) | 风险值 | 缓解措施 |
+| Risk Item | Probability (1-5) | Impact (1-5) | Risk Score | Mitigation |
 |--------|-----------|-----------|--------|----------|
-| 训练不收敛 | | | | |
-| 性能不达预期 | | | | |
-| 计算资源不足 | | | | |
+| Training does not converge | | | | |
+| Performance below target | | | | |
+| Insufficient compute resources | | | | |
 
 ### 5. go_nogo_recommendation
 
-**决策: GO / CONDITIONAL GO / NO-GO**
+**Decision: GO / CONDITIONAL GO / NO-GO**
 
-**理由:** ...
+**Rationale:** ...
 
-**条件 (如果 CONDITIONAL GO):**
+**Conditions (if CONDITIONAL GO):**
 1. ...
 2. ...
 
-**建议的下一步:** ...
+**Recommended next step:** ...

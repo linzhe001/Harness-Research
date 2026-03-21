@@ -1,6 +1,6 @@
 # {project_name}
 
-<!-- Idea: 将在 WF1 完成后由 $init-project update 填入 -->
+<!-- Idea: will be filled by $init-project update after WF1 completes -->
 
 ## Environment
 ```bash
@@ -14,27 +14,27 @@ conda activate {env_name or "<pending>"}
 <!-- dataset paths will be filled from PROJECT_STATE.json when known -->
 
 ## Tech Stack
-<!-- 将在 WF2 完成后由 $init-project update 填入 -->
+<!-- will be filled by $init-project update after WF2 completes -->
 - GPU: {gpu_name} x{count} ({vram}GB)
 
 ## Project Structure
-<!-- 将在 WF6 完成后由 $init-project update 填入 -->
+<!-- will be filled by $init-project update after WF6 completes -->
 
 ## Core Artifacts
-<!-- 将在 WF6 完成后由 $init-project update 填入 -->
+<!-- will be filled by $init-project update after WF6 completes -->
 
 ## Entry Scripts
-<!-- 将在 WF7 完成首次实验后由 $init-project update 填入 -->
-<!-- 锁定后，迭代阶段只允许修改这些文件，禁止新建训练/评估脚本 -->
+<!-- will be filled by $init-project update after WF7 first experiment -->
+<!-- once locked, iteration phase only allows modifying these files; creating new training/eval scripts is prohibited -->
 
-## Global Rule: project_map.json 维护
-任何 skill 在**创建、删除或重命名**文件后，必须同步更新 `project_map.json`。
-详细规则见 `.agents/references/project-map-rule.md`。
+## Global Rule: project_map.json Maintenance
+Any skill must sync-update `project_map.json` after **creating, deleting, or renaming** files.
+See `.agents/references/project-map-rule.md` for detailed rules.
 
 ## Workflow
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
-WF8 迭代循环: $iterate plan → $iterate code → $iterate run → $iterate eval → (CONTINUE→WF9 | DEBUG→repeat | PIVOT→WF2)
+WF8 iteration loop: $iterate plan → $iterate code → $iterate run → $iterate eval → (CONTINUE→WF9 | DEBUG→repeat | PIVOT→WF2)
 Current stage: {current_stage or "not initialized"}
 
 ## Custom
-<!-- 用户手动添加的内容放在这里，update 时会保留 -->
+<!-- user-added content goes here; preserved during updates -->
