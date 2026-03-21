@@ -73,7 +73,6 @@ mv .git .harness
 # Copy framework files to project root
 cp -r harness-tmp/.claude .
 cp -r harness-tmp/.agents .
-cp -r harness-tmp/.vscode .
 cp harness-tmp/CLAUDE.md.template .
 cp harness-tmp/AGENTS.md.template .
 cp harness-tmp/settings.local.json.template .

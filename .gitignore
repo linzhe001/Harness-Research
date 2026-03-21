@@ -24,7 +24,8 @@ wandb/
 *.pth
 *.pt
 
-# === System ===
+# === IDE / System ===
+.vscode/
 .DS_Store
 *.swp
 *~
