@@ -26,6 +26,7 @@ First, read PROJECT_STATE.json to locate input artifacts.
 For code style requirements, see [../../shared/code-style.md](../../shared/code-style.md).
 For the roadmap format, see [templates/implementation-roadmap.md](templates/implementation-roadmap.md).
 For the project map schema, see [templates/project-map-schema.json](templates/project-map-schema.json).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -86,6 +87,8 @@ For the project map schema, see [templates/project-map-schema.json](templates/pr
    - Pseudocode description of core logic
    - Input/output examples (with tensor shapes)
    - Dependency descriptions
+
+   Preserve the roadmap structure and schema fields, but localize roadmap headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
    **Must include pseudocode for `src/utils/git_snapshot.py`**:
    - `git_snapshot(training_type, auto_push)` → dict

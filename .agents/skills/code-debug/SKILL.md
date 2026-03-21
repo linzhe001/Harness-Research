@@ -10,6 +10,7 @@ description: Codex wrapper for post-WF7 code modification and debugging. Use whe
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
 - `../../../.agents/references/pre-training-rule.md`
 - `./references/debug-modes.md`
@@ -40,7 +41,8 @@ Use this skill for all post-WF7 code changes:
 - Treat natural-language requests as the canonical `$code-debug` flow.
 - Preserve the original minimal-change, validation, and semantic-commit requirements.
 - Keep `project_map.json` synchronization for stable interface changes.
+- Use `../../../.agents/references/language-policy.md` for reply language and for any natural-language debugging summaries; keep commands, commit prefixes, paths, and identifiers in English.
 
 ## Execution Rule
 
-Follow the local debugging contract instead of converting this skill into a general-purpose refactor tool.
+Follow the local debugging contract and language policy instead of converting this skill into a general-purpose refactor tool.

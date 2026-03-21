@@ -23,6 +23,12 @@ conda activate {env_name or "<pending>"}
 ## Core Artifacts
 <!-- will be filled by /init-project update after WF6 completes -->
 
+## Language Policy
+- `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
+- `artifact_language`: Use the same language as `interaction_language` for natural-language sections in generated docs and reports unless the user asks otherwise.
+- Keep file names, paths, commands, code identifiers, JSON/YAML keys, schema fields, workflow IDs, metric keys, and placeholder tokens in English.
+- Treat English wording in templates and examples as structural guidance only; localize headings and narrative text unless a field is explicitly marked English-only.
+
 ## Entry Scripts
 <!-- will be filled by /init-project update after WF7 first experiment -->
 <!-- once locked, iteration phase only allows modifying these files; creating new training/eval scripts is prohibited -->

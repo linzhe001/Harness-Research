@@ -10,6 +10,7 @@ description: Codex wrapper for WF6 architecture planning. Use when the user want
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
 - `./references/implementation-roadmap.md`
 - `./references/project-map-schema.json`
@@ -38,6 +39,7 @@ Use this skill for WF6 when the user wants the implementation roadmap and stable
 - Use `./references/implementation-roadmap.md`.
 - Use `./references/project-map-schema.json`.
 - Apply `../../../.agents/references/project-map-rule.md` when deciding what belongs in `project_map.json`.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation
 
@@ -47,4 +49,4 @@ Use this skill for WF6 when the user wants the implementation roadmap and stable
 
 ## Execution Rule
 
-Use the local prompt, roadmap template, schema, and project-map rule as the source of truth for WF6.
+Use the local prompt, roadmap template, schema, project-map rule, and language policy as the source of truth for WF6.

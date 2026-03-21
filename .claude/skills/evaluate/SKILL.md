@@ -28,6 +28,7 @@ When called standalone, the decision is recorded in PROJECT_STATE.json.
    Contains iteration_id, hypothesis, baseline_metrics, best_iteration, previous_iteration.
    If present, **prioritize the baseline and best info within it** for comparison.
 2. `PROJECT_STATE.json` — fallback, to get baseline metrics and experiment context.
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -105,6 +106,8 @@ When called standalone, the decision is recorded in PROJECT_STATE.json.
    - issue_diagnosis (issues found)
    - scaling_prediction (full training prediction)
    - recommendation (decision + reasoning + next steps)
+
+   Preserve the template structure and decision vocabulary, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 7. **Update Project State** (standalone invocation only)
 

@@ -22,6 +22,7 @@ If "PIVOT" or "ABANDON", the project is re-scoped or terminated.
 
 First, read PROJECT_STATE.json (if it exists) to get project context.
 For the output format, see [templates/feasibility-report.md](templates/feasibility-report.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -145,6 +146,8 @@ For the output format, see [templates/feasibility-report.md](templates/feasibili
    Rationale: ...
    Next steps: ...
    ```
+
+   Preserve the template structure and decision vocabulary, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 10. **Update Project State**
 

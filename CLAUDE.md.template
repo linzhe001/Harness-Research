@@ -26,6 +26,12 @@ conda activate {{ENV_NAME}}
 - `iteration_log.json` — Experiment history (single source of truth for iterations)
 - `project_map.json` — Code architecture (single source of truth for structure, stable files only)
 
+## Language Policy
+- `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
+- `artifact_language`: Use the same language as `interaction_language` for natural-language sections in generated docs and reports unless the user asks otherwise.
+- Keep file names, paths, commands, code identifiers, JSON/YAML keys, schema fields, workflow IDs, metric keys, and placeholder tokens in English.
+- Treat English wording in templates and examples as structural guidance only; localize headings and narrative text unless a field is explicitly marked English-only.
+
 ## Entry Scripts
 <!-- Filled by /init-project update after WF7 first run -->
 <!-- Core entry scripts are locked here after first successful training -->

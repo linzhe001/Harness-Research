@@ -22,6 +22,7 @@ On success → WF3 (deep-check). On failure → rollback to WF1.
 
 First, read PROJECT_STATE.json to get project context and locate the feasibility report.
 For the output format, see [templates/technical-spec.md](templates/technical-spec.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -94,6 +95,8 @@ For the output format, see [templates/technical-spec.md](templates/technical-spe
    - integration_points (integration points with existing code)
    - resource_estimation (resource estimation table)
    - risk_mitigation (rollback plan for each major change)
+
+   Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 8. **Update Project State**
 

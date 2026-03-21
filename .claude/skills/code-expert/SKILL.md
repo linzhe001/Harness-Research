@@ -28,6 +28,7 @@ On success → WF8 (iterate).
 If WF8 returns DEBUG → use `/code-debug` (not this skill).
 
 **CRITICAL**: After generating any file, you MUST update project_map.json.
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -84,6 +85,8 @@ If WF8 returns DEBUG → use `/code-debug` (not this skill).
    - `artifacts.project_map` → "project_map.json"
    - `current_stage.status` → "completed"
    - `history` append record
+
+User-facing progress notes and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while paths, commands, schema keys, and code identifiers remain in English.
 </instructions>
 
 <constraints>

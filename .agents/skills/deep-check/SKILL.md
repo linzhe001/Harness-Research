@@ -9,6 +9,7 @@ description: Codex wrapper for WF3 deep-check. Use when the user wants a skeptic
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/sanity-check.md`
 - `../../../PROJECT_STATE.json`
 
@@ -31,6 +32,7 @@ Use this skill for WF3 when the user wants a skeptical gate review before data e
 
 - Keep the `context_summary`.
 - Include failure-case search results, theoretical analysis, performance estimation, risk matrix, and recommendation.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation
 
@@ -40,4 +42,4 @@ Use this skill for WF3 when the user wants a skeptical gate review before data e
 
 ## Execution Rule
 
-Follow the local review logic and template rather than collapsing this stage into a generic prose review.
+Follow the local review logic, template, and language policy rather than collapsing this stage into a generic prose review.

@@ -9,6 +9,7 @@ description: Codex wrapper for experiment analysis and decision-making. Use when
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/stage-report.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
@@ -39,7 +40,8 @@ Use this skill when the user wants training or evaluation results interpreted an
 - Treat natural-language requests as the canonical `$evaluate` flow or the evaluation sub-step of `$iterate`.
 - Use `.agents/state/current_iteration.json` as the active iteration context path.
 - Preserve the original decision vocabulary and per-iteration reporting behavior, but do not assume a fixed metric family.
+- Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language report sections; keep protocol keys and decision tokens in English.
 
 ## Execution Rule
 
-Follow the local evaluation prompt and stage-report template rather than collapsing this into a brief metrics summary.
+Follow the local evaluation prompt, stage-report template, and language policy rather than collapsing this into a brief metrics summary.

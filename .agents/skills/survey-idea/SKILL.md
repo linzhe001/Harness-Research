@@ -9,6 +9,7 @@ description: Codex wrapper for WF1 idea survey and feasibility analysis. Use whe
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/feasibility-report.md`
 - `../../../PROJECT_STATE.json` if it exists
 
@@ -35,6 +36,7 @@ Use this skill for WF1 when the user wants to know whether a research idea is wo
 - Use the template at `./references/feasibility-report.md`.
 - Keep the `context_summary` block.
 - Use the canonical decision vocabulary: `PROCEED`, `PIVOT`, or `ABANDON`.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation
 
@@ -44,4 +46,4 @@ Use this skill for WF1 when the user wants to know whether a research idea is wo
 
 ## Execution Rule
 
-Follow the local report template closely; do not replace the scoring or recommendation structure with a generic summary.
+Follow the local report template and language policy closely; do not replace the scoring or recommendation structure with a generic summary.

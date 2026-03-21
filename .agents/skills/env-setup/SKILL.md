@@ -9,6 +9,7 @@ description: Codex wrapper for environment creation and refresh. Use when the us
 
 Read these first:
 - `../../../.agents/references/deps-update-rule.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/environment-refresh.md`
 - `../../../CLAUDE.md` if it exists
 - `../init-project/references/claude-maintenance.md`
@@ -43,6 +44,7 @@ Interpret natural-language requests as one of:
 - Treat natural-language requests as the canonical `$env-setup {create|refresh}` interface.
 - If the canonical prompt wants `AskUserQuestion`, ask the user directly only for missing setup choices.
 - Preserve the rule that refresh mode updates runtime environment facts while keeping dataset addresses intact unless the workflow explicitly refreshes them.
+- Use `../../../.agents/references/language-policy.md` for reply language while keeping commands, package names, keys, and paths in English.
 
 ## Execution Rule
 

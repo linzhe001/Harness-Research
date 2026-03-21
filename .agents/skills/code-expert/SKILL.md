@@ -10,6 +10,7 @@ description: Codex wrapper for WF7 first-pass code generation. Use when the user
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
 - `./references/generation-order.md`
 - `../../../PROJECT_STATE.json`
@@ -45,7 +46,8 @@ Use this skill for WF7 first-pass code generation only.
 - Treat natural-language requests as the canonical `$code-expert [target or all]` flow.
 - Preserve the dependency-ordered generation style and the requirement to read `project_map.json` and the roadmap before editing.
 - Keep the canonical validation pattern and project-map synchronization.
+- Use `../../../.agents/references/language-policy.md` for reply language and for any natural-language summaries; keep paths, schema keys, commands, and code identifiers in English.
 
 ## Execution Rule
 
-Follow the local prompt as the source of truth for WF7 code generation behavior.
+Follow the local prompt and language policy as the source of truth for WF7 code generation behavior.

@@ -21,6 +21,7 @@ On completion → project concludes, ready for paper writing.
 
 First, read PROJECT_STATE.json to get target_venue and experiment context.
 For the output format, see [templates/experiment-matrix.md](templates/experiment-matrix.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -95,6 +96,8 @@ For the output format, see [templates/experiment-matrix.md](templates/experiment
    - cross_dataset_evaluation (cross-dataset evaluation plan)
    - computation_budget (computation budget summary)
    - execution_order (recommended execution order and parallelization strategy)
+
+   Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 8. **Update project state**
 

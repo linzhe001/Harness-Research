@@ -10,6 +10,7 @@ description: Codex wrapper for staged `CLAUDE.md` generation and updates. Use wh
 Read these first:
 - `./references/claude-md-template.md`
 - `./references/claude-maintenance.md`
+- `../../../.agents/references/language-policy.md`
 - `../../../PROJECT_STATE.json` if it exists
 - `../../../CLAUDE.md` if it exists
 
@@ -39,6 +40,7 @@ Interpret natural-language requests as one of:
    - baseline reference
    - project structure
    - core artifacts
+   - language policy
    - entry scripts
 3. Preserve `## Custom`.
 4. At WF4, dataset paths must be refreshed into `CLAUDE.md` immediately.
@@ -57,8 +59,9 @@ Interpret natural-language requests as one of:
 - Ask the user directly only for essential missing inputs.
 - Preserve the staged fill-in behavior, line-budget discipline, and `## Custom` preservation rule.
 - Preserve the rule that environment creation belongs to WF5 baseline-repro unless the environment already exists.
+- Preserve the `## Language Policy` section and keep it aligned with `../../../.agents/references/language-policy.md`.
 - Keep `AGENTS.md` as Codex-native always-on guidance, but maintain `CLAUDE.md` for compatibility exactly as the canonical prompt expects.
 
 ## Execution Rule
 
-Follow the local prompt and template rather than replacing `CLAUDE.md` maintenance with a generic project summary.
+Follow the local prompt, template, and language policy rather than replacing `CLAUDE.md` maintenance with a generic project summary.

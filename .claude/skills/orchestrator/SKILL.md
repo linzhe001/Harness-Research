@@ -57,6 +57,7 @@ but **does not write** to iteration_log.json.
 - `/env-setup` — maintenance-type environment refresh, not a prerequisite step in the main flow
 
 **Key outputs**: WF6 generates `project_map.json` (architecture blueprint), which both WF7 and code-debug must depend on.
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -187,6 +188,8 @@ Parameter: target workflow_id (parsed from $ARGUMENTS)
    - Alternatives considered
 2. Append to the decisions array
 3. Update the updated_at timestamp
+
+Status reports, direct questions, and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md). Keep workflow IDs, schema keys, and explicitly English-only fields unchanged.
 
 ## State Transition Rules
 

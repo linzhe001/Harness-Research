@@ -9,6 +9,7 @@ description: Codex wrapper for WF8 structured iteration. Use when the user wants
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/iteration-log-schema.json`
 - `./references/iteration-context.md`
 - `./references/iteration-constraints.md`
@@ -91,6 +92,7 @@ Interpret natural-language requests as one of these canonical intents:
 - Treat natural-language requests as the canonical `$iterate {plan|code|run|eval|ablate|status|log}` interface.
 - When the canonical workflow calls for code or analysis substeps, use `$code-debug` and `$evaluate`.
 - Use `.agents/state/` as the local active-context directory; create context files inside it only when needed.
+- Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language iteration summaries; keep schema keys, commands, and decision/status tokens unchanged.
 
 ## Execution Rule
 

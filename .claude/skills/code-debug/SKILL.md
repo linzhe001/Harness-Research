@@ -33,6 +33,7 @@ Inputs:
 4. Per-iteration report `docs/iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision)
 
 After fix → re-train → /iterate eval or /evaluate re-evaluates.
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -99,6 +100,8 @@ After fix → re-train → /iterate eval or /evaluate re-evaluates.
    - `train(baseline/{name}): fix data loading path, align evaluation metric computation`
 
    **The commit is mandatory**. If the commit fails, do not silently skip it — report the error.
+
+User-facing debugging summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, commit prefixes, paths, and identifiers remain in English.
 </instructions>
 
 <constraints>

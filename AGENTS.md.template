@@ -17,6 +17,13 @@
 - `project_map.json`: stable architecture map for core code and configs.
 - These canonical state files must stay at the repository root, not under `.agents/`.
 
+## Language Policy
+
+- Match the language of the latest substantive user input unless the user explicitly requests another language.
+- Use the same language for natural-language artifacts, reports, and summaries unless the user asks for a different output language.
+- Keep file names, paths, commands, code identifiers, JSON/YAML keys, schema fields, workflow IDs, metric keys, and placeholder tokens in English.
+- Treat English wording in templates and examples under `.agents/` as structural guidance only, not as a requirement that the final output be in English.
+
 ## Skills
 
 - Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.

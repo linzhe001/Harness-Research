@@ -10,6 +10,7 @@ description: Codex wrapper for WF5 baseline reproduction. Use when the user want
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/pre-training-rule.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/baseline-report.md`
 - `../../../PROJECT_STATE.json`
 
@@ -37,6 +38,7 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 - Keep adaptation notes, training config notes, and reproduced-versus-paper comparison.
 - Treat environment creation here as part of the canonical WF5 gate, not as a separate pre-workflow step.
 - Use the canonical pre-training commit rule for baseline code changes.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation
 
@@ -46,4 +48,4 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 
 ## Execution Rule
 
-Follow the local prompt and baseline report template instead of simplifying the reproduction stage.
+Follow the local prompt, baseline report template, and language policy instead of simplifying the reproduction stage.

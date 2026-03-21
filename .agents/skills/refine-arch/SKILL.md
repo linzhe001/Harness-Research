@@ -10,6 +10,7 @@ description: Codex wrapper for WF2 architecture design. Use when the user wants 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/technical-spec.md`
 - `../../../PROJECT_STATE.json`
 
@@ -30,6 +31,7 @@ Use this skill for WF2 when the user wants to translate an approved idea into a 
 
 - Use `./references/technical-spec.md`.
 - Include the required sections: architecture overview, module modification plan, MVP definition, alternative plans, integration points, resource estimation, and risk mitigation.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation
 
@@ -39,4 +41,4 @@ Use this skill for WF2 when the user wants to translate an approved idea into a 
 
 ## Execution Rule
 
-Use the local instructions and template as the source of truth for the spec sections.
+Use the local instructions, template, and language policy as the source of truth for the spec sections.

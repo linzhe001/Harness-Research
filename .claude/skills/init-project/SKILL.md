@@ -30,6 +30,7 @@ CLAUDE.md content is only finalized at different workflow stages:
 If PROJECT_STATE.json exists, read it to determine current stage.
 If CLAUDE.md already exists, read it first.
 For the template format, see [templates/claude-md-template.md](templates/claude-md-template.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -69,6 +70,12 @@ Python, PyTorch, CUDA, GPU, dependency versions...
 
 ## Tech Stack
 <!-- Detailed tech stack will be filled in after WF2 completion -->
+
+## Language Policy
+- `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
+- `artifact_language`: Use the same language as `interaction_language` for natural-language sections in generated docs and reports unless the user asks otherwise.
+- Keep file names, paths, commands, code identifiers, JSON/YAML keys, schema fields, workflow IDs, metric keys, and placeholder tokens in English.
+- Treat English wording in templates and examples as structural guidance only; localize headings and narrative text unless a field is explicitly marked English-only.
 
 ## Workflow
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
@@ -149,6 +156,7 @@ Equivalent to the effect of `/env-setup refresh`.
 Every update also:
 - Re-detects Environment (versions may have changed)
 - Updates the `Current stage` line
+- Preserves the `## Language Policy` section and keeps it aligned with [../../shared/language-policy.md](../../shared/language-policy.md)
 - Preserves the `## Custom` section content (manually added by the user)
 - Does not overwrite already filled-in valid content
 
@@ -167,5 +175,6 @@ Every update also:
 - NEVER list unrelated dependencies (e.g., setuptools, pip itself)
 - ALWAYS include the virtual environment activation command
 - ALWAYS auto-detect rather than manually fill in tech stack versions
+- ALWAYS preserve the `## Language Policy` section
 - ALWAYS preserve the `## Custom` section user content
 </constraints>

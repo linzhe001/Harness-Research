@@ -21,6 +21,7 @@ This is a utility skill (not a numbered workflow stage). It can be called:
 Sub-commands:
 - `create` — Create a new conda environment from scratch as a maintenance action
 - `refresh` — Detect current environment and update CLAUDE.md `## Environment` section
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -107,6 +108,8 @@ Sub-commands:
    ```
 
 4. Do not touch any other sections of CLAUDE.md.
+
+User-facing questions and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, package names, keys, and paths remain in English.
 </instructions>
 
 <constraints>

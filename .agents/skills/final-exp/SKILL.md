@@ -9,6 +9,7 @@ description: Codex wrapper for WF9 final experiment planning. Use when the user 
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/experiment-matrix.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
@@ -31,7 +32,8 @@ Use this skill for WF9 when the user wants the final validation matrix after the
 - Treat natural-language requests as the canonical `$final-exp` flow.
 - Preserve the original emphasis on ablation isolation, reviewer expectations, and compute budgeting.
 - Keep the canonical output path and state updates.
+- Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule
 
-Follow the local planning prompt and experiment-matrix template rather than replacing them with a generic experiment checklist.
+Follow the local planning prompt, experiment-matrix template, and language policy rather than replacing them with a generic experiment checklist.

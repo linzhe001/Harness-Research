@@ -9,6 +9,7 @@ description: Codex wrapper for WF7.5 validation. Use when the user wants the tra
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/review-checklist.md`
 - `../../../project_map.json`
 - `../../../docs/Technical_Spec.md`
@@ -44,7 +45,8 @@ Use this skill for WF7.5 when the user wants to verify the codebase is safe to e
 - Treat natural-language requests as the canonical `$validate-run [config_path]` flow.
 - Preserve the canonical two-part gate: semantic review plus smoke test.
 - If the canonical workflow routes to a fix step, use `$code-debug`.
+- Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language review notes and verdict summaries; keep checklist item names, commands, status labels, and identifiers in English.
 
 ## Execution Rule
 
-Follow the local validation sequence instead of reducing this stage to a quick smoke test only.
+Follow the local validation sequence and language policy instead of reducing this stage to a quick smoke test only.

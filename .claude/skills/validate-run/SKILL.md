@@ -27,6 +27,7 @@ Failure here means issues that must be fixed before entering WF8.
 Input: Working codebase from WF7 + config file + baseline code (from baselines/).
 Output: Code review findings + smoke test pass/fail report.
 On PASS → WF8 (iterate). On FAIL → fix issues via /code-debug.
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -202,6 +203,8 @@ On PASS → WF8 (iterate). On FAIL → fix issues via /code-debug.
    - **PASS**: Smoke test all passed AND code review has no critical findings (warnings are recorded but do not block)
    - **REVIEW**: Smoke test passed BUT code review has critical findings — list issues needing confirmation, user decides whether to proceed
    - **FAIL**: Smoke test has failed items — must be fixed
+
+   Keep checklist item names, status labels, commands, and identifiers stable, but localize surrounding narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 9. **Cleanup**
 

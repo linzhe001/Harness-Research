@@ -24,6 +24,7 @@ On CONTINUE (final) → WF9 (final-exp).
 
 The iteration log file is at `iteration_log.json` in the project root.
 For the schema, see [templates/iteration-log-schema.json](templates/iteration-log-schema.json).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 
 ## State Ownership
 
@@ -85,6 +86,8 @@ If there are incomplete iterations, prompt the user to complete or abandon them 
    - Configuration changes (config_diff)
    - Expected effects
    - **Screening recommendation**: If no new architecture/loss family is involved, suggest a 5K-10K proxy run first
+
+   Localize user-facing plan summaries and recommendations according to [../../shared/language-policy.md](../../shared/language-policy.md), while keeping schema keys, commands, and status/decision tokens unchanged.
 
 5. **Codex Cross-Validation** (always triggered):
 

@@ -9,6 +9,7 @@ description: Codex wrapper for the canonical WF orchestrator. Use when the user 
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/language-policy.md`
 - `./references/project-state-schema.json`
 - `./references/stage-gates.md`
 - `../../../CLAUDE.md`
@@ -70,6 +71,7 @@ Interpret natural-language requests as one of these canonical intents:
 - Ask the user directly, in plain text, when the canonical Claude prompt would have used `AskUserQuestion`.
 - Call Codex wrapper skills such as `$init-project`, `$validate-run`, and `$iterate` instead of Claude slash commands.
 - Keep the stage table, gate rules, and state semantics from the canonical prompt unchanged.
+- Use `../../../.agents/references/language-policy.md` for reply language; keep workflow IDs, schema keys, and explicitly English-only fields unchanged.
 
 ## Execution Rule
 

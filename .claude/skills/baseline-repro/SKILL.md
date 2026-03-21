@@ -22,6 +22,7 @@ On success → WF6 (build-plan). On failure → debug reproduction issues or ski
 
 First, read PROJECT_STATE.json to get project context and Technical_Spec.md for the baseline list.
 For the output format, see [templates/baseline-report.md](templates/baseline-report.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -80,6 +81,8 @@ For the output format, see [templates/baseline-report.md](templates/baseline-rep
    - Reproduction results table for all baselines
    - Per-baseline adaptation notes and training configurations
    - Discrepancy analysis against paper-reported values
+
+   Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 5. **Update project_map.json**
 

@@ -26,6 +26,7 @@ Output: Sanity_Check_Log.md.
 On GO → WF4 (data-prep). On NO-GO → rollback to WF2.
 
 For the output format, see [templates/sanity-check.md](templates/sanity-check.md).
+For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 </context>
 
 <instructions>
@@ -118,6 +119,8 @@ For the output format, see [templates/sanity-check.md](templates/sanity-check.md
    - performance_estimation (upper bound / expected / lower bound)
    - risk_matrix
    - codex_cross_validation (used/unavailable + content)
+
+   Preserve the template structure and decision labels, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
    - go_nogo_recommendation (with detailed rationale)
 
 9. **Update Project State**
