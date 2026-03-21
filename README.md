@@ -40,22 +40,37 @@ WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
 
 ### Prerequisites
 
-The user should have already run:
+The user should have already run one of:
 
 ```bash
+# Option A (recommended): Clone directly into an EMPTY project directory
+mkdir /path/to/my-research-project && cd /path/to/my-research-project
+git clone <harness-repo-url> .
+```
+
+```bash
+# Option B: Clone into a subdirectory (if project dir is not empty)
 cd /path/to/my-research-project
 git clone <harness-repo-url> harness-tmp
 ```
 
 ### Step-by-Step Setup
 
-Execute these steps **in order**.
+Execute these steps **in order**. Detect which option the user used and follow the corresponding path.
 
-#### Step 1: Move framework files to project root
+#### Step 1: Arrange files and create `.harness`
 
-Copy all framework files from the cloned subdirectory to the project root:
+**If Option A** (`git clone <url> .` — files are already at project root):
 
 ```bash
+# .git is currently the harness repo — rename it to .harness
+mv .git .harness
+```
+
+**If Option B** (`git clone <url> harness-tmp` — files are in a subdirectory):
+
+```bash
+# Copy framework files to project root
 cp -r harness-tmp/.claude .
 cp -r harness-tmp/.agents .
 cp -r harness-tmp/.vscode .
@@ -63,20 +78,17 @@ cp harness-tmp/CLAUDE.md.template .
 cp harness-tmp/AGENTS.md.template .
 cp harness-tmp/settings.local.json.template .
 cp harness-tmp/README.md .
-```
 
-**Note**: Do NOT copy `harness-tmp/.git` here — that is handled in Step 2.
-
-#### Step 2: Convert harness clone to bare repo at `.harness`
-
-```bash
-# Move the cloned .git into .harness (this becomes the harness bare repo)
+# Move harness .git to .harness
 mv harness-tmp/.git .harness
 
 # Remove the now-empty clone directory
 rm -rf harness-tmp
+```
 
-# Configure .harness so it works as a secondary repo alongside .git
+**Then, for both options**, configure `.harness`:
+
+```bash
 git --git-dir=.harness --work-tree=. config core.bare false
 git --git-dir=.harness --work-tree=. config status.showUntrackedFiles no
 ```
@@ -84,11 +96,11 @@ git --git-dir=.harness --work-tree=. config status.showUntrackedFiles no
 Verify:
 
 ```bash
-git --git-dir=.harness --work-tree=. status     # should be clean
+git --git-dir=.harness --work-tree=. status        # should be clean
 git --git-dir=.harness --work-tree=. log --oneline  # should show harness commits
 ```
 
-#### Step 3: Generate project files from templates
+#### Step 2: Generate project files from templates
 
 Copy each template to its actual filename. **Only copy if the target does not already exist** (never overwrite existing project files):
 
@@ -103,7 +115,7 @@ Copy each template to its actual filename. **Only copy if the target does not al
 [ ! -f .claude/settings.local.json ] && cp settings.local.json.template .claude/settings.local.json
 ```
 
-#### Step 4: Create project directory structure
+#### Step 3: Create project directory structure
 
 ```bash
 mkdir -p src scripts configs baselines experiments docs docs/iterations tests
@@ -111,13 +123,13 @@ mkdir -p .claude/iterations
 mkdir -p .agents/state/iterations
 ```
 
-#### Step 5: Initialize research repo
+#### Step 4: Initialize research repo
 
 ```bash
 git init
 ```
 
-#### Step 6: Create research `.gitignore`
+#### Step 5: Create research `.gitignore`
 
 The research repo must ignore all harness-managed files. Create `.gitignore` with this exact content:
 
@@ -151,7 +163,7 @@ wandb/
 *~
 ```
 
-#### Step 7: Initial commit for research repo
+#### Step 6: Initial commit for research repo
 
 ```bash
 git add CLAUDE.md AGENTS.md .gitignore
@@ -164,7 +176,7 @@ If the user has a remote URL for the research repo:
 git remote add origin <research-repo-url>
 ```
 
-#### Step 8: Set up `hgit` shell alias
+#### Step 7: Set up `hgit` shell alias
 
 Check if the alias already exists. If not, add it to the user's shell config:
 
@@ -175,7 +187,7 @@ alias hgit='git --git-dir=.harness --work-tree=.'
 
 Remind the user to run `source ~/.bashrc` (or restart the shell) for the alias to take effect.
 
-#### Step 9: Fill in project details
+#### Step 8: Fill in project details
 
 Replace `{{placeholders}}` in `CLAUDE.md` with actual project information, or run:
 - Claude Code: `/orchestrator init`
