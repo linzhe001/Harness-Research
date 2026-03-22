@@ -15,6 +15,7 @@
 - `PROJECT_STATE.json`: stage and milestone state. Stage transitions require explicit user confirmation.
 - `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
 - `project_map.json`: stable architecture map for core code and configs.
+- `.auto_iterate/`: controller-owned runtime state (if auto-iterate is enabled; do not edit manually).
 - These canonical state files must stay at the repository root, not under `.agents/`.
 
 ## Language Policy

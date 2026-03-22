@@ -12,7 +12,7 @@
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF9 final-exp (CONTINUE) / /iterate plan (DEBUG) / WF2 (PIVOT)
+- **Next Step:** /iterate plan (NEXT_ROUND) / /iterate plan [debug] (DEBUG) / WF9 final-exp (CONTINUE) / WF2 (PIVOT)
 </context_summary>
 ```
 
@@ -85,7 +85,7 @@ Based on scaling law:
 ```markdown
 ## Recommendation
 
-**Decision: CONTINUE / DEBUG / PIVOT / ABORT**
+**Decision: NEXT_ROUND / DEBUG / CONTINUE / PIVOT / ABORT**
 
 **Rationale:**
 1. ...
@@ -99,7 +99,8 @@ Based on scaling law:
 
 | Scenario | Decision | Next Step |
 |------|------|--------|
-| Performance on target + training stable | CONTINUE | WF8 |
-| Fixable bug found | DEBUG | WF6 (with error info) |
-| Performance gap >5% | PIVOT | WF2 (alternative approach) |
+| Ordinary improvement round, not yet ready for WF9 | NEXT_ROUND | /iterate plan (next round) |
+| Bug, stability issue, or pipeline failure | DEBUG | /iterate plan (debug-oriented round) |
+| Target met or ready for final experiments | CONTINUE | WF9 (handoff to orchestrator) |
+| Fundamental approach change needed | PIVOT | WF2 (alternative approach) |
 | Theoretical failure / insufficient resources | ABORT | Record lessons learned and terminate |

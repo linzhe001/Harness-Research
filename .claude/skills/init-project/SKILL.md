@@ -79,7 +79,7 @@ Python, PyTorch, CUDA, GPU, dependency versions...
 
 ## Workflow
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
-WF8 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (CONTINUE→WF9 | DEBUG→repeat | PIVOT→WF2)
+WF8 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF9 | PIVOT→WF2 | ABORT→stop)
 Current stage: WF1 not_started
 ```
 

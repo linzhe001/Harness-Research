@@ -94,10 +94,27 @@
             },
             "additionalProperties": { "type": ["number", "string", "null"] }
           },
+          "screening": {
+            "type": ["object", "null"],
+            "description": "Screening run result (same iteration as full_run)",
+            "properties": {
+              "recommended": { "type": "boolean", "description": "Whether plan recommended screening" },
+              "status": { "type": "string", "enum": ["passed", "failed", "skipped"], "description": "Terminal screening status" }
+            }
+          },
+          "full_run": {
+            "type": ["object", "null"],
+            "description": "Full training run result (same iteration as screening)",
+            "properties": {
+              "status": { "type": "string", "enum": ["completed", "recoverable_failed", "failed"] },
+              "resume_mode": { "type": ["string", "null"], "description": "from_scratch or checkpoint" },
+              "metrics": { "type": "object", "description": "Protocol-defined tracked metrics", "additionalProperties": { "type": ["number", "string", "null"] } }
+            }
+          },
           "decision": {
             "type": ["string", "null"],
-            "enum": ["CONTINUE", "DEBUG", "PIVOT", "ABORT", null],
-            "description": "Post-evaluation decision"
+            "enum": ["NEXT_ROUND", "CONTINUE", "DEBUG", "PIVOT", "ABORT", null],
+            "description": "Post-evaluation decision: NEXT_ROUND=continue loop, DEBUG=debug round, CONTINUE=handoff to WF9, PIVOT=WF2, ABORT=terminate"
           },
           "lessons": {
             "type": "array",

@@ -40,6 +40,8 @@ Use these checks when validating `PROJECT_STATE.json` progress.
   - `iteration_log.json`
   - `PROJECT_STATE.json.current_stage.latest_iteration` synchronized with the latest iteration record
   - `CLAUDE.md` current-stage summary synchronized with iteration progress
+  - WF8 → WF9 gate: only a `decision=CONTINUE` on the latest completed iteration allows advancing to WF9. `NEXT_ROUND` and `DEBUG` keep the project in WF8. `PIVOT` triggers rollback to WF2. `ABORT` terminates.
+  - If auto-iterate is active, `.auto_iterate/state.json` may be read for loop status (read-only; orchestrator must not write to `.auto_iterate/`)
 - `final_exp`
   - `docs/Final_Experiment_Matrix.md`
 - `release`

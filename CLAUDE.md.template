@@ -25,6 +25,7 @@ conda activate {{ENV_NAME}}
 - `PROJECT_STATE.json` — Stage progression (single source of truth for stages)
 - `iteration_log.json` — Experiment history (single source of truth for iterations)
 - `project_map.json` — Code architecture (single source of truth for structure, stable files only)
+- `.auto_iterate/` — Controller-owned runtime state (if auto-iterate is enabled; do not edit manually)
 
 ## Language Policy
 - `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
@@ -52,7 +53,7 @@ See `.agents/references/project-map-rule.md` for detailed rules.
 
 ## Workflow
 WF1(survey) -> WF2(arch) -> WF3(check) -> WF4(data) -> WF5(baseline) -> WF6(plan) -> WF7(code) -> WF7.5(validate) -> WF8(iterate) -> WF9(final-exp) -> WF10(release)
-WF8 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (CONTINUE->WF9 | DEBUG->repeat | PIVOT->WF2)
+WF8 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF9 | PIVOT->WF2 | ABORT->stop)
 Current stage: WF1 (not started)
 
 ## Custom
