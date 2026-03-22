@@ -1,0 +1,62 @@
+{
+  "schema_version": 999,
+  "loop_id": "auto_20260322_153000",
+  "status": "running",
+  "tool": "codex",
+  "current_round_index": 1,
+  "current_phase_key": "plan",
+  "current_iteration_id": null,
+  "phase_attempt": 1,
+  "goal": {
+    "source_path": "docs/auto_iterate_goal.md",
+    "activated_at": "2026-03-22T15:30:00Z"
+  },
+  "objective": {
+    "primary_metric": {
+      "name": "PSNR",
+      "direction": "maximize",
+      "target": 32.0
+    },
+    "constraints": []
+  },
+  "best": {
+    "iteration_id": null,
+    "round_index": null,
+    "primary_metric": null,
+    "updated_at": null
+  },
+  "patience": {
+    "max_no_improve_rounds": 5,
+    "min_primary_delta": 0.1,
+    "consecutive_no_improve": 0
+  },
+  "budget": {
+    "max_rounds": 20,
+    "completed_rounds": 0,
+    "gpu_count": 1,
+    "max_gpu_hours": 100.0,
+    "used_gpu_hours": 0.0,
+    "tracking_method": "wall_time_hours_x_gpu_count"
+  },
+  "llm_budget": {
+    "max_calls": 200,
+    "used_calls": 0,
+    "max_cost_usd": 50.0,
+    "used_cost_usd": 0.0,
+    "tracking_method": "runtime_invocation_count"
+  },
+  "accounts": {
+    "selected_account_id": "codex_acc1",
+    "by_account": {
+      "codex_acc1": {
+        "used_calls": 0,
+        "last_used_at": null,
+        "cooldown_until": null,
+        "status": "ready"
+      }
+    }
+  },
+  "last_decision": null,
+  "halt_reason": null,
+  "last_failure": null
+}

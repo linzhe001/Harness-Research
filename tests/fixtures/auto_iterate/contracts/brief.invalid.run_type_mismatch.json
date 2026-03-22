@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "loop_id": "auto_20260322_153000",
+  "round_index": 4,
+  "phase_family": "run",
+  "phase_key": "run_full",
+  "run_type": "screening",
+  "tool": "codex",
+  "auto_mode": true,
+  "recovery_mode": "normal",
+  "round_type": "ordinary",
+  "objective": {
+    "primary_metric": {
+      "name": "PSNR",
+      "direction": "maximize",
+      "target": 32.0
+    },
+    "constraints": []
+  },
+  "current_best": {
+    "iteration_id": "iter3",
+    "primary_metric": 30.5
+  },
+  "recent_lessons": [],
+  "failed_hypotheses": [],
+  "budget_status": {
+    "completed_rounds": 3,
+    "max_rounds": 20,
+    "used_gpu_hours": 12.5,
+    "max_gpu_hours": 100.0,
+    "used_llm_calls": 24,
+    "max_llm_calls": 200
+  },
+  "screening_policy": {
+    "enabled": true,
+    "threshold_pct": 90,
+    "default_steps": 5000
+  },
+  "timeouts": {
+    "plan": 1800,
+    "code": 3600,
+    "run_screening": 14400,
+    "run_full": 28800,
+    "eval": 1800
+  }
+}

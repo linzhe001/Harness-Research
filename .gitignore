@@ -1,6 +1,6 @@
 # === Research project files (not part of harness framework) ===
 src/
-scripts/
+scripts/*
 !scripts/auto_iterate_ctl.sh
 !scripts/auto_iterate_ctl.py
 !scripts/auto_iterate_controller.py
@@ -8,7 +8,7 @@ scripts/
 !scripts/auto_iterate_runtime_codex.py
 !scripts/auto_iterate/
 configs/
-config/
+config/*
 !config/auto_iterate_*.example.yaml
 baselines/
 experiments/
@@ -17,7 +17,7 @@ docs/*
 !docs/auto_iterate_v7_plan/*.md
 !docs/auto_iterate_goal_template.md
 !docs/remote_control_guide.md
-tests/
+tests/*
 !tests/fixtures/
 !tests/test_auto_iterate_*.py
 PROJECT_STATE.json

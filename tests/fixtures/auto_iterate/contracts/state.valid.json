@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "loop_id": "auto_20260322_153000",
+  "status": "running",
+  "tool": "codex",
+  "current_round_index": 3,
+  "current_phase_key": "eval",
+  "current_iteration_id": "iter3",
+  "phase_attempt": 1,
+  "goal": {
+    "source_path": "docs/auto_iterate_goal.md",
+    "activated_at": "2026-03-22T15:30:00Z"
+  },
+  "objective": {
+    "primary_metric": {
+      "name": "PSNR",
+      "direction": "maximize",
+      "target": 32.0
+    },
+    "constraints": [
+      "FPS >= 30",
+      "Parameters <= 50M"
+    ]
+  },
+  "best": {
+    "iteration_id": "iter2",
+    "round_index": 2,
+    "primary_metric": 30.5,
+    "updated_at": "2026-03-22T17:45:00Z"
+  },
+  "patience": {
+    "max_no_improve_rounds": 5,
+    "min_primary_delta": 0.1,
+    "consecutive_no_improve": 1
+  },
+  "budget": {
+    "max_rounds": 20,
+    "completed_rounds": 2,
+    "gpu_count": 1,
+    "max_gpu_hours": 100.0,
+    "used_gpu_hours": 12.5,
+    "tracking_method": "wall_time_hours_x_gpu_count"
+  },
+  "llm_budget": {
+    "max_calls": 200,
+    "used_calls": 24,
+    "max_cost_usd": 50.0,
+    "used_cost_usd": 6.80,
+    "tracking_method": "runtime_invocation_count"
+  },
+  "accounts": {
+    "selected_account_id": "codex_acc1",
+    "by_account": {
+      "codex_acc1": {
+        "used_calls": 18,
+        "last_used_at": "2026-03-22T18:00:00Z",
+        "cooldown_until": null,
+        "status": "ready"
+      },
+      "codex_acc2": {
+        "used_calls": 6,
+        "last_used_at": "2026-03-22T16:30:00Z",
+        "cooldown_until": null,
+        "status": "ready"
+      }
+    }
+  },
+  "last_decision": "NEXT_ROUND",
+  "halt_reason": null,
+  "last_failure": null
+}

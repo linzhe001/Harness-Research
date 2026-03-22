@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "phase_family": "eval",
+  "phase_key": "eval",
+  "run_type": null,
+  "account_id": "codex_acc1",
+  "started_at": "2026-03-22T18:00:00Z",
+  "finished_at": "2026-03-22T18:12:35Z",
+  "duration_sec": 755,
+  "exit_code": 0,
+  "runtime_exit_class": "success",
+  "failure_reason": null,
+  "timed_out": false,
+  "stdout_path": ".auto_iterate/runtime/round4_eval.stdout.log",
+  "stderr_path": ".auto_iterate/runtime/round4_eval.stderr.log"
+}

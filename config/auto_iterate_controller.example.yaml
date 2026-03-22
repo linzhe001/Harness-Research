@@ -1,0 +1,50 @@
+# Auto-Iterate Controller Configuration
+# Copy to your project and customize as needed.
+
+# --- Timeouts (seconds) ---
+# Maximum wall-clock time per phase before the controller sends SIGTERM.
+timeouts:
+  plan: 1800        # 30 min
+  code: 3600        # 1 hour
+  run_screening: 14400  # 4 hours
+  run_full: 28800   # 8 hours
+  eval: 1800        # 30 min
+
+# Grace period after SIGTERM before SIGKILL.
+terminate_grace_sec: 30
+
+# --- Retry Policy ---
+retry_policy:
+  # Max attempts per phase_key before pausing with manual_action_required.
+  max_phase_attempts: 2
+
+# --- Budget ---
+budget:
+  # Number of GPUs used (for conservative GPU-hour accounting: wall_time * gpu_count).
+  gpu_count: 1
+
+# --- LLM Budget ---
+# Limits on LLM (Codex) usage across all rounds.
+llm_budget:
+  max_calls: 200
+  max_cost_usd: 50.0
+
+# --- Patience ---
+patience:
+  # Stop if no improvement for this many consecutive rounds.
+  max_no_improve_rounds: 5
+  # Minimum delta to count as improvement.
+  min_primary_delta: 0.1
+
+# --- Event Log ---
+event_log:
+  # Rotate events.jsonl when it exceeds this size (bytes).
+  # Rotation only happens at round boundaries.
+  rotate_bytes: 1048576  # 1 MB
+
+# --- Heartbeat ---
+heartbeat:
+  # Interval between heartbeat updates to lock.json (seconds).
+  interval_sec: 30
+  # A lock is considered stale if heartbeat_at is older than this (seconds).
+  stale_threshold_sec: 120

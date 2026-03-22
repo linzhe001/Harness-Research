@@ -1,0 +1,13 @@
+{"v": 1, "ts": "2026-03-22T15:30:00Z", "event": "LOOP_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "payload": {"tool": "codex", "goal_source": "docs/auto_iterate_goal.md"}}
+{"v": 1, "ts": "2026-03-22T15:30:01Z", "event": "ROUND_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1}
+{"v": 1, "ts": "2026-03-22T15:30:02Z", "event": "PHASE_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "plan"}
+{"v": 1, "ts": "2026-03-22T15:45:00Z", "event": "PHASE_COMPLETED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "plan", "payload": {"current_iteration_id": "iter1"}}
+{"v": 1, "ts": "2026-03-22T15:45:01Z", "event": "PHASE_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "code"}
+{"v": 1, "ts": "2026-03-22T16:15:00Z", "event": "PHASE_COMPLETED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "code"}
+{"v": 1, "ts": "2026-03-22T16:15:01Z", "event": "SCREENING_BYPASSED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "payload": {"reason": "screening_policy.enabled=false"}}
+{"v": 1, "ts": "2026-03-22T16:15:02Z", "event": "PHASE_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "run_full"}
+{"v": 1, "ts": "2026-03-22T20:00:00Z", "event": "PHASE_COMPLETED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "run_full"}
+{"v": 1, "ts": "2026-03-22T20:00:01Z", "event": "PHASE_STARTED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "eval"}
+{"v": 1, "ts": "2026-03-22T20:15:00Z", "event": "NEW_BEST", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "payload": {"iteration_id": "iter1", "primary_metric": 29.8, "previous_best": null}}
+{"v": 1, "ts": "2026-03-22T20:15:01Z", "event": "PHASE_COMPLETED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1, "phase_key": "eval", "payload": {"decision": "NEXT_ROUND"}}
+{"v": 1, "ts": "2026-03-22T20:15:02Z", "event": "ROUND_COMPLETED", "loop_id": "auto_20260322_153000", "status": "running", "round_index": 1}
