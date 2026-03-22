@@ -200,8 +200,19 @@ wandb/
 
 ```bash
 git add CLAUDE.md AGENTS.md .gitignore
+git add PROJECT_STATE.json project_map.json docs/ scripts/ configs/ src/ tests/ 2>/dev/null || true
 git commit -m "init: project scaffold"
 ```
+
+If stable scaffold files already exist when bootstrap happens, they should be tracked in the same initial commit instead of being left as long-lived untracked files.
+
+After bootstrap, whenever the workflow creates new stable project files, add them to the research repo promptly. In practice, this usually means:
+
+```bash
+git add PROJECT_STATE.json project_map.json docs/ scripts/ configs/ src/ tests/
+```
+
+Do not leave canonical state files, stable docs, or stable scripts/configs untracked just because they were generated after the first commit.
 
 If the user has a remote URL for the research repo:
 
@@ -278,7 +289,9 @@ ls -d harness-tmp Harness-Research 2>/dev/null && echo "FAIL: clone dir exists" 
 # 2. Research repo — should only track project files
 git status                # clean
 git log --oneline         # shows "init: project scaffold"
-git ls-files              # should list: CLAUDE.md, AGENTS.md, .gitignore
+git ls-files              # should at minimum list: CLAUDE.md, AGENTS.md, .gitignore
+                          # should also list stable scaffold files when present:
+                          # PROJECT_STATE.json, project_map.json, docs/, scripts/, configs/, src/, tests/
                           # should NOT list: .claude/*, .agents/*
 
 # 3. Harness repo — should only track framework files
