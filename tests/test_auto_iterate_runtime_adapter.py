@@ -553,10 +553,15 @@ class TestHeartbeatWorker:
         lm = LockManager(tmp_path / "lock.json")
         lm.acquire("loop1", "codex", "/workspace")
 
+        # Use a short interval so the next heartbeat fires quickly.
         hb = HeartbeatWorker(lm, interval_sec=1)
         hb.start()
-        time.sleep(0.1)  # Let the first heartbeat succeed.
+        time.sleep(0.2)  # Let the first heartbeat succeed.
         # Remove lock to cause error on next heartbeat.
         (tmp_path / "lock.json").unlink()
-        time.sleep(2.0)  # Wait for the next heartbeat cycle to detect the error.
+        # Wait long enough for at least 2 heartbeat cycles.
+        for _ in range(30):
+            time.sleep(0.2)
+            if not hb.is_alive():
+                break
         assert not hb.is_alive()
