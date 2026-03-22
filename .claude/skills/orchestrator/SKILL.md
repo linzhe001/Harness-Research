@@ -46,8 +46,9 @@ but **does not write** to iteration_log.json.
 | 10 | release | /release | submission package |
 
 **WF8 iteration loop**: `/iterate plan` → `/iterate code` → `/iterate run` → `/iterate eval` → decision branch:
-- CONTINUE → advance to WF9
-- DEBUG → new iteration (back to /iterate plan)
+- NEXT_ROUND → stay in WF8, ordinary improvement round (back to /iterate plan)
+- DEBUG → stay in WF8, fix technical issues (back to /iterate plan)
+- CONTINUE → handoff to orchestrator, advance to WF9
 - PIVOT → rollback to WF2
 - ABORT → terminate project
 
@@ -112,7 +113,8 @@ Execute the corresponding command based on $ARGUMENTS.
    - Latest iteration ID + status + decision
    - best_iteration + metrics
    - Total iteration count
-4. Display:
+4. If in WF8 and `.auto_iterate/state.json` exists, include loop state (current round, goal, progress) in the report (read-only — orchestrator never writes to that file).
+5. Display:
    - Project name and idea overview
    - Current stage and status
    - List of completed stages (with checkmarks)
@@ -138,6 +140,7 @@ Before advancing, verify the following conditions:
 - During the WF7 → WF8 transition, automatically insert a validate_run check
 - Call `/validate-run` to verify: 100-step training passes, eval passes, checkpoint can be saved, wandb can connect
 - Entry to WF8 is only allowed after validate_run passes
+- WF7.5 PASS hook: after `/validate-run` passes, orchestrator should auto-trigger `/auto-iterate-goal` check so that an iteration goal is set before WF8 begins
 
 If validation passes:
 - Update current_stage to the next stage
@@ -166,8 +169,9 @@ If validation fails:
 - WF8 uses `/iterate` sub-commands to manage the iteration loop:
   - `/iterate plan` → `/iterate code` → `/iterate run` → `/iterate eval`
   - `/iterate ablate` for intra-iteration ablation experiments
-  - eval decision CONTINUE → advance to WF9
-  - eval decision DEBUG → new iteration (continue WF8 loop)
+  - eval decision NEXT_ROUND → stay in WF8 (do not advance stage); ordinary improvement round
+  - eval decision DEBUG → stay in WF8 (do not advance stage); fix technical issues
+  - eval decision CONTINUE → can advance to WF9 (handoff to orchestrator)
   - eval decision PIVOT → execute rollback to WF2
   - eval decision ABORT → terminate project
 
@@ -203,8 +207,9 @@ Status reports, direct questions, and summaries should follow [../../shared/lang
 | WF6 build-plan | WF7 code-expert | Roll back to WF2 to adjust architecture |
 | WF7 code-expert | WF7.5 validate-run | First-time generation fails → check Roadmap |
 | WF7.5 validate-run | WF8 iterate | Smoke test fails → debug |
+| WF8 iterate (NEXT_ROUND) | Stay in WF8 — ordinary improvement round | Loop until CONTINUE/PIVOT/ABORT |
+| WF8 iterate (DEBUG) | Stay in WF8 — fix technical issues | Loop until CONTINUE/PIVOT/ABORT |
 | WF8 iterate (CONTINUE) | WF9 final-exp | — |
-| WF8 iterate (DEBUG) | → new /iterate iteration → continue WF8 | Loop until CONTINUE/PIVOT/ABORT |
 | WF8 iterate (PIVOT) | Roll back to WF2 for alternative approach | — |
 | WF8 iterate (ABORT) | Terminate project | — |
 | WF9 final-exp | WF10 release | Run additional experiments or adjust design |

@@ -77,13 +77,14 @@ These are mandatory behavior rules for `$iterate`.
 - The comparison basis must come from the WF5 evaluation protocol, not from fixed assumptions about PSNR/SSIM/LPIPS or any other metric family.
 - Must write back to `iteration_log.json`:
   - finalized `metrics`
-  - exactly one `decision`
+  - exactly one `decision` from {NEXT_ROUND, DEBUG, CONTINUE, PIVOT, ABORT}
   - non-empty `lessons`
   - `status=completed` when evaluation is complete
 - Must produce or refresh the per-iteration report under `docs/iterations/` when the workflow uses those reports.
 - Must output the recommended next-step command that matches the decision:
+  - `NEXT_ROUND` -> `$iterate plan "..."` (ordinary improvement round)
+  - `DEBUG` -> `$iterate plan "..." [debug-oriented]`
   - `CONTINUE` -> `$orchestrator next`
-  - `DEBUG` -> `$iterate plan "..."`
   - `PIVOT` -> `$orchestrator rollback 2`
   - `ABORT` -> `$orchestrator decision`
 

@@ -32,6 +32,10 @@ Each state file has a single write-responsible owner to avoid multi-source diver
 
 **Key rule**: iterate **does not write** PROJECT_STATE.json; orchestrator **does not write** iteration_log.json. Cross-file information is obtained through **reading**.
 
+| File | Sole Writer | Purpose |
+|------|------------|---------|
+| `.auto_iterate/` | auto-iterate controller | Controller-owned runtime state (e.g. `state.json`, phase logs). The controller only **reads** `iteration_log.json` and `PROJECT_STATE.json`; it never writes them. |
+
 ### 1.3 Workflow Overview
 
 ```
@@ -68,13 +72,13 @@ Each state file has a single write-responsible owner to avoid multi-source diver
 │  │    Optional: /ablate (component contribution analysis)│            │
 │  └───────────────────────┬───────────────────────────────┘            │
 │                          │                                            │
-│           ┌──────────────┼──────────────┐                            │
-│        CONTINUE        PIVOT          ABORT                          │
-│           │              │              │                             │
-│           ▼              │              ▼                             │
-│  ┌──────┐   ┌──────┐    │           Terminate project                │
-│  │ WF9  │ → │ WF10 │    │                                            │
-│  │ablate│   │submit│    └──→ Rollback to WF2 (re-architect)          │
+│           ┌──────────┬───────────┬──────────┐                        │
+│       NEXT_ROUND  CONTINUE    PIVOT      ABORT                       │
+│           │         │          │          │                           │
+│           ▼         ▼          │          ▼                           │
+│     back to plan  ┌──────┐  ┌──────┐  Terminate project              │
+│     (default)     │ WF9  │→ │ WF10 │                                 │
+│                   │ablate│  │submit│  └──→ Rollback to WF2 (re-arch) │
 │  └──────┘   └──────┘                                                 │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
@@ -143,13 +147,15 @@ WF5 is also responsible for creating the first runnable environment and syncing 
 
 Ensures no code correctness or infrastructure issues are encountered during iteration.
 
+**WF7.5 → WF8 bridge**: after validate-run PASS, the orchestrator auto-triggers `/auto-iterate-goal` to verify that the iteration goal is well-defined and ready before WF8 can start.
+
 ### WF8: Structured Experiment Iteration (Core)
 
 | | |
 |---|---|
 | **Skill** | `/iterate [plan|code|run|eval|ablate|status|log]` |
 | **Output** | iteration_log.json (continuously updated), best checkpoint |
-| **Decision** | CONTINUE → WF9 / DEBUG → new iteration / PIVOT → WF2 / ABORT |
+| **Decision** | NEXT_ROUND → stay in WF8 / DEBUG → debug round in WF8 / CONTINUE → WF9 / PIVOT → WF2 / ABORT → terminate |
 
 **Seven subcommands**:
 
@@ -233,6 +239,9 @@ Supports resumption: already completed sub-iterations are automatically skipped.
 - **Enforced git commit**: if no commit hash after code subcommand completes, stays in coding status without advancing
 - **Repeated lessons check**: plan phase scans known lessons, warns about repeated failure patterns
 - **Screening protocol**: non-architecture/loss changes should do a 5K-10K proxy run first
+- **Same-iteration phases**: each iteration may include a `screening` phase (fast proxy run) and a `full_run` phase, both orchestrated by the controller within the same iteration
+- **Auto mode**: when `auto_mode=true`, the controller drives the plan→code→run→eval loop without blocking on user confirmation
+- **Controller resume**: on restart, the controller recovers state from `.auto_iterate/state.json` combined with repository inspection (iteration_log.json, git status) to determine where to resume
 
 ### WF9: Formal Ablation Experiments
 
@@ -295,7 +304,7 @@ Core features:
 - Parse training logs, extract target metrics defined by baseline/evaluation protocol
 - Diagnose training issues (overfitting, vanishing gradients, loss divergence, etc.)
 - Compare against baseline performance + historical best
-- Provide CONTINUE/DEBUG/PIVOT/ABORT decision
+- Provide NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
 **Per-iteration reports**: when called from /iterate eval, writes to `docs/iterations/iter{N}.md`.
 `docs/Stage_Report.md` serves as the latest summary index.
@@ -610,13 +619,14 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
                     │  decision recorded              │
                     └───────────────┬───────────────┘
                                     │
-                  ┌─────────┬───────┴───────┬─────────┐
-                  │         │               │         │
-               CONTINUE   DEBUG           PIVOT     ABORT
-                  │         │               │         │
-                  ▼         ▼               ▼         ▼
-               → WF9     Back to plan    → WF2    Terminate
-              (ablation) (new hypothesis) (re-arch)  project
+                  ┌──────────┬──────────┬───────┴───────┬─────────┐
+                  │          │          │               │         │
+              NEXT_ROUND   DEBUG    CONTINUE          PIVOT     ABORT
+                  │          │          │               │         │
+                  ▼          ▼          ▼               ▼         ▼
+            back to plan back to plan → WF9           → WF2   Terminate
+            (ordinary    (debug-      (exit WF8,    (re-arch)  project
+             round)       oriented)    ablation)
                             │
                             └──→ /iterate plan "new hypothesis based on lessons"
                                         │
@@ -678,8 +688,24 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
 │   only                  │     │   operations guide      │
 └─────────────────────────┘     └─────────────────────────┘
 
+┌─────────────────────────┐
+│   .auto_iterate/        │
+│ Controller runtime state│
+│                         │
+│ Writer:                 │
+│   auto-iterate controller│
+│                         │
+│ Contents:               │
+│   state.json, phase logs│
+│                         │
+│ Reads (never writes):   │
+│   iteration_log.json    │
+│   PROJECT_STATE.json    │
+└─────────────────────────┘
+
 Key rule: /iterate does not write PROJECT_STATE.json
          orchestrator does not write iteration_log.json
+         controller only reads iteration_log.json and PROJECT_STATE.json
          Cross-file information is obtained through "reading"
 ```
 

@@ -46,7 +46,8 @@ Interpret natural-language requests as one of these canonical intents:
 1. Read `PROJECT_STATE.json`.
 2. Validate the current stage name against the canonical stage table and stage-gate reference.
 3. If the project is in WF8, also read `iteration_log.json` for latest and best iteration status.
-4. Report current stage, completed stages, blockers, latest artifacts, and the most appropriate next action.
+4. If in WF8 and `.auto_iterate/state.json` exists, include loop state (current round, goal, progress) in the report (read-only — orchestrator never writes to that file).
+5. Report current stage, completed stages, blockers, latest artifacts, and the most appropriate next action.
 
 ### `next`
 
@@ -55,7 +56,14 @@ Interpret natural-language requests as one of these canonical intents:
 3. Apply special gate logic from the canonical prompt:
    - WF5 must have `docs/Baseline_Report.md` and populated baseline metrics.
    - WF7 to WF8 requires `$validate-run`.
+   - WF7.5 PASS hook: after `$validate-run` passes, orchestrator should auto-trigger a `$auto-iterate-goal` check so that an iteration goal is set before WF8 begins.
    - WF8 to WF9 requires the latest completed iteration decision to be `CONTINUE`.
+   - WF8 decision handling:
+     - `NEXT_ROUND` → stay in WF8 (do not advance stage); ordinary improvement round
+     - `DEBUG` → stay in WF8 (do not advance stage); fix technical issues
+     - `CONTINUE` → can advance to WF9
+     - `PIVOT` → rollback to WF2
+     - `ABORT` → terminate project
 4. Never auto-advance without explicit user confirmation in the current conversation.
 
 ### `rollback`

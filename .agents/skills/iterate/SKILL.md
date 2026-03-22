@@ -36,6 +36,14 @@ Interpret natural-language requests as one of these canonical intents:
 - Do not write stage transitions into `PROJECT_STATE.json`; `$orchestrator` owns those.
 - Stable interface changes still require `project_map.json` sync through `$code-debug`.
 
+## Controller Coexistence
+
+- When the auto-iterate controller is active, `$iterate` phases are invoked via runtime adapter prompt, not directly by the user.
+- `iteration_log.json` ownership is unchanged — `$iterate` still owns it exclusively.
+- The controller only reads `iteration_log.json` via postcondition validation; it does not write to it.
+- The controller does not write to `.agents/state/**`.
+- `.auto_iterate/` is controller-owned; `$iterate` must not write to it.
+
 ## Canonical Workflow
 
 ### Startup Cleanup
@@ -50,7 +58,7 @@ Interpret natural-language requests as one of these canonical intents:
 1. Ensure there is no blocking unfinished iteration.
 2. Allocate the next iteration ID.
 3. Check prior lessons to avoid repeating known failed ideas blindly.
-4. Record hypothesis, changes summary, config diff, and screening recommendation.
+4. Record hypothesis, changes summary, config diff, and screening recommendation (`screening.recommended` as a structured boolean field).
 5. Preserve the canonical `codex_review` field behavior in `iteration_log.json`.
 
 ### `code`

@@ -1,6 +1,6 @@
 ---
 name: evaluate
-description: Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a CONTINUE, DEBUG, PIVOT, or ABORT recommendation.
+description: Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a NEXT_ROUND, DEBUG, CONTINUE, PIVOT, or ABORT recommendation.
 ---
 
 # Evaluate
@@ -29,8 +29,9 @@ Use this skill when the user wants training or evaluation results interpreted an
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
 4. Produce the canonical report using `./references/stage-report.md`.
 5. Recommend exactly one of:
-   - `CONTINUE`
-   - `DEBUG`
+   - `NEXT_ROUND` — ordinary improvement round, stay in WF8
+   - `DEBUG` — fixable technical issue, stay in WF8
+   - `CONTINUE` — handoff to orchestrator/WF9, not continue iterating
    - `PIVOT`
    - `ABORT`
 6. If invoked from `$iterate`, do not take over stage-transition ownership.
@@ -39,7 +40,7 @@ Use this skill when the user wants training or evaluation results interpreted an
 
 - Treat natural-language requests as the canonical `$evaluate` flow or the evaluation sub-step of `$iterate`.
 - Use `.agents/state/current_iteration.json` as the active iteration context path.
-- Preserve the original decision vocabulary and per-iteration reporting behavior, but do not assume a fixed metric family.
+- Preserve the original decision vocabulary (NEXT_ROUND / DEBUG / CONTINUE / PIVOT / ABORT) and per-iteration reporting behavior, but do not assume a fixed metric family.
 - Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language report sections; keep protocol keys and decision tokens in English.
 
 ## Execution Rule

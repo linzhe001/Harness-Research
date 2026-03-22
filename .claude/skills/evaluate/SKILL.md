@@ -1,6 +1,6 @@
 ---
 name: evaluate
-description: Result analysis tool (utility). Parses training logs, diagnoses training issues, compares against baseline performance, predicts full-training results, and provides CONTINUE/DEBUG/PIVOT/ABORT decisions. Can be called by /iterate eval or used standalone.
+description: Result analysis tool (utility). Parses training logs, diagnoses training issues, compares against baseline performance, predicts full-training results, and provides NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decisions. Can be called by /iterate eval or used standalone.
 argument-hint: "[log_path]"
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
@@ -18,7 +18,7 @@ This is a utility skill (not a numbered workflow stage).
 It can be called by `/iterate eval` or used standalone.
 Input: Training logs and metrics.
 Output: Per-iteration report with analysis and decision.
-Decisions: CONTINUE / DEBUG / PIVOT / ABORT.
+Decisions: NEXT_ROUND / DEBUG / CONTINUE / PIVOT / ABORT.
 
 When called from /iterate, the decision is recorded in iteration_log.json (by iterate).
 When called standalone, the decision is recorded in PROJECT_STATE.json.
@@ -81,8 +81,9 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - What is the risk-reward ratio of continued investment?
    </thinking>
 
-   - **CONTINUE**: Performance meets the success criteria set by the protocol; recommend proceeding to WF9 ablation experiments
-   - **DEBUG**: Fixable technical issues exist (bugs, config errors); fix within WF8 via `/code-debug`
+   - **NEXT_ROUND**: Ordinary improvement round — stay in WF8, plan next iteration
+   - **DEBUG**: Fixable technical issues exist (bugs, config errors); stay in WF8, fix via `/code-debug`
+   - **CONTINUE**: Performance meets the success criteria set by the protocol; handoff to orchestrator/WF9 (not continue iterating)
    - **PIVOT**: Performance gap too large (< baseline by 5%+); recommend rolling back to WF2 for alternative approach
    - **ABORT**: Theoretical failure (core hypothesis disproven); abandon this idea
 
@@ -116,7 +117,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `current_stage.status` → "completed"
    - `artifacts.stage_report` → file path
    - `history` append record
-   - `decisions` record CONTINUE/DEBUG/PIVOT/ABORT decision
+   - `decisions` record NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
    When called from /iterate eval:
    **Do not update PROJECT_STATE.json** (iterate is responsible for writing iteration_log.json; orchestrator handles stage transitions).

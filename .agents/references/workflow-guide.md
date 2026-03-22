@@ -33,6 +33,10 @@ Each state file has a single designated writer to avoid divergence from multiple
 **Key rule**: iterate does **not write** PROJECT_STATE.json; orchestrator does **not write** iteration_log.json. When cross-file information is needed, it is obtained by **reading**.
 These canonical state files should all live at the repository root, not inside `.agents/`.
 
+| File | Sole Writer | Purpose |
+|------|-----------|------|
+| `.auto_iterate/` | auto-iterate controller | Controller-owned runtime state (e.g. `state.json`, phase logs). The controller only **reads** `iteration_log.json` and `PROJECT_STATE.json`; it never writes them. |
+
 ### 1.3 Workflow Overview
 
 ```
@@ -69,13 +73,13 @@ These canonical state files should all live at the repository root, not inside `
 │  │    Optional: $iterate ablate (component contribution analysis)│                    │
 │  └────────────────────────┬─────────────────────────────────────┘                    │
 │                           │                                                          │
-│            ┌──────────────┼──────────────┐                                           │
-│         CONTINUE        PIVOT          ABORT                                         │
-│            │              │              │                                            │
-│            ▼              │              ▼                                            │
-│  ┌─────┐    ┌─────┐      │         Terminate project                                 │
-│  │ WF9 │ →  │WF10 │      │                                                          │
-│  │Ablate│    │Release│    └──→ Roll back to WF2 (redesign architecture)              │
+│            ┌──────────┬───────────┬──────────┐                                      │
+│        NEXT_ROUND  CONTINUE    PIVOT      ABORT                                      │
+│            │         │          │          │                                          │
+│            ▼         ▼          │          ▼                                          │
+│      back to plan  ┌─────┐  ┌─────┐   Terminate project                              │
+│      (default)     │ WF9 │→ │WF10 │                                                  │
+│                    │Ablate│  │Release│  └──→ Roll back to WF2 (redesign architecture) │
 │  └─────┘    └─────┘                                                                  │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
@@ -144,13 +148,15 @@ WF5 also creates the first runnable environment and synchronizes the `## Environ
 
 This ensures that code correctness and infrastructure issues are caught before the iteration stage.
 
+**WF7.5 → WF8 bridge**: after validate-run PASS, the orchestrator auto-triggers `$auto-iterate-goal` to verify that the iteration goal is well-defined and ready before WF8 can start.
+
 ### WF8: Structured Experiment Iteration (Core)
 
 | | |
 |---|---|
 | **Skill** | `$iterate [plan|code|run|eval|ablate|status|log]` |
 | **Output** | iteration_log.json (continuously updated), best checkpoint |
-| **Decision** | CONTINUE → WF9 / DEBUG → new iteration / PIVOT → WF2 / ABORT |
+| **Decision** | NEXT_ROUND → stay in WF8 / DEBUG → debug round in WF8 / CONTINUE → WF9 / PIVOT → WF2 / ABORT → terminate |
 
 **Seven subcommands**:
 
@@ -234,6 +240,9 @@ Supports resume-after-interruption: completed sub-iterations are skipped automat
 - **Mandatory git commit**: if the code subcommand finishes without a commit hash, remain in `coding` status and do not advance
 - **Repeated-lesson check**: during `plan`, scan known lessons and warn about repeated failure modes
 - **Screening protocol**: for non-architecture/non-loss changes, a 5K-10K proxy run is recommended first
+- **Same-iteration phases**: each iteration may include a `screening` phase (fast proxy run) and a `full_run` phase, both orchestrated by the controller within the same iteration
+- **Auto mode**: when `auto_mode=true`, the controller drives the plan→code→run→eval loop without blocking on user confirmation
+- **Controller resume**: on restart, the controller recovers state from `.auto_iterate/state.json` combined with repository inspection (iteration_log.json, git status) to determine where to resume
 
 ### WF9: Formal Ablation Experiments
 
@@ -296,7 +305,7 @@ Core functions:
 - Parse training logs and extract the target metrics defined by the baseline/evaluation protocol
 - Diagnose training issues (overfitting, gradient vanishing, loss divergence, etc.)
 - Compare against baseline performance + historical best
-- Produce a CONTINUE/DEBUG/PIVOT/ABORT decision
+- Produce a NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
 **Per-iteration report**: when invoked from `$iterate eval`, write to `docs/iterations/iter{N}.md`.
 `docs/Stage_Report.md` serves as the latest summary index.
@@ -596,13 +605,14 @@ After each stage is completed, orchestrator automatically triggers `$init-projec
                     │ already recorded              │
                     └───────────────┬───────────────┘
                                     │
-                  ┌─────────┬───────┴───────┬─────────┐
-                  │         │               │         │
-               CONTINUE   DEBUG           PIVOT     ABORT
-                  │         │               │         │
-                  ▼         ▼               ▼         ▼
-               → WF9   back to plan       → WF2   terminate
-             (ablation) (new hypothesis) (redesign) project
+                  ┌──────────┬──────────┬───────┴───────┬─────────┐
+                  │          │          │               │         │
+              NEXT_ROUND   DEBUG    CONTINUE          PIVOT     ABORT
+                  │          │          │               │         │
+                  ▼          ▼          ▼               ▼         ▼
+            back to plan back to plan → WF9           → WF2   terminate
+            (ordinary    (debug-      (exit WF8,    (redesign) project
+             round)       oriented)    ablation)
                             │
                             └──→ $iterate plan "new hypothesis based on lessons"
                                         │
@@ -662,8 +672,24 @@ After each stage is completed, orchestrator automatically triggers `$init-projec
 │ track stable files only │     │ ≤80 lines, stable guide │
 └─────────────────────────┘     └─────────────────────────┘
 
+┌─────────────────────────┐
+│   .auto_iterate/        │
+│ controller runtime state│
+│                         │
+│ writer:                 │
+│   auto-iterate controller│
+│                         │
+│ contents:               │
+│   state.json, phase logs│
+│                         │
+│ reads (never writes):   │
+│   iteration_log.json    │
+│   PROJECT_STATE.json    │
+└─────────────────────────┘
+
 Key rules: $iterate does not write PROJECT_STATE.json
            orchestrator does not write iteration_log.json
+           controller only reads iteration_log.json and PROJECT_STATE.json
            cross-file information is obtained by "reading"
 ```
 

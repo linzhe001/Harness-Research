@@ -48,7 +48,16 @@ cross-validation. Record `codex_review: "used"|"unavailable"` (never null).
 
 **Screening protocol**: For experiments that don't introduce new architecture/loss,
 recommend a 5K-10K step proxy run before full training. Add `screening` field to
-iteration entry.
+iteration entry (`screening.recommended` as a structured boolean field).
+
+## Controller Coexistence
+
+- When the auto-iterate controller is active, `/iterate` phases are invoked via runtime adapter prompt, not directly by the user.
+- `iteration_log.json` ownership is unchanged — `/iterate` still owns it exclusively.
+- The controller only reads `iteration_log.json` via postcondition validation; it does not write to it.
+- The controller does not write to `.claude/iterations/**` or any `/iterate`-owned state.
+- `.auto_iterate/` is controller-owned; `/iterate` must not write to it.
+- **Note**: Claude runtime parity for auto-iterate is not in V1 scope.
 </context>
 
 <instructions>
@@ -229,8 +238,9 @@ user calls `/iterate eval` after training completes.
    - vs previous best iteration
    - vs previous iteration
 8. Make a decision:
-   - **CONTINUE**: Satisfactory level reached, ready to proceed to WF9
-   - **DEBUG**: Fixable issues found, new iteration needed for fixes
+   - **NEXT_ROUND**: Ordinary improvement round — results show progress but more iteration needed
+   - **DEBUG**: Debug-oriented round — fixable issues found, new iteration needed for fixes
+   - **CONTINUE**: Satisfactory level reached, handoff to WF9 orchestrator
    - **PIVOT**: Current direction is hopeless, roll back to WF2
    - **ABORT**: Terminate the project
 9. Extract lessons learned (at least 1)
@@ -242,8 +252,9 @@ user calls `/iterate eval` after training completes.
     - If this is a new best → update `best_iteration`
 11. **Do not write to PROJECT_STATE.json**. Stage-level transitions are orchestrator's responsibility.
 12. **Output recommended next-step command** (based on decision):
+    - NEXT_ROUND → `Recommended: /iterate plan "{improvement hypothesis based on lessons}"`
+    - DEBUG → `Recommended: /iterate plan "{improvement hypothesis based on lessons}" [debug-oriented]`
     - CONTINUE → `Recommended: /orchestrator next  (advance to WF9 ablation experiments)`
-    - DEBUG → `Recommended: /iterate plan "{improvement hypothesis based on lessons}"`
     - PIVOT → `Recommended: /orchestrator rollback 2  (roll back to architecture design)`
     - ABORT → `Recommended: /orchestrator decision  (record termination decision)`
 

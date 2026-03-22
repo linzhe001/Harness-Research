@@ -538,6 +538,8 @@ class TestHeartbeatWorker:
         lock_data = lm.acquire("loop1", "codex", "/workspace")
         old_hb = lock_data["heartbeat_at"]
 
+        # Wait at least 1 second so the next heartbeat produces a different timestamp.
+        time.sleep(1.1)
         hb = HeartbeatWorker(lm, interval_sec=1)
         hb.start()
         time.sleep(1.5)
