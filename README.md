@@ -19,6 +19,13 @@ This repo contains the **framework only** — skills, rules, templates, and work
 | `CLAUDE.md.template` | Project CLAUDE.md template with `{{placeholders}}` |
 | `AGENTS.md.template` | Project AGENTS.md template with `{{placeholders}}` |
 | `settings.local.json.template` | Claude Code permissions template |
+| `scripts/auto_iterate*` | V7 auto-iterate controller, runtime adapter, CLI |
+| `scripts/auto_iterate/` | Controller package (state, lock, events, goal, etc.) |
+| `config/auto_iterate_*.example.yaml` | Controller and account configuration examples |
+| `tests/fixtures/auto_iterate/` | Contract test fixtures |
+| `tests/test_auto_iterate_*.py` | Controller test suite |
+| `docs/auto_iterate_goal_template.md` | Goal file template for auto-iterate |
+| `docs/remote_control_guide.md` | Operator runbook for remote control |
 
 ### Workflow Stages
 
