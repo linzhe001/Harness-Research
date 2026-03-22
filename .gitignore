@@ -1,20 +1,38 @@
 # === Research project files (not part of harness framework) ===
 src/
 scripts/
+!scripts/auto_iterate_ctl.sh
+!scripts/auto_iterate_ctl.py
+!scripts/auto_iterate_controller.py
+!scripts/auto_iterate_runtime_codex.sh
+!scripts/auto_iterate_runtime_codex.py
+!scripts/auto_iterate/
 configs/
+config/
+!config/auto_iterate_*.example.yaml
 baselines/
 experiments/
-docs/
+docs/*
+!docs/auto_iterate_v7_plan/
+!docs/auto_iterate_v7_plan/*.md
+!docs/auto_iterate_goal_template.md
+!docs/remote_control_guide.md
 tests/
+!tests/fixtures/
+!tests/test_auto_iterate_*.py
 PROJECT_STATE.json
 iteration_log.json
 project_map.json
 CLAUDE.md
 AGENTS.md
+Reference_tool_repo/
 .claude/settings.local.json
 .claude/iterations/
 .agents/state/iterations/
 .agents/state/current_iteration.json
+
+# === Controller runtime state (never commit in real projects) ===
+.auto_iterate/
 
 # === Runtime / Generated ===
 __pycache__/
