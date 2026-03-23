@@ -45,12 +45,23 @@ The two repos share one worktree, but they must not track the same files.
 
 ## Important Rule About Ignore Files
 
-Do not try to maintain two different root `.gitignore` files.
+There can be multiple ignore mechanisms in the same worktree, but there should
+not be two different root `.gitignore` files.
 
-In same-worktree dual-repo mode:
+Use this split:
 
-- the root `.gitignore` is harness-owned and exists to keep research files out of `hgit`
-- the research repo should hide harness-owned files via `.git/info/exclude`
+- the root `.gitignore` is harness-owned and exists to keep research files out
+  of `hgit`
+- the research repo hides harness-owned files via `.git/info/exclude`
+- if the research repo needs shared ignore rules for its own generated files,
+  put a `.gitignore` inside a research-owned subdirectory such as `data/`,
+  `experiments/`, or `artifacts/`
+
+In other words:
+
+- yes: one root `.gitignore` plus research-side `.git/info/exclude`
+- yes: extra subdirectory `.gitignore` files inside research-owned paths
+- no: two competing root `.gitignore` files at the same project root
 
 That split matters now that the harness repo also ships `tooling/auto_iterate/**`
 and `auto_iterate_v7_plan/**`.
@@ -124,6 +135,8 @@ cat >> .git/info/exclude <<'EOF'
 tooling/
 auto_iterate_v7_plan/
 README.md
+AI_AGENT_SETUP.md
+Harness_Update_Guide.md
 .gitignore
 *.template
 settings.local.json.template
@@ -133,7 +146,7 @@ EOF
 Notes:
 
 - keep project-specific overview docs under `docs/` instead of replacing the harness root `README.md`
-- if the project needs shared ignore rules for its own generated files, prefer subdirectory `.gitignore` files inside research-owned paths such as `experiments/` or `data/`
+- if the project needs shared ignore rules for its own generated files, prefer subdirectory `.gitignore` files inside research-owned paths such as `experiments/`, `data/`, or `artifacts/`
 
 ## 5. Create project directories
 
@@ -236,7 +249,7 @@ git --git-dir=.harness --work-tree=. status
 git status
 
 # Research repo should ignore harness-owned paths.
-git check-ignore -v .claude/ .agents/ tooling/ auto_iterate_v7_plan/ README.md .gitignore
+git check-ignore -v .claude/ .agents/ tooling/ auto_iterate_v7_plan/ README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore
 
 # Auto-iterate project inputs should be research-owned files.
 test -f docs/auto_iterate_goal.md

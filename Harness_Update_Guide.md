@@ -27,9 +27,27 @@ When you update harness, the following paths are framework files managed by
 - `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
-- usually the root `.gitignore`
+- the root `.gitignore`
 
 Do not add these files to the research repo.
+
+## Ignore Rules In Dual-Repo Mode
+
+There is only one root `.gitignore` at the shared project root, and it is
+harness-owned.
+
+The research repo should not maintain a second competing root `.gitignore` for
+framework files. Instead:
+
+- use `.git/info/exclude` to hide harness-owned paths from the research repo
+- use subdirectory `.gitignore` files only inside research-owned paths when the
+  project needs shared ignore rules for its own generated files
+
+Examples:
+
+- good: `experiments/.gitignore`
+- good: `data/.gitignore`
+- avoid: editing the root `.gitignore` for research-only ignore rules
 
 ## Pull Workflow
 
@@ -111,6 +129,7 @@ Check at least:
 ```bash
 diff CLAUDE.md.template CLAUDE.md
 diff AGENTS.md.template AGENTS.md
+diff tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
 diff tooling/auto_iterate/config/auto_iterate_controller.example.yaml configs/auto_iterate_controller.yaml
 diff tooling/auto_iterate/config/auto_iterate_accounts.example.yaml configs/auto_iterate_accounts.yaml
 ```
@@ -134,8 +153,8 @@ them via `.git/info/exclude` in the research repo instead of tracking them.
 Inspect both staged and unstaged harness state:
 
 ```bash
-git --git-dir=.harness --work-tree=. diff -- README.md AI_AGENT_SETUP.md .gitignore
-git --git-dir=.harness --work-tree=. diff --cached -- README.md AI_AGENT_SETUP.md .gitignore
+git --git-dir=.harness --work-tree=. diff -- README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
+git --git-dir=.harness --work-tree=. diff --cached -- README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
 ```
 
 If those are just stale local harness changes, restore them to harness `HEAD`
@@ -144,7 +163,7 @@ before retrying:
 ```bash
 git --git-dir=.harness --work-tree=. restore \
   --staged --worktree --source=HEAD --ignore-skip-worktree-bits \
-  README.md AI_AGENT_SETUP.md .gitignore
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
 ```
 
 Then run the pull again.
@@ -162,6 +181,7 @@ Instead, add harness-managed paths to `.git/info/exclude`, for example:
 /README.md
 /AI_AGENT_SETUP.md
 /Harness_Update_Guide.md
+/.gitignore
 /tooling/
 /auto_iterate_v7_plan/
 /*.template
