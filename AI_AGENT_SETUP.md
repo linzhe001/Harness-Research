@@ -182,6 +182,9 @@ Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `READ
 
 ## Daily Dual-Repo Management
 
+For the recommended day-2 update flow, conflict handling, and post-pull checks,
+see [Harness_Update_Guide.md](Harness_Update_Guide.md).
+
 ### Research changes
 
 Use normal `git`:

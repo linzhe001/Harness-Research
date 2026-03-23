@@ -42,6 +42,9 @@ WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
 For same-worktree bootstrap and dual-repo instructions, see
 [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
 
+For day-2 framework update and pull instructions, see
+[Harness_Update_Guide.md](Harness_Update_Guide.md).
+
 That guide covers:
 
 - how `.harness` / `hgit` coexists with the research repo's normal `.git`
@@ -81,6 +84,9 @@ If `CLAUDE.md.template` has new sections you want to adopt:
 diff CLAUDE.md.template CLAUDE.md
 # Manually merge relevant new sections into your project's CLAUDE.md
 ```
+
+For a full pull checklist, conflict recovery, and post-pull template sync, see
+[Harness_Update_Guide.md](Harness_Update_Guide.md).
 
 ---
 
