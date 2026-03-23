@@ -1,25 +1,12 @@
 # === Research project files (not part of harness framework) ===
 src/
-scripts/*
-!scripts/auto_iterate_ctl.sh
-!scripts/auto_iterate_ctl.py
-!scripts/auto_iterate_controller.py
-!scripts/auto_iterate_runtime_codex.sh
-!scripts/auto_iterate_runtime_codex.py
-!scripts/auto_iterate/
+scripts/
 configs/
-config/*
-!config/auto_iterate_*.example.yaml
+config/
 baselines/
 experiments/
-docs/*
-!docs/auto_iterate_v7_plan/
-!docs/auto_iterate_v7_plan/*.md
-!docs/auto_iterate_goal_template.md
-!docs/remote_control_guide.md
-tests/*
-!tests/fixtures/
-!tests/test_auto_iterate_*.py
+docs/
+tests/
 PROJECT_STATE.json
 iteration_log.json
 project_map.json
@@ -36,6 +23,7 @@ Reference_tool_repo/
 
 # === Runtime / Generated ===
 __pycache__/
+.pytest_cache/
 *.pyc
 wandb/
 *.ckpt

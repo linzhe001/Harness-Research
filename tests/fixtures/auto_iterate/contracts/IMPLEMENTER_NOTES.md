@@ -2,7 +2,7 @@
 
 These notes freeze critical algorithms and precedence rules that are not fully captured
 by the JSON fixtures alone. Every controller implementation decision must be traceable
-to either this document or `tooling/auto_iterate/docs/auto_iterate_v7_plan/01_contract_freeze.md`.
+to either this document or `auto_iterate_v7_plan/01_contract_freeze.md`.
 
 ---
 

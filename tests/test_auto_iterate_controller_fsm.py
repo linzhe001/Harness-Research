@@ -34,6 +34,7 @@ from auto_iterate.controller import (
     LoopController,
     _DECISION_HALT,
 )
+from auto_iterate.lock import LockConflictError
 from auto_iterate.state import load_json, atomic_write_json
 from auto_iterate.events import EventLogger
 
@@ -203,6 +204,82 @@ class TestBudgetExhaustion:
         )
         state = load_json(project / ".auto_iterate" / "state.json")
         assert state["halt_reason"] == "llm_budget_exhausted"
+
+
+# ===================================================================
+# Stop conditions
+# ===================================================================
+
+class TestStopConditions:
+    def _make_plan_boundary_controller(
+        self,
+        tmp_path: Path,
+        *,
+        direction: str = "maximize",
+        target: float = 32.0,
+        best: float = 32.1,
+    ) -> LoopController:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.state = {
+            "schema_version": 1,
+            "loop_id": "loop_target",
+            "status": "running",
+            "tool": "codex",
+            "current_round_index": 2,
+            "current_phase_key": "plan",
+            "current_iteration_id": None,
+            "phase_attempt": 1,
+            "goal": {"source_path": "goal.md", "activated_at": "2026-01-01T00:00:00Z"},
+            "objective": {"primary_metric": {"name": "PSNR", "direction": direction, "target": target}},
+            "best": {"iteration_id": "iter2", "round_index": 2, "primary_metric": best, "updated_at": None},
+            "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
+            "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
+                        "max_gpu_hours": 100.0, "used_gpu_hours": 1.0, "tracking_method": "wall_time_hours_x_gpu_count"},
+            "llm_budget": {"max_calls": 200, "used_calls": 10, "max_cost_usd": 50.0,
+                           "used_cost_usd": 1.0, "tracking_method": "runtime_invocation_count"},
+            "accounts": {"selected_account_id": None, "by_account": {}},
+            "last_decision": "NEXT_ROUND",
+            "halt_reason": None,
+            "last_failure": None,
+            "screening_policy": {"enabled": False},
+        }
+        return ctl
+
+    def test_target_met_stops_next_round_for_maximize_metric(self, tmp_path: Path) -> None:
+        ctl = self._make_plan_boundary_controller(tmp_path, direction="maximize", target=32.0, best=32.1)
+
+        reason = ctl._check_stop_conditions()
+
+        assert reason == "target_met"
+        assert ctl.state["status"] == "stopped"
+        assert ctl.state["halt_reason"] == "target_met"
+
+    def test_target_met_stops_next_round_for_minimize_metric(self, tmp_path: Path) -> None:
+        ctl = self._make_plan_boundary_controller(tmp_path, direction="minimize", target=0.08, best=0.07)
+
+        reason = ctl._check_stop_conditions()
+
+        assert reason == "target_met"
+        assert ctl.state["status"] == "stopped"
+        assert ctl.state["halt_reason"] == "target_met"
+
+    def test_round_boundary_stop_emits_loop_stopped_event(self, tmp_path: Path) -> None:
+        ctl = self._make_plan_boundary_controller(tmp_path, direction="maximize", target=32.0, best=32.1)
+
+        code = ctl.run_main_loop()
+
+        events = [
+            json.loads(line)
+            for line in (ctl.auto_dir / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+
+        assert code == EXIT_OK
+        assert events[-1]["event"] == "LOOP_STOPPED"
+        assert events[-1]["payload"]["halt_reason"] == "target_met"
+        assert events[-1]["round_index"] == 2
 
 
 # ===================================================================
@@ -419,3 +496,102 @@ class TestCLI:
         from auto_iterate_ctl import main
         code = main([])
         assert code == EXIT_INVALID_ARGS
+
+
+class TestLockRaceHandling:
+    def test_start_loop_lock_race_returns_exit_code_without_state_pollution(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+
+        def raise_conflict(*args, **kwargs):
+            raise LockConflictError("raced with another controller")
+
+        monkeypatch.setattr("auto_iterate.controller.LockManager.acquire", raise_conflict)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(goal_path=str(CONTRACTS / "goal.valid.md"))
+
+        assert code == EXIT_LOCK_CONFLICT
+        assert not (auto_dir / "state.json").exists()
+        assert not (auto_dir / "goal.md").exists()
+
+    def test_resume_loop_lock_race_returns_exit_code(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        state = load_json(CONTRACTS / "state.valid.json")
+        state["status"] = "paused"
+        state["current_phase_key"] = "plan"
+        state["current_iteration_id"] = None
+        state["phase_attempt"] = 1
+        atomic_write_json(auto_dir / "state.json", state)
+
+        def raise_conflict(*args, **kwargs):
+            raise LockConflictError("raced with another controller")
+
+        monkeypatch.setattr("auto_iterate.controller.LockManager.acquire", raise_conflict)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.resume_loop()
+
+        assert code == EXIT_LOCK_CONFLICT
+
+
+class TestFatalControllerErrors:
+    def test_start_loop_unexpected_error_maps_to_fatal_exit(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+
+        def boom(self):
+            raise RuntimeError("unexpected controller failure")
+
+        monkeypatch.setattr(LoopController, "run_main_loop", boom)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(goal_path=str(CONTRACTS / "goal.valid.md"))
+
+        state = load_json(project / ".auto_iterate" / "state.json")
+        assert code == 109
+        assert state["status"] == "failed"
+        assert state["halt_reason"] == "fatal_controller_error"
+        assert "unexpected controller failure" in state["last_failure"]
+
+    def test_resume_loop_unexpected_error_maps_to_fatal_exit(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        state = load_json(CONTRACTS / "state.valid.json")
+        state["status"] = "paused"
+        state["current_phase_key"] = "plan"
+        state["current_iteration_id"] = None
+        state["phase_attempt"] = 1
+        atomic_write_json(auto_dir / "state.json", state)
+
+        def boom(self):
+            raise RuntimeError("resume failed unexpectedly")
+
+        monkeypatch.setattr(LoopController, "run_main_loop", boom)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.resume_loop()
+
+        updated = load_json(auto_dir / "state.json")
+        assert code == 109
+        assert updated["status"] == "failed"
+        assert updated["halt_reason"] == "fatal_controller_error"
+        assert "resume failed unexpectedly" in updated["last_failure"]

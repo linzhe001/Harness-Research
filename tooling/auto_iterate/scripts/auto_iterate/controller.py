@@ -199,30 +199,39 @@ class LoopController:
             "screening_policy": screening_policy,
         }
 
-        # 6. Persist.
-        self.store.ensure_dirs()
-        self.goal_mgr.snapshot_to(goal_path)
-        self._persist_state()
-
-        # 7. Acquire lock.
-        self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
-
-        # 8. Start heartbeat.
-        hb_interval = self.policy.get("heartbeat", {}).get("interval_sec", 30)
-        self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
-        self.heartbeat.start()
-
-        # 9. Emit event.
-        self.events.emit(
-            "LOOP_STARTED", loop_id, "running",
-            payload={"tool": tool, "goal_source": goal_path},
-        )
-
-        # 10. Run.
+        acquired = False
         try:
+            # 6. Acquire lock before writing controller-owned runtime state so a
+            # losing contender does not overwrite the active loop's files.
+            self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
+            acquired = True
+
+            # 7. Persist initial runtime state.
+            self.store.ensure_dirs()
+            self.goal_mgr.snapshot_to(goal_path)
+            self._persist_state()
+
+            # 8. Start heartbeat.
+            hb_interval = self.policy.get("heartbeat", {}).get("interval_sec", 30)
+            self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
+            self.heartbeat.start()
+
+            # 9. Emit event.
+            self.events.emit(
+                "LOOP_STARTED", loop_id, "running",
+                payload={"tool": tool, "goal_source": goal_path},
+            )
+
+            # 10. Run.
             return self.run_main_loop()
+        except LockConflictError:
+            return EXIT_LOCK_CONFLICT
+        except Exception as exc:
+            self._record_fatal_controller_error(str(exc))
+            return EXIT_FATAL
         finally:
-            self._cleanup()
+            if acquired:
+                self._cleanup()
 
     # ==================================================================
     # resume
@@ -299,23 +308,31 @@ class LoopController:
         self.state["status"] = "running"
         loop_id = self.state["loop_id"]
         tool = self.state.get("tool", "codex")
-        self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
-
-        # Start heartbeat.
-        hb_interval = self.state.get("heartbeat", {}).get(
-            "interval_sec",
-            self.policy.get("heartbeat", {}).get("interval_sec", 30),
-        )
-        self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
-        self.heartbeat.start()
-
-        self.events.emit("LOOP_RESUMED", loop_id, "running")
-        self._persist_state()
-
+        acquired = False
         try:
+            self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
+            acquired = True
+
+            # Start heartbeat.
+            hb_interval = self.state.get("heartbeat", {}).get(
+                "interval_sec",
+                self.policy.get("heartbeat", {}).get("interval_sec", 30),
+            )
+            self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
+            self.heartbeat.start()
+
+            self.events.emit("LOOP_RESUMED", loop_id, "running")
+            self._persist_state()
+
             return self.run_main_loop()
+        except LockConflictError:
+            return EXIT_LOCK_CONFLICT
+        except Exception as exc:
+            self._record_fatal_controller_error(str(exc))
+            return EXIT_FATAL
         finally:
-            self._cleanup()
+            if acquired:
+                self._cleanup()
 
     # ==================================================================
     # main loop
@@ -341,6 +358,11 @@ class LoopController:
                 # Check stop conditions.
                 halt = self._check_stop_conditions()
                 if halt:
+                    self.events.emit(
+                        "LOOP_STOPPED", self.state["loop_id"], "stopped",
+                        round_index=round_idx,
+                        payload={"halt_reason": self.state["halt_reason"]},
+                    )
                     return self._map_exit_code()
 
                 # Budget pre-check.
@@ -727,6 +749,13 @@ class LoopController:
         llm = self.state.get("llm_budget", {})
         patience = self.state.get("patience", {})
 
+        # Success target.
+        if self._is_target_met():
+            self.state["status"] = "stopped"
+            self.state["halt_reason"] = "target_met"
+            self._persist_state()
+            return "target_met"
+
         # Max rounds.
         if budget.get("completed_rounds", 0) >= budget.get("max_rounds", 999):
             self.state["status"] = "stopped"
@@ -775,6 +804,28 @@ class LoopController:
         if llm.get("max_calls", 0) > 0 and llm.get("used_calls", 0) + 5 > llm["max_calls"]:
             return "llm_budget_exhausted"
         return "gpu_budget_exhausted"
+
+    def _is_target_met(self) -> bool:
+        """Return True when the tracked best value has reached the goal target."""
+        objective = self.state.get("objective", {}).get("primary_metric", {})
+        direction = objective.get("direction")
+        target = objective.get("target")
+        best_value = self.state.get("best", {}).get("primary_metric")
+
+        if direction not in ("maximize", "minimize"):
+            return False
+        if target is None or best_value is None:
+            return False
+
+        try:
+            target_num = float(target)
+            best_num = float(best_value)
+        except (TypeError, ValueError):
+            return False
+
+        if direction == "maximize":
+            return best_num >= target_num
+        return best_num <= target_num
 
     def _update_best_tracking(self, round_idx: int) -> None:
         """Update best iteration and patience tracking after eval."""
@@ -879,6 +930,24 @@ class LoopController:
             self.heartbeat.stop()
         if self.lock_mgr:
             self.lock_mgr.release()
+
+    def _record_fatal_controller_error(self, error: str) -> None:
+        """Persist a fatal controller failure on a best-effort basis."""
+        self.state["status"] = "failed"
+        self.state["halt_reason"] = "fatal_controller_error"
+        self.state["last_failure"] = error
+        try:
+            self.store.ensure_dirs()
+            self._persist_state()
+            if self.state.get("loop_id"):
+                self.events.emit(
+                    "LOOP_FAILED",
+                    self.state["loop_id"],
+                    "failed",
+                    payload={"reason": error},
+                )
+        except Exception:
+            pass
 
     def _map_exit_code(self) -> int:
         """Map current state to an exit code."""
