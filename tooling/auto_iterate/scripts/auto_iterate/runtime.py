@@ -19,10 +19,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import signal
 import subprocess
 import threading
 import time
+import tomllib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -315,6 +317,38 @@ def classify_exit(exit_code: int, timed_out: bool) -> str:
     return "internal_error"
 
 
+_MODEL_LINE_RE = re.compile(r"^model:\s*(.+?)\s*$")
+
+
+def _expected_model(codex_home: str) -> str | None:
+    config_path = Path(codex_home) / "config.toml"
+    if not config_path.exists():
+        return None
+    try:
+        with config_path.open("rb") as f:
+            raw = tomllib.load(f)
+    except Exception:
+        return None
+    model = raw.get("model")
+    return model if isinstance(model, str) and model else None
+
+
+def _actual_model(stderr_path: str) -> str | None:
+    path = Path(stderr_path)
+    if not path.exists():
+        return None
+    try:
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            match = _MODEL_LINE_RE.match(line.strip())
+            if match:
+                model = match.group(1).strip()
+                if model:
+                    return model
+    except Exception:
+        return None
+    return None
+
+
 # ---------------------------------------------------------------------------
 # PhaseSupervisor — launches and monitors runtime
 # ---------------------------------------------------------------------------
@@ -376,9 +410,19 @@ class PhaseSupervisor:
             stderr_path=stderr_path,
         )
 
-        finished_at = iso_now()
         exit_class = classify_exit(exit_code, timed_out)
         failure_reason = None if exit_class == "success" else exit_class
+
+        if exit_class == "success":
+            expected_model = _expected_model(codex_home)
+            actual_model = _actual_model(stderr_path)
+            if expected_model and actual_model and expected_model != actual_model:
+                exit_class = "quota_or_rate_limit"
+                failure_reason = (
+                    f"model_downgrade: expected {expected_model}, got {actual_model}"
+                )
+
+        finished_at = iso_now()
 
         result = build_result(
             brief=brief,

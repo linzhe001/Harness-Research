@@ -478,9 +478,12 @@ class LoopController:
         )
 
         try:
+            recent_lessons, failed_hypotheses = self._plan_context()
             brief = build_brief(
                 self.state, phase_key,
                 recovery_mode=self.state.get("_recovery_mode", "normal"),
+                recent_lessons=recent_lessons,
+                failed_hypotheses=failed_hypotheses,
             )
             runtime_result = supervisor.run_phase(
                 brief=brief,
@@ -641,6 +644,58 @@ class LoopController:
                 self.state["phase_attempt"] = 1
         except ValueError:
             pass
+
+    def _plan_context(
+        self,
+        *,
+        lessons_limit: int = 8,
+        failed_limit: int = 5,
+    ) -> tuple[list[str], list[str]]:
+        """Collect recent lessons and failed hypotheses from iteration_log.json."""
+        log = self.validator.load_iteration_log()
+        iterations = log.get("iterations", [])
+
+        recent_lessons: list[str] = []
+        failed_hypotheses: list[str] = []
+        seen_lessons: set[str] = set()
+        seen_failed: set[str] = set()
+
+        for it in reversed(iterations):
+            lessons = it.get("lessons", [])
+            if isinstance(lessons, list):
+                for lesson in reversed(lessons):
+                    if (
+                        isinstance(lesson, str)
+                        and lesson
+                        and lesson not in seen_lessons
+                        and len(recent_lessons) < lessons_limit
+                    ):
+                        recent_lessons.append(lesson)
+                        seen_lessons.add(lesson)
+
+            hypothesis = it.get("hypothesis")
+            decision = it.get("decision")
+            screening_status = it.get("screening", {}).get("status")
+            full_run_status = it.get("full_run", {}).get("status")
+            failed = (
+                decision in {"DEBUG", "PIVOT", "ABORT"}
+                or screening_status == "failed"
+                or full_run_status in {"failed", "recoverable_failed"}
+            )
+            if (
+                failed
+                and isinstance(hypothesis, str)
+                and hypothesis
+                and hypothesis not in seen_failed
+                and len(failed_hypotheses) < failed_limit
+            ):
+                failed_hypotheses.append(hypothesis)
+                seen_failed.add(hypothesis)
+
+            if len(recent_lessons) >= lessons_limit and len(failed_hypotheses) >= failed_limit:
+                break
+
+        return recent_lessons, failed_hypotheses
 
     def _should_bypass_screening(self) -> bool:
         sp = self.state.get("screening_policy", {})
