@@ -47,7 +47,7 @@ tests/
 
 ## 2. 文件职责拆分
 
-### 2.1 `scripts/auto_iterate_ctl.sh`
+### 2.1 `tooling/auto_iterate/scripts/auto_iterate_ctl.sh`
 
 职责只保留三件事：
 
@@ -57,7 +57,7 @@ tests/
 
 不要把业务逻辑写进 `.sh`。否则测试、重构、remote 包装都会变差。
 
-### 2.2 `scripts/auto_iterate_ctl.py`
+### 2.2 `tooling/auto_iterate/scripts/auto_iterate_ctl.py`
 
 这是 CLI 前门，不是完整状态机本体。
 
@@ -86,11 +86,11 @@ tests/
 - hidden/test-only `--workspace-root`
 - hidden/test-only `--dry-run`
 
-### 2.3 `scripts/auto_iterate_controller.py`
+### 2.3 `tooling/auto_iterate/scripts/auto_iterate_controller.py`
 
 这是 V1 的核心状态机，但不建议把全部实现永久堆在单文件里。
 
-建议从第一版就把真实逻辑放进 `scripts/auto_iterate/` 包；`scripts/auto_iterate_controller.py` 保留为薄兼容入口或 import shim。这样做的原因很简单：lock / events / goal / recovery / postcondition 都是天然可测的 primitives，不值得先耦合进一个 1500+ 行的大文件再拆。
+建议从第一版就把真实逻辑放进 `tooling/auto_iterate/scripts/auto_iterate/` 包；`tooling/auto_iterate/scripts/auto_iterate_controller.py` 保留为薄兼容入口或 import shim。这样做的原因很简单：lock / events / goal / recovery / postcondition 都是天然可测的 primitives，不值得先耦合进一个 1500+ 行的大文件再拆。
 
 建议的包内逻辑对象映射：
 
@@ -127,7 +127,7 @@ tests/
 - `handle_phase_failure()`
 - `recover_from_state()`
 
-### 2.4 `scripts/auto_iterate_runtime_codex.sh`
+### 2.4 `tooling/auto_iterate/scripts/auto_iterate_runtime_codex.sh`
 
 仍然只做 thin wrapper：
 
@@ -135,7 +135,7 @@ tests/
 - 导出必要 env（如 `CODEX_HOME`）
 - 调用 `auto_iterate_runtime_codex.py`
 
-### 2.5 `scripts/auto_iterate_runtime_codex.py`
+### 2.5 `tooling/auto_iterate/scripts/auto_iterate_runtime_codex.py`
 
 职责：
 
@@ -543,7 +543,7 @@ V1 的 `dry_run` 应该做到：
 
 ## 12. 需要先落地的配置样例
 
-### 12.1 `config/auto_iterate_controller.example.yaml`
+### 12.1 `tooling/auto_iterate/config/auto_iterate_controller.example.yaml`
 
 至少包含：
 
@@ -555,7 +555,7 @@ V1 的 `dry_run` 应该做到：
 - `terminate_grace_sec`
 - `event_log.rotate_bytes`
 
-### 12.2 `config/auto_iterate_accounts.example.yaml`
+### 12.2 `tooling/auto_iterate/config/auto_iterate_accounts.example.yaml`
 
 至少包含：
 

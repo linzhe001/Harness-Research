@@ -58,7 +58,7 @@
 
 ### 3.2 当前仓库缺失的核心能力
 
-- 没有 `scripts/auto_iterate_ctl.sh` / `.py` / controller / runtime adapter。
+- 没有 `tooling/auto_iterate/scripts/auto_iterate_ctl.sh` / `.py` / controller / runtime adapter。
 - 没有 `.auto_iterate/` runtime state contract 的任何实现。
 - 没有 v7 要求的 `state.json` / `lock.json` / `events.jsonl` schema fixture。
 - 没有 `goal.md` / `goal.next.md` staged activation 机制。
@@ -78,16 +78,16 @@
 必须进入改造范围的文件面包括：
 
 - 新增脚本与配置：
-  - `scripts/auto_iterate_ctl.sh`
-  - `scripts/auto_iterate_ctl.py`
-  - `scripts/auto_iterate_controller.py`
-  - `scripts/auto_iterate_runtime_codex.sh`
-  - `scripts/auto_iterate_runtime_codex.py`
-  - `scripts/auto_iterate/**`（推荐从第一版开始承载可测 primitives，而不是把核心逻辑永久塞进单文件）
-  - `config/auto_iterate_controller.example.yaml`
-  - `config/auto_iterate_accounts.example.yaml`
-  - `docs/auto_iterate_goal_template.md`
-  - `docs/remote_control_guide.md`
+  - `tooling/auto_iterate/scripts/auto_iterate_ctl.sh`
+  - `tooling/auto_iterate/scripts/auto_iterate_ctl.py`
+  - `tooling/auto_iterate/scripts/auto_iterate_controller.py`
+  - `tooling/auto_iterate/scripts/auto_iterate_runtime_codex.sh`
+  - `tooling/auto_iterate/scripts/auto_iterate_runtime_codex.py`
+  - `tooling/auto_iterate/scripts/auto_iterate/**`（推荐从第一版开始承载可测 primitives，而不是把核心逻辑永久塞进单文件）
+  - `tooling/auto_iterate/config/auto_iterate_controller.example.yaml`
+  - `tooling/auto_iterate/config/auto_iterate_accounts.example.yaml`
+  - `tooling/auto_iterate/docs/auto_iterate_goal_template.md`
+  - `tooling/auto_iterate/docs/remote_control_guide.md`
 - 必改 skill / schema / guide：
   - `.agents/skills/auto-iterate-goal/**`
   - `.claude/skills/auto-iterate-goal/**`
@@ -170,11 +170,11 @@
 
 输出物：
 
-- `scripts/auto_iterate_*`
-- `scripts/auto_iterate/**`
+- `tooling/auto_iterate/scripts/auto_iterate_*`
+- `tooling/auto_iterate/scripts/auto_iterate/**`
 - `config/*.example.yaml`
-- `docs/auto_iterate_goal_template.md`
-- `docs/remote_control_guide.md`
+- `tooling/auto_iterate/docs/auto_iterate_goal_template.md`
+- `tooling/auto_iterate/docs/remote_control_guide.md`
 
 对应文档：`02_controller_runtime_plan.md`
 
@@ -198,8 +198,8 @@
 
 输出物：
 
-- `config/auto_iterate_accounts.example.yaml`
-- `docs/remote_control_guide.md`
+- `tooling/auto_iterate/config/auto_iterate_accounts.example.yaml`
+- `tooling/auto_iterate/docs/remote_control_guide.md`
 - cc-connect mapping note
 
 对应文档：`04_remote_account_ops.md`

@@ -2,7 +2,7 @@
 
 These notes freeze critical algorithms and precedence rules that are not fully captured
 by the JSON fixtures alone. Every controller implementation decision must be traceable
-to either this document or `docs/auto_iterate_v7_plan/01_contract_freeze.md`.
+to either this document or `tooling/auto_iterate/docs/auto_iterate_v7_plan/01_contract_freeze.md`.
 
 ---
 
@@ -34,7 +34,7 @@ When `start` initializes the loop, values are resolved in this order (highest wi
 
 1. **CLI overrides** — explicit `--flag value` arguments to `start`
 2. **Validated source goal** — extracted schema from the goal markdown file
-3. **Controller policy config** — `config/auto_iterate_controller.yaml`
+3. **Controller policy config** — `tooling/auto_iterate/config/auto_iterate_controller.yaml`
 4. **Doc defaults** — hardcoded defaults in the controller code
 5. **Account registry** — only used for account selection, not metric/budget values
 

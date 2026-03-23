@@ -126,7 +126,7 @@ If there are incomplete iterations, prompt the user to complete or abandon them 
      "changes_summary": "...",
      "config_diff": {...},
      "status": "planned",
-     "screening": "recommended" | "not_needed",
+     "screening": {"recommended": true},
      "codex_review": "used" | "unavailable",
      "codex_review_detail": {...} | null
    }

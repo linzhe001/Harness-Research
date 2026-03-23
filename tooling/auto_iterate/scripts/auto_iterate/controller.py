@@ -21,7 +21,7 @@ from .state import StateStore, atomic_write_json, load_json, StateLoadError
 from .lock import LockManager, LockConflictError
 from .events import EventLogger, iso_now
 from .goal import GoalManager, parse as parse_goal, validate as validate_goal, check_metric_identity
-from .policy import PolicyConfig
+from .policy import DEFAULT_POLICY, PolicyConfig
 from .accounts import AccountRegistry, NoAccountAvailableError
 from .postcondition import PostconditionValidator
 from .recovery import RecoveryEngine, RERUN, ADOPT, FAIL
@@ -58,6 +58,7 @@ _DECISION_HALT: dict[str, str] = {
 
 # Canonical phase sequence.
 _PHASE_SEQUENCE = ["plan", "code", "run_screening", "run_full", "eval"]
+_PERSISTED_POLICY_KEYS = ("timeouts", "terminate_grace_sec", "retry_policy", "heartbeat")
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +190,10 @@ class LoopController:
             "last_decision": None,
             "halt_reason": None,
             "last_failure": None,
+            "timeouts": copy.deepcopy(self.policy.get("timeouts", {})),
+            "terminate_grace_sec": self.policy.get("terminate_grace_sec", 30),
+            "retry_policy": copy.deepcopy(self.policy.get("retry_policy", {})),
+            "heartbeat": copy.deepcopy(self.policy.get("heartbeat", {})),
             # Internal: not persisted but used during run.
             "_policy": self.policy,
             "screening_policy": screening_policy,
@@ -240,16 +245,23 @@ class LoopController:
         if status not in ("paused", "failed", "running"):
             return EXIT_INVALID_STATE
 
-        # Load policy.
+        # Reconstruct frozen runtime policy from durable state. Config/defaults
+        # are only a compatibility fallback for older state files that predate
+        # persisted policy fields.
         pc = PolicyConfig.load(config_path)
-        self.policy = pc.freeze()
+        self.policy = self._policy_from_state(pc.freeze())
         self.state["_policy"] = self.policy
+        self._ensure_policy_fields_in_state()
 
         # Load accounts.
         self.accounts = AccountRegistry.load(accounts_path)
+        self.accounts.restore_runtime(self.state.get("accounts"))
 
         # Lock management.
-        stale_threshold = self.policy.get("heartbeat", {}).get("stale_threshold_sec", 120)
+        stale_threshold = self.state.get("heartbeat", {}).get(
+            "stale_threshold_sec",
+            self.policy.get("heartbeat", {}).get("stale_threshold_sec", 120),
+        )
         self.lock_mgr = LockManager(
             self.auto_dir / "lock.json",
             stale_threshold_sec=stale_threshold,
@@ -280,6 +292,7 @@ class LoopController:
             # Adopt the existing state — advance to next phase.
             if plan["phase_key"] == "plan" and plan.get("adopted_iteration_id"):
                 self.state["current_iteration_id"] = plan["adopted_iteration_id"]
+                self.state.pop("plan_binding", None)
             self._advance_phase()
 
         # Re-acquire lock.
@@ -289,7 +302,10 @@ class LoopController:
         self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
 
         # Start heartbeat.
-        hb_interval = self.policy.get("heartbeat", {}).get("interval_sec", 30)
+        hb_interval = self.state.get("heartbeat", {}).get(
+            "interval_sec",
+            self.policy.get("heartbeat", {}).get("interval_sec", 30),
+        )
         self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
         self.heartbeat.start()
 
@@ -319,7 +335,8 @@ class LoopController:
                     return self._map_exit_code()
 
                 # Activate pending goal.
-                self._activate_pending_goal()
+                if not self._activate_pending_goal():
+                    return self._map_exit_code()
 
                 # Check stop conditions.
                 halt = self._check_stop_conditions()
@@ -388,9 +405,13 @@ class LoopController:
         """Execute a single phase. Returns the postcondition result or None on fatal."""
         loop_id = self.state["loop_id"]
         iteration_id = self.state.get("current_iteration_id")
-
-        # Increment attempt.
-        self.state["phase_attempt"] = self.state.get("phase_attempt", 0) + 1
+        self.state["phase_attempt"] = int(self.state.get("phase_attempt", 1)) + 1
+        if phase_key == "plan":
+            binding = self.state.get("plan_binding")
+            if not isinstance(binding, dict) or "existing_ids" not in binding:
+                self.state["plan_binding"] = {
+                    "existing_ids": sorted(self.validator.get_iteration_ids()),
+                }
         self._persist_state()
 
         self.events.emit(
@@ -398,8 +419,12 @@ class LoopController:
             round_index=round_idx, phase_key=phase_key,
         )
 
-        # Snapshot pre-IDs for plan phase.
-        pre_ids = self.validator.get_iteration_ids() if phase_key == "plan" else None
+        # Snapshot pre-IDs for plan phase from durable state so resume can bind
+        # the same iteration deterministically.
+        pre_ids = None
+        if phase_key == "plan":
+            existing_ids = self.state.get("plan_binding", {}).get("existing_ids", [])
+            pre_ids = set(existing_ids)
 
         # Select account.
         try:
@@ -419,8 +444,11 @@ class LoopController:
             return None
 
         # Build brief and run.
-        timeout = self.policy.get("timeouts", {}).get(phase_key, 1800)
-        grace = self.policy.get("terminate_grace_sec", 30)
+        timeout = self.state.get("timeouts", {}).get(
+            phase_key,
+            self.policy.get("timeouts", {}).get(phase_key, 1800),
+        )
+        grace = self.state.get("terminate_grace_sec", self.policy.get("terminate_grace_sec", 30))
 
         supervisor = PhaseSupervisor(
             workspace_root=self.workspace_root,
@@ -509,6 +537,7 @@ class LoopController:
         # Bind iteration_id after plan.
         if phase_key == "plan":
             self.state["current_iteration_id"] = validation.get("iteration_id")
+            self.state.pop("plan_binding", None)
 
         # Track GPU hours for run phases.
         if phase_key in ("run_screening", "run_full"):
@@ -613,7 +642,7 @@ class LoopController:
         max_attempts = self.policy.get("retry_policy", {}).get("max_phase_attempts", 2)
         attempt = self.state.get("phase_attempt", 1)
 
-        if attempt >= max_attempts:
+        if attempt > max_attempts:
             self.state["status"] = "paused"
             self.state["halt_reason"] = "manual_action_required"
             self._persist_state()
@@ -658,20 +687,30 @@ class LoopController:
 
         return None
 
-    def _activate_pending_goal(self) -> None:
+    def _activate_pending_goal(self) -> bool:
         if not self.goal_mgr.has_staged():
-            return
+            return True
         success, errors = self.goal_mgr.activate_staged(self.state)
         if success:
             # Re-parse activated goal and update objective.
             try:
                 new_goal = parse_goal(self.goal_mgr.goal_path)
-                self.state["objective"] = new_goal.get("objective", self.state["objective"])
+                self._apply_goal_fields(new_goal)
+                self.state["goal"]["activated_at"] = iso_now()
+                self._persist_state()
             except Exception:
-                pass
+                self.events.emit(
+                    "GOAL_ACTIVATION_FAILED", self.state["loop_id"], "paused",
+                    payload={"errors": ["activated goal could not be re-parsed"]},
+                )
+                self.state["status"] = "paused"
+                self.state["halt_reason"] = "manual_action_required"
+                self._persist_state()
+                return False
             self.events.emit(
                 "GOAL_ACTIVATED", self.state["loop_id"], "running",
             )
+            return True
         else:
             self.events.emit(
                 "GOAL_ACTIVATION_FAILED", self.state["loop_id"], "paused",
@@ -680,6 +719,7 @@ class LoopController:
             self.state["status"] = "paused"
             self.state["halt_reason"] = "manual_action_required"
             self._persist_state()
+            return False
 
     def _check_stop_conditions(self) -> str | None:
         """Check budget, patience, and target conditions."""
@@ -788,6 +828,50 @@ class LoopController:
         """Write state to disk (strip internal keys)."""
         to_save = {k: v for k, v in self.state.items() if not k.startswith("_")}
         self.store.save_state(to_save)
+
+    def _policy_from_state(self, fallback: dict[str, Any]) -> dict[str, Any]:
+        policy = copy.deepcopy(fallback)
+        for key in _PERSISTED_POLICY_KEYS:
+            if key in self.state:
+                policy[key] = copy.deepcopy(self.state[key])
+        if "screening_policy" in self.state:
+            policy["screening_policy"] = copy.deepcopy(self.state["screening_policy"])
+        return policy
+
+    def _ensure_policy_fields_in_state(self) -> None:
+        for key in _PERSISTED_POLICY_KEYS:
+            if key not in self.state:
+                self.state[key] = copy.deepcopy(self.policy.get(key, DEFAULT_POLICY.get(key)))
+
+    def _apply_goal_fields(self, parsed_goal: dict[str, Any]) -> None:
+        self.state["objective"] = parsed_goal.get("objective", self.state.get("objective", {}))
+
+        patience = parsed_goal.get("patience", {})
+        if patience:
+            current_patience = self.state.get("patience", {})
+            current_patience["max_no_improve_rounds"] = patience.get(
+                "max_no_improve_rounds",
+                current_patience.get("max_no_improve_rounds"),
+            )
+            current_patience["min_primary_delta"] = patience.get(
+                "min_primary_delta",
+                current_patience.get("min_primary_delta"),
+            )
+            self.state["patience"] = current_patience
+
+        budget = parsed_goal.get("budget", {})
+        if budget:
+            current_budget = self.state.get("budget", {})
+            current_budget["max_rounds"] = budget.get("max_rounds", current_budget.get("max_rounds"))
+            current_budget["max_gpu_hours"] = budget.get(
+                "max_gpu_hours",
+                current_budget.get("max_gpu_hours"),
+            )
+            self.state["budget"] = current_budget
+
+        screening_policy = parsed_goal.get("screening_policy")
+        if isinstance(screening_policy, dict):
+            self.state["screening_policy"] = copy.deepcopy(screening_policy)
 
     def _cleanup(self) -> None:
         """Stop heartbeat and release lock."""

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .postcondition import PostconditionValidator, _get_iteration
+from .postcondition import PostconditionValidator, _get_iteration, bind_iteration_id
 
 
 # ---------------------------------------------------------------------------
@@ -29,17 +29,19 @@ def recovery_action(
     iterations: list[dict[str, Any]],
     phase_attempt: int,
     max_phase_attempts: int,
+    *,
+    existing_ids: set[str] | None = None,
 ) -> tuple[str, str]:
     """Determine recovery action for the current phase.
 
     Returns ``(action, reason)`` where action is one of
     ``RERUN``, ``ADOPT``, ``FAIL``.
     """
-    if phase_attempt >= max_phase_attempts:
-        return FAIL, f"phase_attempt={phase_attempt} >= max={max_phase_attempts}"
+    if phase_attempt > max_phase_attempts:
+        return FAIL, f"phase_attempt={phase_attempt} > max={max_phase_attempts}"
 
     if phase_key == "plan":
-        return _recover_plan(iteration_id, iterations)
+        return _recover_plan(iteration_id, iterations, existing_ids=existing_ids)
     elif phase_key == "code":
         return _recover_code(iteration_id, iterations)
     elif phase_key == "run_screening":
@@ -57,8 +59,21 @@ def recovery_action(
 def _recover_plan(
     iteration_id: str | None,
     iterations: list[dict[str, Any]],
+    *,
+    existing_ids: set[str] | None = None,
 ) -> tuple[str, str]:
-    # Look for a planned iteration that could be the one we were creating.
+    if existing_ids is not None:
+        current_ids = {it["id"] for it in iterations if "id" in it}
+        adopted_id, err = bind_iteration_id(existing_ids, current_ids)
+        if err:
+            return RERUN, err
+
+        candidate = _get_iteration(iterations, adopted_id)
+        if candidate and candidate.get("status") == "planned" and candidate.get("hypothesis"):
+            return ADOPT, f"adopting bound planned iteration {adopted_id}"
+        return RERUN, f"bound iteration {adopted_id!r} missing planned postcondition"
+
+    # Backward-compatible fallback for old state without a persisted pre-plan snapshot.
     planned = [it for it in iterations if it.get("status") == "planned"]
     if len(planned) == 0:
         return RERUN, "no planned iteration found"
@@ -150,7 +165,14 @@ def _recover_eval(
     if it is None:
         return FAIL, f"iteration {iteration_id} not found"
 
-    if it.get("status") == "completed" and it.get("decision") and it.get("lessons"):
+    metrics = it.get("metrics", it.get("full_run", {}).get("metrics", {}))
+    if (
+        it.get("status") == "completed"
+        and it.get("decision")
+        and it.get("lessons")
+        and isinstance(metrics, dict)
+        and metrics
+    ):
         return ADOPT, "iteration already completed with decision and lessons"
     return RERUN, "eval incomplete"
 
@@ -182,6 +204,9 @@ class RecoveryEngine:
         phase_key = state.get("current_phase_key", "plan")
         iteration_id = state.get("current_iteration_id")
         phase_attempt = state.get("phase_attempt", 1)
+        plan_binding = state.get("plan_binding", {})
+        existing_ids_raw = plan_binding.get("existing_ids")
+        existing_ids = set(existing_ids_raw) if isinstance(existing_ids_raw, list) else None
 
         log = self.validator.load_iteration_log()
         iterations = log.get("iterations", [])
@@ -192,6 +217,7 @@ class RecoveryEngine:
             iterations=iterations,
             phase_attempt=phase_attempt,
             max_phase_attempts=max_phase_attempts,
+            existing_ids=existing_ids,
         )
 
         result: dict[str, Any] = {
@@ -203,8 +229,14 @@ class RecoveryEngine:
 
         # For plan phase adopt, extract the adopted iteration_id.
         if phase_key == "plan" and action == ADOPT:
-            planned = [it for it in iterations if it.get("status") == "planned"]
-            if planned:
-                result["adopted_iteration_id"] = planned[0]["id"]
+            if existing_ids is not None:
+                current_ids = {it["id"] for it in iterations if "id" in it}
+                adopted_id, err = bind_iteration_id(existing_ids, current_ids)
+                if err is None and adopted_id is not None:
+                    result["adopted_iteration_id"] = adopted_id
+            if "adopted_iteration_id" not in result:
+                planned = [it for it in iterations if it.get("status") == "planned"]
+                if planned:
+                    result["adopted_iteration_id"] = planned[0]["id"]
 
         return result

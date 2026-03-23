@@ -122,10 +122,10 @@ def build_brief(
     obj = state.get("objective", {})
     best = state.get("best", {})
     sp = state.get("screening_policy", state.get("_policy", {}).get("screening_policy", {}))
-    timeouts = state.get("_policy", {}).get("timeouts", {
+    timeouts = state.get("timeouts", state.get("_policy", {}).get("timeouts", {
         "plan": 1800, "code": 3600,
         "run_screening": 14400, "run_full": 28800, "eval": 1800,
-    })
+    }))
 
     brief: dict[str, Any] = {
         "schema_version": 1,

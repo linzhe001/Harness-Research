@@ -1,6 +1,6 @@
 # Goal Template Reference
 
-See `docs/auto_iterate_goal_template.md` for the canonical template.
+See `tooling/auto_iterate/docs/auto_iterate_goal_template.md` for the canonical template.
 
 ## Required Fields (must be present for controller goal parser)
 

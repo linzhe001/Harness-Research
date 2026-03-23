@@ -5,7 +5,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Use the Python from PATH (conda/venv expected to be active).
 exec python3 "$SCRIPT_DIR/auto_iterate_runtime_codex.py" "$@"

@@ -15,12 +15,13 @@ from __future__ import annotations
 import json
 import shutil
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.controller import (
     EXIT_BUDGET_EXHAUSTED,
@@ -223,6 +224,123 @@ class TestGoalValidation:
         code = ctl.override_goal(str(CONTRACTS / "goal.valid.md"))
         assert code == EXIT_OK
         assert (project / ".auto_iterate" / "goal.next.md").exists()
+
+    def test_invalid_staged_goal_stops_before_round_start(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.goal_mgr.stage_next(CONTRACTS / "goal.invalid_metric_change.md")
+
+        code = ctl.start_loop(goal_path=str(CONTRACTS / "goal.valid.md"))
+
+        state = load_json(project / ".auto_iterate" / "state.json")
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert code == EXIT_MANUAL_ACTION
+        assert state["status"] == "paused"
+        assert state["halt_reason"] == "manual_action_required"
+        assert state["current_round_index"] == 0
+        assert any(e["event"] == "GOAL_ACTIVATION_FAILED" for e in events)
+        assert not any(e["event"] == "ROUND_STARTED" for e in events)
+        assert not any(e["event"] == "PHASE_STARTED" for e in events)
+
+    def test_goal_activation_updates_all_goal_derived_fields(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+
+        active_goal = tmp_path / "active_goal.md"
+        active_goal.write_text((CONTRACTS / "goal.valid.md").read_text())
+        staged_goal = tmp_path / "staged_goal.md"
+        staged_goal.write_text(textwrap.dedent("""\
+        # Auto-Iterate Goal
+
+        ## Objective
+
+        ### Primary Metric
+        - **name**: PSNR
+        - **direction**: maximize
+        - **target**: 35.0
+
+        ### Constraints
+        - FPS >= 30
+
+        ## Patience
+        - **max_no_improve_rounds**: 2
+        - **min_primary_delta**: 0.5
+
+        ## Budget
+        - **max_rounds**: 7
+        - **max_gpu_hours**: 12.0
+
+        ## Screening Policy
+        - **enabled**: false
+        - **threshold_pct**: 95
+        - **default_steps**: 1234
+        """))
+
+        ctl.goal_mgr.snapshot_to(active_goal)
+        ctl.goal_mgr.stage_next(staged_goal)
+        ctl.state = {
+            "loop_id": "loop1",
+            "status": "running",
+            "goal": {"source_path": str(active_goal), "activated_at": "2026-01-01T00:00:00Z"},
+            "objective": {"primary_metric": {"name": "PSNR", "direction": "maximize", "target": 32.0}},
+            "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 1},
+            "budget": {"max_rounds": 20, "completed_rounds": 3, "gpu_count": 1,
+                       "max_gpu_hours": 100.0, "used_gpu_hours": 4.0},
+            "screening_policy": {"enabled": True, "threshold_pct": 90, "default_steps": 5000},
+        }
+
+        assert ctl._activate_pending_goal() is True
+        assert ctl.state["objective"]["primary_metric"]["target"] == 35.0
+        assert ctl.state["patience"]["max_no_improve_rounds"] == 2
+        assert ctl.state["patience"]["min_primary_delta"] == 0.5
+        assert ctl.state["patience"]["consecutive_no_improve"] == 1
+        assert ctl.state["budget"]["max_rounds"] == 7
+        assert ctl.state["budget"]["max_gpu_hours"] == 12.0
+        assert ctl.state["budget"]["completed_rounds"] == 3
+        assert ctl.state["screening_policy"]["enabled"] is False
+        assert ctl.state["screening_policy"]["default_steps"] == 1234
+
+
+class TestRetryCeiling:
+    def test_first_failure_still_allows_retry(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.policy = {"retry_policy": {"max_phase_attempts": 2}}
+        ctl.state = {
+            "loop_id": "loop1",
+            "status": "running",
+            "phase_attempt": 2,
+            "halt_reason": None,
+        }
+
+        result = ctl._handle_phase_failure("code", 1)
+        assert result is not None
+        assert ctl.state["status"] == "running"
+        assert ctl.state["halt_reason"] is None
+
+    def test_second_failure_pauses(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.policy = {"retry_policy": {"max_phase_attempts": 2}}
+        ctl.state = {
+            "loop_id": "loop1",
+            "status": "running",
+            "phase_attempt": 3,
+            "halt_reason": None,
+        }
+
+        result = ctl._handle_phase_failure("code", 1)
+        assert result is None
+        assert ctl.state["status"] == "paused"
+        assert ctl.state["halt_reason"] == "manual_action_required"
 
 
 # ===================================================================

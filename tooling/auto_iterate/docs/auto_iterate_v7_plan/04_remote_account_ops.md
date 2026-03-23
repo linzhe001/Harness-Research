@@ -8,13 +8,13 @@
 
 V1 的 source of truth 仍然是本地命令：
 
-- `scripts/auto_iterate_ctl.sh start ...`
-- `scripts/auto_iterate_ctl.sh status`
-- `scripts/auto_iterate_ctl.sh pause`
-- `scripts/auto_iterate_ctl.sh stop`
-- `scripts/auto_iterate_ctl.sh resume`
-- `scripts/auto_iterate_ctl.sh tail`
-- `scripts/auto_iterate_ctl.sh override ...`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start ...`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh status`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh pause`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh stop`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail`
+- `tooling/auto_iterate/scripts/auto_iterate_ctl.sh override ...`
 
 remote layer 只包装这些命令，不直接修改 runtime state 文件。
 
@@ -44,13 +44,13 @@ V1 不要求直接在本仓实现 `cc-connect` 插件，只要求给它一个足
 
 | 远程动作 | 本地命令 |
 |---|---|
-| 启动 loop | `scripts/auto_iterate_ctl.sh start --tool codex --goal docs/auto_iterate_goal.md` |
-| 查看状态 | `scripts/auto_iterate_ctl.sh status --json` |
-| 暂停 | `scripts/auto_iterate_ctl.sh pause` |
-| 停止 | `scripts/auto_iterate_ctl.sh stop` |
-| 恢复 | `scripts/auto_iterate_ctl.sh resume` |
-| 查看事件尾部 | `scripts/auto_iterate_ctl.sh tail --jsonl --lines 50` |
-| staged goal update | `scripts/auto_iterate_ctl.sh override --goal docs/auto_iterate_goal.md` |
+| 启动 loop | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start --tool codex --goal docs/auto_iterate_goal.md` |
+| 查看状态 | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json` |
+| 暂停 | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh pause` |
+| 停止 | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh stop` |
+| 恢复 | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume` |
+| 查看事件尾部 | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50` |
+| staged goal update | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh override --goal docs/auto_iterate_goal.md` |
 
 ### 2.2 为什么先稳 CLI，再谈 chat command
 
@@ -63,7 +63,7 @@ V1 不要求直接在本仓实现 `cc-connect` 插件，只要求给它一个足
 因此 V1 的优先级是：
 
 1. 先保证本地 CLI 完整
-2. 再写 `docs/remote_control_guide.md`
+2. 再写 `tooling/auto_iterate/docs/remote_control_guide.md`
 3. 最后才在后续版本中接 `cc-connect` webhook/management API
 
 ## 3. V1 远控的 operator 语义
@@ -138,7 +138,7 @@ remote wrapper 也必须把 exit code 当稳定接口，而不是看 stderr pros
 
 这里参考 `openclaw-cliproxy-kit` 和 `codex-account-manager`，但不照抄它们的运行方式。
 
-### 4.1 推荐的 `config/auto_iterate_accounts.example.yaml`
+### 4.1 推荐的 `tooling/auto_iterate/config/auto_iterate_accounts.example.yaml`
 
 建议结构：
 
@@ -241,14 +241,14 @@ controller 的预算 source of truth 仍然是：
   - manual action required
   - loop paused/stopped/failed
 
-V1 不强制实现某个具体通知 provider，但 `docs/remote_control_guide.md` 应预留：
+V1 不强制实现某个具体通知 provider，但 `tooling/auto_iterate/docs/remote_control_guide.md` 应预留：
 
 - `cc-connect`
 - Feishu / Telegram / Slack 这类包装层
 
 ## 8. operator runbook 需要覆盖的内容
 
-`docs/remote_control_guide.md` 最终至少要讲清楚：
+`tooling/auto_iterate/docs/remote_control_guide.md` 最终至少要讲清楚：
 
 1. 如何启动
 2. 如何查看状态
@@ -284,5 +284,5 @@ remote/account/ops 这一块完成的最低标准：
 1. 本地 CLI 足够稳定，远程系统只需包它。
 2. `CODEX_HOME` per-process account selection 可配置。
 3. quota/rate-limit 后 account cooldown + retry 行为明确。
-4. `docs/remote_control_guide.md` 足够让后续 AI 或 operator 接 `cc-connect`。
+4. `tooling/auto_iterate/docs/remote_control_guide.md` 足够让后续 AI 或 operator 接 `cc-connect`。
 5. 整个 remote/account 方案没有破坏 controller 的 single-writer rule。

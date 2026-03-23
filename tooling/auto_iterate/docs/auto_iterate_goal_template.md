@@ -4,7 +4,7 @@
 > The controller's goal parser extracts structured fields from the headings and
 > field lines below. Keep the format consistent — do not remove required headings.
 >
-> After editing, run `auto_iterate_ctl.sh start --goal docs/auto_iterate_goal.md`
+> After editing, run `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start --goal docs/auto_iterate_goal.md`
 > or use the `$auto-iterate-goal check` skill to validate before launching.
 
 ## Objective

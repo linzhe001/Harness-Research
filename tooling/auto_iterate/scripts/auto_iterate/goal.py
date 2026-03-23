@@ -7,7 +7,7 @@ specification of the research objective.  The controller consumes a
 Supported goal format
 ---------------------
 Markdown with structured ``**key**: value`` field lines under well-known
-headings.  See ``docs/auto_iterate_goal_template.md`` for the canonical
+headings.  See ``tooling/auto_iterate/docs/auto_iterate_goal_template.md`` for the canonical
 template and ``01_contract_freeze.md`` §5 for the frozen schema.
 """
 
@@ -18,7 +18,10 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from .state import atomic_write_json, load_json
+try:
+    import yaml  # type: ignore[import-untyped]
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -64,6 +67,10 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
         raise GoalParseError(f"Goal file not found: {path}")
 
     text = path.read_text(encoding="utf-8")
+    front_matter = _parse_front_matter(text)
+    if front_matter is not None:
+        return _normalize_goal_dict(front_matter)
+
     lines = text.splitlines()
 
     result: dict[str, Any] = {
@@ -187,14 +194,22 @@ def validate(parsed_goal: dict[str, Any]) -> list[str]:
     patience = parsed_goal.get("patience", {})
     if "max_no_improve_rounds" not in patience:
         errors.append("patience.max_no_improve_rounds is required")
+    if "min_primary_delta" not in patience:
+        errors.append("patience.min_primary_delta is required")
 
     budget = parsed_goal.get("budget", {})
     if "max_rounds" not in budget:
         errors.append("budget.max_rounds is required")
+    if "max_gpu_hours" not in budget:
+        errors.append("budget.max_gpu_hours is required")
 
     sp = parsed_goal.get("screening_policy", {})
     if "enabled" not in sp:
         errors.append("screening_policy.enabled is required")
+    if "threshold_pct" not in sp:
+        errors.append("screening_policy.threshold_pct is required")
+    if "default_steps" not in sp:
+        errors.append("screening_policy.default_steps is required")
 
     return errors
 
@@ -312,3 +327,60 @@ def _coerce(raw: str) -> Any:
         pass
 
     return raw
+
+
+def _parse_front_matter(text: str) -> dict[str, Any] | None:
+    """Parse a top-of-file YAML front matter block if present."""
+    if not text.startswith("---\n"):
+        return None
+
+    end = text.find("\n---", 4)
+    if end == -1:
+        raise GoalParseError("Invalid goal front matter: missing closing ---")
+    if yaml is None:
+        raise GoalParseError("PyYAML is required to parse goal front matter")
+
+    raw = text[4:end]
+    try:
+        parsed = yaml.safe_load(raw)
+    except Exception as exc:  # pragma: no cover - exact parser error is not important
+        raise GoalParseError(f"Invalid goal front matter: {exc}") from exc
+
+    if not isinstance(parsed, dict):
+        raise GoalParseError("Goal front matter must decode to a mapping")
+    return parsed
+
+
+def _normalize_goal_dict(data: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a machine-readable goal mapping to the canonical schema."""
+    result: dict[str, Any] = {
+        "objective": {
+            "primary_metric": {},
+            "constraints": [],
+        },
+        "patience": {},
+        "budget": {},
+        "screening_policy": {},
+        "initial_hypotheses": [],
+        "forbidden_directions": [],
+    }
+
+    if isinstance(data.get("objective"), dict):
+        objective = data["objective"]
+        if isinstance(objective.get("primary_metric"), dict):
+            result["objective"]["primary_metric"] = dict(objective["primary_metric"])
+        constraints = objective.get("constraints", [])
+        if isinstance(constraints, list):
+            result["objective"]["constraints"] = list(constraints)
+
+    for key in ("patience", "budget", "screening_policy"):
+        value = data.get(key, {})
+        if isinstance(value, dict):
+            result[key] = dict(value)
+
+    for key in ("initial_hypotheses", "forbidden_directions"):
+        value = data.get(key, [])
+        if isinstance(value, list):
+            result[key] = list(value)
+
+    return result

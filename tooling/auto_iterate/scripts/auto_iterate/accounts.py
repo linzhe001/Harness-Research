@@ -1,6 +1,6 @@
 """Account registry for per-process Codex home selection.
 
-Accounts are defined in ``config/auto_iterate_accounts.yaml``.  The
+Accounts are defined in ``tooling/auto_iterate/config/auto_iterate_accounts.yaml``.  The
 controller picks an account before each phase launch and sets
 ``CODEX_HOME`` in the subprocess environment — it never modifies
 the global ``~/.codex/auth.json``.
@@ -37,6 +37,7 @@ class AccountRegistry:
         self.accounts: list[dict[str, Any]] = []
         # Runtime state: tracks cooldowns and transient status.
         self._runtime: dict[str, dict[str, Any]] = {}
+        self._selected_account_id: str | None = None
 
     @classmethod
     def load(cls, accounts_path: str | Path | None = None) -> "AccountRegistry":
@@ -86,6 +87,7 @@ class AccountRegistry:
         if state:
             current_id = state.get("accounts", {}).get("selected_account_id")
             if current_id and self.is_ready(current_id):
+                self._selected_account_id = current_id
                 return self._get(current_id)
 
         # 2. Pick from ready accounts: fewest used_calls, highest priority.
@@ -97,7 +99,30 @@ class AccountRegistry:
             self._runtime.get(a["id"], {}).get("used_calls", 0),
             -a.get("priority", 0),
         ))
-        return ready[0]
+        selected = ready[0]
+        self._selected_account_id = selected["id"]
+        return selected
+
+    def restore_runtime(self, accounts_state: dict[str, Any] | None) -> None:
+        """Hydrate runtime counters and cooldowns from persisted state."""
+        if not accounts_state:
+            return
+
+        selected_id = accounts_state.get("selected_account_id")
+        if selected_id in {a["id"] for a in self.accounts}:
+            self._selected_account_id = selected_id
+
+        by_account = accounts_state.get("by_account", {})
+        if not isinstance(by_account, dict):
+            return
+
+        for aid, snapshot in by_account.items():
+            if aid not in self._runtime or not isinstance(snapshot, dict):
+                continue
+            rt = self._runtime[aid]
+            for key in ("cooldown_until", "status", "used_calls", "last_used_at"):
+                if key in snapshot:
+                    rt[key] = snapshot[key]
 
     # ------------------------------------------------------------------
     # Status management
@@ -147,6 +172,8 @@ class AccountRegistry:
         """Increment the used_calls counter for an account."""
         rt = self._runtime.setdefault(account_id, {})
         rt["used_calls"] = rt.get("used_calls", 0) + calls
+        rt["last_used_at"] = _utcnow_iso()
+        self._selected_account_id = account_id
 
     # ------------------------------------------------------------------
     # Accessors
@@ -164,7 +191,7 @@ class AccountRegistry:
     def to_state_dict(self) -> dict[str, Any]:
         """Build the ``accounts`` sub-structure for ``state.json``."""
         by_account: dict[str, Any] = {}
-        selected: str | None = None
+        selected: str | None = self._selected_account_id
 
         for acc in self.accounts:
             aid = acc["id"]
@@ -198,3 +225,7 @@ class AccountRegistry:
             if a["id"] == account_id:
                 return a
         return None
+
+
+def _utcnow_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

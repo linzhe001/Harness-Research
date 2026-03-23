@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.recovery import (
     ADOPT,
@@ -52,6 +52,22 @@ class TestRecoveryAction:
         iters = [{"id": "iter1", "status": "planned"}]
         action, reason = recovery_action("plan", None, iters, 1, 2)
         assert action == RERUN
+
+    def test_plan_uses_existing_ids_binding_when_available(self) -> None:
+        iters = [
+            {"id": "iter_old", "status": "planned", "hypothesis": "old"},
+            {"id": "iter_new", "status": "planned", "hypothesis": "new"},
+        ]
+        action, reason = recovery_action(
+            "plan",
+            None,
+            iters,
+            2,
+            2,
+            existing_ids={"iter_old"},
+        )
+        assert action == ADOPT
+        assert "iter_new" in reason
 
     # -- code ---------------------------------------------------------------
 
@@ -117,7 +133,8 @@ class TestRecoveryAction:
 
     def test_eval_completed(self) -> None:
         iters = [{"id": "iter1", "status": "completed",
-                   "decision": "NEXT_ROUND", "lessons": ["x"]}]
+                   "decision": "NEXT_ROUND", "lessons": ["x"],
+                   "metrics": {"PSNR": 30.1}}]
         action, reason = recovery_action("eval", "iter1", iters, 1, 2)
         assert action == ADOPT
 
@@ -126,11 +143,17 @@ class TestRecoveryAction:
         action, reason = recovery_action("eval", "iter1", iters, 1, 2)
         assert action == RERUN
 
+    def test_eval_missing_metrics(self) -> None:
+        iters = [{"id": "iter1", "status": "completed",
+                   "decision": "NEXT_ROUND", "lessons": ["x"]}]
+        action, reason = recovery_action("eval", "iter1", iters, 1, 2)
+        assert action == RERUN
+
     # -- retry ceiling ------------------------------------------------------
 
     def test_retry_ceiling_reached(self) -> None:
         iters = [{"id": "iter1", "status": "planned"}]
-        action, reason = recovery_action("plan", None, iters, 2, 2)
+        action, reason = recovery_action("plan", None, iters, 3, 2)
         assert action == FAIL
 
     def test_retry_ceiling_not_reached(self) -> None:
@@ -167,6 +190,21 @@ class TestRecoveryEngine:
         result = engine.recover(state)
         assert result["action"] == ADOPT
         assert result["adopted_iteration_id"] == "iter1"
+
+    def test_recover_plan_uses_bound_iteration_id(self, tmp_path: Path) -> None:
+        engine = self._make_engine(tmp_path, [
+            {"id": "iter_old", "status": "planned", "hypothesis": "old"},
+            {"id": "iter_new", "status": "planned", "hypothesis": "new"},
+        ])
+        state = {
+            "current_phase_key": "plan",
+            "current_iteration_id": None,
+            "phase_attempt": 2,
+            "plan_binding": {"existing_ids": ["iter_old"]},
+        }
+        result = engine.recover(state)
+        assert result["action"] == ADOPT
+        assert result["adopted_iteration_id"] == "iter_new"
 
     def test_recover_code_rerun(self, tmp_path: Path) -> None:
         engine = self._make_engine(tmp_path, [

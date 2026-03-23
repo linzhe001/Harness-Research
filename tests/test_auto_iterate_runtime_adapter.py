@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.state import load_json, atomic_write_json
 from auto_iterate.runtime import (
@@ -437,7 +437,8 @@ class TestPostconditionValidator:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "completed",
              "decision": "CONTINUE",
-             "lessons": ["Ready for WF9"]},
+             "lessons": ["Ready for WF9"],
+             "metrics": {"PSNR": 32.1}},
         ])
         result = v.validate("eval", "iter3")
         assert result["ok"] is True
@@ -467,6 +468,15 @@ class TestPostconditionValidator:
         ])
         result = v.validate("eval", "iter3")
         assert result["ok"] is False
+
+    def test_eval_metrics_required(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND", "lessons": ["x"]},
+        ])
+        result = v.validate("eval", "iter3")
+        assert result["ok"] is False
+        assert "metrics" in result["payload"]["error"].lower()
 
     def test_eval_wrong_status(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [

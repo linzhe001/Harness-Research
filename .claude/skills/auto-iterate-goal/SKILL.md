@@ -13,7 +13,7 @@ Bridge skill between WF7.5 PASS and WF8 auto-iterate `start`. Produces or valida
 ## When To Use
 
 - After `/validate-run` returns PASS (WF7.5 gate cleared)
-- Before running `scripts/auto_iterate_ctl.sh start --goal docs/auto_iterate_goal.md`
+- Before running `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start --goal docs/auto_iterate_goal.md`
 - When the orchestrator auto-triggers a goal readiness check
 
 ## References
@@ -21,7 +21,7 @@ Bridge skill between WF7.5 PASS and WF8 auto-iterate `start`. Produces or valida
 - `./templates/goal-template.md`
 - `.claude/Workflow_Guide.md`
 - `.claude/skills/evaluate/templates/stage-report.md`
-- `docs/auto_iterate_goal_template.md`
+- `tooling/auto_iterate/docs/auto_iterate_goal_template.md`
 
 ## Subcommands
 

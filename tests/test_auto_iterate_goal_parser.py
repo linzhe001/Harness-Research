@@ -13,13 +13,14 @@ from __future__ import annotations
 import json
 import sys
 import time
+import textwrap
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.goal import (
     GoalManager,
@@ -89,6 +90,40 @@ class TestGoalParse:
         with pytest.raises(GoalParseError, match="not found"):
             parse("/nonexistent/goal.md")
 
+    def test_parse_yaml_front_matter(self, tmp_path: Path) -> None:
+        pytest.importorskip("yaml")
+        goal_path = tmp_path / "goal.md"
+        goal_path.write_text(textwrap.dedent("""\
+        ---
+        objective:
+          primary_metric:
+            name: PSNR
+            direction: maximize
+            target: 33.0
+          constraints:
+            - FPS >= 30
+        patience:
+          max_no_improve_rounds: 4
+          min_primary_delta: 0.2
+        budget:
+          max_rounds: 10
+          max_gpu_hours: 20.0
+        screening_policy:
+          enabled: true
+          threshold_pct: 90
+          default_steps: 4000
+        initial_hypotheses:
+          - Try a stronger encoder
+        forbidden_directions:
+          - Increase latency above 2x baseline
+        ---
+        """))
+
+        parsed = parse(goal_path)
+        assert parsed["objective"]["primary_metric"]["target"] == 33.0
+        assert parsed["budget"]["max_rounds"] == 10
+        assert parsed["screening_policy"]["default_steps"] == 4000
+
 
 class TestGoalValidation:
     def test_valid_goal(self) -> None:
@@ -119,6 +154,12 @@ class TestGoalValidation:
         del parsed["screening_policy"]["enabled"]
         errors = validate(parsed)
         assert any("screening_policy.enabled" in e for e in errors)
+
+    def test_missing_min_primary_delta(self) -> None:
+        parsed = parse(FIXTURES / "goal.valid.md")
+        del parsed["patience"]["min_primary_delta"]
+        errors = validate(parsed)
+        assert any("patience.min_primary_delta" in e for e in errors)
 
 
 class TestMetricIdentity:
@@ -248,7 +289,7 @@ class TestPolicyConfig:
         assert pc.get("nonexistent.key", 42) == 42
 
     def test_load_from_fixture_yaml(self) -> None:
-        config_path = REPO_ROOT / "config" / "auto_iterate_controller.example.yaml"
+        config_path = REPO_ROOT / "tooling" / "auto_iterate" / "config" / "auto_iterate_controller.example.yaml"
         try:
             pc = PolicyConfig.load(config_path)
         except ImportError:
@@ -265,7 +306,7 @@ class TestPolicyConfig:
 class TestAccountRegistry:
     def _make_registry(self) -> AccountRegistry:
         """Build a registry from the example YAML."""
-        path = REPO_ROOT / "config" / "auto_iterate_accounts.example.yaml"
+        path = REPO_ROOT / "tooling" / "auto_iterate" / "config" / "auto_iterate_accounts.example.yaml"
         try:
             return AccountRegistry.load(path)
         except ImportError:
@@ -314,6 +355,8 @@ class TestAccountRegistry:
         reg.record_usage("codex_acc1", calls=5)
         sd = reg.to_state_dict()
         assert sd["by_account"]["codex_acc1"]["used_calls"] == 5
+        assert sd["selected_account_id"] == "codex_acc1"
+        assert sd["by_account"]["codex_acc1"]["last_used_at"] is not None
 
     def test_to_state_dict(self) -> None:
         reg = self._make_registry()
@@ -330,3 +373,29 @@ class TestAccountRegistry:
     def test_load_missing_file(self) -> None:
         reg = AccountRegistry.load("/nonexistent/accounts.yaml")
         assert len(reg.accounts) == 0
+
+    def test_restore_runtime_from_state(self) -> None:
+        reg = self._make_registry()
+        reg.restore_runtime({
+            "selected_account_id": "codex_acc2",
+            "by_account": {
+                "codex_acc1": {
+                    "used_calls": 10,
+                    "last_used_at": "2026-03-23T00:00:00Z",
+                    "cooldown_until": "2999-01-01T00:00:00+00:00",
+                    "status": "ready",
+                },
+                "codex_acc2": {
+                    "used_calls": 1,
+                    "last_used_at": "2026-03-23T00:00:01Z",
+                    "cooldown_until": None,
+                    "status": "ready",
+                },
+            },
+        })
+
+        selected = reg.select_account({"accounts": {"selected_account_id": "codex_acc2"}})
+        assert selected["id"] == "codex_acc2"
+        sd = reg.to_state_dict()
+        assert sd["selected_account_id"] == "codex_acc2"
+        assert sd["by_account"]["codex_acc1"]["used_calls"] == 10

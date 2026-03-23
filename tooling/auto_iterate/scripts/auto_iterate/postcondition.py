@@ -259,5 +259,10 @@ class PostconditionValidator:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": "At least 1 lesson is required"})
 
+        metrics = it.get("metrics", it.get("full_run", {}).get("metrics", {}))
+        if not isinstance(metrics, dict) or not metrics:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": "Finalized metrics are required"})
+
         return _ok("eval", "completed", iteration_id,
                     {"decision": decision})

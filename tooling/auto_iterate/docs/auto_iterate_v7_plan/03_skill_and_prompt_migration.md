@@ -71,7 +71,7 @@
 | 路径 | 变更级别 | 建议内容 |
 |---|---|---|
 | `README.md` | 中 | 在 workflow capability / roadmap / file ownership 一节加入 auto-iterate v7 的 controller 说明 |
-| `docs/feature_plan_auto_iterate_and_remote.md` | 低 | 追加 deprecation note，指向 `docs/auto_iterate_v7_plan/` |
+| `docs/feature_plan_auto_iterate_and_remote.md` | 低 | 追加 deprecation note，指向 `tooling/auto_iterate/docs/auto_iterate_v7_plan/` |
 | `.agents/skills/final-exp/references/experiment-matrix.md` | 低 | 确认其前置条件文案仍只把 `CONTINUE` 解释为 handoff 到 WF9，不残留“普通继续迭代”语义 |
 | `.claude/skills/final-exp/templates/experiment-matrix.md` | 低 | 同上 |
 

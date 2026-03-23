@@ -1,6 +1,6 @@
 """Controller policy configuration loader.
 
-Loads ``config/auto_iterate_controller.yaml`` (or a custom path) and
+Loads ``tooling/auto_iterate/config/auto_iterate_controller.yaml`` (or a custom path) and
 merges with goal-extracted values following the frozen precedence order::
 
     CLI overrides > validated goal > controller policy config > doc defaults
