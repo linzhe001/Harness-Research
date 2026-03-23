@@ -237,6 +237,81 @@ python3 tooling/auto_iterate/scripts/auto_iterate_ctl.py \
   status --json
 ```
 
+### Auto-iterate bring-up notes
+
+Practical notes from a successful bring-up:
+
+- do not create `.auto_iterate/` by hand; `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start`
+  creates and owns the runtime directory, including `state.json`,
+  `events.jsonl`, `runtime/`, and the goal snapshot
+- keep `docs/auto_iterate_goal.md` and the project copies of the controller /
+  account YAMLs in the research repo; keep `.auto_iterate/` runtime-only and
+  out of git
+- use one dedicated `CODEX_HOME` per controller account instead of sharing a
+  single Codex home across multiple accounts
+- if an auth flow keeps failing on an old `CODEX_HOME`, prefer creating a fresh
+  directory over reusing a dirty one
+- for current Codex CLI versions, the harness runtime should invoke
+  `codex exec --full-auto ...`; the older `--approval-mode full-auto` form is
+  not accepted by newer CLIs
+
+Recommended local account layout:
+
+```bash
+mkdir -p ~/.codex-acc1 ~/.codex-acc2
+
+CODEX_HOME=~/.codex-acc1 codex login --device-auth
+CODEX_HOME=~/.codex-acc1 codex login status
+
+CODEX_HOME=~/.codex-acc2 codex login --device-auth
+CODEX_HOME=~/.codex-acc2 codex login status
+```
+
+Then point the project account registry at those homes:
+
+```yaml
+accounts:
+  - id: codex_primary
+    codex_home: /home/<user>/.codex-acc1
+    enabled: true
+    priority: 100
+    cooldown_sec: 1800
+    tags: [local, primary]
+
+  - id: codex_secondary
+    codex_home: /home/<user>/.codex-acc2
+    enabled: true
+    priority: 90
+    cooldown_sec: 1800
+    tags: [local, secondary]
+```
+
+### Tracking a live auto-iterate run
+
+Use these views while the controller is running:
+
+```bash
+# Overall controller state.
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
+
+# Phase timeline.
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --lines 30
+
+# Detailed phase log (replace with the newest stderr file if the round changes).
+tail -f .auto_iterate/runtime/round1_plan.stderr.log
+
+# Canonical research output: the newest planned / training / completed iteration.
+jq '.iterations[-1]' iteration_log.json
+```
+
+What each artifact answers:
+
+- `.auto_iterate/state.json`: current loop id, phase, round, selected account
+- `.auto_iterate/events.jsonl`: phase transitions and failures
+- `.auto_iterate/runtime/*.stderr.log`: what Codex is actively doing inside a phase
+- `iteration_log.json`: the actual experiment hypothesis, config diff, metrics,
+  and lessons once a phase successfully writes back to the project state
+
 ## Verification
 
 Run these checks after bootstrap:

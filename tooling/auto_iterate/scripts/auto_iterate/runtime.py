@@ -415,8 +415,8 @@ class PhaseSupervisor:
 
         cmd = [
             "codex",
-            "--approval-mode", "full-auto",
             "exec",
+            "--full-auto",
             "--cd", str(self.workspace_root),
             "-",  # read prompt from stdin
         ]
