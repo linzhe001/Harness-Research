@@ -12,6 +12,41 @@ Set up one directory with two separate git histories:
 
 The two repos share one worktree, but they must not track the same files.
 
+## Framework Contents
+
+| Path | Purpose |
+|------|---------|
+| `.claude/skills/` | Claude Code skill definitions (18 skills) |
+| `.claude/rules/` | Auto-triggered rules (pre-training, project-map, deps-update) |
+| `.claude/shared/` | Shared references (code style, language policy) |
+| `.claude/Workflow_Guide.md` | Full workflow documentation for Claude Code |
+| `.agents/skills/` | Codex agent skill definitions (18 skills) |
+| `.agents/references/` | Shared behavior constraints for Codex |
+| `CLAUDE.md.template` | Project CLAUDE.md template with `{{placeholders}}` |
+| `AGENTS.md.template` | Project AGENTS.md template with `{{placeholders}}` |
+| `settings.local.json.template` | Claude Code permissions template |
+| `tooling/auto_iterate/scripts/` | V7 auto-iterate controller, runtime adapter, CLI |
+| `tooling/auto_iterate/scripts/auto_iterate/` | Controller package (state, lock, events, goal, postcondition, recovery) |
+| `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
+| `tooling/auto_iterate/docs/` | Goal template, remote control guide |
+| `tests/` | Controller test suite and fixtures |
+| `auto_iterate_v7_plan/` | V7 plan/spec documents for the controller rollout |
+
+## Workflow Stages
+
+```
+WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
+→ WF6(plan) ��� WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
+```
+
+The core iteration loop (WF8) follows four stages per round:
+
+```
+plan (hypothesis) → code (implement) → run (train + metrics) → eval (decision)
+```
+
+Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE** (advance to WF9), **PIVOT** (roll back to WF2), **ABORT** (terminate).
+
 ## Ownership Model
 
 ### Harness-owned files (`hgit`)
@@ -331,6 +366,32 @@ What each artifact answers:
 - `.auto_iterate/runtime/*.stderr.log`: what Codex is actively doing inside a phase
 - `iteration_log.json`: the actual experiment hypothesis, config diff, metrics,
   and lessons once a phase successfully writes back to the project state
+
+## File Ownership Summary
+
+| File | Tracked by | Purpose |
+|------|-----------|---------|
+| `.claude/skills/**` | harness (`hgit`) | Skill definitions |
+| `.claude/rules/**` | harness (`hgit`) | Auto-triggered rules |
+| `.claude/shared/**` | harness (`hgit`) | Shared references |
+| `.claude/Workflow_Guide.md` | harness (`hgit`) | Workflow documentation |
+| `.agents/skills/**` | harness (`hgit`) | Codex agent definitions |
+| `.agents/references/**` | harness (`hgit`) | Shared constraints |
+| `*.template` | harness (`hgit`) | Project templates |
+| `tooling/auto_iterate/**` | harness (`hgit`) | Controller, runtime adapter, docs, examples |
+| `auto_iterate_v7_plan/**` | harness (`hgit`) | Controller rollout plan/spec |
+| `README.md` | harness (`hgit`) | Harness overview and links |
+| `.gitignore` | harness (`hgit`) | Harness-side ignore rules for research files |
+| `.git/info/exclude` | research-local (`git`) | Research-side ignore rules for harness files |
+| `CLAUDE.md` | research (`git`) | Project-specific config |
+| `AGENTS.md` | research (`git`) | Project-specific config |
+| `src/`, `scripts/`, `configs/` | research (`git`) | Research code |
+| `docs/auto_iterate_goal.md` | research (`git`) | Project goal source consumed by auto-iterate |
+| `configs/auto_iterate_*.yaml` | research (`git`) | Project-specific auto-iterate config copied from examples |
+| `PROJECT_STATE.json` | research (`git`) | Workflow stage state |
+| `iteration_log.json` | research (`git`) | Experiment history |
+| `project_map.json` | research (`git`) | Code architecture map |
+| `.auto_iterate/` | ignored runtime state | Controller state, lock, events, runtime logs |
 
 ## Verification
 
