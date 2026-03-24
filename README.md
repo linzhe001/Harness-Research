@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>. Harness Research is meant to stay cool-headed while it iterates. The banner and icon combine motifs from the in-game cards Coolheaded and Iterate to represent calm reasoning paired with disciplined optimization loops.
+  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>, combining the card motifs of Coolheaded and Iterate.
 </p>
 
 
