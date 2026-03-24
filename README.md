@@ -1,6 +1,16 @@
-# Harness Research Loop
+<p align="center">
+  <img src="media/harness_simple_banner.jpeg" alt="Harness Research banner inspired by The Defect from Slay the Spire 2, blending the visual ideas of Coolheaded and Iterate." width="100%" />
+</p>
+
+<p align="center">
+  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>. Harness Research is meant to stay cool-headed while it iterates. The banner and icon combine motifs from the in-game cards Coolheaded and Iterate to represent calm reasoning paired with disciplined optimization loops.
+</p>
+
+
+<h1><img src="media/harness_icon.png" alt="Harness Research icon inspired by The Defect from Slay the Spire 2." width="56" /> Harness Research</h1>
 
 A structured 10-stage research workflow framework for CV/ML projects, designed to work with **Claude Code** and **Codex** as AI research assistants.
+
 
 ## What This Is
 

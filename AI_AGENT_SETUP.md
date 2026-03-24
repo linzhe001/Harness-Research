@@ -29,6 +29,7 @@ The two repos share one worktree, but they must not track the same files.
 | `tooling/auto_iterate/scripts/auto_iterate/` | Controller package (state, lock, events, goal, postcondition, recovery) |
 | `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
 | `tooling/auto_iterate/docs/` | Goal template, remote control guide |
+| `media/` | Harness-level branding and documentation assets used by root docs |
 | `tests/` | Controller test suite and fixtures |
 | `auto_iterate_v7_plan/` | V7 plan/spec documents for the controller rollout |
 
@@ -36,7 +37,7 @@ The two repos share one worktree, but they must not track the same files.
 
 ```
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
-→ WF6(plan) ��� WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
+→ WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
 ```
 
 The core iteration loop (WF8) follows four stages per round:
@@ -56,6 +57,7 @@ Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE**
 - `*.template`
 - `tooling/auto_iterate/**`
 - `auto_iterate_v7_plan/**`
+- `media/**`
 - root `README.md`
 - root `.gitignore`
 
@@ -69,6 +71,20 @@ Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE**
 - `src/`, `scripts/`, `configs/`, `docs/`, `tests/`
 - `docs/auto_iterate_goal.md`
 - `docs/iterations/**`
+- project-specific figures/screenshots under research-owned paths such as `docs/media/`, `docs/figures/`, or `experiments/`
+
+### Media placement
+
+Use the root `media/` directory only for harness-owned assets referenced by
+framework docs such as the root `README.md`.
+
+If a research project needs its own figures, plots, screenshots, or diagrams,
+store them inside research-owned paths such as `docs/media/`, `docs/figures/`,
+`experiments/`, or another project directory tracked by the research repo.
+
+In same-worktree dual-repo mode, the research repo should hide the root
+`media/` directory through `.git/info/exclude` and should not commit those
+framework assets.
 
 ### Local operator inputs
 
@@ -99,6 +115,9 @@ Use this split:
 - the root `.gitignore` is harness-owned and exists to keep research files out
   of `hgit`
 - the research repo hides harness-owned files via `.git/info/exclude`
+- root framework paths such as `media/`, `README.md`, and `tooling/` belong in
+  the research repo's `.git/info/exclude`, not in a second competing root
+  `.gitignore`
 - if the research repo needs shared ignore rules for its own generated files,
   put a `.gitignore` inside a research-owned subdirectory such as `data/`,
   `experiments/`, or `artifacts/`
@@ -180,6 +199,7 @@ cat >> .git/info/exclude <<'EOF'
 .vscode/
 tooling/
 auto_iterate_v7_plan/
+media/
 README.md
 AI_AGENT_SETUP.md
 Harness_Update_Guide.md
@@ -192,6 +212,7 @@ EOF
 Notes:
 
 - keep project-specific overview docs under `docs/` instead of replacing the harness root `README.md`
+- keep harness branding and shared documentation assets in the root `media/` directory, but place project-specific figures under research-owned paths such as `docs/media/` or `docs/figures/`
 - if the project needs shared ignore rules for its own generated files, prefer subdirectory `.gitignore` files inside research-owned paths such as `experiments/`, `data/`, or `artifacts/`
 
 ## 5. Create project directories
@@ -244,7 +265,7 @@ git add PROJECT_STATE.json project_map.json docs/ configs/ src/ scripts/ tests/ 
 git commit -m "init: project scaffold"
 ```
 
-Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `README.md`, or `.gitignore`.
+Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `media/`, `README.md`, or `.gitignore`.
 
 ## Daily Dual-Repo Management
 
