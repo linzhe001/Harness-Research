@@ -159,7 +159,9 @@ diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml to
 ```
 
 When templates add new sections or fields, merge them manually into the
-project goal file or local operator YAMLs.
+project goal file or local operator YAMLs. If your repo versions
+`controller.local.yaml` / `accounts.local.yaml` as shared defaults, update
+those tracked files in place.
 
 ### 4. Check the research repo separately
 

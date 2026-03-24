@@ -1,0 +1,24 @@
+# Auto-Iterate Account Registry
+# Shared default for this repository.
+# Update each `codex_home` to match the local filesystem on the machine where
+# the controller runs. Keep one dedicated CODEX_HOME per account.
+
+accounts:
+  - id: codex_primary
+    codex_home: /home/linzhe/.codex-acc1  # Change this path per machine.
+    enabled: true
+    priority: 100
+    cooldown_sec: 1800
+    tags: [local, primary]
+  - id: codex_secondary
+    codex_home: /home/linzhe/.codex-acc2  # Change this path per machine.
+    enabled: true
+    priority: 90
+    cooldown_sec: 1800
+    tags: [local, backup]
+  - id: codex_tertiary
+    codex_home: /home/linzhe/.codex-acc3  # Change this path per machine.
+    enabled: true
+    priority: 80
+    cooldown_sec: 1800
+    tags: [local, backup, tertiary]

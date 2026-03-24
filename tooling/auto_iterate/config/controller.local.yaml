@@ -1,0 +1,35 @@
+# Auto-Iterate Controller Configuration
+# Shared default for this repository.
+# Review timeouts, GPU count, and budget limits when moving to a different
+# machine or changing the expected experiment cadence.
+
+timeouts:
+  plan: 1800
+  code: 3600
+  run_screening: 14400
+  run_full: 28800
+  eval: 1800
+
+terminate_grace_sec: 30
+
+retry_policy:
+  max_phase_attempts: 2
+  max_attempts_per_account: 2
+
+budget:
+  gpu_count: 1  # Change if a run uses more than one GPU on this machine.
+
+llm_budget:
+  max_calls: 120      # Raise/lower depending on how many Codex turns you allow.
+  max_cost_usd: 30.0  # Optional soft cap for this loop.
+
+patience:
+  max_no_improve_rounds: 5  # Increase for broader search, decrease for tighter loops.
+  min_primary_delta: 0.1    # Minimum improvement to reset patience.
+
+event_log:
+  rotate_bytes: 1048576
+
+heartbeat:
+  interval_sec: 30
+  stale_threshold_sec: 120

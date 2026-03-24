@@ -5,8 +5,8 @@ collide with a research project's own top-level `scripts/`, `config/`, and
 `docs/` folders.
 
 - `scripts/` contains the controller CLI, runtime adapter, and Python package.
-- `config/` holds reusable templates plus optional local live YAMLs such as
-  `controller.local.yaml` and `accounts.local.yaml`.
+- `config/` holds reusable templates plus the repo's shared local YAML defaults
+  such as `controller.local.yaml` and `accounts.local.yaml`.
 - `docs/` contains operator-facing static docs, templates, and the v7 plan/spec set.
 
 Per-project runtime state is still written to the project root under

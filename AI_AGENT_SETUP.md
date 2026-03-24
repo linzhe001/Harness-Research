@@ -35,13 +35,17 @@ The two repos share one worktree, but they must not track the same files.
 - `docs/auto_iterate_goal.md`
 - `docs/iterations/**`
 
-### Local operator inputs (usually uncommitted)
+### Local operator inputs
 
 These files are convenient to keep under the harness tree, but they are
 machine-local inputs rather than framework templates:
 
 - `tooling/auto_iterate/config/controller.local.yaml`
 - `tooling/auto_iterate/config/accounts.local.yaml`
+
+Teams can either keep these files uncommitted or version shared defaults. This
+repository chooses to version the two default files above and annotate the
+machine-specific fields inline.
 
 ### Runtime-only files (never commit)
 
@@ -185,6 +189,8 @@ Keep this boundary:
 - do not edit templates under `tooling/auto_iterate/config/templates/`
 - do not create `.auto_iterate/` by hand
 - do not commit `.auto_iterate/`
+- if your project wants shared defaults, it is acceptable to version
+  `controller.local.yaml` and `accounts.local.yaml`
 
 ## 7. Fill in project details
 

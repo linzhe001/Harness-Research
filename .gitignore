@@ -21,6 +21,8 @@
 # === Local-only paths (kept out of harness history) ===
 /.harness/
 /tooling/auto_iterate/config/*.local.yaml
+!/tooling/auto_iterate/config/controller.local.yaml
+!/tooling/auto_iterate/config/accounts.local.yaml
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/
