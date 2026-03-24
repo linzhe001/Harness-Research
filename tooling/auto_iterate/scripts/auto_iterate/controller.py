@@ -8,29 +8,37 @@ The controller does NOT write ``iteration_log.json`` or
 ``PROJECT_STATE.json`` — those remain owned by their respective skills.
 """
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import copy
-import os
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .state import StateStore, atomic_write_json, load_json, StateLoadError
-from .lock import LockManager, LockConflictError
-from .events import EventLogger, iso_now
-from .goal import GoalManager, parse as parse_goal, validate as validate_goal, check_metric_identity
-from .policy import DEFAULT_POLICY, PolicyConfig
 from .accounts import AccountRegistry, NoAccountAvailableError
-from .postcondition import PostconditionValidator
-from .recovery import RecoveryEngine, RERUN, ADOPT, FAIL
-from .runtime import (
-    PhaseSupervisor,
-    HeartbeatWorker,
-    build_brief,
-    BriefValidationError,
+from .events import EventLogger, iso_now
+from .goal import (
+    GoalManager,
 )
+from .goal import (
+    parse as parse_goal,
+)
+from .goal import (
+    validate as validate_goal,
+)
+from .lock import LockConflictError, LockManager
+from .policy import DEFAULT_POLICY, PolicyConfig
+from .postcondition import PostconditionValidator
+from .recovery import ADOPT, FAIL, RecoveryEngine
+from .runtime import (
+    BriefValidationError,
+    HeartbeatWorker,
+    PhaseSupervisor,
+    build_brief,
+)
+from .state import StateLoadError, StateStore
 
 # ---------------------------------------------------------------------------
 # Exit codes (frozen in 01§8.5)
@@ -59,6 +67,19 @@ _DECISION_HALT: dict[str, str] = {
 # Canonical phase sequence.
 _PHASE_SEQUENCE = ["plan", "code", "run_screening", "run_full", "eval"]
 _PERSISTED_POLICY_KEYS = ("timeouts", "terminate_grace_sec", "retry_policy", "heartbeat")
+
+
+def _merge_with_fallback(
+    override: dict[str, Any],
+    fallback: dict[str, Any],
+) -> dict[str, Any]:
+    result = copy.deepcopy(fallback)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = _merge_with_fallback(value, result[key])
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +176,7 @@ class LoopController:
             "current_phase_key": "plan",
             "current_iteration_id": None,
             "phase_attempt": 1,
+            "phase_account_attempts": {},
             "goal": {
                 "source_path": goal_path,
                 "activated_at": iso_now(),
@@ -261,10 +283,12 @@ class LoopController:
         self.policy = self._policy_from_state(pc.freeze())
         self.state["_policy"] = self.policy
         self._ensure_policy_fields_in_state()
+        self._ensure_phase_retry_fields_in_state()
 
         # Load accounts.
         self.accounts = AccountRegistry.load(accounts_path)
         self.accounts.restore_runtime(self.state.get("accounts"))
+        self.state["accounts"] = self.accounts.to_state_dict()
 
         # Lock management.
         stale_threshold = self.state.get("heartbeat", {}).get(
@@ -288,7 +312,7 @@ class LoopController:
 
         # Recovery.
         recovery = RecoveryEngine(self.validator)
-        max_attempts = self.policy.get("retry_policy", {}).get("max_phase_attempts", 2)
+        max_attempts = self._phase_retry_ceiling()
         plan = recovery.recover(self.state, max_phase_attempts=max_attempts)
 
         if plan["action"] == FAIL:
@@ -394,7 +418,7 @@ class LoopController:
                 )
                 self.state["current_phase_key"] = "run_full"
                 phase_key = "run_full"
-                self.state["phase_attempt"] = 1
+                self._reset_phase_retry_state()
                 self._persist_state()
 
             # -- Run one phase --------------------------------------------
@@ -428,6 +452,7 @@ class LoopController:
         loop_id = self.state["loop_id"]
         iteration_id = self.state.get("current_iteration_id")
         self.state["phase_attempt"] = int(self.state.get("phase_attempt", 1)) + 1
+        self._ensure_phase_retry_fields_in_state()
         if phase_key == "plan":
             binding = self.state.get("plan_binding")
             if not isinstance(binding, dict) or "existing_ids" not in binding:
@@ -454,6 +479,8 @@ class LoopController:
             account_id = account["id"]
             codex_home = account.get("codex_home", "")
             self.state["accounts"]["selected_account_id"] = account_id
+            self._record_phase_account_attempt(account_id)
+            self._persist_state()
         except NoAccountAvailableError:
             self.state["status"] = "paused"
             self.state["halt_reason"] = "waiting_for_account"
@@ -534,8 +561,16 @@ class LoopController:
             return self._handle_phase_failure(phase_key, round_idx)
 
         if exit_class == "auth_failure":
-            self.accounts.mark_auth_failure(account_id)
+            cooldown_until = self.accounts.mark_auth_failure(account_id)
             self.state["accounts"] = self.accounts.to_state_dict()
+            self.events.emit(
+                "ACCOUNT_AUTH_FAILURE", loop_id, "running",
+                payload={
+                    "account_id": account_id,
+                    "cooldown_until": cooldown_until,
+                    "next_account": self.state["accounts"].get("selected_account_id"),
+                },
+            )
             return self._handle_phase_failure(phase_key, round_idx)
 
         # Validate postcondition.
@@ -608,7 +643,7 @@ class LoopController:
             # Reset for next round.
             self.state["current_phase_key"] = "plan"
             self.state["current_iteration_id"] = None
-            self.state["phase_attempt"] = 1
+            self._reset_phase_retry_state()
             self.state.pop("_recovery_mode", None)
             self._persist_state()
 
@@ -641,7 +676,7 @@ class LoopController:
             idx = _PHASE_SEQUENCE.index(current)
             if idx + 1 < len(_PHASE_SEQUENCE):
                 self.state["current_phase_key"] = _PHASE_SEQUENCE[idx + 1]
-                self.state["phase_attempt"] = 1
+                self._reset_phase_retry_state()
         except ValueError:
             pass
 
@@ -716,7 +751,7 @@ class LoopController:
         self, phase_key: str, round_idx: int,
     ) -> dict[str, Any] | None:
         """Handle a phase failure: retry or pause."""
-        max_attempts = self.policy.get("retry_policy", {}).get("max_phase_attempts", 2)
+        max_attempts = self._phase_retry_ceiling()
         attempt = self.state.get("phase_attempt", 1)
 
         if attempt > max_attempts:
@@ -939,15 +974,70 @@ class LoopController:
         policy = copy.deepcopy(fallback)
         for key in _PERSISTED_POLICY_KEYS:
             if key in self.state:
-                policy[key] = copy.deepcopy(self.state[key])
+                state_value = self.state[key]
+                if isinstance(state_value, dict) and isinstance(policy.get(key), dict):
+                    policy[key] = _merge_with_fallback(state_value, policy[key])
+                else:
+                    policy[key] = copy.deepcopy(state_value)
         if "screening_policy" in self.state:
             policy["screening_policy"] = copy.deepcopy(self.state["screening_policy"])
         return policy
 
     def _ensure_policy_fields_in_state(self) -> None:
         for key in _PERSISTED_POLICY_KEYS:
+            fallback_value = self.policy.get(key, DEFAULT_POLICY.get(key))
             if key not in self.state:
-                self.state[key] = copy.deepcopy(self.policy.get(key, DEFAULT_POLICY.get(key)))
+                self.state[key] = copy.deepcopy(fallback_value)
+            elif isinstance(self.state.get(key), dict) and isinstance(fallback_value, dict):
+                self.state[key] = _merge_with_fallback(self.state[key], fallback_value)
+
+    def _ensure_phase_retry_fields_in_state(self) -> None:
+        phase_account_attempts = self.state.get("phase_account_attempts")
+        if not isinstance(phase_account_attempts, dict):
+            self.state["phase_account_attempts"] = {}
+            return
+
+        normalized: dict[str, int] = {}
+        for account_id, count in phase_account_attempts.items():
+            try:
+                normalized[str(account_id)] = max(0, int(count))
+            except (TypeError, ValueError):
+                continue
+        self.state["phase_account_attempts"] = normalized
+
+    def _record_phase_account_attempt(self, account_id: str) -> None:
+        self._ensure_phase_retry_fields_in_state()
+        attempts = self.state["phase_account_attempts"]
+        attempts[account_id] = int(attempts.get(account_id, 0)) + 1
+
+    def _reset_phase_retry_state(self) -> None:
+        self.state["phase_attempt"] = 1
+        self.state["phase_account_attempts"] = {}
+
+    def _phase_retry_ceiling(self) -> int:
+        retry_policy = self.state.get("retry_policy", self.policy.get("retry_policy", {}))
+        if not isinstance(retry_policy, dict):
+            retry_policy = {}
+
+        raw_max_attempts = retry_policy.get("max_phase_attempts", 2)
+        try:
+            max_attempts = int(raw_max_attempts)
+        except (TypeError, ValueError):
+            max_attempts = 2
+        max_attempts = max(1, max_attempts)
+
+        raw_per_account = retry_policy.get("max_attempts_per_account")
+        try:
+            max_attempts_per_account = int(raw_per_account)
+        except (TypeError, ValueError):
+            max_attempts_per_account = 0
+
+        if max_attempts_per_account > 1:
+            account_count = len(self.accounts.get_ids())
+            if account_count > 0:
+                max_attempts = max(max_attempts, account_count * max_attempts_per_account)
+
+        return max_attempts
 
     def _apply_goal_fields(self, parsed_goal: dict[str, Any]) -> None:
         self.state["objective"] = parsed_goal.get("objective", self.state.get("objective", {}))

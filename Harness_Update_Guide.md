@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This guide explains how to pull the latest Harness Research updates in a
+This guide explains the day-2 pull and push workflow for Harness Research in a
 same-worktree dual-repo project.
 
 In this layout:
@@ -49,7 +49,7 @@ Examples:
 - good: `data/.gitignore`
 - avoid: editing the root `.gitignore` for research-only ignore rules
 
-## Pull Workflow
+## Daily Pull Workflow
 
 ### Preferred command
 
@@ -82,6 +82,29 @@ scripts/update_harness.sh
 
 That script should check that the harness worktree is clean before pulling.
 
+## Daily Push Workflow
+
+When you intentionally changed harness-owned files, stay on the harness git
+history for the whole cycle:
+
+```bash
+hgit status --short
+hgit pull --ff-only origin "$(hgit branch --show-current)"
+hgit add <harness paths>
+hgit commit -m "..."
+hgit push origin "$(hgit branch --show-current)"
+```
+
+If the remote branch moved after your local commit, rebase the harness branch
+before pushing:
+
+```bash
+hgit pull --rebase origin "$(hgit branch --show-current)"
+hgit push origin "$(hgit branch --show-current)"
+```
+
+Do not use normal `git push` for harness-owned files.
+
 ## Before Pulling
 
 Always inspect harness state first:
@@ -99,6 +122,7 @@ Typical blocking files are:
 - root `.gitignore`
 - `.claude/**`
 - `.agents/**`
+- `tooling/auto_iterate/**`
 
 ## After Pulling
 
@@ -130,12 +154,12 @@ Check at least:
 diff CLAUDE.md.template CLAUDE.md
 diff AGENTS.md.template AGENTS.md
 diff tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
-diff tooling/auto_iterate/config/auto_iterate_controller.example.yaml configs/auto_iterate_controller.yaml
-diff tooling/auto_iterate/config/auto_iterate_accounts.example.yaml configs/auto_iterate_accounts.yaml
+diff tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
+diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 When templates add new sections or fields, merge them manually into the
-research-owned files.
+project goal file or local operator YAMLs.
 
 ### 4. Check the research repo separately
 
@@ -197,3 +221,9 @@ After every harness pull:
 2. read updated framework docs
 3. diff templates against project-owned files
 4. verify normal `git status` is still clean with respect to harness paths
+
+After every harness push:
+
+1. verify `hgit status`
+2. confirm you committed only harness-owned paths
+3. push with `hgit`, not normal `git`

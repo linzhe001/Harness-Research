@@ -17,20 +17,18 @@ contract and ``01_contract_freeze.md`` §6–7 for brief/result schemas.
 
 from __future__ import annotations
 
-import json
 import os
 import re
-import signal
 import subprocess
 import threading
 import time
-import tomllib
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import tomllib
+
 from .events import iso_now
-from .state import atomic_write_json, load_json, validate_schema_version, SchemaVersionError
+from .state import atomic_write_json, validate_schema_version
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -58,6 +56,24 @@ PHASE_FAMILY = {
     "run_full": "run",
     "eval": "eval",
 }
+
+_GPU_VISIBLE_PHASES = {"run_screening", "run_full"}
+_QUOTA_OR_RATE_LIMIT_PATTERNS = (
+    re.compile(r"you(?:'ve| have) hit your usage limit", re.IGNORECASE),
+    re.compile(r"hit your usage limit", re.IGNORECASE),
+    re.compile(r"usage limit exceeded", re.IGNORECASE),
+    re.compile(r"rate limit exceeded", re.IGNORECASE),
+    re.compile(r"quota exceeded", re.IGNORECASE),
+    re.compile(r"too many requests", re.IGNORECASE),
+    re.compile(r"\b429\b.*(?:too many requests|rate limit|quota)", re.IGNORECASE),
+)
+_AUTH_FAILURE_PATTERNS = (
+    re.compile(r"auth(?:entication)? failure", re.IGNORECASE),
+    re.compile(r"unauthorized", re.IGNORECASE),
+    re.compile(r"invalid api key", re.IGNORECASE),
+    re.compile(r"please run codex login", re.IGNORECASE),
+    re.compile(r"\b401\b"),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -123,11 +139,26 @@ def build_brief(
     llm = state.get("llm_budget", {})
     obj = state.get("objective", {})
     best = state.get("best", {})
-    sp = state.get("screening_policy", state.get("_policy", {}).get("screening_policy", {}))
-    timeouts = state.get("timeouts", state.get("_policy", {}).get("timeouts", {
-        "plan": 1800, "code": 3600,
-        "run_screening": 14400, "run_full": 28800, "eval": 1800,
-    }))
+    sp = state.get(
+        "screening_policy",
+        state.get("_policy", {}).get("screening_policy", {}),
+    )
+    timeouts = state.get(
+        "timeouts",
+        state.get(
+            "_policy",
+            {},
+        ).get(
+            "timeouts",
+            {
+                "plan": 1800,
+                "code": 3600,
+                "run_screening": 14400,
+                "run_full": 28800,
+                "eval": 1800,
+            },
+        ),
+    )
 
     brief: dict[str, Any] = {
         "schema_version": 1,
@@ -195,7 +226,8 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Use $code-debug for actual code modifications.\n"
     ),
     "run_screening": (
-        "You are in auto_mode. Execute `$iterate run` (screening mode) for iteration {iteration_id}.\n"
+        "You are in auto_mode. Execute `$iterate run` "
+        "(screening mode) for iteration {iteration_id}.\n"
         "\n"
         "Phase: run_screening. Run a short proxy training ({screening_steps} steps).\n"
         "\n"
@@ -205,7 +237,8 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Screening threshold: {threshold_pct}% of baseline.\n"
     ),
     "run_full": (
-        "You are in auto_mode. Execute `$iterate run` (full training) for iteration {iteration_id}.\n"
+        "You are in auto_mode. Execute `$iterate run` "
+        "(full training) for iteration {iteration_id}.\n"
         "\n"
         "Phase: run_full. Run the complete training.\n"
         "\n"
@@ -223,7 +256,8 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
-        "- Decision must be exactly ONE of: NEXT_ROUND, DEBUG, CONTINUE, PIVOT, ABORT.\n"
+        "- Decision must be exactly ONE of: NEXT_ROUND, DEBUG, CONTINUE, "
+        "PIVOT, ABORT.\n"
         "  - NEXT_ROUND: ordinary improvement, continue loop.\n"
         "  - DEBUG: bug/stability issue, continue with debug focus.\n"
         "  - CONTINUE: target met or ready for WF9 handoff.\n"
@@ -247,9 +281,17 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
     sp = brief.get("screening_policy", {})
 
     lessons = brief.get("recent_lessons", [])
-    lessons_str = "\n".join(f"  - {l}" for l in lessons) if lessons else "  (none)"
+    lessons_str = (
+        "\n".join(f"  - {lesson}" for lesson in lessons)
+        if lessons
+        else "  (none)"
+    )
     failed = brief.get("failed_hypotheses", [])
-    failed_str = "\n".join(f"  - {f}" for f in failed) if failed else "  (none)"
+    failed_str = (
+        "\n".join(f"  - {hypothesis}" for hypothesis in failed)
+        if failed
+        else "  (none)"
+    )
 
     return template.format(
         round_index=brief.get("round_index", "?"),
@@ -303,10 +345,34 @@ def build_result(
     }
 
 
-def classify_exit(exit_code: int, timed_out: bool) -> str:
+def _stderr_matches(
+    stderr_path: str | None,
+    patterns: tuple[re.Pattern[str], ...],
+) -> bool:
+    if not stderr_path:
+        return False
+    path = Path(stderr_path)
+    if not path.exists():
+        return False
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return False
+    return any(pattern.search(text) for pattern in patterns)
+
+
+def classify_exit(
+    exit_code: int,
+    timed_out: bool,
+    stderr_path: str | None = None,
+) -> str:
     """Map a process exit code to a ``runtime_exit_class``."""
     if timed_out:
         return "timeout"
+    if _stderr_matches(stderr_path, _QUOTA_OR_RATE_LIMIT_PATTERNS):
+        return "quota_or_rate_limit"
+    if _stderr_matches(stderr_path, _AUTH_FAILURE_PATTERNS):
+        return "auth_failure"
     if exit_code == 0:
         return "success"
     # Codex-specific heuristics (can be extended).
@@ -347,6 +413,25 @@ def _actual_model(stderr_path: str) -> str | None:
     except Exception:
         return None
     return None
+
+
+def build_codex_command(workspace_root: str | Path, phase_key: str) -> list[str]:
+    """Build the codex CLI command for a given phase.
+
+    Run phases need direct host access so training can see the local GPU.
+    Other phases stay on the safer workspace-write sandbox.
+    """
+    cmd = ["codex"]
+    if phase_key in _GPU_VISIBLE_PHASES:
+        cmd.append("--dangerously-bypass-approvals-and-sandbox")
+    else:
+        cmd.append("--full-auto")
+    cmd.extend([
+        "exec",
+        "--cd", str(workspace_root),
+        "-",  # read prompt from stdin
+    ])
+    return cmd
 
 
 # ---------------------------------------------------------------------------
@@ -402,6 +487,7 @@ class PhaseSupervisor:
         prompt = render_prompt(brief, iteration_id=iteration_id)
 
         exit_code, timed_out, duration = self._invoke_codex(
+            phase_key=pk,
             prompt=prompt,
             codex_home=codex_home,
             timeout_sec=timeout_sec,
@@ -410,7 +496,7 @@ class PhaseSupervisor:
             stderr_path=stderr_path,
         )
 
-        exit_class = classify_exit(exit_code, timed_out)
+        exit_class = classify_exit(exit_code, timed_out, stderr_path=stderr_path)
         failure_reason = None if exit_class == "success" else exit_class
 
         if exit_class == "success":
@@ -446,6 +532,7 @@ class PhaseSupervisor:
 
     def _invoke_codex(
         self,
+        phase_key: str,
         prompt: str,
         codex_home: str,
         timeout_sec: int,
@@ -457,13 +544,7 @@ class PhaseSupervisor:
         env = os.environ.copy()
         env["CODEX_HOME"] = codex_home
 
-        cmd = [
-            "codex",
-            "exec",
-            "--full-auto",
-            "--cd", str(self.workspace_root),
-            "-",  # read prompt from stdin
-        ]
+        cmd = build_codex_command(self.workspace_root, phase_key)
 
         start = time.monotonic()
         timed_out = False

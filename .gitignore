@@ -1,25 +1,29 @@
 # === Research project files (not part of harness framework) ===
-src/
-scripts/
-configs/
-config/
-baselines/
-experiments/
-docs/
-tests/
-PROJECT_STATE.json
-iteration_log.json
-project_map.json
-CLAUDE.md
-AGENTS.md
-Reference_tool_repo/
-.claude/settings.local.json
-.claude/iterations/
-.agents/state/iterations/
-.agents/state/current_iteration.json
+/src/
+/scripts/
+/configs/
+/config/
+/baselines/
+/experiments/
+/docs/
+/tests/
+/PROJECT_STATE.json
+/iteration_log.json
+/project_map.json
+/CLAUDE.md
+/AGENTS.md
+/Reference_tool_repo/
+/.claude/settings.local.json
+/.claude/iterations/
+/.agents/state/iterations/
+/.agents/state/current_iteration.json
+
+# === Local-only paths (kept out of harness history) ===
+/.harness/
+/tooling/auto_iterate/config/*.local.yaml
 
 # === Controller runtime state (never commit in real projects) ===
-.auto_iterate/
+/.auto_iterate/
 
 # === Runtime / Generated ===
 __pycache__/

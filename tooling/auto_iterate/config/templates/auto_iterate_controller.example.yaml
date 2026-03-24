@@ -17,6 +17,9 @@ terminate_grace_sec: 30
 retry_policy:
   # Max attempts per phase_key before pausing with manual_action_required.
   max_phase_attempts: 2
+  # Optional: cap retries per account within the same phase. Useful when
+  # transient network failures should get one more try before switching.
+  max_attempts_per_account: 2
 
 # --- Budget ---
 budget:

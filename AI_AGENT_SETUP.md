@@ -33,8 +33,15 @@ The two repos share one worktree, but they must not track the same files.
 - `project_map.json`
 - `src/`, `scripts/`, `configs/`, `docs/`, `tests/`
 - `docs/auto_iterate_goal.md`
-- `configs/auto_iterate_controller.yaml`
-- `configs/auto_iterate_accounts.yaml`
+- `docs/iterations/**`
+
+### Local operator inputs (usually uncommitted)
+
+These files are convenient to keep under the harness tree, but they are
+machine-local inputs rather than framework templates:
+
+- `tooling/auto_iterate/config/controller.local.yaml`
+- `tooling/auto_iterate/config/accounts.local.yaml`
 
 ### Runtime-only files (never commit)
 
@@ -156,22 +163,27 @@ mkdir -p .claude/iterations
 mkdir -p .agents/state/iterations
 ```
 
+Do not create `.auto_iterate/` by hand. It is controller-owned runtime state
+and should appear only after the first auto-iterate `start`.
+
 ## 6. Bootstrap auto-iterate project files
 
-The harness repo owns the controller code and example configs. The research repo
-should own the actual project copies.
+The harness repo owns the controller code and reusable templates. The project
+should create one research goal file plus local controller/account YAMLs.
 
 ```bash
 [ ! -f docs/auto_iterate_goal.md ] && cp tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
-[ ! -f configs/auto_iterate_controller.yaml ] && cp tooling/auto_iterate/config/auto_iterate_controller.example.yaml configs/auto_iterate_controller.yaml
-[ ! -f configs/auto_iterate_accounts.yaml ] && cp tooling/auto_iterate/config/auto_iterate_accounts.example.yaml configs/auto_iterate_accounts.yaml
+[ ! -f tooling/auto_iterate/config/controller.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
+[ ! -f tooling/auto_iterate/config/accounts.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 Keep this boundary:
 
 - edit `docs/auto_iterate_goal.md` in the research repo
-- edit `configs/auto_iterate_*.yaml` in the research repo
-- do not edit example files under `tooling/auto_iterate/config/`
+- edit `tooling/auto_iterate/config/*.local.yaml` as local operator inputs for
+  this workspace
+- do not edit templates under `tooling/auto_iterate/config/templates/`
+- do not create `.auto_iterate/` by hand
 - do not commit `.auto_iterate/`
 
 ## 7. Fill in project details
@@ -224,8 +236,8 @@ research worktree:
 ```bash
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
   --goal docs/auto_iterate_goal.md \
-  --config configs/auto_iterate_controller.yaml \
-  --accounts configs/auto_iterate_accounts.yaml
+  --config tooling/auto_iterate/config/controller.local.yaml \
+  --accounts tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 If you need to point the controller at a different workspace for testing, use
@@ -244,9 +256,11 @@ Practical notes from a successful bring-up:
 - do not create `.auto_iterate/` by hand; `tooling/auto_iterate/scripts/auto_iterate_ctl.sh start`
   creates and owns the runtime directory, including `state.json`,
   `events.jsonl`, `runtime/`, and the goal snapshot
-- keep `docs/auto_iterate_goal.md` and the project copies of the controller /
-  account YAMLs in the research repo; keep `.auto_iterate/` runtime-only and
-  out of git
+- create `docs/iterations/` during bootstrap so per-iteration reports and notes
+  have a stable home from day 1
+- keep `docs/auto_iterate_goal.md` research-owned; keep
+  `tooling/auto_iterate/config/*.local.yaml` as local operator inputs; keep
+  `.auto_iterate/` runtime-only and out of git
 - use one dedicated `CODEX_HOME` per controller account instead of sharing a
   single Codex home across multiple accounts
 - if an auth flow keeps failing on an old `CODEX_HOME`, prefer creating a fresh
@@ -326,10 +340,11 @@ git status
 # Research repo should ignore harness-owned paths.
 git check-ignore -v .claude/ .agents/ tooling/ auto_iterate_v7_plan/ README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore
 
-# Auto-iterate project inputs should be research-owned files.
+# Auto-iterate project inputs should exist before the first start.
 test -f docs/auto_iterate_goal.md
-test -f configs/auto_iterate_controller.yaml
-test -f configs/auto_iterate_accounts.yaml
+test -f tooling/auto_iterate/config/controller.local.yaml
+test -f tooling/auto_iterate/config/accounts.local.yaml
+test -d docs/iterations
 ```
 
 Expected outcome:
@@ -337,4 +352,5 @@ Expected outcome:
 - `hgit status` is clean or only shows intentional framework edits
 - `git status` is clean or only shows research files
 - `tooling/auto_iterate/**` stays harness-managed
+- `tooling/auto_iterate/config/*.local.yaml` exist as local operator inputs
 - `.auto_iterate/**` remains runtime-only and uncommitted

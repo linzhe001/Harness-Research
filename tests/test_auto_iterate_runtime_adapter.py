@@ -11,9 +11,10 @@ Tests cover:
 - HeartbeatWorker lifecycle
 """
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -23,22 +24,20 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
-from auto_iterate.state import load_json, atomic_write_json
+from auto_iterate.lock import LockManager
+from auto_iterate.postcondition import PostconditionValidator, bind_iteration_id
 from auto_iterate.runtime import (
     BriefValidationError,
     HeartbeatWorker,
     PhaseSupervisor,
     build_brief,
+    build_codex_command,
     build_result,
     classify_exit,
     render_prompt,
     validate_brief,
 )
-from auto_iterate.postcondition import (
-    PostconditionValidator,
-    bind_iteration_id,
-)
-from auto_iterate.lock import LockManager
+from auto_iterate.state import atomic_write_json, load_json
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
 
@@ -177,6 +176,45 @@ class TestResultAndClassify:
     def test_classify_internal_error(self) -> None:
         assert classify_exit(1, False) == "internal_error"
 
+    def test_classify_usage_limit_from_stderr(self, tmp_path: Path) -> None:
+        stderr_path = tmp_path / "quota.stderr.log"
+        stderr_path.write_text(
+            "ERROR: You've hit your usage limit.",
+            encoding="utf-8",
+        )
+        assert classify_exit(1, False, str(stderr_path)) == "quota_or_rate_limit"
+
+    def test_classify_success_ignores_embedded_quota_label(
+        self, tmp_path: Path,
+    ) -> None:
+        stderr_path = tmp_path / "transcript.stderr.log"
+        stderr_path.write_text(
+            '{"runtime_exit_class": "quota_or_rate_limit"}',
+            encoding="utf-8",
+        )
+        assert classify_exit(0, False, str(stderr_path)) == "success"
+
+    def test_classify_auth_failure_from_stderr(self, tmp_path: Path) -> None:
+        stderr_path = tmp_path / "auth.stderr.log"
+        stderr_path.write_text(
+            "Unauthorized. Please run codex login.",
+            encoding="utf-8",
+        )
+        assert classify_exit(1, False, str(stderr_path)) == "auth_failure"
+
+    def test_build_codex_command_run_phase_uses_danger_full_access(self) -> None:
+        cmd = build_codex_command("/tmp/work", "run_full")
+        assert cmd[0] == "codex"
+        assert "--dangerously-bypass-approvals-and-sandbox" in cmd
+        assert "exec" in cmd
+        assert "--full-auto" not in cmd
+
+    def test_build_codex_command_non_run_phase_keeps_full_auto(self) -> None:
+        cmd = build_codex_command("/tmp/work", "plan")
+        assert "--full-auto" in cmd
+        assert "exec" in cmd
+        assert "danger-full-access" not in cmd
+
     def test_build_result_fields(self) -> None:
         brief = load_json(FIXTURES / "brief.valid.plan.json")
         result = build_result(
@@ -288,7 +326,11 @@ class TestPhaseSupervisorDryRun:
 # ===================================================================
 
 class TestPostconditionValidator:
-    def _make_project(self, tmp_path: Path, iterations: list[dict]) -> PostconditionValidator:
+    def _make_project(
+        self,
+        tmp_path: Path,
+        iterations: list[dict],
+    ) -> PostconditionValidator:
         """Create a minimal fixture project with the given iterations."""
         log = {"project": "test", "iterations": iterations}
         atomic_write_json(tmp_path / "iteration_log.json", log)

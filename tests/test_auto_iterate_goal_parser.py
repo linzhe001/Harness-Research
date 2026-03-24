@@ -5,14 +5,14 @@ Tests cover:
 - Metric identity change detection
 - Staged goal activation
 - Policy config loading and merge precedence
-- Account selection, cooldown, and auth failure
+- Account selection, cooldown, and auth failure recovery
 """
+
+# ruff: noqa: E402,E501
 
 from __future__ import annotations
 
-import json
 import sys
-import time
 import textwrap
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -22,16 +22,15 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
+from auto_iterate.accounts import AccountRegistry, NoAccountAvailableError
 from auto_iterate.goal import (
     GoalManager,
-    GoalMetricIdentityError,
     GoalParseError,
     check_metric_identity,
     parse,
     validate,
 )
-from auto_iterate.policy import DEFAULT_POLICY, PolicyConfig
-from auto_iterate.accounts import AccountRegistry, NoAccountAvailableError
+from auto_iterate.policy import PolicyConfig
 from auto_iterate.state import load_json
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
@@ -289,7 +288,14 @@ class TestPolicyConfig:
         assert pc.get("nonexistent.key", 42) == 42
 
     def test_load_from_fixture_yaml(self) -> None:
-        config_path = REPO_ROOT / "tooling" / "auto_iterate" / "config" / "auto_iterate_controller.example.yaml"
+        config_path = (
+            REPO_ROOT
+            / "tooling"
+            / "auto_iterate"
+            / "config"
+            / "templates"
+            / "auto_iterate_controller.example.yaml"
+        )
         try:
             pc = PolicyConfig.load(config_path)
         except ImportError:
@@ -306,7 +312,14 @@ class TestPolicyConfig:
 class TestAccountRegistry:
     def _make_registry(self) -> AccountRegistry:
         """Build a registry from the example YAML."""
-        path = REPO_ROOT / "tooling" / "auto_iterate" / "config" / "auto_iterate_accounts.example.yaml"
+        path = (
+            REPO_ROOT
+            / "tooling"
+            / "auto_iterate"
+            / "config"
+            / "templates"
+            / "auto_iterate_accounts.example.yaml"
+        )
         try:
             return AccountRegistry.load(path)
         except ImportError:
@@ -331,6 +344,28 @@ class TestAccountRegistry:
         selected = reg.select_account(state)
         assert selected["id"] == "codex_acc2"
 
+    def test_select_fallback_when_current_hits_phase_retry_cap(self) -> None:
+        reg = self._make_registry()
+        state = {
+            "accounts": {"selected_account_id": "codex_acc1"},
+            "retry_policy": {"max_attempts_per_account": 2},
+            "phase_account_attempts": {"codex_acc1": 2},
+        }
+        selected = reg.select_account(state)
+        assert selected["id"] == "codex_acc2"
+
+    def test_select_raises_when_all_accounts_hit_phase_retry_cap(self) -> None:
+        reg = self._make_registry()
+        state = {
+            "retry_policy": {"max_attempts_per_account": 1},
+            "phase_account_attempts": {
+                "codex_acc1": 1,
+                "codex_acc2": 1,
+            },
+        }
+        with pytest.raises(NoAccountAvailableError):
+            reg.select_account(state)
+
     def test_select_raises_when_all_unavailable(self) -> None:
         reg = self._make_registry()
         for aid in reg.get_ids():
@@ -340,10 +375,54 @@ class TestAccountRegistry:
 
     def test_auth_failure_excludes(self) -> None:
         reg = self._make_registry()
-        reg.mark_auth_failure("codex_acc1")
+        reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
         assert not reg.is_ready("codex_acc1")
         selected = reg.select_account()
         assert selected["id"] == "codex_acc2"
+
+    def test_auth_failure_auto_recovers_after_cooldown(self) -> None:
+        reg = self._make_registry()
+        reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
+        reg._runtime["codex_acc1"]["cooldown_until"] = (
+            datetime.now(timezone.utc) - timedelta(seconds=1)
+        ).isoformat()
+
+        assert reg.is_ready("codex_acc1")
+        sd = reg.to_state_dict()
+        assert sd["by_account"]["codex_acc1"]["status"] == "ready"
+        assert sd["by_account"]["codex_acc1"]["cooldown_until"] is None
+
+    def test_restore_runtime_clears_stale_auth_failure_without_cooldown(self) -> None:
+        reg = self._make_registry()
+        reg.restore_runtime({
+            "selected_account_id": "codex_acc2",
+            "by_account": {
+                "codex_acc1": {
+                    "used_calls": 3,
+                    "last_used_at": "2026-03-23T00:00:00Z",
+                    "cooldown_until": None,
+                    "status": "auth_failure",
+                },
+                "codex_acc2": {
+                    "used_calls": 1,
+                    "last_used_at": "2026-03-23T00:00:01Z",
+                    "cooldown_until": None,
+                    "status": "ready",
+                },
+            },
+        })
+
+        assert reg.is_ready("codex_acc1")
+        sd = reg.to_state_dict()
+        assert sd["by_account"]["codex_acc1"]["status"] == "ready"
+
+    def test_to_state_dict_reselects_when_current_account_is_blocked(self) -> None:
+        reg = self._make_registry()
+        reg.record_usage("codex_acc1")
+        reg.mark_cooldown("codex_acc1", "quota", cooldown_sec=3600)
+
+        sd = reg.to_state_dict()
+        assert sd["selected_account_id"] == "codex_acc2"
 
     def test_get_codex_home(self) -> None:
         reg = self._make_registry()
