@@ -227,6 +227,12 @@ type ProviderSwitcher interface {
 	ListProviders() []ProviderConfig
 }
 
+// SessionScopeProvider exposes the active account/provider scope that should be
+// used when resolving persistent backend session IDs.
+type SessionScopeProvider interface {
+	CurrentSessionScope() string
+}
+
 // MemoryFileProvider is an optional interface for agents that support
 // persistent instruction files (CLAUDE.md, AGENTS.md, GEMINI.md, etc.).
 // The engine uses these paths for the /memory command.

@@ -24,17 +24,18 @@ import (
 // codexSession manages a multi-turn Codex conversation.
 // First Send() uses `codex exec`, subsequent ones use `codex exec resume <threadID>`.
 type codexSession struct {
-	workDir  string
-	model    string
-	effort   string
-	mode     string
-	extraEnv []string
-	events   chan core.Event
-	threadID atomic.Value // stores string — Codex thread_id
-	ctx      context.Context
-	cancel   context.CancelFunc
-	wg       sync.WaitGroup
-	alive    atomic.Bool
+	workDir   string
+	codexHome string
+	model     string
+	effort    string
+	mode      string
+	extraEnv  []string
+	events    chan core.Event
+	threadID  atomic.Value // stores string — Codex thread_id
+	ctx       context.Context
+	cancel    context.CancelFunc
+	wg        sync.WaitGroup
+	alive     atomic.Bool
 
 	pendingMsgs []string // buffered agent_message texts awaiting classification
 }
@@ -43,14 +44,15 @@ func newCodexSession(ctx context.Context, workDir, model, effort, mode, resumeID
 	sessionCtx, cancel := context.WithCancel(ctx)
 
 	cs := &codexSession{
-		workDir:  workDir,
-		model:    model,
-		effort:   effort,
-		mode:     mode,
-		extraEnv: extraEnv,
-		events:   make(chan core.Event, 64),
-		ctx:      sessionCtx,
-		cancel:   cancel,
+		workDir:   workDir,
+		codexHome: resolveCodexHome(codexHomeFromEnvList(extraEnv)),
+		model:     model,
+		effort:    effort,
+		mode:      mode,
+		extraEnv:  extraEnv,
+		events:    make(chan core.Event, 64),
+		ctx:       sessionCtx,
+		cancel:    cancel,
 	}
 	cs.alive.Store(true)
 
@@ -204,7 +206,7 @@ func (cs *codexSession) readLoop(cmd *exec.Cmd, stdout io.ReadCloser, stderrBuf 
 			}
 		}
 		if tid := cs.CurrentSessionID(); tid != "" {
-			patchSessionSource(tid)
+			patchSessionSource(tid, cs.codexHome)
 		}
 	}()
 

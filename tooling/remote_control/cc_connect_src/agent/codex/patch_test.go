@@ -25,10 +25,7 @@ func TestPatchSessionSource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Override CODEX_HOME for test
-	t.Setenv("CODEX_HOME", filepath.Join(tmpDir, ".codex"))
-
-	patchSessionSource(sessionID)
+	patchSessionSource(sessionID, filepath.Join(tmpDir, ".codex"))
 
 	data, err := os.ReadFile(fname)
 	if err != nil {
@@ -65,9 +62,7 @@ func TestPatchSessionSource_Idempotent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Setenv("CODEX_HOME", filepath.Join(tmpDir, ".codex"))
-
-	patchSessionSource(sessionID)
+	patchSessionSource(sessionID, filepath.Join(tmpDir, ".codex"))
 
 	data, _ := os.ReadFile(fname)
 	if string(data) != line1+"\n" {

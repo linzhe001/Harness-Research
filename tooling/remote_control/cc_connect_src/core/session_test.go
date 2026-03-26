@@ -225,6 +225,40 @@ func TestSession_GetAgentSessionID(t *testing.T) {
 	}
 }
 
+func TestSession_ScopedAgentSessionIDs(t *testing.T) {
+	s := &Session{}
+
+	s.SetAgentSessionIDForScope("home-a", "sess-a", "codex")
+	if got := s.GetAgentSessionIDForScope("home-a"); got != "sess-a" {
+		t.Fatalf("scope home-a = %q, want sess-a", got)
+	}
+	if got := s.GetAgentSessionID(); got != "sess-a" {
+		t.Fatalf("active agent session = %q, want sess-a", got)
+	}
+
+	s.SetAgentSessionIDForScope("home-b", "sess-b", "codex")
+	if got := s.GetAgentSessionIDForScope("home-b"); got != "sess-b" {
+		t.Fatalf("scope home-b = %q, want sess-b", got)
+	}
+	if got := s.GetAgentSessionIDForScope("home-a"); got != "sess-a" {
+		t.Fatalf("scope home-a after second set = %q, want sess-a", got)
+	}
+	if got := s.GetAgentSessionID(); got != "sess-b" {
+		t.Fatalf("active agent session after scope switch = %q, want sess-b", got)
+	}
+
+	if activated := s.ActivateAgentSessionScope("home-a"); activated != "sess-a" {
+		t.Fatalf("ActivateAgentSessionScope(home-a) = %q, want sess-a", activated)
+	}
+	if got := s.GetAgentSessionID(); got != "sess-a" {
+		t.Fatalf("active agent session after activate = %q, want sess-a", got)
+	}
+
+	if ok := s.CompareAndSetAgentSessionIDForScope("home-a", "sess-new", "codex"); ok {
+		t.Fatal("CompareAndSetAgentSessionIDForScope should not overwrite existing scoped binding")
+	}
+}
+
 func TestSession_GetName(t *testing.T) {
 	s := &Session{Name: "test-session"}
 	if got := s.GetName(); got != "test-session" {
@@ -333,31 +367,35 @@ func TestSessionManager_DeleteByAgentSessionID(t *testing.T) {
 	sm := NewSessionManager("")
 
 	s1 := sm.NewSession("user1", "one")
-	s1.SetAgentSessionID("agent-1", "codex")
+	s1.SetAgentSessionIDForScope("home-a", "agent-1", "codex")
 
 	s2 := sm.NewSession("user2", "two")
-	s2.SetAgentSessionID("agent-2", "codex")
+	s2.SetAgentSessionIDForScope("home-b", "agent-2", "codex")
 
 	s3 := sm.NewSession("user3", "three")
-	s3.SetAgentSessionID("agent-1", "codex")
+	s3.SetAgentSessionIDForScope("home-a", "agent-1", "codex")
+	s3.SetAgentSessionIDForScope("home-b", "agent-3", "codex")
 
 	if removed := sm.DeleteByAgentSessionID("agent-1"); removed != 2 {
 		t.Fatalf("removed = %d, want 2", removed)
 	}
-	if got := sm.FindByID(s1.ID); got != nil {
-		t.Fatalf("expected s1 removed, got %+v", got)
+	if got := sm.FindByID(s1.ID); got == nil {
+		t.Fatal("expected s1 local session preserved")
 	}
-	if got := sm.FindByID(s3.ID); got != nil {
-		t.Fatalf("expected s3 removed, got %+v", got)
+	if got := sm.FindByID(s3.ID); got == nil {
+		t.Fatal("expected s3 local session preserved")
 	}
 	if got := sm.FindByID(s2.ID); got == nil {
 		t.Fatal("expected s2 preserved")
 	}
-	if got := sm.ActiveSessionID("user1"); got != "" {
-		t.Fatalf("user1 active session = %q, want empty", got)
+	if got := s1.GetAgentSessionIDForScope("home-a"); got != "" {
+		t.Fatalf("s1 home-a session = %q, want cleared", got)
 	}
-	if got := sm.ActiveSessionID("user3"); got != "" {
-		t.Fatalf("user3 active session = %q, want empty", got)
+	if got := s3.GetAgentSessionIDForScope("home-a"); got != "" {
+		t.Fatalf("s3 home-a session = %q, want cleared", got)
+	}
+	if got := s3.GetAgentSessionIDForScope("home-b"); got != "agent-3" {
+		t.Fatalf("s3 home-b session = %q, want agent-3", got)
 	}
 	if list := sm.ListSessions("user2"); len(list) != 1 || list[0].ID != s2.ID {
 		t.Fatalf("user2 sessions = %+v, want only s2", list)

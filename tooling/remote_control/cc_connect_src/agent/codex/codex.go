@@ -387,15 +387,25 @@ func (a *Agent) StartSession(ctx context.Context, sessionID string) (core.AgentS
 }
 
 func (a *Agent) ListSessions(_ context.Context) ([]core.AgentSessionInfo, error) {
-	return listCodexSessions(a.workDir)
+	a.mu.RLock()
+	workDir := a.workDir
+	homes := a.sessionHomesLocked()
+	a.mu.RUnlock()
+	return listCodexSessions(workDir, homes)
 }
 
 func (a *Agent) GetSessionHistory(_ context.Context, sessionID string, limit int) ([]core.HistoryEntry, error) {
-	return getSessionHistory(sessionID, limit)
+	a.mu.RLock()
+	homes := a.sessionHomesLocked()
+	a.mu.RUnlock()
+	return getSessionHistory(sessionID, limit, homes)
 }
 
 func (a *Agent) DeleteSession(_ context.Context, sessionID string) error {
-	path := findSessionFile(sessionID)
+	a.mu.RLock()
+	homes := a.sessionHomesLocked()
+	a.mu.RUnlock()
+	path := findSessionFile(sessionID, homes)
 	if path == "" {
 		return fmt.Errorf("session file not found: %s", sessionID)
 	}
@@ -530,6 +540,55 @@ func (a *Agent) providerEnvLocked() []string {
 		env = append(env, k+"="+v)
 	}
 	return env
+}
+
+func (a *Agent) currentCodexHomeLocked() string {
+	if a.activeIdx >= 0 && a.activeIdx < len(a.providers) {
+		if home := strings.TrimSpace(a.providers[a.activeIdx].Env["CODEX_HOME"]); home != "" {
+			return home
+		}
+	}
+	if home := codexHomeFromEnvList(a.sessionEnv); home != "" {
+		return home
+	}
+	return resolveCodexHome("")
+}
+
+func (a *Agent) CurrentSessionScope() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return resolveCodexHome(a.currentCodexHomeLocked())
+}
+
+func (a *Agent) sessionHomesLocked() []sessionHomeRef {
+	homes := make([]sessionHomeRef, 0, len(a.providers)+2)
+	seen := make(map[string]struct{}, len(a.providers)+2)
+	addHome := func(providerName, codexHome string) {
+		resolved := resolveCodexHome(codexHome)
+		if resolved == "" {
+			return
+		}
+		if _, ok := seen[resolved]; ok {
+			return
+		}
+		seen[resolved] = struct{}{}
+		homes = append(homes, sessionHomeRef{
+			ProviderName: strings.TrimSpace(providerName),
+			CodexHome:    resolved,
+			SessionScope: resolved,
+		})
+	}
+
+	if a.activeIdx >= 0 && a.activeIdx < len(a.providers) {
+		addHome(a.providers[a.activeIdx].Name, a.providers[a.activeIdx].Env["CODEX_HOME"])
+	}
+	for _, provider := range a.providers {
+		addHome(provider.Name, provider.Env["CODEX_HOME"])
+	}
+	if len(homes) == 0 {
+		addHome("", a.currentCodexHomeLocked())
+	}
+	return homes
 }
 
 func (a *Agent) PermissionModes() []core.PermissionModeInfo {

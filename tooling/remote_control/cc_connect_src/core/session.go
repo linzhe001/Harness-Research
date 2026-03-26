@@ -6,19 +6,22 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
 
 // Session tracks one conversation between a user and the agent.
 type Session struct {
-	ID             string         `json:"id"`
-	Name           string         `json:"name"`
-	AgentSessionID string         `json:"agent_session_id"`
-	AgentType      string         `json:"agent_type,omitempty"`
-	History        []HistoryEntry `json:"history"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
+	ID                    string            `json:"id"`
+	Name                  string            `json:"name"`
+	AgentSessionID        string            `json:"agent_session_id"`
+	AgentSessionScope     string            `json:"agent_session_scope,omitempty"`
+	ScopedAgentSessionIDs map[string]string `json:"scoped_agent_session_ids,omitempty"`
+	AgentType             string            `json:"agent_type,omitempty"`
+	History               []HistoryEntry    `json:"history"`
+	CreatedAt             time.Time         `json:"created_at"`
+	UpdatedAt             time.Time         `json:"updated_at"`
 
 	mu   sync.Mutex `json:"-"`
 	busy bool       `json:"-"`
@@ -51,12 +54,108 @@ func (s *Session) AddHistory(role, content string) {
 	})
 }
 
+func normalizeSessionScope(scope string) string {
+	return strings.TrimSpace(scope)
+}
+
+func (s *Session) getScopedAgentSessionIDLocked(scope string) string {
+	scope = normalizeSessionScope(scope)
+	if scope != "" {
+		if s.ScopedAgentSessionIDs != nil {
+			if id := strings.TrimSpace(s.ScopedAgentSessionIDs[scope]); id != "" {
+				return id
+			}
+		}
+		if legacyScope := normalizeSessionScope(s.AgentSessionScope); legacyScope != "" && legacyScope == scope {
+			return strings.TrimSpace(s.AgentSessionID)
+		}
+		return ""
+	}
+
+	if id := strings.TrimSpace(s.AgentSessionID); id != "" {
+		return id
+	}
+	if activeScope := normalizeSessionScope(s.AgentSessionScope); activeScope != "" && s.ScopedAgentSessionIDs != nil {
+		return strings.TrimSpace(s.ScopedAgentSessionIDs[activeScope])
+	}
+	return ""
+}
+
+func (s *Session) setScopedAgentSessionIDLocked(scope, id, agentType string) {
+	scope = normalizeSessionScope(scope)
+	id = strings.TrimSpace(id)
+
+	if scope != "" {
+		if id == "" {
+			if s.ScopedAgentSessionIDs != nil {
+				delete(s.ScopedAgentSessionIDs, scope)
+				if len(s.ScopedAgentSessionIDs) == 0 {
+					s.ScopedAgentSessionIDs = nil
+				}
+			}
+		} else {
+			if s.ScopedAgentSessionIDs == nil {
+				s.ScopedAgentSessionIDs = make(map[string]string)
+			}
+			s.ScopedAgentSessionIDs[scope] = id
+		}
+		s.AgentSessionScope = scope
+	} else {
+		s.AgentSessionScope = ""
+	}
+
+	s.AgentSessionID = id
+	s.AgentType = agentType
+}
+
+func (s *Session) removeAgentSessionIDLocked(agentSessionID string) bool {
+	agentSessionID = strings.TrimSpace(agentSessionID)
+	if agentSessionID == "" {
+		return false
+	}
+
+	removed := false
+	if strings.TrimSpace(s.AgentSessionID) == agentSessionID {
+		s.AgentSessionID = ""
+		removed = true
+	}
+	if s.ScopedAgentSessionIDs != nil {
+		for scope, id := range s.ScopedAgentSessionIDs {
+			if strings.TrimSpace(id) != agentSessionID {
+				continue
+			}
+			delete(s.ScopedAgentSessionIDs, scope)
+			removed = true
+		}
+		if len(s.ScopedAgentSessionIDs) == 0 {
+			s.ScopedAgentSessionIDs = nil
+		}
+	}
+	if removed && s.AgentSessionScope != "" && s.AgentSessionID == "" {
+		if s.ScopedAgentSessionIDs != nil {
+			s.AgentSessionID = strings.TrimSpace(s.ScopedAgentSessionIDs[s.AgentSessionScope])
+		}
+		if s.AgentSessionID == "" {
+			s.AgentSessionScope = ""
+		}
+	}
+	return removed
+}
+
 // SetAgentInfo atomically sets the agent session ID, agent type, and name.
 func (s *Session) SetAgentInfo(agentSessionID, agentType, name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.AgentSessionID = agentSessionID
-	s.AgentType = agentType
+	s.setScopedAgentSessionIDLocked("", agentSessionID, agentType)
+	s.Name = name
+}
+
+// SetAgentInfoForScope atomically sets the scoped agent session ID, agent type,
+// and display name for the active account/provider scope.
+func (s *Session) SetAgentInfoForScope(scope, agentSessionID, agentType, name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.setScopedAgentSessionIDLocked(scope, agentSessionID, agentType)
 	s.Name = name
 }
 
@@ -65,6 +164,14 @@ func (s *Session) GetAgentSessionID() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.AgentSessionID
+}
+
+// GetAgentSessionIDForScope atomically reads the agent session ID for a
+// specific account/provider scope, falling back to legacy single-session state.
+func (s *Session) GetAgentSessionIDForScope(scope string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.getScopedAgentSessionIDLocked(scope)
 }
 
 // GetName atomically reads the session name.
@@ -78,8 +185,15 @@ func (s *Session) GetName() string {
 func (s *Session) SetAgentSessionID(id, agentType string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.AgentSessionID = id
-	s.AgentType = agentType
+	s.setScopedAgentSessionIDLocked("", id, agentType)
+}
+
+// SetAgentSessionIDForScope atomically sets the scoped agent session ID for the
+// active account/provider scope.
+func (s *Session) SetAgentSessionIDForScope(scope, id, agentType string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.setScopedAgentSessionIDLocked(scope, id, agentType)
 }
 
 // CompareAndSetAgentSessionID sets the agent session ID only if it is currently empty.
@@ -87,12 +201,35 @@ func (s *Session) SetAgentSessionID(id, agentType string) {
 func (s *Session) CompareAndSetAgentSessionID(id, agentType string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.AgentSessionID != "" {
+	if s.getScopedAgentSessionIDLocked("") != "" {
 		return false
 	}
-	s.AgentSessionID = id
-	s.AgentType = agentType
+	s.setScopedAgentSessionIDLocked("", id, agentType)
 	return true
+}
+
+// CompareAndSetAgentSessionIDForScope sets the scoped agent session ID only if
+// the given scope does not already have a bound backend session.
+func (s *Session) CompareAndSetAgentSessionIDForScope(scope, id, agentType string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.getScopedAgentSessionIDLocked(scope) != "" {
+		return false
+	}
+	s.setScopedAgentSessionIDLocked(scope, id, agentType)
+	return true
+}
+
+// ActivateAgentSessionScope switches the active backend-session binding to the
+// given account/provider scope and returns the bound agent session ID, if any.
+func (s *Session) ActivateAgentSessionScope(scope string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	scope = normalizeSessionScope(scope)
+	activeID := s.getScopedAgentSessionIDLocked(scope)
+	s.AgentSessionScope = scope
+	s.AgentSessionID = activeID
+	return s.AgentSessionID
 }
 
 func (s *Session) ClearHistory() {
@@ -126,7 +263,7 @@ type sessionSnapshot struct {
 	ActiveSession map[string]string    `json:"active_session"`
 	UserSessions  map[string][]string  `json:"user_sessions"`
 	Counter       int64                `json:"counter"`
-	SessionNames  map[string]string    `json:"session_names,omitempty"`  // agent session ID → custom name
+	SessionNames  map[string]string    `json:"session_names,omitempty"` // agent session ID → custom name
 	UserMeta      map[string]*UserMeta `json:"user_meta,omitempty"`     // sessionKey → display info
 }
 
@@ -333,14 +470,13 @@ func (sm *SessionManager) DeleteByAgentSessionID(agentSessionID string) int {
 	defer sm.mu.Unlock()
 
 	removed := 0
-	for id, s := range sm.sessions {
+	for _, s := range sm.sessions {
 		s.mu.Lock()
-		matched := s.AgentSessionID == agentSessionID
+		matched := s.removeAgentSessionIDLocked(agentSessionID)
 		s.mu.Unlock()
 		if !matched {
 			continue
 		}
-		sm.deleteByIDLocked(id)
 		removed++
 	}
 	if removed > 0 {
@@ -381,13 +517,20 @@ func (sm *SessionManager) saveLocked() {
 	for id, s := range sm.sessions {
 		s.mu.Lock()
 		snapSessions[id] = &Session{
-			ID:             s.ID,
-			Name:           s.Name,
-			AgentSessionID: s.AgentSessionID,
-			AgentType:      s.AgentType,
-			History:        append([]HistoryEntry(nil), s.History...),
-			CreatedAt:      s.CreatedAt,
-			UpdatedAt:      s.UpdatedAt,
+			ID:                s.ID,
+			Name:              s.Name,
+			AgentSessionID:    s.AgentSessionID,
+			AgentSessionScope: s.AgentSessionScope,
+			AgentType:         s.AgentType,
+			History:           append([]HistoryEntry(nil), s.History...),
+			CreatedAt:         s.CreatedAt,
+			UpdatedAt:         s.UpdatedAt,
+		}
+		if len(s.ScopedAgentSessionIDs) > 0 {
+			snapSessions[id].ScopedAgentSessionIDs = make(map[string]string, len(s.ScopedAgentSessionIDs))
+			for scope, sid := range s.ScopedAgentSessionIDs {
+				snapSessions[id].ScopedAgentSessionIDs[scope] = sid
+			}
 		}
 		s.mu.Unlock()
 	}
@@ -472,6 +615,8 @@ func (sm *SessionManager) InvalidateForAgent(agentType string) {
 				"old_agent_session_id", s.AgentSessionID,
 			)
 			s.AgentSessionID = ""
+			s.AgentSessionScope = ""
+			s.ScopedAgentSessionIDs = nil
 			s.AgentType = agentType
 			invalidated++
 		}

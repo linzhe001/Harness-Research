@@ -260,6 +260,19 @@ func (a *stubProviderAgent) SetActiveProvider(name string) bool {
 	return false
 }
 
+func (a *stubProviderAgent) CurrentSessionScope() string {
+	for _, prov := range a.providers {
+		if prov.Name != a.active {
+			continue
+		}
+		if home := strings.TrimSpace(prov.Env["CODEX_HOME"]); home != "" {
+			return home
+		}
+		return prov.Name
+	}
+	return ""
+}
+
 type stubFailoverAgent struct {
 	stubProviderAgent
 	nextSession AgentSession
@@ -1636,8 +1649,10 @@ func TestCmdDelete_SyncsLocalSessionSnapshot(t *testing.T) {
 	if got, want := strings.Join(agent.deleted, ","), "session-1"; got != want {
 		t.Fatalf("deleted = %q, want %q", got, want)
 	}
-	if got := e.sessions.FindByID(victim.ID); got != nil {
-		t.Fatalf("victim session should be removed, got %+v", got)
+	if got := e.sessions.FindByID(victim.ID); got == nil {
+		t.Fatal("victim local session should be preserved")
+	} else if got.GetAgentSessionID() != "" {
+		t.Fatalf("victim agent session id = %q, want cleared", got.GetAgentSessionID())
 	}
 	if got := e.sessions.FindByID(keep.ID); got == nil {
 		t.Fatal("keep session should remain")
@@ -2792,8 +2807,8 @@ func TestProcessInteractiveEvents_AutoSwitchesProviderOnQuotaError(t *testing.T)
 	if session.GetAgentSessionID() != "" {
 		t.Fatalf("agent session id = %q, want cleared", session.GetAgentSessionID())
 	}
-	if len(session.GetHistory(10)) != 0 {
-		t.Fatalf("history = %v, want cleared", session.GetHistory(10))
+	if len(session.GetHistory(10)) != 1 {
+		t.Fatalf("history = %v, want preserved local history", session.GetHistory(10))
 	}
 	if !strings.Contains(strings.Join(p.getSent(), "\n"), "Switched to `codex_secondary`") {
 		t.Fatalf("sent = %v, want auto-switch notice", p.getSent())
@@ -2826,8 +2841,8 @@ func TestSwitchProvider_ResetsConversationState(t *testing.T) {
 	if session.GetAgentSessionID() != "" {
 		t.Fatalf("agent session id = %q, want cleared", session.GetAgentSessionID())
 	}
-	if len(session.GetHistory(10)) != 0 {
-		t.Fatalf("history = %v, want cleared", session.GetHistory(10))
+	if len(session.GetHistory(10)) != 1 {
+		t.Fatalf("history = %v, want preserved local history", session.GetHistory(10))
 	}
 }
 
@@ -5179,6 +5194,17 @@ func (a *switchableAgent) ListSessions(_ context.Context) ([]AgentSessionInfo, e
 	return a.sessions, nil
 }
 
+type switchableProviderAgent struct {
+	stubProviderAgent
+	sessions []AgentSessionInfo
+}
+
+func (a *switchableProviderAgent) Name() string { return "codex" }
+
+func (a *switchableProviderAgent) ListSessions(_ context.Context) ([]AgentSessionInfo, error) {
+	return a.sessions, nil
+}
+
 func TestCmdSwitch_NoArgs_ShowsUsage(t *testing.T) {
 	p := &stubPlatformEngine{n: "test"}
 	e := NewEngine("test", &stubAgent{}, []Platform{p}, "", LangEnglish)
@@ -5265,6 +5291,46 @@ func TestCmdSwitch_ByIDPrefix(t *testing.T) {
 	}
 	if !foundSwitch {
 		t.Fatalf("expected switch by prefix to succeed, got %v", sent)
+	}
+}
+
+func TestCmdSwitch_SessionFromDifferentProviderSwitchesProvider(t *testing.T) {
+	p := &stubPlatformEngine{n: "test"}
+	agent := &switchableProviderAgent{
+		stubProviderAgent: stubProviderAgent{
+			providers: []ProviderConfig{
+				{Name: "codex_primary", Env: map[string]string{"CODEX_HOME": "/tmp/acc1"}},
+				{Name: "codex_secondary", Env: map[string]string{"CODEX_HOME": "/tmp/acc2"}},
+			},
+			active: "codex_primary",
+		},
+		sessions: []AgentSessionInfo{
+			{ID: "sess-bbb", Summary: "Second session", MessageCount: 3, ProviderName: "codex_secondary", SessionScope: "/tmp/acc2"},
+		},
+	}
+	e := NewEngine("test", agent, []Platform{p}, "", LangEnglish)
+
+	var savedProvider string
+	e.SetProviderSaveFunc(func(providerName string) error {
+		savedProvider = providerName
+		return nil
+	})
+
+	msg := &Message{SessionKey: "test:ch:user1", Content: "/switch 1", ReplyCtx: "ctx"}
+	e.handleCommand(p, msg, msg.Content)
+
+	session := e.sessions.GetOrCreateActive(msg.SessionKey)
+	if agent.active != "codex_secondary" {
+		t.Fatalf("active provider = %q, want codex_secondary", agent.active)
+	}
+	if savedProvider != "codex_secondary" {
+		t.Fatalf("saved provider = %q, want codex_secondary", savedProvider)
+	}
+	if got := session.GetAgentSessionIDForScope("/tmp/acc2"); got != "sess-bbb" {
+		t.Fatalf("scoped session id = %q, want sess-bbb", got)
+	}
+	if got := session.GetAgentSessionID(); got != "sess-bbb" {
+		t.Fatalf("active session id = %q, want sess-bbb", got)
 	}
 }
 
