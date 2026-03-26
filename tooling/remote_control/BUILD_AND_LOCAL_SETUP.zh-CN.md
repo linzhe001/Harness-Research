@@ -10,7 +10,7 @@
 
 应该提交：
 
-- `Reference_tool_repo/cc-connect/` 下的源码修改
+- `tooling/remote_control/cc_connect_src/` 下的源码修改
 - `tooling/remote_control/` 下的脚本、模板、文档
 - 不含密钥的模板配置
 
@@ -24,10 +24,13 @@
 
 ## 推荐目录约定
 
+- 内置 `cc-connect` 源码：`tooling/remote_control/cc_connect_src/`
 - 模板：`tooling/remote_control/config/templates/`
 - 本地生效配置：`tooling/remote_control/config/*.local.*`
 - 本地 Go 工具链：`tooling/remote_control/vendor/go/`
 - 本地 patched 二进制：`tooling/remote_control/vendor/bin/`
+
+当前 setup 已不再依赖 `Reference_tool_repo/cc-connect`。
 
 ## 1. 生成本地配置
 
@@ -74,7 +77,7 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 
 - 优先使用 `tooling/remote_control/vendor/go/bin/go`
 - 否则回退到系统 `go`
-- 在 `Reference_tool_repo/cc-connect/` 中编译 patched binary
+- 在 `tooling/remote_control/cc_connect_src/` 中编译 patched binary
 - 安装到 `tooling/remote_control/vendor/bin/cc-connect-harness-patched-linux-amd64`
 
 ## 3. 启动

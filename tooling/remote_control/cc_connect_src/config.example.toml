@@ -1,0 +1,1154 @@
+# cc-connect configuration
+# cc-connect 配置文件
+#
+# Copy this file to config.toml and fill in your credentials.
+# 复制此文件为 config.toml，填入你的凭证信息。
+#
+# Each [[projects]] entry binds one code directory to its own agent + platforms.
+# A single cc-connect process can manage multiple projects simultaneously.
+# 每个 [[projects]] 将一个代码目录绑定到独立的 agent 和平台。
+# 单个 cc-connect 进程可以同时管理多个项目。
+
+# =============================================================================
+# Global Settings / 全局设置
+# =============================================================================
+
+# Language for bot messages / 机器人消息语言
+# - "en": English
+# - "zh": 中文
+# - "" (empty/not set): Auto-detect from user's first message / 留空自动检测
+# language = "en"
+
+# Session data storage directory (default: ~/.cc-connect)
+# Stores conversation history and session state as JSON files.
+# 会话数据存储目录（默认 ~/.cc-connect），以 JSON 文件保存对话历史和会话状态。
+# data_dir = "/path/to/custom/dir"
+
+# Attachment send-back switch for `cc-connect send --image/--file`.
+# Independent from the agent's /mode. Set to "off" to block IM image/file send-back.
+# `cc-connect send --message` without attachments is unaffected.
+# 附件回传开关，用于控制 `cc-connect send --image/--file`。
+# 它与 agent 的 /mode 独立；设为 "off" 会禁用通过 IM 回传图片/文件。
+# 不带附件的 `cc-connect send --message` 不受影响。
+# attachment_send = "on"
+
+# Default quiet mode (suppress thinking/tool progress messages) / 默认静默模式（隐藏思考和工具进度消息）
+# Can be overridden per-project. Users can still toggle with /quiet command.
+# 可被项目级配置覆盖。用户仍可通过 /quiet 命令切换。
+# quiet = true
+
+[log]
+level = "info" # debug, info, warn, error
+
+# =============================================================================
+# Display Settings / 显示设置
+# =============================================================================
+# Controls how intermediate messages (thinking, tool use) are shown in chat.
+# 控制中间消息（思考过程、工具调用）在聊天中的显示方式。
+#
+# Set to 0 to disable truncation (show full content).
+# 设为 0 表示不截断（显示完整内容）。
+
+# [display]
+# thinking_max_len = 300   # Max chars for thinking messages (default: 300) / 思考消息最大字符数（默认 300）
+# tool_max_len = 500       # Max chars for tool use messages (default: 500) / 工具调用消息最大字符数（默认 500）
+
+# Agent idle timeout: max minutes between consecutive agent events before
+# considering the session stuck. Set to 0 to disable the timeout entirely.
+# Agent 空闲超时：两次 agent 事件之间的最大等待分钟数，超时则认为会话卡住。设为 0 禁用。
+# idle_timeout_mins = 120  # default: 120 (2 hours) / 默认 120（2 小时）
+
+# =============================================================================
+# Streaming Preview / 流式预览
+# =============================================================================
+# Real-time message preview: shows agent output as it streams, updating the
+# message in-place (like a "typing" indicator). Supported on Telegram, Discord,
+# and Feishu. The message is edited periodically until the final response is sent.
+# 实时流式预览：Agent 输出时实时更新消息（类似"正在输入"效果）。
+# 支持 Telegram、Discord 和飞书。消息会定期编辑，直到最终回复发送。
+
+# [stream_preview]
+# enabled = true            # Enable/disable streaming preview (default: true) / 启用/禁用流式预览（默认 true）
+# interval_ms = 1500        # Min ms between updates (default: 1500) / 更新最小间隔毫秒数（默认 1500）
+# min_delta_chars = 30      # Min new chars before sending update (default: 30) / 发送更新前最少新增字符数（默认 30）
+# max_chars = 2000          # Max preview length (default: 2000) / 预览最大长度（默认 2000）
+
+# =============================================================================
+# Rate Limiting / 速率限制
+# =============================================================================
+# Per-session sliding-window rate limiter. Prevents users from flooding the bot
+# with too many messages. When exceeded, a friendly "slow down" message is sent.
+# 每会话滑动窗口速率限制。防止用户刷消息。超限时返回友好的提示。
+
+# [rate_limit]
+# max_messages = 20         # Max messages per window; 0 = disabled (default: 20) / 窗口内最大消息数；0 = 禁用（默认 20）
+# window_secs = 60          # Window size in seconds (default: 60) / 窗口时间秒数（默认 60）
+
+# =============================================================================
+# Relay Settings / Relay 设置
+# =============================================================================
+# Bot-to-bot relay timeout. Controls how long cc-connect waits for the target
+# bot to finish responding during `cc-connect relay send`.
+# Bot 间 relay 超时。控制 `cc-connect relay send` 时等待目标 bot 完成回复的最长时间。
+
+# [relay]
+# timeout_secs = 120        # Max relay wait in seconds; 0 = disabled (default: 120) / relay 最大等待秒数；0 = 禁用（默认 120）
+
+# =============================================================================
+# Cron Settings / 定时任务设置
+# =============================================================================
+# Controls cron job behavior.
+# 控制定时任务行为。
+
+# [cron]
+# silent = false             # Suppress "⏰ task name" notification when cron starts (default: false)
+#                            # 静默模式：不发送定时任务开始执行的通知消息（默认 false）
+
+# =============================================================================
+# Webhook / 外部 Webhook 端点
+# =============================================================================
+# Exposes an HTTP endpoint for external systems (git hooks, CI/CD, file watchers)
+# to trigger agent prompts or shell commands.
+# 暴露一个 HTTP 端点，供外部系统（git hook、CI/CD、文件监听）触发 agent 或 shell 命令。
+#
+# [webhook]
+# enabled = true
+# port = 9111                  # Listen port (default: 9111) / 监听端口（默认 9111）
+# token = "your-secret-token"  # Shared secret for auth; empty = no auth / 认证密钥；为空则不验证
+# path = "/hook"               # URL path (default: "/hook") / URL 路径（默认 "/hook"）
+#
+# Usage / 使用方式:
+#
+#   # Trigger an agent prompt / 触发 agent 执行
+#   curl -X POST http://localhost:9111/hook \
+#     -H "Authorization: Bearer your-secret-token" \
+#     -H "Content-Type: application/json" \
+#     -d '{"session_key":"telegram:123:123","prompt":"review latest commit","event":"git:commit"}'
+#
+#   # Execute a shell command / 执行 shell 命令
+#   curl -X POST http://localhost:9111/hook \
+#     -H "Authorization: Bearer your-secret-token" \
+#     -H "Content-Type: application/json" \
+#     -d '{"session_key":"telegram:123:123","exec":"git log -3 --oneline","event":"git:push"}'
+#
+#   # Git post-commit hook example (.git/hooks/post-commit):
+#   # #!/bin/sh
+#   # MSG=$(git log -1 --pretty=format:"%s")
+#   # curl -sX POST http://localhost:9111/hook \
+#   #   -H "Authorization: Bearer your-secret-token" \
+#   #   -H "Content-Type: application/json" \
+#   #   -d "{\"session_key\":\"telegram:123:123\",\"event\":\"git:commit\",\"prompt\":\"New commit: $MSG. Review it briefly.\"}"
+
+# =============================================================================
+# Bridge Platform (External Adapters via WebSocket)
+# Bridge 平台（通过 WebSocket 接入外部适配器）
+# =============================================================================
+# Allow external adapters written in any language to connect at runtime.
+# 允许使用任何语言编写的外部适配器在运行时动态接入。
+# See docs/bridge-protocol.md for the full protocol specification.
+# 完整协议规范请参阅 docs/bridge-protocol.md。
+#
+# [bridge]
+# enabled = true
+# port = 9810                         # WebSocket listen port (default: 9810) / 监听端口
+# token = "your-bridge-secret"        # Auth token (required) / 认证密钥（必填）
+# path = "/bridge/ws"                 # URL path (default: "/bridge/ws") / URL 路径
+
+# =============================================================================
+# Management API (External Management Tools)
+# 管理 API（外部管理工具）
+# =============================================================================
+# HTTP REST API for external apps (web dashboards, TUI, GUI, Mac tray apps).
+# 为外部应用（Web 管理面板、TUI、GUI、Mac 托盘应用）提供 HTTP REST API。
+# See docs/management-api.md for the full API specification.
+# 完整 API 规范请参阅 docs/management-api.md。
+#
+# [management]
+# enabled = true
+# port = 9820                           # HTTP listen port (default: 9820) / 监听端口
+# token = "your-mgmt-secret"            # Auth token (required) / 认证密钥（必填）
+# cors_origins = ["http://localhost:3000"]  # Allowed CORS origins / 允许的 CORS 来源
+
+# =============================================================================
+# Speech-to-Text (Voice Messages) / 语音转文字（语音消息）
+# =============================================================================
+# Enable to transcribe voice messages to text before sending to agents.
+# 启用后，语音消息会先转为文字再发送给 Agent。
+#
+# Requires ffmpeg for audio format conversion (AMR/OGG → MP3).
+# 需要安装 ffmpeg 进行音频格式转换（AMR/OGG → MP3）。
+
+# [speech]
+# enabled = true
+# provider = "openai"    # "openai", "groq", or "qwen" / "openai"、"groq" 或 "qwen"
+# language = ""          # e.g. "zh", "en"; empty = auto-detect / 如 "zh"、"en"；留空自动检测
+#
+# [speech.openai]
+# api_key = "sk-xxx"     # OpenAI API key
+# base_url = ""          # optional: custom endpoint (OpenAI-compatible) / 可选：自定义端点（兼容 OpenAI 接口）
+# model = "whisper-1"    # default model / 默认模型
+#
+# # Alternative: Groq (faster, free tier available)
+# # 备选：Groq（更快，有免费额度）
+# [speech.groq]
+# api_key = "gsk_xxx"
+# model = "whisper-large-v3-turbo"
+
+# =============================================================================
+# Text-to-Speech (Voice Reply) / 文字转语音（语音回复）
+# =============================================================================
+# Enable to synthesize AI replies into voice messages sent back to users.
+# 启用后，AI 的文字回复会合成为语音消息发送给用户。
+#
+# tts_mode:
+#   "voice_only" (default) - only reply with voice when user sends a voice message
+#                            仅当用户发送语音消息时，AI 才用语音回复
+#   "always"               - always send a voice reply regardless of input type
+#                            无论用户发文字还是语音，AI 始终额外发一条语音回复
+#
+# Runtime command: /tts [always|voice_only]
+# 运行时命令：/tts [always|voice_only]
+#
+# Requires ffmpeg for WAV → Opus conversion (needed by Feishu audio messages).
+# 需要安装 ffmpeg 进行 WAV → Opus 转换（飞书语音消息要求 Opus 格式）。
+
+# [tts]
+# enabled  = true
+# provider = "qwen"          # "qwen" | "openai" | "minimax"
+# voice    = "Cherry"        # default voice / 默认音色（千问支持：Cherry/Serena/Ethan/Chelsie 等）
+# tts_mode = "voice_only"    # "voice_only" (default) | "always"
+# max_text_len = 0           # max rune count before skipping TTS; 0 = no limit
+#                            # 超过此长度则跳过 TTS；0 表示不限制
+#                            # Qwen TTS 建议参考官方文档：https://help.aliyun.com/zh/model-studio/qwen-tts
+#                            # OpenAI TTS 限制请参考：https://platform.openai.com/docs/guides/text-to-speech
+#
+# # Qwen TTS (Alibaba DashScope / 阿里百炼)
+# [tts.qwen]
+# api_key  = "sk-xxx"        # DashScope API key / 阿里百炼 API Key
+# base_url = ""              # optional: leave empty for default endpoint / 留空使用默认地址
+# model    = "qwen3-tts-flash"   # "qwen3-tts-flash" | "qwen3-tts-instruct-flash"
+#
+# # Alternative: OpenAI TTS (OpenAI-compatible)
+# # 备选：OpenAI TTS（兼容 OpenAI 接口）
+# [tts.openai]
+# api_key  = "sk-xxx"
+# base_url = ""              # optional: custom endpoint / 可选：自定义端点
+# model    = "tts-1"         # "tts-1" | "tts-1-hd"
+#
+# # Alternative: MiniMax TTS (T2A v2 streaming API)
+# # 备选：MiniMax TTS（T2A v2 流式 API）
+# # Docs: https://platform.minimaxi.com/document/T2A%20V2
+# [tts.minimax]
+# api_key  = "your-minimax-api-key"
+# base_url = ""              # optional: default "https://api.minimax.io" / 留空使用默认地址
+# model    = "speech-2.8-hd" # "speech-2.8-hd" | "speech-2.8"
+
+# =============================================================================
+# Daemon Mode / 守护进程模式
+# =============================================================================
+# Run cc-connect as a background service (systemd user / launchd LaunchAgent).
+# 将 cc-connect 作为后台服务运行（systemd 用户服务 / launchd LaunchAgent）。
+#
+# CLI: cc-connect daemon install|uninstall|start|stop|restart|status|logs
+# Install: --log-file PATH, --log-max-size N (MB), --work-dir DIR, --force
+# Logs: -f/--follow, -n N, --log-file PATH
+# 配置均通过 CLI 参数，无需在此文件中设置。
+
+# =============================================================================
+# Custom Skills (Slash Commands) / 自定义命令
+# =============================================================================
+# Define reusable prompt templates as global slash commands (available in all projects).
+# 定义可复用的 prompt 模板作为全局 slash 命令（所有项目通用）。
+#
+# Two types of commands are supported / 支持两种类型的命令：
+#   1. Prompt commands — expand template and send to AI agent
+#      Prompt 命令 — 展开模板后发送给 AI Agent
+#   2. Exec commands — execute shell command directly
+#      Exec 命令 — 直接执行 shell 命令
+#
+# Placeholders (for both prompt and exec) / 占位符（prompt 和 exec 都支持）:
+#   {{1}}, {{2}}        — positional argument / 位置参数
+#   {{1:default}}       — positional with default value / 带默认值的位置参数
+#   {{2*}}              — argument N and everything after / 第 N 个及之后所有参数
+#   {{2*:default}}      — same, with default / 同上，带默认值
+#   {{args}}            — all arguments / 所有参数
+#   {{args:default}}    — all arguments, with default if none / 所有参数，无参数时使用默认值
+#   (no placeholder — args appended to end / 无占位符则参数追加到末尾)
+#
+# Default values are used when the corresponding argument is not provided.
+# 当对应参数未提供时，使用默认值替代。
+#
+# Usage / 用法:
+#   /finduser 张三  →  expands prompt with "张三" and sends to agent
+#   /push           →  executes "git push" directly
+
+# [[commands]]
+# name = "finduser"
+# description = "Look up user info by name / 按姓名查找用户信息"
+# prompt = "Search the database for user「{{1}}」and return details including registration time, last login, and permissions."
+
+# [[commands]]
+# name = "review"
+# description = "Code review with focus area / 代码审查（可指定关注点）"
+# prompt = "Please review {{1}} focusing on: {{2*:code quality and potential bugs}}"
+
+# [[commands]]
+# name = "translate"
+# description = "Translate text to specified language / 翻译文本到指定语言"
+# prompt = "Translate the following text to {{1:English}}:\n{{2*}}"
+
+# [[commands]]
+# name = "daily"
+# description = "Generate daily progress report / 生成每日进度报告"
+# prompt = "Summarize today's code changes and project progress. Generate a concise daily report."
+
+# Exec commands - execute shell commands directly
+# Exec 命令 — 直接执行 shell 命令
+
+# [[commands]]
+# name = "push"
+# description = "Push to remote / 推送到远程"
+# exec = "git push"
+
+# [[commands]]
+# name = "status"
+# description = "Show git status / 显示 git 状态"
+# exec = "git status {{args}}"
+
+# [[commands]]
+# name = "branch"
+# description = "Create and checkout new branch / 创建并切换到新分支"
+# exec = "git checkout -b {{1}}"
+
+# [[commands]]
+# name = "build"
+# description = "Build the project / 构建项目"
+# exec = "npm run build"
+# work_dir = "/path/to/project"  # Optional: override working directory / 可选：指定工作目录
+
+#
+# You can also add/remove commands at runtime via chat:
+# 也可以在聊天中动态添加/删除命令：
+#   /commands add finduser Search the database for user「{{1}}」
+#   /commands addexec push git push
+#   /commands addexec --work-dir /path/to/project build npm run build
+#   /commands del finduser
+#   /commands         — list all custom commands
+#
+# In addition, cc-connect auto-discovers .md files from the agent's commands
+# directory (e.g. .claude/commands/*.md, .gemini/commands/*.md).
+# 此外，cc-connect 还会自动发现 Agent 的 commands 目录下的 .md 文件。
+
+# =============================================================================
+# Banned Words / 违禁词
+# =============================================================================
+#
+# Messages containing any of these words will be blocked and NOT forwarded to
+# the AI agent. Matching is case-insensitive.
+# 消息中包含以下任一违禁词时，将被拦截，不会转发给 AI Agent。匹配不区分大小写。
+
+# banned_words = ["违禁词1", "违禁词2", "secret_project"]
+
+# =============================================================================
+# Command Aliases / 命令别名
+# =============================================================================
+#
+# Create aliases for commands — like Linux shell aliases.
+# 为命令创建别名，类似 Linux shell 的 alias。
+#
+# When a user sends a message matching the alias trigger (exact match on first
+# word), it is automatically replaced with the target command.
+# 当用户发送的消息首词匹配别名触发词时，自动替换为目标命令。
+#
+# Example: typing "帮助" triggers "/help", typing "新建 测试" triggers "/new 测试".
+# 示例：输入"帮助"触发 "/help"，输入"新建 测试"触发 "/new 测试"。
+
+# [[aliases]]
+# name = "帮助"
+# command = "/help"
+
+# [[aliases]]
+# name = "新建"
+# command = "/new"
+
+# [[aliases]]
+# name = "列表"
+# command = "/list"
+
+#
+# You can also add/remove aliases at runtime via chat:
+# 也可以在聊天中动态添加/删除别名：
+#   /alias add 帮助 /help
+#   /alias del 帮助
+#   /alias         — list all aliases
+#
+
+# =============================================================================
+# Multi-workspace Mode / 多工作区模式
+# =============================================================================
+# Single bot, multiple workspaces. Channel name maps to ~/workspace/<channel-name>
+# automatically. Use /workspace init <url> to clone and bind a new repo.
+# 单个 bot 服务多个工作区。频道名称自动映射到 ~/workspace/<频道名>。
+# 使用 /workspace init <url> 克隆并绑定新仓库。
+#
+# [[projects]]
+# name = "claude-multi"
+# mode = "multi-workspace"
+# base_dir = "~/workspace"
+#
+# [projects.agent]
+# type = "claudecode"
+# permission_mode = "yolo"
+#
+# [[projects.platforms]]
+# type = "slack"
+# [projects.platforms.options]
+# bot_token = "xoxb-..."
+# app_token = "xapp-..."
+
+# =============================================================================
+# Project 1 / 项目 1
+# =============================================================================
+
+[[projects]]
+name = "my-backend"
+# quiet = true  # Override global quiet for this project / 覆盖全局静默模式
+# disabled_commands = ["restart", "upgrade", "cron"]  # Disable specific commands for this project
+#                                                     # 禁用该项目的指定命令
+#
+# admin_from controls who can run privileged commands (/shell, /restart, /upgrade, /commands addexec).
+# admin_from 控制谁可以执行特权命令（/shell, /restart, /upgrade, /commands addexec）。
+#
+# 💡 TIP: Send /whoami or /status to the bot to get your User ID for allow_from / admin_from.
+# 💡 提示：向机器人发送 /whoami 或者 /status  即可获取你的 User ID，用于填写 allow_from / admin_from。
+#
+# Not set (default): privileged commands are blocked for all users.
+# 未设置（默认）：所有用户均无法使用特权命令。
+#
+# Explicit user list: only these users can run privileged commands.
+# 指定用户列表：仅这些用户可执行特权命令。
+# admin_from = "user_id_1,user_id_2"
+#
+# ⚠️ RISK WARNING / 风险提示:
+# Setting admin_from = "*" grants ALL allowed users full shell access to the host machine.
+# Only use this for personal single-user deployments where you trust every allowed user.
+# 设置 admin_from = "*" 将授予所有已允许的用户对主机的完整 shell 访问权限。
+# 仅在个人单用户部署中使用此配置，确保所有允许的用户均可信任。
+# admin_from = "*"
+
+# Multi-user mode — per-user rate limits and role-based command ACL
+# 多用户模式 — 按用户速率限制和基于角色的命令权限控制
+#
+# When [projects.users] is configured, each user is matched to a role.
+# Roles control which commands are available and the rate limit for that user.
+# If not configured, behavior is unchanged (backward compatible).
+#
+# 配置 [projects.users] 后，每个用户会被分配到一个角色。
+# 角色控制该用户可用的命令和速率限制。未配置时行为不变（向后兼容）。
+#
+# [projects.users]
+# default_role = "member"
+#
+# [projects.users.roles.admin]
+# user_ids = ["platform_user_id_1", "platform_user_id_2"]
+# disabled_commands = []                                     # no restrictions
+# rate_limit = { max_messages = 50, window_secs = 60 }
+#
+# [projects.users.roles.member]
+# user_ids = ["*"]                                           # matches all unassigned users
+# disabled_commands = ["*"]                                  # disable all built-in commands
+# rate_limit = { max_messages = 10, window_secs = 60 }
+
+# Heartbeat — periodic awareness check / 心跳 — 周期性巡检
+# The agent wakes up at a fixed interval to check the environment.
+# Agent 会按固定间隔唤醒，检查环境状态。
+#
+# Unlike cron (precise scheduling, isolated tasks), heartbeat runs in the
+# main session with full context — ideal for status monitoring and continuing
+# unfinished work.
+# 与 cron（精确调度、独立任务）不同，heartbeat 在主会话中运行并共享上下文
+# —— 适合状态监控和继续未完成的工作。
+#
+# [projects.heartbeat]
+# enabled = true
+# interval_mins = 30             # Interval in minutes (default: 30) / 间隔分钟数（默认 30）
+# session_key = "telegram:123:123"  # Target session key (required) / 目标会话 key（必填）
+# only_when_idle = true          # Skip if session is busy (default: true) / 会话忙碌时跳过（默认 true）
+# silent = true                  # Suppress "💓" notification (default: true) / 不发送心跳通知（默认 true）
+# timeout_mins = 30              # Max execution time (default: 30) / 最大执行时间（默认 30 分钟）
+# prompt = "check inbox and tasks"  # Explicit prompt; if empty, reads HEARTBEAT.md from work_dir
+#                                    # 显式提示词；为空时从 work_dir 读取 HEARTBEAT.md
+#
+# HEARTBEAT.md example / HEARTBEAT.md 示例:
+#   On heartbeat:
+#   - check inbox
+#   - check background tasks
+#   - continue unfinished work
+#
+# Optional: Harness-specific card customization / 可选：Harness 专用卡片自定义
+# [projects.harness_cards]
+# enabled = true
+# home_title = "Harness 工作台"
+# show_workspace_root = true
+# show_metric = true
+# show_account = true
+# show_recommended_actions = true
+# show_copyable_commands = true
+# provider_card_show_copyable_commands = true
+# model_card_show_copyable_commands = true
+# reasoning_card_show_copyable_commands = true
+# interaction_hint = "选择后立即生效；若卡片交互不可用，请复制下方命令执行。"
+
+[projects.agent]
+type = "claudecode"
+
+[projects.agent.options]
+work_dir = "/path/to/backend"
+mode = "default" # "default" | "acceptEdits" (edit) | "plan" | "bypassPermissions" (yolo)
+
+# Mode options / 模式说明:
+# - "default":            Every tool call requires user approval. / 每次工具调用都需要用户确认。
+# - "acceptEdits" (edit): File edit tools auto-approved; other tools still ask. / 文件编辑自动通过，其他仍需确认。
+# - "plan":               Claude only plans — no execution until you approve. / 只做规划不执行，审批后再执行。
+# - "bypassPermissions" (yolo): All tool calls auto-approved. Use with caution. / 全部自动通过，请谨慎使用。
+# - "dontAsk" (dont-ask): Auto-deny tools unless pre-approved via allowed_tools or settings allow rules. / 未预授权的工具自动拒绝，安全推荐。
+#
+# When using IM platforms, you can reply "允许"/"allow" to grant permission.
+# 在 IM 平台中，可回复"允许"或"allow"来授权操作。
+
+# In default/acceptEdits mode, you can pre-approve specific tools:
+# 在 default/acceptEdits 模式下，可预授权特定工具：
+# allowed_tools = ["Read", "Grep", "Glob", "Bash", "Edit", "Write"]
+
+# Optional: specify a model / 可选：指定模型
+# model = "claude-sonnet-4-20250514"
+
+# Claude Code Router Integration / Claude Code Router 集成
+# Route Claude Code requests through Claude Code Router to use different model providers.
+# 通过 Claude Code Router 路由 Claude Code 请求，使用不同的模型提供商。
+# See: https://github.com/musistudio/claude-code-router
+#
+# router_url = "http://127.0.0.1:3456"  # Claude Code Router URL (default: http://127.0.0.1:3456)
+# router_api_key = "your-router-api-key" # Optional: API key if router requires authentication / 可选：如果 router 需要认证
+#
+# When router_url is set, cc-connect will automatically:
+# 设置 router_url 后，cc-connect 会自动：
+#   - Set ANTHROPIC_BASE_URL to router_url
+#   - Set NO_PROXY=127.0.0.1 to prevent proxy interference
+#   - Disable telemetry and cost warnings for cleaner integration
+#
+# Note: When using router, provider settings below are ignored as the router handles model selection.
+# 注意：使用 router 时，下方的 provider 设置将被忽略，因为 router 负责模型选择。
+
+# Active provider (matches a name in [[projects.agent.providers]])
+# 当前激活的 provider（对应下方 providers 中的 name）
+# provider = "anthropic"
+
+# API Providers — switch between them via /provider command in chat
+# or via CLI: cc-connect provider add --project my-backend --name relay --api-key sk-xxx
+# API Provider 管理 — 可通过聊天命令 /provider 或 CLI 命令切换
+#
+# [[projects.agent.providers]]
+# name = "anthropic"
+# api_key = "sk-ant-xxx"
+#
+# [[projects.agent.providers]]
+# name = "relay"
+# api_key = "sk-xxx"
+# base_url = "https://api.relay-service.com"
+# model = "claude-sonnet-4-20250514"
+# # Optional: pre-configure available models shown by /model command (alias - model)
+# # /model [alias] switches to the model; omit to auto-fetch from the API.
+# # 可选：预先配置 /model 命令显示的可用模型列表，格式为 alias - model
+# # 使用 /model [alias] 切换模型；留空则自动从 API 获取
+# [[projects.agent.providers.models]]
+# model = "claude-sonnet-4-20250514"
+# alias = "sonnet"
+# [[projects.agent.providers.models]]
+# model = "claude-opus-4-20250514"
+# alias = "opus"
+# [[projects.agent.providers.models]]
+# model = "claude-haiku-3-5-20241022"
+# alias = "haiku"
+#
+# # Third-party provider with thinking override / 第三方 Provider 并覆盖 thinking 参数
+# # Some providers (e.g. SiliconFlow) don't support Claude's adaptive thinking.
+# # Set thinking = "disabled" to auto-rewrite via a local proxy.
+# # 部分第三方 Provider（如硅基流动）不支持 Claude 的 adaptive thinking，
+# # 设置 thinking = "disabled" 后 cc-connect 会通过本地代理自动改写请求。
+# [[projects.agent.providers]]
+# name = "siliconflow"
+# api_key = "sk-xxx"
+# base_url = "https://api.siliconflow.cn"
+# model = "deepseek-ai/DeepSeek-V3"
+# thinking = "disabled"
+#
+# # MiniMax — OpenAI-compatible provider with 1M context window
+# # MiniMax — 兼容 OpenAI 接口的大模型，支持 1M 超长上下文
+# # Models: MiniMax-M2.7 (flagship, 1M context), MiniMax-M2.5, MiniMax-M2.5-highspeed
+# # Docs: https://platform.minimaxi.com
+# [[projects.agent.providers]]
+# name = "minimax"
+# api_key = "your-minimax-api-key"
+# base_url = "https://api.minimax.io/v1"
+# model = "MiniMax-M2.7"
+# thinking = "disabled"
+# [[projects.agent.providers.models]]
+# model = "MiniMax-M2.7"
+# alias = "m27"
+# [[projects.agent.providers.models]]
+# model = "MiniMax-M2.5"
+# alias = "m25"
+# [[projects.agent.providers.models]]
+# model = "MiniMax-M2.5-highspeed"
+# alias = "m25fast"
+#
+# # For special setups (Bedrock, Vertex, etc.), use the env map:
+# # 特殊环境（Bedrock、Vertex 等）使用 env 字段：
+# [[projects.agent.providers]]
+# name = "bedrock"
+# env = { CLAUDE_CODE_USE_BEDROCK = "1", AWS_PROFILE = "bedrock" }
+
+# Feishu / Lark / 飞书
+# 1. Create an app at https://open.feishu.cn / 在 https://open.feishu.cn 创建应用
+# 2. Enable Bot capability / 开启机器人能力
+# 3. Add im.message.receive_v1 event, select WebSocket long-connection mode
+#    添加 im.message.receive_v1 事件，选择 WebSocket 长连接模式
+# 4. Fill in app_id and app_secret below / 填入下方 app_id 和 app_secret
+# Quick setup via CLI:
+#   cc-connect feishu setup --project <project_name>
+# （可通过 CLI 快速配置：cc-connect feishu setup --project <project_name>）
+# Note: No WebSocket URL needed — the SDK auto-negotiates the connection.
+# 注意：无需配置 WebSocket URL，SDK 会自动通过凭证建立连接。
+
+[[projects.platforms]]
+type = "feishu"
+
+[projects.platforms.options]
+app_id = "your-feishu-app-id"
+app_secret = "your-feishu-app-secret"
+# enable_feishu_card = true  # Enable Feishu interactive cards (default: true); set false to force plain-text replies
+#                              # 启用飞书交互式卡片（默认 true）；设为 false 时强制回退纯文本回复
+# allow_from = "*"          # Allowed user open_ids, comma-separated; "*" = all (default). Use /whoami to get your open_id.
+#                              # 允许的用户 open_id，逗号分隔；"*" 表示所有（默认）。发送 /whoami 获取你的 open_id。
+# reaction_emoji = "OnIt"  # Emoji reaction on incoming messages (default: "OnIt"); set to "none" to disable
+#                           # 收到消息时添加的表情回复（默认 "OnIt"）；设为 "none" 可禁用
+# group_reply_all = false   # If true, respond to ALL group messages without requiring @mention
+#                           # 设为 true 时，群聊中无需 @机器人 也会响应所有消息（默认 false）
+# share_session_in_channel = false  # If true, all users in a group share one agent session
+#                                   # 设为 true 时，群聊内所有用户共享同一个 Agent 会话
+# thread_isolation = false  # If true, group messages use Feishu reply threads as session boundaries (one thread/root = one agent session)
+#                           # 设为 true 时，群聊按飞书话题/根消息隔离会话（一个 thread/root 对应一个 Agent 会话）
+# reply_in_thread = false  # If true, all responses are threaded to the original message (helps trace which question triggered which reply)
+#                          # 设为 true 时，所有回复都会引用原消息（方便追踪每条回复对应哪条提问）
+
+# Lark (International Version) / Lark 国际版
+# Lark uses Webhook mode instead of WebSocket long-connection.
+# Lark 使用 Webhook 模式而非 WebSocket 长连接。
+# 1. Create an app at https://open.larksuite.com / 在 https://open.larksuite.com 创建应用
+# 2. Enable Bot capability / 开启机器人能力
+# 3. Add im.message.receive_v1 event, configure Webhook URL (requires public IP)
+#    添加 im.message.receive_v1 事件，配置 Webhook URL（需要公网 IP）
+# 4. Fill in app_id, app_secret, port, callback_path below
+#    填入下方 app_id、app_secret、port、callback_path
+
+# [[projects.platforms]]
+# type = "lark"
+#
+# [projects.platforms.options]
+# app_id = "your-lark-app-id"
+# app_secret = "your-lark-app-secret"
+# port = "8080"                  # Webhook server port / Webhook 服务器端口
+# callback_path = "/feishu/webhook"  # Webhook callback path / Webhook 回调路径
+# encrypt_key = ""               # Event encrypt key (optional) / 事件加密密钥（可选）
+# enable_feishu_card = true
+# allow_from = "*"
+# reaction_emoji = "OnIt"
+
+# DingTalk / 钉钉 (uncomment to enable / 取消注释以启用)
+# 1. Create an app at https://open-dev.dingtalk.com / 在钉钉开放平台创建应用
+# 2. Under "App Features > Bot", enable bot and select Stream mode
+#    在"应用功能 > 机器人"中启用机器人并选择 Stream 模式
+# 3. Fill in client_id (AppKey) and client_secret (AppSecret) below
+#    填入下方 client_id (AppKey) 和 client_secret (AppSecret)
+
+# [[projects.platforms]]
+# type = "dingtalk"
+#
+# [projects.platforms.options]
+# client_id = "your-dingtalk-client-id"
+# client_secret = "your-dingtalk-client-secret"
+# allow_from = "*"  # Allowed staff IDs / 允许的员工 ID
+# share_session_in_channel = false  # If true, all users in a group share one agent session / 群聊共享会话
+
+# Telegram (uncomment to enable / 取消注释以启用)
+# 1. Message @BotFather on Telegram, send /newbot to create a bot
+#    在 Telegram 中找 @BotFather，发送 /newbot 创建机器人
+# 2. Copy the bot token below / 复制 token 到下方
+# Connection: Long polling (no public URL needed) / 长轮询（无需公网 IP）
+
+# [[projects.platforms]]
+# type = "telegram"
+#
+# [projects.platforms.options]
+# token = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+# allow_from = "*"  # Allowed Telegram user IDs, e.g. "123456789,987654321"; "*" = all
+#                   # 允许的 Telegram 用户 ID，如 "123456789,987654321"；"*" 表示所有
+# group_reply_all = false  # If true, respond to ALL group messages without @mention / 设为 true 群聊无需 @ 也响应
+# share_session_in_channel = false  # If true, all users in a group share one agent session / 群聊共享会话
+
+# Slack (uncomment to enable / 取消注释以启用)
+# 1. Create an app at https://api.slack.com/apps / 创建应用
+# 2. Enable Socket Mode (Settings > Socket Mode) / 开启 Socket Mode
+# 3. Subscribe to bot events: message.channels, message.im
+#    订阅事件：message.channels, message.im
+# 4. Install app to workspace, copy Bot Token (xoxb-...) and App Token (xapp-...)
+#    安装应用到工作区，复制 Bot Token 和 App Token
+# Connection: Socket Mode WebSocket (no public URL needed) / 无需公网 IP
+
+# [[projects.platforms]]
+# type = "slack"
+#
+# [projects.platforms.options]
+# bot_token = "xoxb-your-bot-token"
+# app_token = "xapp-your-app-level-token"
+# allow_from = "*"  # Allowed Slack user IDs / 允许的 Slack 用户 ID
+# share_session_in_channel = false  # If true, all users in a channel share one agent session / 频道共享会话
+
+# Discord (uncomment to enable / 取消注释以启用)
+# 1. Create an app at https://discord.com/developers/applications / 创建应用
+# 2. Under "Bot", create a bot and copy the token / 创建 Bot 并复制 token
+# 3. Enable "Message Content Intent" under Privileged Gateway Intents
+#    在 Privileged Gateway Intents 中开启 Message Content Intent
+# 4. Invite bot with OAuth2 URL Generator:
+#    通过 OAuth2 URL 邀请 Bot 到服务器：
+#    Scopes: bot + applications.commands (BOTH required for slash command menu)
+#    Scopes 需要同时勾选: bot + applications.commands（缺少后者则 / 菜单不会出现）
+#    Bot Permissions: Send Messages, Use Slash Commands
+#    Bot 权限: Send Messages, Use Slash Commands
+# Connection: Gateway WebSocket (no public URL needed) / 无需公网 IP
+#
+# NOTE: Global slash commands may take up to 1 hour to appear in Discord.
+#       Set guild_id for instant per-guild registration (recommended for testing).
+# 注意：全局 slash 命令最多需 1 小时生效。设置 guild_id 可秒级生效（推荐测试时使用）。
+# To find your guild ID: Discord Settings > Advanced > Developer Mode ON, then right-click server > Copy Server ID
+# 获取 guild_id：Discord 设置 > 高级 > 开启开发者模式，然后右键服务器 > 复制服务器 ID
+
+# [[projects.platforms]]
+# type = "discord"
+#
+# [projects.platforms.options]
+# token = "your-discord-bot-token"
+# allow_from = "*"  # Allowed Discord user IDs / 允许的 Discord 用户 ID
+# guild_id = ""     # Optional: set for instant slash command registration (per-guild)
+#                   # 可选：设置后 slash 命令秒级生效（仅该服务器）
+# group_reply_all = false  # If true, respond to ALL guild messages without @mention / 设为 true 群聊无需 @ 也响应
+# share_session_in_channel = false  # If true, all users in a channel share one agent session / 频道共享会话
+# thread_isolation = false  # If true, cc-connect creates/uses Discord threads as session boundaries when the channel supports threads
+#                           # 设为 true 时，cc-connect 会在支持 thread 的 Discord 频道内按 thread 隔离会话
+
+# LINE (uncomment to enable / 取消注释以启用)
+# 1. Create a channel at https://developers.line.biz/console/ (Messaging API)
+#    在 LINE Developers 创建 Messaging API Channel
+# 2. Copy Channel Secret and Channel Access Token (long-lived)
+#    复制 Channel Secret 和 Channel Access Token
+# 3. Set your webhook URL to: http(s)://<your-domain>:<port>/callback
+#    设置 Webhook URL：http(s)://<你的域名>:<端口>/callback
+# Connection: HTTP Webhook — you need a public URL (use ngrok, cloudflared, etc.)
+# 连接方式：HTTP Webhook — 需要公网 URL（可用 ngrok、cloudflared 等）
+
+# [[projects.platforms]]
+# type = "line"
+#
+# [projects.platforms.options]
+# channel_secret = "your-line-channel-secret"
+# channel_token = "your-line-channel-access-token"
+# port = "8080"
+# callback_path = "/callback"
+# allow_from = "*"  # Allowed LINE user IDs / 允许的 LINE 用户 ID
+
+# WeChat Work / 企业微信 (uncomment to enable / 取消注释以启用)
+# 1. Log in to https://work.weixin.qq.com/wework_admin/frame
+#    登录企业微信管理后台
+# 2. App Management > Create a custom app > note AgentId + Secret
+#    应用管理 > 创建自建应用 > 记录 AgentId 和 Secret
+# 3. My Enterprise > note Corp ID / 我的企业 > 记录 Corp ID
+# 4. App > Receive Messages > Set API Receive:
+#    应用 > 接收消息 > 设置 API 接收：
+#    URL: http(s)://<your-domain>:<port>/wecom/callback
+#    Token: any random string / 任意随机字符串
+#    EncodingAESKey: click "Random Generate" (43 chars) / 点击"随机生成"（43位）
+#    (Start cc-connect FIRST, then save to pass verification)
+#    （先启动 cc-connect，再保存以通过验证）
+# 5. App > Trusted IP > add your server's outbound IP
+#    应用 > 企业可信 IP > 添加服务器出口 IP
+# 6. (Optional) My Enterprise > WeChat Plugin > scan QR to link personal WeChat
+#    （可选）我的企业 > 微信插件 > 扫码关联个人微信
+# Connection: HTTP Webhook — you need a public URL
+# 连接方式：HTTP Webhook — 需要公网 URL
+
+# [[projects.platforms]]
+# type = "wecom"
+#
+# [projects.platforms.options]
+# corp_id = "your-corp-id"
+# corp_secret = "your-app-secret"
+# agent_id = "1000002"
+# callback_token = "your-callback-token"
+# callback_aes_key = "your-43-char-encoding-aes-key"
+# port = "8081"
+# callback_path = "/wecom/callback"
+# enable_markdown = false  # set true to send Markdown (only renders in WeChat Work app, NOT personal WeChat)
+#                          # 设为 true 发送 Markdown（仅企业微信应用内可渲染，个人微信显示"暂不支持"）
+# allow_from = "*"  # Allowed WeChat Work user IDs / 允许的企业微信用户 ID
+# proxy = ""  # optional: forward proxy for API calls if your IP is dynamic
+#             # 可选：正向代理，用于 IP 不固定的场景
+#             # e.g. "http://your-vps-ip:8888" — the VPS IP goes into trusted IP list
+#             # 示例："http://你的VPS-IP:8888" — 将 VPS IP 加入可信 IP 列表
+# proxy_username = ""  # optional: proxy authentication username / 代理认证用户名
+# proxy_password = ""  # optional: proxy authentication password / 代理认证密码
+
+# WeChat Work WebSocket / 企业微信长连接模式 (uncomment to enable / 取消注释以启用)
+# No public URL, no message encryption, no IP allowlist needed!
+# 无需公网 URL、无需消息加解密、无需 IP 白名单！
+# 1. Create a "智能机器人" (AI Bot) in WeChat Work admin console
+#    在企业微信管理后台创建「智能机器人」
+# 2. Get BotID and Secret / 获取 BotID 和 Secret
+# 3. Fill in config below / 填入下方配置
+# Connection: WebSocket long-connection (client-initiated, no public URL needed)
+# 连接方式：WebSocket 长连接（客户端主动连接，无需公网 URL）
+
+# [[projects.platforms]]
+# type = "wecom"
+#
+# [projects.platforms.options]
+# mode = "websocket"
+# bot_id = "your-bot-id"
+# bot_secret = "your-bot-secret"
+# allow_from = "*"  # Allowed user IDs / 允许的用户 ID
+
+# =============================================================================
+# Project 2: Using Cursor Agent / 项目 2：使用 Cursor Agent (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: Cursor Agent CLI (`agent`) — install via Cursor IDE or `npm i -g @anthropic-ai/cursor-agent`
+# 需要安装：Cursor Agent CLI (`agent`) — 通过 Cursor IDE 或 npm 安装
+# Uses `agent --print --output-format stream-json` under the hood.
+# 底层使用 `agent --print --output-format stream-json` 命令。
+
+# [[projects]]
+# name = "my-cursor-project"
+#
+# [projects.agent]
+# type = "cursor"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "force"  # "default" | "force" (yolo) | "plan" | "ask"
+# cmd = "agent"   # CLI binary name (default: "agent") / CLI 二进制名称（默认 "agent"）
+#
+# Mode options / 模式说明:
+# - "default": Trust workspace, ask before tool use / 信任工作区，工具调用前询问
+# - "force":   Auto-approve all tool calls (same as --force/--yolo) / 自动批准所有工具调用
+# - "plan":    Read-only analysis, no edits / 只读分析，不做修改
+# - "ask":     Q&A style, read-only / 问答风格，只读
+#
+# Optional: specify a model / 可选：指定模型
+# model = "claude-sonnet-4-20250514"
+#
+# [[projects.platforms]]
+# type = "feishu"
+#
+# [projects.platforms.options]
+# app_id = "your-feishu-app-id"
+# app_secret = "your-feishu-app-secret"
+
+# =============================================================================
+# Project 3: Using Gemini CLI / 项目 3：使用 Gemini CLI (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: npm install -g @google/gemini-cli
+# 需要安装：npm install -g @google/gemini-cli
+# Gemini CLI uses `gemini -p --output-format stream-json` under the hood.
+# Gemini CLI 底层使用 `gemini -p --output-format stream-json` 命令。
+#
+# Authentication / 认证方式:
+#   - Google Account login (free: 60 req/min, 1000 req/day) / Google 账号登录（免费额度）
+#   - GEMINI_API_KEY env var / 环境变量
+#   - Vertex AI (GOOGLE_API_KEY + GOOGLE_GENAI_USE_VERTEXAI=true)
+
+# [[projects]]
+# name = "my-gemini-project"
+#
+# [projects.agent]
+# type = "gemini"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "yolo"  # "default" | "auto_edit" | "yolo" | "plan"
+# cmd = "gemini" # CLI binary name (default: "gemini") / CLI 二进制名称（默认 "gemini"）
+# timeout_mins = 30  # 每次对话超时时间（分钟），0 表示不限制
+#
+# Mode options / 模式说明:
+# - "default":   Prompt for approval on each tool use / 每次工具调用都需要确认
+# - "auto_edit": Auto-approve edit tools, ask for others / 编辑工具自动通过，其他仍需确认
+# - "yolo":      Auto-approve all tool calls (-y flag) / 自动批准所有工具调用
+# - "plan":      Read-only plan mode, no execution / 只读规划模式，不做修改
+#
+# Optional: specify a model / 可选：指定模型
+# model = "gemini-2.5-flash"
+#
+# # Provider with API key / 使用 API Key 的 Provider
+# [[projects.agent.providers]]
+# name = "google"
+# api_key = "your-gemini-api-key"    # GEMINI_API_KEY
+#
+# # Vertex AI provider / Vertex AI 提供商
+# [[projects.agent.providers]]
+# name = "vertex"
+# env = { GOOGLE_API_KEY = "your-key", GOOGLE_GENAI_USE_VERTEXAI = "true" }
+#
+# [[projects.platforms]]
+# type = "feishu"
+#
+# [projects.platforms.options]
+# app_id = "your-feishu-app-id"
+# app_secret = "your-feishu-app-secret"
+
+# =============================================================================
+# Project 4: Using Codex agent / 项目 4：使用 Codex agent (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: npm install -g @openai/codex
+# 需要安装：npm install -g @openai/codex
+# Codex uses `codex exec --json` under the hood.
+# Codex 底层使用 `codex exec --json` 命令。
+
+# [[projects]]
+# name = "my-codex-project"
+#
+# [projects.agent]
+# type = "codex"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "suggest"  # "suggest" | "auto-edit" | "full-auto" | "yolo"
+#
+# Mode options / 模式说明:
+# - "suggest":   ask permission for every tool call (default, safest) / 每次调用都需确认（默认，最安全）
+# - "auto-edit": auto-approve file edits, ask for shell commands / 文件编辑自动通过，Shell 命令仍需确认
+# - "full-auto": auto-approve everything with workspace sandbox / 全部自动通过，工作区沙箱保护
+# - "yolo":      bypass all approvals and sandbox (dangerous) / 跳过所有审批和沙箱（危险）
+#
+# Optional: specify a model / 可选：指定模型
+# model = "o3"
+#
+# Optional: specify Codex preferred models / 可选：指定 Codex 偏好的模型回退链
+# If model is empty, cc-connect will try these in order and pick the first available.
+# 如果 model 为空，cc-connect 会按顺序尝试这些模型并选择第一个可用项。
+# preferred_models = ["gpt-5.4", "gpt-5.4-codex", "gpt-5.3-codex", "o3"]
+#
+# Optional: specify Codex reasoning effort / 可选：指定 Codex 推理强度
+# Default is "xhigh" when not set. / 未设置时默认使用 "xhigh"。
+# reasoning_effort = "xhigh"  # "low" | "medium" | "high" | "xhigh"
+#
+# # Active provider / 当前激活的 provider
+# # provider = "openai"
+#
+# [[projects.agent.providers]]
+# name = "openai"
+# api_key = "sk-xxx"
+# priority = 100          # higher value wins during auto failover / 自动切号时优先级更高
+# cooldown_sec = 1800     # cooldown after quota/rate-limit exhaustion / 配额或限流后冷却秒数
+# auto_failover = true    # default true / 默认 true
+#
+# [[projects.agent.providers]]
+# name = "custom"
+# api_key = "sk-xxx"
+# base_url = "https://custom-api.com/v1"
+# model = "gpt-4o"
+# priority = 90
+# cooldown_sec = 1800
+# auto_failover = true
+#
+# # MiniMax — OpenAI-compatible, works natively with Codex
+# # MiniMax — 兼容 OpenAI 接口，可直接用于 Codex
+# [[projects.agent.providers]]
+# name = "minimax"
+# api_key = "your-minimax-api-key"
+# base_url = "https://api.minimax.io/v1"
+# model = "MiniMax-M2.7"
+#
+# [[projects.platforms]]
+# type = "telegram"
+#
+# [projects.platforms.options]
+# token = "your-telegram-bot-token"
+
+# QQ (via NapCat / OneBot v11) (uncomment to enable / 取消注释以启用)
+# Requires a OneBot v11 implementation running alongside your QQ client:
+# 需要一个 OneBot v11 实现配合 QQ 客户端运行：
+#   - NapCat (recommended / 推荐): https://github.com/NapNeko/NapCatQQ
+#     - Docker: docker run -d --name napcat -e ACCOUNT=<QQ号> -p 3001:3001 -p 6099:6099 mlikiowa/napcat-docker:latest
+#     - Enable Forward WebSocket in NapCat WebUI (http://localhost:6099), default port 3001
+#       在 NapCat WebUI 中启用正向 WebSocket，默认端口 3001
+#   - LLOneBot: https://github.com/LLOneBot/LLOneBot (NTQQ plugin / NTQQ 插件)
+#
+# allow_from: comma-separated QQ user IDs that are allowed to interact, or "*" for all.
+#             允许交互的 QQ 号列表（逗号分隔），设为 "*" 允许所有人。
+# token: optional access_token for WebSocket authentication (must match NapCat config).
+#        可选的 WebSocket 鉴权 token（需与 NapCat 配置一致）。
+
+# [[projects.platforms]]
+# type = "qq"
+#
+# [projects.platforms.options]
+# ws_url = "ws://127.0.0.1:3001"  # NapCat Forward WebSocket URL
+# token = ""                       # optional: access_token / 可选鉴权 token
+# allow_from = "*"                 # allowed QQ user IDs, e.g. "12345,67890" or "*" for all
+#                                  # 允许的 QQ 号，如 "12345,67890"，"*" 表示所有
+# share_session_in_channel = false  # If true, all users in a group share one agent session / 群聊共享会话
+
+# QQ Bot (Official / 官方 QQ 机器人) (uncomment to enable / 取消注释以启用)
+# Uses the official QQ Bot Platform API — no third-party adapter needed.
+# 使用 QQ 官方机器人 API，无需第三方适配器。
+# 1. Register at https://q.qq.com → create bot → get AppID & AppSecret
+#    在 https://q.qq.com 注册 → 创建机器人 → 获取 AppID 和 AppSecret
+# 2. Connection: WebSocket (no public IP needed) / WebSocket 连接（无需公网 IP）
+# 3. In group chats, bot only receives messages when @mentioned
+#    群聊中，机器人仅在被 @ 时收到消息
+
+# [[projects.platforms]]
+# type = "qqbot"
+#
+# [projects.platforms.options]
+# app_id = ""           # Bot AppID / 机器人 AppID
+# app_secret = ""       # Bot AppSecret / 机器人 AppSecret
+# sandbox = false       # Use sandbox API endpoint / 使用沙箱环境
+# allow_from = "*"      # Allowed user openids, e.g. "OPEN_ID_1,OPEN_ID_2"; "*" = all
+#                       # 允许的用户 openid，如 "OPEN_ID_1,OPEN_ID_2"；"*" 表示所有
+# share_session_in_channel = false  # If true, all users in a group share one agent session / 群聊共享会话
+# markdown_support = false  # Enable Markdown messages (msg_type: 2). Requires bot permission. / 启用 Markdown 消息（msg_type: 2）。需要机器人具备该权限。
+
+# =============================================================================
+# Project 5: Using Qoder CLI / 项目 5：使用 Qoder CLI (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: curl -fsSL https://qoder.com/install | bash
+# 需要安装：curl -fsSL https://qoder.com/install | bash
+# Qoder CLI uses `qodercli -p <prompt> -f stream-json` under the hood.
+# Qoder CLI 底层使用 `qodercli -p <prompt> -f stream-json` 命令。
+
+# [[projects]]
+# name = "my-qoder-project"
+#
+# [projects.agent]
+# type = "qoder"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "default"  # "default" | "yolo"
+#
+# Mode options / 模式说明:
+# - "default": Standard permissions / 标准权限模式
+# - "yolo":    Skip all permission checks (--dangerously-skip-permissions) / 跳过所有权限检查
+#
+# Optional: specify a model tier / 可选：指定模型级别
+# model = "auto"  # "auto" | "ultimate" | "performance" | "efficient" | "lite"
+#
+# [[projects.platforms]]
+# type = "telegram"
+#
+# [projects.platforms.options]
+# token = "your-telegram-bot-token"
+
+# =============================================================================
+# Project 6: Using OpenCode / 项目 6：使用 OpenCode (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: OpenCode CLI — https://github.com/opencode-ai/opencode
+# 需要安装：OpenCode CLI
+# Uses `opencode run --format json` under the hood.
+# 底层使用 `opencode run --format json` 命令。
+
+# [[projects]]
+# name = "my-opencode-project"
+#
+# [projects.agent]
+# type = "opencode"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "default"  # "default" | "yolo"
+#
+# Mode options / 模式说明:
+# - "default": Standard mode / 标准模式
+# - "yolo":    Auto-approve all tool calls / 自动批准所有工具调用
+#
+# Optional: specify a model (provider/model format) / 可选：指定模型
+# model = "anthropic/claude-sonnet-4-20250514"
+#
+# [[projects.platforms]]
+# type = "telegram"
+#
+# [projects.platforms.options]
+# token = "your-telegram-bot-token"
+
+# =============================================================================
+# Project 7: Using iFlow CLI / 项目 7：使用 iFlow CLI (uncomment to enable / 取消注释以启用)
+# =============================================================================
+# Requires: npm install -g @iflow-ai/iflow-cli
+# 需要安装：npm install -g @iflow-ai/iflow-cli
+# Uses `iflow -i` in interactive mode with session resume (`-r`) and execution info output (`-o`).
+# 底层使用 `iflow -i` 交互模式，结合 `-r` 会话续聊和 `-o` 执行信息输出。
+
+# [[projects]]
+# name = "my-iflow-project"
+#
+# [projects.agent]
+# type = "iflow"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/project"
+# mode = "default"  # "default" | "auto-edit" | "plan" | "yolo"
+# cmd = "iflow"     # CLI binary name (default: "iflow") / CLI 二进制名称（默认 "iflow"）
+#
+# Mode options / 模式说明:
+# - "default":   Manual approval mode / 手动审批模式
+# - "auto-edit": Auto-edit mode / 自动编辑模式
+# - "plan":      Read-only planning mode / 只读规划模式
+# - "yolo":      Auto-approve all tool calls / 自动批准所有工具调用
+#
+# Optional: specify a model / 可选：指定模型
+# model = "Qwen3-Coder"
+#
+# # Active provider / 当前激活的 provider
+# # provider = "iflow-openai-compatible"
+#
+# [[projects.agent.providers]]
+# name = "iflow-openai-compatible"
+# api_key = "sk-xxx"
+# base_url = "https://api.example.com/v1"
+# model = "Qwen3-Coder"
+# env = { IFLOW_selectedAuthType = "openai-compatible" }
+#
+# [[projects.platforms]]
+# type = "telegram"
+#
+# [projects.platforms.options]
+# token = "your-telegram-bot-token"
+
+# =============================================================================
+# Project 8: Another example / 项目 8：更多示例 (uncomment to enable / 取消注释以启用)
+# =============================================================================
+
+# [[projects]]
+# name = "my-frontend"
+#
+# [projects.agent]
+# type = "claudecode"
+#
+# [projects.agent.options]
+# work_dir = "/path/to/frontend"
+# mode = "bypassPermissions"
+#
+# [[projects.platforms]]
+# type = "discord"
+#
+# [projects.platforms.options]
+# token = "your-discord-bot-token"

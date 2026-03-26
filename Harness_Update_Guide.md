@@ -184,7 +184,7 @@ machine-specific values.
 
 If your harness pull changed either of these:
 
-- `Reference_tool_repo/cc-connect/**`
+- `tooling/remote_control/cc_connect_src/**`
 - `tooling/remote_control/scripts/build_patched_cc_connect.sh`
 
 rebuild the local binary before using Feishu again:

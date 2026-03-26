@@ -59,11 +59,12 @@ python3 -m unittest discover -s tooling/remote_control/tests
 
 Recommended setup:
 
-- use the patched built-in `cc-connect /home` card
+- use the bundled patched `cc-connect /home` card
 - expose this wrapper through a custom `/ai` exec command
 
 See:
 
+- `cc_connect_src/`
 - `config/cc_connect.local.toml`
 - `config/templates/cc_connect.local.example.toml`
 - `config/templates/cc_connect_commands.example.toml`
@@ -75,7 +76,7 @@ Recommended local workflow:
 
 1. Copy `config/templates/cc_connect.local.example.toml` to `config/cc_connect.local.toml`
 2. Fill Feishu credentials / `CODEX_HOME` / paths locally
-3. Build patched `cc-connect` with `scripts/build_patched_cc_connect.sh`
+3. Build patched `cc-connect` from `cc_connect_src/` with `scripts/build_patched_cc_connect.sh`
 4. Start via `tooling/remote_control/bin/cc-connect`
 
 Recommended command mapping:

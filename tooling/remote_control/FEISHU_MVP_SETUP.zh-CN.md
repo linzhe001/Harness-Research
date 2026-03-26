@@ -19,12 +19,14 @@
 - 一个可运行的 `cc-connect` 实例
 - 飞书应用凭证
 - 当前仓库中的 `tooling/remote_control/`
-- 一个包含本次 patch 的 `cc-connect` fork
+- 当前仓库中的 `tooling/remote_control/cc_connect_src/`
 
 关键原因：
 
 - 自定义 exec command 在 `multi-workspace` 模式下，必须能落到当前绑定 workspace
 - 这个能力依赖本次补的 workspace-aware custom command 路由 patch
+
+当前 setup 已不再依赖 `Reference_tool_repo/cc-connect`。
 
 ## 2. 推荐接法
 

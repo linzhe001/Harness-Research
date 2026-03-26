@@ -3,10 +3,15 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-CC_CONNECT_DIR="${REPO_ROOT}/Reference_tool_repo/cc-connect"
+CC_CONNECT_DIR="${REPO_ROOT}/tooling/remote_control/cc_connect_src"
 LOCAL_GO="${REPO_ROOT}/tooling/remote_control/vendor/go/bin/go"
 TARGET_DIR="${REPO_ROOT}/tooling/remote_control/vendor/bin"
 TARGET_BIN="${TARGET_DIR}/cc-connect-harness-patched-linux-amd64"
+
+if [[ ! -d "${CC_CONNECT_DIR}" ]]; then
+  echo "Bundled cc-connect source not found at ${CC_CONNECT_DIR}" >&2
+  exit 1
+fi
 
 if [[ -x "${LOCAL_GO}" ]]; then
   GO_BIN="${LOCAL_GO}"

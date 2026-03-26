@@ -30,6 +30,7 @@ The two repos share one worktree, but they must not track the same files.
 | `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
 | `tooling/auto_iterate/docs/` | Goal template, remote control guide |
 | `tooling/remote_control/scripts/` | Harness remote wrapper and patched `cc-connect` build helper |
+| `tooling/remote_control/cc_connect_src/` | Bundled patched `cc-connect` source tree for local builds |
 | `tooling/remote_control/config/templates/` | Remote control / Feishu / Codex config templates |
 | `tooling/remote_control/` docs | Local build, Feishu setup, and remote control usage notes |
 | `media/` | Harness-level branding and documentation assets used by root docs |
