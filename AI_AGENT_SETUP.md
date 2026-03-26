@@ -275,6 +275,64 @@ config files from templates:
 [ ! -f tooling/remote_control/config/cc_connect.local.toml ] && cp tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml
 ```
 
+When filling `cc_connect.local.toml` for a same-worktree project, derive the
+workspace values from the current repository root instead of editing random
+absolute paths by hand:
+
+```bash
+CURRENT_WORKSPACE="$(pwd)"
+WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
+WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
+```
+
+Choose one of these layouts:
+
+### Single-workspace: default to the current repository
+
+Use this when the bot should always operate on the current repository and you do
+not want to bind each chat channel manually.
+
+- omit `[[projects]].mode`
+- omit `[[projects]].base_dir`
+- set `projects.agent.options.work_dir = "$CURRENT_WORKSPACE"`
+- set custom command `work_dir = "$CURRENT_WORKSPACE"` for `/ai` and `/home`
+- if practical, keep `[[projects]].name` aligned with `"$WORKSPACE_NAME"`
+
+This is the simplest setup for one local repo and avoids the "No workspace
+found for this channel" prompt during direct chat.
+
+### Multi-workspace: one bot can switch between many repos
+
+Use this when one bot instance should serve multiple workspaces under the same
+parent directory.
+
+- `[[projects]].mode = "multi-workspace"`
+- `[[projects]].base_dir = "$WORKSPACE_PARENT"`
+- `[[commands]]` entries such as `/ai` and `/home` may still use `work_dir = "$CURRENT_WORKSPACE"`
+- if practical, keep `[[projects]].name` aligned with `"$WORKSPACE_NAME"` so bindings are easier to reason about
+
+Important distinction in `multi-workspace` mode:
+
+- `base_dir` is the parent directory that contains candidate workspaces
+- `work_dir` on custom commands is the concrete workspace root for that command
+- do not set `projects.agent.options.work_dir`; workspace routing comes from channel binding plus `base_dir`
+
+After first boot in a chat channel, bind that channel to the current workspace:
+
+```bash
+/workspace bind <workspace-name>
+```
+
+For example, if `CURRENT_WORKSPACE=/path/to/PCLR_compare`, run:
+
+```bash
+/workspace bind PCLR_compare
+```
+
+Without that binding, direct natural-language chat to the agent may answer with
+"No workspace found for this channel" even if `/ai` and `/home` already work,
+because those custom commands can have their own fixed `work_dir`.
+
 The patched `cc-connect` source is already bundled in this repository under:
 
 - `tooling/remote_control/cc_connect_src/`
@@ -303,6 +361,10 @@ If you need a local patched `cc-connect`, build it with:
 tooling/remote_control/scripts/build_patched_cc_connect.sh
 ```
 
+If `go` is not available on `PATH`, unpack Go 1.25 under
+`tooling/remote_control/vendor/go/` and rerun the build. The build helper
+prefers `tooling/remote_control/vendor/go/bin/go` automatically.
+
 Then start it with:
 
 ```bash
@@ -310,11 +372,16 @@ tooling/remote_control/bin/cc-connect \
   -config tooling/remote_control/config/cc_connect.local.toml
 ```
 
+If you change `cc_connect.local.toml`, restart `cc-connect` so the live process
+reloads the new project name, ACL, and workspace settings.
+
 Minimal remote-control verification:
 
 ```bash
 tooling/remote_control/bin/cc-connect -version
 test -d tooling/remote_control/cc_connect_src
+/workspace
+/workspace bind <workspace-name>
 ```
 
 See:
@@ -345,6 +412,11 @@ Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `medi
 
 For the recommended day-2 update flow, conflict handling, and post-pull checks,
 see [Harness_Update_Guide.md](Harness_Update_Guide.md).
+
+If remote control was already used before a project rename or config rewrite,
+existing channel bindings may still live under the old project key in
+`~/.cc-connect/workspace_bindings.json`. Rebind the channel after restart if the
+bot still resolves to an old workspace or says no workspace is bound.
 
 ### Research changes
 

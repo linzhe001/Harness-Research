@@ -196,6 +196,31 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 The resulting local binary belongs under `tooling/remote_control/vendor/bin/`
 and should stay out of Git history.
 
+### 3c. Recheck live `cc-connect` workspace assumptions
+
+If you use Feishu / remote control, also verify the live local config still
+matches the current workspace after the pull:
+
+- for a single local repo, prefer single-workspace config with `projects.agent.options.work_dir = "$(pwd)"` and no `mode` / `base_dir`
+- in `multi-workspace` mode, `base_dir` should be the parent directory of the workspace, not the workspace root itself
+- custom commands such as `/ai` and `/home` may still set `work_dir` to the concrete workspace root
+- direct natural-language chat still depends on channel-to-workspace binding
+
+Recommended quick check:
+
+```bash
+CURRENT_WORKSPACE="$(pwd)"
+WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
+WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
+
+rg -n 'name = |mode = |base_dir = |work_dir = ' tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cc-connect -version
+```
+
+If you changed `cc_connect.local.toml`, restart `cc-connect` before testing in
+Feishu. If the bot still says no workspace is bound, run `/workspace bind
+<workspace-name>` in that channel.
+
 ### 4. Check the research repo separately
 
 ```bash
@@ -264,6 +289,69 @@ git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
 git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
 ```
 
+### `build_patched_cc_connect.sh` fails because `go` is missing
+
+The remote-control tree expects Go 1.25. The build helper already prefers a
+local toolchain at:
+
+```text
+tooling/remote_control/vendor/go/bin/go
+```
+
+If `go` is not on `PATH`, unpack a Go 1.25 tarball into
+`tooling/remote_control/vendor/go/` and rerun:
+
+```bash
+tooling/remote_control/scripts/build_patched_cc_connect.sh
+```
+
+This keeps the toolchain local to the harness tree and avoids depending on a
+system-wide Go install.
+
+### Bot replies `No workspace found for this channel`
+
+This usually means one of these is true:
+
+- you actually wanted single-workspace mode, but the config is still using `multi-workspace`
+- the channel was never bound to a workspace
+- `base_dir` points at the wrong parent directory
+- `projects.name` changed, so old bindings are stored under a stale project key
+- you updated `cc_connect.local.toml` but did not restart `cc-connect`
+
+Remember:
+
+- for one repo, the simplest fix is to remove `mode` / `base_dir` and set `projects.agent.options.work_dir` to the current workspace root
+- `base_dir` is the parent directory that contains workspaces
+- `work_dir` on `/ai` or `/home` only affects those custom commands
+- direct natural-language chat still resolves workspace from channel binding
+
+Recommended recovery:
+
+```bash
+CURRENT_WORKSPACE="$(pwd)"
+WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
+WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
+
+rg -n 'name = |mode = |base_dir = |work_dir = ' tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cc-connect -version
+```
+
+Then in Feishu:
+
+```bash
+/workspace
+/workspace bind <workspace-name>
+```
+
+If bindings still look wrong after a rename or config rewrite, inspect:
+
+```bash
+sed -n '1,200p' ~/.cc-connect/workspace_bindings.json
+```
+
+Bindings are keyed by `project:<name>`, so changing `[[projects]].name`
+requires rebinding channels for the new project key.
+
 ## Summary
 
 Use `git` for research files and `hgit` for framework files.
@@ -275,6 +363,7 @@ After every harness pull:
 3. diff templates against project-owned files
 4. verify normal `git status` is still clean with respect to harness paths
 5. rebuild patched `cc-connect` if remote-control source changed
+6. restart `cc-connect` and re-check workspace binding if remote-control config changed
 
 After every harness push:
 
