@@ -23,7 +23,7 @@ When you update harness, the following paths are framework files managed by
 - `.agents/**`
 - `*.template`
 - `tooling/auto_iterate/**`
-- `auto_iterate_v7_plan/**`
+- `tooling/remote_control/**`
 - `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
@@ -48,6 +48,13 @@ Examples:
 - good: `experiments/.gitignore`
 - good: `data/.gitignore`
 - avoid: editing the root `.gitignore` for research-only ignore rules
+
+Remote-control local files follow the same pattern:
+
+- commit templates under `tooling/remote_control/config/templates/`
+- keep `tooling/remote_control/config/*.local.*` local-only
+- do not commit `tooling/remote_control/vendor/go/`
+- do not commit built binaries under `tooling/remote_control/vendor/bin/`
 
 ## Daily Pull Workflow
 
@@ -123,6 +130,7 @@ Typical blocking files are:
 - `.claude/**`
 - `.agents/**`
 - `tooling/auto_iterate/**`
+- `tooling/remote_control/**`
 
 ## After Pulling
 
@@ -158,10 +166,35 @@ diff tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml 
 diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
+If you use remote control / Feishu integration, also check:
+
+```bash
+diff tooling/remote_control/config/templates/remote_control.example.yaml tooling/remote_control/config/remote_control.local.yaml || true
+diff tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml || true
+```
+
 When templates add new sections or fields, merge them manually into the
 project goal file or local operator YAMLs. If your repo versions
 `controller.local.yaml` / `accounts.local.yaml` as shared defaults, update
-those tracked files in place.
+those tracked files in place. For remote control, merge new template fields
+into your local `.local` files manually, but do not commit secrets or
+machine-specific values.
+
+### 3b. Rebuild patched `cc-connect` if needed
+
+If your harness pull changed either of these:
+
+- `Reference_tool_repo/cc-connect/**`
+- `tooling/remote_control/scripts/build_patched_cc_connect.sh`
+
+rebuild the local binary before using Feishu again:
+
+```bash
+tooling/remote_control/scripts/build_patched_cc_connect.sh
+```
+
+The resulting local binary belongs under `tooling/remote_control/vendor/bin/`
+and should stay out of Git history.
 
 ### 4. Check the research repo separately
 
@@ -209,8 +242,26 @@ Instead, add harness-managed paths to `.git/info/exclude`, for example:
 /Harness_Update_Guide.md
 /.gitignore
 /tooling/
-/auto_iterate_v7_plan/
 /*.template
+```
+
+If local remote-control files appear in `git status`, do not add them. These
+paths should remain local-only:
+
+```gitignore
+/tooling/remote_control/config/*.local.toml
+/tooling/remote_control/config/*.local.yaml
+/tooling/remote_control/vendor/go/
+/tooling/remote_control/vendor/bin/cc-connect*
+```
+
+Do not use `git add -f` on those paths. If you are unsure whether local
+protection still works after a pull, verify it explicitly:
+
+```bash
+git check-ignore -v tooling/remote_control/config/cc_connect.local.toml
+git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
+git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
 ```
 
 ## Summary
@@ -223,6 +274,7 @@ After every harness pull:
 2. read updated framework docs
 3. diff templates against project-owned files
 4. verify normal `git status` is still clean with respect to harness paths
+5. rebuild patched `cc-connect` if remote-control source changed
 
 After every harness push:
 

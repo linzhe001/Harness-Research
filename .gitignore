@@ -23,6 +23,15 @@
 /tooling/auto_iterate/config/*.local.yaml
 !/tooling/auto_iterate/config/controller.local.yaml
 !/tooling/auto_iterate/config/accounts.local.yaml
+/tooling/remote_control/config/*.local.toml
+/tooling/remote_control/config/*.local.yaml
+/tooling/remote_control/vendor/go/
+/tooling/remote_control/vendor/bin/cc-connect*
+/tooling/remote_control/vendor/*.tar.gz
+/tooling/remote_control/vendor/node_modules/
+/tooling/remote_control/vendor/package.json
+/tooling/remote_control/vendor/package-lock.json
+/.npm-cache/
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/

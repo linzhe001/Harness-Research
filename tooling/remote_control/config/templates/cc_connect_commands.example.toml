@@ -1,0 +1,38 @@
+# Example cc-connect custom commands for Harness remote control.
+#
+# Add these snippets into the relevant project section of your cc-connect
+# config.toml.
+#
+# Note:
+# - `/home` is expected to come from the patched built-in cc-connect command.
+# - Keep only `/ai` as a custom command wrapper.
+
+[[commands]]
+name = "ai"
+description = "Harness auto-iterate remote wrapper / 自动迭代远程控制"
+exec = "tooling/remote_control/scripts/harness_remote.sh ai {{args}}"
+work_dir = "/path/to/workspace"
+
+[[aliases]]
+name = "工作台"
+command = "/home"
+
+[[aliases]]
+name = "自动迭代"
+command = "/help auto"
+
+[[aliases]]
+name = "工作区帮助"
+command = "/help workspace"
+
+[[aliases]]
+name = "暂停"
+command = "/ai pause"
+
+[[aliases]]
+name = "继续"
+command = "/ai resume"
+
+[[aliases]]
+name = "停止迭代"
+command = "/ai stop"

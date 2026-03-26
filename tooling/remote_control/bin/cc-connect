@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+PATCHED_STABLE="${REPO_ROOT}/tooling/remote_control/vendor/bin/cc-connect-harness-patched-linux-amd64"
+OFFICIAL_BIN="${REPO_ROOT}/tooling/remote_control/vendor/bin/cc-connect-v1.2.2-beta.3-linux-amd64"
+
+if [[ -x "${PATCHED_STABLE}" ]]; then
+  exec "${PATCHED_STABLE}" "$@"
+fi
+
+LATEST_PATCHED="$(find "${REPO_ROOT}/tooling/remote_control/vendor/bin" -maxdepth 1 -type f -name 'cc-connect-harness-patched-linux-amd64-*' | sort | tail -n 1 || true)"
+if [[ -n "${LATEST_PATCHED}" && -x "${LATEST_PATCHED}" ]]; then
+  exec "${LATEST_PATCHED}" "$@"
+fi
+
+exec "${OFFICIAL_BIN}" "$@"

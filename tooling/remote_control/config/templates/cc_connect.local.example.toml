@@ -1,0 +1,171 @@
+data_dir = ""
+attachment_send = ""
+language = "zh"
+
+[[projects]]
+  name = "harness-research"
+  mode = "multi-workspace"
+  base_dir = "/abs/path/to/workspaces"
+  admin_from = "your_feishu_open_id"
+
+  [projects.agent]
+    type = "codex"
+
+    [projects.agent.options]
+      model = "gpt-5.4"
+      mode = "auto-edit"
+      provider = "codex_primary"
+      preferred_models = ["gpt-5.4", "gpt-5.4-codex", "gpt-5.3-codex", "o3"]
+      reasoning_effort = "xhigh"
+
+    [[projects.agent.providers]]
+      name = "codex_primary"
+      api_key = ""
+      priority = 100
+      cooldown_sec = 1800
+      auto_failover = true
+      [projects.agent.providers.env]
+        CODEX_HOME = "/abs/path/to/.codex-acc1"
+
+    [[projects.agent.providers]]
+      name = "codex_secondary"
+      api_key = ""
+      priority = 90
+      cooldown_sec = 1800
+      auto_failover = true
+      [projects.agent.providers.env]
+        CODEX_HOME = "/abs/path/to/.codex-acc2"
+
+    [[projects.agent.providers]]
+      name = "codex_tertiary"
+      api_key = ""
+      priority = 80
+      cooldown_sec = 1800
+      auto_failover = true
+      [projects.agent.providers.env]
+        CODEX_HOME = "/abs/path/to/.codex-acc3"
+
+  [[projects.platforms]]
+    type = "feishu"
+    [projects.platforms.options]
+      allow_from = "your_feishu_open_id"
+      app_id = "cli_xxxxxxxxxxxxx"
+      app_secret = "sec_xxxxxxxxxxxxxxxx"
+      enable_feishu_card = true
+      thread_isolation = true
+
+  [projects.harness_cards]
+    show_copyable_commands = false
+
+  [projects.heartbeat]
+
+[[commands]]
+  name = "ai"
+  description = "Harness auto-iterate remote wrapper / 自动迭代远程控制"
+  prompt = ""
+  exec = "tooling/remote_control/scripts/harness_remote.sh ai {{args}}"
+  work_dir = "/abs/path/to/Harness-Research"
+
+[[commands]]
+  name = "home"
+  description = "Harness workspace summary / 工作台概览"
+  prompt = ""
+  exec = "tooling/remote_control/scripts/harness_remote.sh summary"
+  work_dir = "/abs/path/to/Harness-Research"
+
+[[aliases]]
+  name = "工作台"
+  command = "/home"
+
+[[aliases]]
+  name = "帮助"
+  command = "/help"
+
+[[aliases]]
+  name = "工作区"
+  command = "/workspace"
+
+[[aliases]]
+  name = "会话"
+  command = "/help session"
+
+[[aliases]]
+  name = "自动迭代"
+  command = "/help auto"
+
+[[aliases]]
+  name = "暂停"
+  command = "/ai pause"
+
+[[aliases]]
+  name = "继续"
+  command = "/ai resume"
+
+[[aliases]]
+  name = "停止迭代"
+  command = "/ai stop"
+
+[[aliases]]
+  name = "当前账号"
+  command = "/provider"
+
+[[aliases]]
+  name = "账号列表"
+  command = "/provider list"
+
+[log]
+  level = "info"
+
+[speech]
+  enabled = false
+  provider = ""
+  language = ""
+  [speech.openai]
+    api_key = ""
+    base_url = ""
+    model = ""
+  [speech.groq]
+    api_key = ""
+    model = ""
+  [speech.qwen]
+    api_key = ""
+    base_url = ""
+    model = ""
+
+[tts]
+  enabled = false
+  provider = ""
+  voice = ""
+  tts_mode = ""
+  max_text_len = 0
+  [tts.openai]
+    api_key = ""
+    base_url = ""
+    model = ""
+  [tts.qwen]
+    api_key = ""
+    base_url = ""
+    model = ""
+  [tts.minimax]
+    api_key = ""
+    base_url = ""
+    model = ""
+
+[display]
+
+[stream_preview]
+
+[rate_limit]
+
+[relay]
+
+[cron]
+
+[webhook]
+  port = 0
+
+[bridge]
+  port = 0
+
+[management]
+  port = 0

@@ -1,0 +1,3 @@
+default_goal_path: docs/auto_iterate_goal.md
+default_controller_config: tooling/auto_iterate/config/controller.local.yaml
+default_accounts_config: tooling/auto_iterate/config/accounts.local.yaml

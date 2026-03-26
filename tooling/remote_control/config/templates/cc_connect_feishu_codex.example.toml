@@ -1,0 +1,87 @@
+# Feishu-first cc-connect example for Harness remote control.
+#
+# This sample assumes:
+# - you use Feishu as the primary remote entry
+# - you want multi-workspace routing
+# - you use Codex as the primary interactive agent
+# - your patched cc-connect fork has built-in /home card support
+# - you expose Harness remote wrapper through /ai
+# - you maintain the Codex account pool in tooling/auto_iterate/config/accounts.local.yaml
+
+language = "zh"
+
+[log]
+level = "info"
+
+[[commands]]
+name = "ai"
+description = "Harness auto-iterate remote wrapper / 自动迭代远程控制"
+exec = "tooling/remote_control/scripts/harness_remote.sh ai {{args}}"
+
+[[aliases]]
+name = "工作台"
+command = "/home"
+
+[[aliases]]
+name = "帮助"
+command = "/help"
+
+[[aliases]]
+name = "工作区"
+command = "/workspace"
+
+[[aliases]]
+name = "会话"
+command = "/help session"
+
+[[aliases]]
+name = "自动迭代"
+command = "/help auto"
+
+[[aliases]]
+name = "工作区帮助"
+command = "/help workspace"
+
+[[projects]]
+name = "harness-research"
+mode = "multi-workspace"
+base_dir = "/path/to/workspaces"
+admin_from = "*"
+
+[projects.agent]
+type = "codex"
+
+[projects.agent.options]
+work_dir = "/path/to/default/workspace"
+mode = "auto-edit"
+provider = "codex_primary"
+reasoning_effort = "high"
+
+[[projects.agent.providers]]
+name = "codex_primary"
+env = { CODEX_HOME = "/path/to/.codex-acc1" }
+
+[[projects.agent.providers]]
+name = "codex_secondary"
+env = { CODEX_HOME = "/path/to/.codex-acc2" }
+
+[[projects.agent.providers]]
+name = "codex_tertiary"
+env = { CODEX_HOME = "/path/to/.codex-acc3" }
+
+[[projects.platforms]]
+type = "feishu"
+
+[projects.platforms.options]
+app_id = "cli_xxxxxxxxxxxxx"
+app_secret = "sec_xxxxxxxxxxxxxxxx"
+allow_from = "*"           # Replace with your open_id after first login if you want stricter ACL.
+enable_feishu_card = true  # Required for /home and grouped help cards.
+thread_isolation = true    # Recommended for remote coding workflows.
+
+# Suggested Feishu bot menu event_key mapping:
+#   工作台     -> /home
+#   Workspace  -> /workspace
+#   会话       -> /help session
+#   自动迭代   -> /help auto
+#   帮助       -> /help

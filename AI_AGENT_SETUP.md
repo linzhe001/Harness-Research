@@ -29,9 +29,11 @@ The two repos share one worktree, but they must not track the same files.
 | `tooling/auto_iterate/scripts/auto_iterate/` | Controller package (state, lock, events, goal, postcondition, recovery) |
 | `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
 | `tooling/auto_iterate/docs/` | Goal template, remote control guide |
+| `tooling/remote_control/scripts/` | Harness remote wrapper and patched `cc-connect` build helper |
+| `tooling/remote_control/config/templates/` | Remote control / Feishu / Codex config templates |
+| `tooling/remote_control/` docs | Local build, Feishu setup, and remote control usage notes |
 | `media/` | Harness-level branding and documentation assets used by root docs |
 | `tests/` | Controller test suite and fixtures |
-| `auto_iterate_v7_plan/` | V7 plan/spec documents for the controller rollout |
 
 ## Workflow Stages
 
@@ -56,7 +58,7 @@ Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE**
 - `.agents/**`
 - `*.template`
 - `tooling/auto_iterate/**`
-- `auto_iterate_v7_plan/**`
+- `tooling/remote_control/**`
 - `media/**`
 - root `README.md`
 - root `.gitignore`
@@ -93,10 +95,21 @@ machine-local inputs rather than framework templates:
 
 - `tooling/auto_iterate/config/controller.local.yaml`
 - `tooling/auto_iterate/config/accounts.local.yaml`
+- `tooling/remote_control/config/cc_connect.local.toml`
+- `tooling/remote_control/config/remote_control.local.yaml`
 
 Teams can either keep these files uncommitted or version shared defaults. This
-repository chooses to version the two default files above and annotate the
-machine-specific fields inline.
+repository chooses to version the two auto-iterate defaults above and annotate
+the machine-specific fields inline. Remote control `.local` files should remain
+local-only because they commonly contain Feishu credentials, operator IDs, or
+machine-specific `CODEX_HOME` paths.
+
+### Local toolchains and built binaries (never commit)
+
+- `tooling/remote_control/vendor/go/**`
+- `tooling/remote_control/vendor/bin/cc-connect*`
+
+These are local build artifacts. Commit source, templates, and docs instead.
 
 ### Runtime-only files (never commit)
 
@@ -128,8 +141,10 @@ In other words:
 - yes: extra subdirectory `.gitignore` files inside research-owned paths
 - no: two competing root `.gitignore` files at the same project root
 
-That split matters now that the harness repo also ships `tooling/auto_iterate/**`
-and `auto_iterate_v7_plan/**`.
+That split matters now that the harness repo also ships:
+
+- `tooling/auto_iterate/**`
+- `tooling/remote_control/**`
 
 ## Bootstrap
 
@@ -198,7 +213,6 @@ cat >> .git/info/exclude <<'EOF'
 .agents/
 .vscode/
 tooling/
-auto_iterate_v7_plan/
 media/
 README.md
 AI_AGENT_SETUP.md
@@ -228,8 +242,9 @@ and should appear only after the first auto-iterate `start`.
 
 ## 6. Bootstrap auto-iterate project files
 
-The harness repo owns the controller code and reusable templates. The project
-should create one research goal file plus local controller/account YAMLs.
+The harness repo owns the controller code, remote-control wrapper, and reusable
+templates. The project should create one research goal file plus local
+controller/account YAMLs.
 
 ```bash
 [ ! -f docs/auto_iterate_goal.md ] && cp tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
@@ -247,6 +262,43 @@ Keep this boundary:
 - do not commit `.auto_iterate/`
 - if your project wants shared defaults, it is acceptable to version
   `controller.local.yaml` and `accounts.local.yaml`
+
+## 6b. Optional: bootstrap remote control local files
+
+If the project will use Feishu / remote-control features, create local-only
+config files from templates:
+
+```bash
+[ ! -f tooling/remote_control/config/remote_control.local.yaml ] && cp tooling/remote_control/config/templates/remote_control.example.yaml tooling/remote_control/config/remote_control.local.yaml
+[ ! -f tooling/remote_control/config/cc_connect.local.toml ] && cp tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml
+```
+
+Keep this boundary:
+
+- edit `tooling/remote_control/config/*.local.*` only for your own machine
+- do not commit Feishu credentials, operator IDs, or `CODEX_HOME` values
+- do not commit `tooling/remote_control/vendor/go/`
+- do not commit built binaries under `tooling/remote_control/vendor/bin/`
+- do not use `git add -f` to force-add ignored local config or local binaries
+
+You can verify that the main local files are ignored before continuing:
+
+```bash
+git check-ignore -v tooling/remote_control/config/cc_connect.local.toml
+git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
+git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
+```
+
+If you need a local patched `cc-connect`, build it with:
+
+```bash
+tooling/remote_control/scripts/build_patched_cc_connect.sh
+```
+
+See:
+
+- `tooling/remote_control/BUILD_AND_LOCAL_SETUP.zh-CN.md`
+- `tooling/remote_control/FEISHU_MVP_SETUP.zh-CN.md`
 
 ## 7. Fill in project details
 
@@ -400,7 +452,6 @@ What each artifact answers:
 | `.agents/references/**` | harness (`hgit`) | Shared constraints |
 | `*.template` | harness (`hgit`) | Project templates |
 | `tooling/auto_iterate/**` | harness (`hgit`) | Controller, runtime adapter, docs, examples |
-| `auto_iterate_v7_plan/**` | harness (`hgit`) | Controller rollout plan/spec |
 | `README.md` | harness (`hgit`) | Harness overview and links |
 | `.gitignore` | harness (`hgit`) | Harness-side ignore rules for research files |
 | `.git/info/exclude` | research-local (`git`) | Research-side ignore rules for harness files |
@@ -426,7 +477,7 @@ git --git-dir=.harness --work-tree=. status
 git status
 
 # Research repo should ignore harness-owned paths.
-git check-ignore -v .claude/ .agents/ tooling/ auto_iterate_v7_plan/ README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore
+git check-ignore -v .claude/ .agents/ tooling/ README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore
 
 # Auto-iterate project inputs should exist before the first start.
 test -f docs/auto_iterate_goal.md
