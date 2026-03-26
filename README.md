@@ -62,4 +62,4 @@ In practice: use **Claude Code** for interactive research sessions, use **Codex*
 - **At project setup**: read [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) for bootstrap instructions, framework contents, file ownership, and dual-repo layout.
 - **At framework update**: read [Harness_Update_Guide.md](Harness_Update_Guide.md) for pull/push workflows, conflict recovery, and post-pull template sync.
 
-Some code is based on ralph and cc-connect.
+Some code is based on [ralph](https://github.com/snarktank/ralph) and [cc-connect](https://github.com/chenhg5/cc-connect).
