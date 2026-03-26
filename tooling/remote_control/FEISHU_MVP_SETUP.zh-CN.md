@@ -26,7 +26,7 @@
 - 自定义 exec command 在 `multi-workspace` 模式下，必须能落到当前绑定 workspace
 - 这个能力依赖本次补的 workspace-aware custom command 路由 patch
 
-当前 setup 已不再依赖 `Reference_tool_repo/cc-connect`。
+当前 setup 只依赖本仓库内的内容。
 
 ## 2. 推荐接法
 

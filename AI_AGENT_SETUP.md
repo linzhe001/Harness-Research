@@ -151,24 +151,25 @@ That split matters now that the harness repo also ships:
 
 ### 1. Put the harness worktree at the project root
 
+This guide assumes the current repository contents are already present on the
+machine and should become the harness worktree at the project root.
+
 Preferred flow:
 
 ```bash
-mkdir /path/to/my-project
-cd /path/to/my-project
-git clone <harness-repo-url> .
+cd /path/to/current-harness-worktree
 mv .git .harness
 ```
 
-If the harness repo was cloned into a subdirectory instead:
+If the current repository contents were unpacked into a subdirectory instead:
 
 ```bash
 cd /path/to/my-project
-CLONE_DIR="Harness-Research"
+FRAMEWORK_DIR="Harness-Research"
 
-rsync -a "$CLONE_DIR"/ ./ --exclude .git
-mv "$CLONE_DIR/.git" .harness
-rm -rf "$CLONE_DIR"
+rsync -a "$FRAMEWORK_DIR"/ ./ --exclude .git
+mv "$FRAMEWORK_DIR/.git" .harness
+rm -rf "$FRAMEWORK_DIR"
 ```
 
 Then configure the harness repo:
@@ -274,6 +275,12 @@ config files from templates:
 [ ! -f tooling/remote_control/config/cc_connect.local.toml ] && cp tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml
 ```
 
+The patched `cc-connect` source is already bundled in this repository under:
+
+- `tooling/remote_control/cc_connect_src/`
+
+Setup and local builds use only the contents of this repository.
+
 Keep this boundary:
 
 - edit `tooling/remote_control/config/*.local.*` only for your own machine
@@ -294,6 +301,20 @@ If you need a local patched `cc-connect`, build it with:
 
 ```bash
 tooling/remote_control/scripts/build_patched_cc_connect.sh
+```
+
+Then start it with:
+
+```bash
+tooling/remote_control/bin/cc-connect \
+  -config tooling/remote_control/config/cc_connect.local.toml
+```
+
+Minimal remote-control verification:
+
+```bash
+tooling/remote_control/bin/cc-connect -version
+test -d tooling/remote_control/cc_connect_src
 ```
 
 See:

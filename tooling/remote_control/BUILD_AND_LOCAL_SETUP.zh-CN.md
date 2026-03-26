@@ -30,7 +30,7 @@
 - 本地 Go 工具链：`tooling/remote_control/vendor/go/`
 - 本地 patched 二进制：`tooling/remote_control/vendor/bin/`
 
-当前 setup 已不再依赖 `Reference_tool_repo/cc-connect`。
+当前 setup 只依赖本仓库内的内容。
 
 ## 1. 生成本地配置
 
