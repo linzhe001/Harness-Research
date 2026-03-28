@@ -239,7 +239,14 @@ tooling/remote_control/scripts/install_user_commands.sh --shell-init
 这个命令还会：
 
 - 把 `codex_all` 和 `cw` 链接到 `~/.local/bin/`
-- 在 `~/.profile` 和 `~/.bashrc` 中补一段最小 PATH 配置（如果原来没有）
+- 在 `~/.profile` 和 `~/.bashrc` 中补一段最小 PATH 配置，但只会在“当前文件里还没有相关设置”时写入
+
+脚本会跳过写入的情况包括：
+
+- 这个文件已经带有 harness 写入的 marker
+- 这个文件已经引用了当前安装目录
+- 默认安装目录下，这个文件已经引用了 `~/.local/bin`
+- 这个文件里已经有 `codex_all` / `cw` 的 function 或 alias 定义
 
 如果当前 shell 还找不到命令，先执行：
 
@@ -247,7 +254,17 @@ tooling/remote_control/scripts/install_user_commands.sh --shell-init
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-之后重新开一个 shell 即可。
+如果你刚执行过 `--shell-init`，也可以直接刷新当前 shell：
+
+```bash
+source ~/.bashrc
+```
+
+如果你的终端主要走 login shell，也可以再执行：
+
+```bash
+source ~/.profile
+```
 
 如果你想换安装目录，也可以临时覆盖：
 
@@ -262,6 +279,81 @@ tooling/remote_control/scripts/install_user_commands.sh
 ```
 
 这一步补上之后，别人拉取仓库时就不需要复制你的私有 `~/.bashrc` 配置了。
+
+### 1.8 一套完整流程
+
+如果你是一个新 clone 下来的 workspace，或者刚 pull 完想把当前 workspace 重新配齐，可以直接按这套顺序做：
+
+1. 进入 workspace 根目录
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+```
+
+2. 准备本地配置
+
+- 如果没有 `tooling/remote_control/config/cc_connect.local.toml`：
+  - 从模板复制一份
+- 如果已经有：
+  - 不要覆盖
+  - 按“1.4 从模板生成本地配置”里的 checklist 原地修改
+
+```bash
+if [ ! -f tooling/remote_control/config/cc_connect.local.toml ]; then
+  cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
+    tooling/remote_control/config/cc_connect.local.toml
+fi
+```
+
+3. 编译 patched `cc-connect`
+
+```bash
+tooling/remote_control/scripts/build_patched_cc_connect.sh
+```
+
+4. 安装本地命令并补 shell 初始化
+
+```bash
+tooling/remote_control/scripts/install_user_commands.sh --shell-init
+```
+
+5. 刷新当前 shell
+
+```bash
+source ~/.bashrc
+source ~/.profile
+hash -r
+```
+
+如果你不想 `source`，也可以直接开一个新终端。
+
+6. 验证命令是否可用
+
+```bash
+command -v codex_all
+command -v cw
+tooling/remote_control/bin/cc-connect -version
+```
+
+7. 启动 `cc-connect`
+
+```bash
+tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_connect.local.toml
+```
+
+8. 本地开始使用共享会话
+
+```bash
+codex_all
+codex_all next
+codex_all s003
+```
+
+如果你接飞书，再继续做：
+
+- `/workspace`
+- `/workspace bind <workspace-name>`
+- `/home`
 
 ## 2. 飞书 MVP 接入
 

@@ -227,6 +227,15 @@ This refreshes the user-local command shims such as:
 If you do not want the installer to manage `~/.profile` / `~/.bashrc`, you can
 rerun it without `--shell-init`.
 
+If you do use `--shell-init`, the installer only appends shell code when those
+files do not already contain related command or PATH setup. Refresh the current
+shell afterwards:
+
+```bash
+source ~/.bashrc
+source ~/.profile
+```
+
 ### 3c. Recheck live `cc-connect` workspace assumptions
 
 If you use Feishu / remote control, also verify the live local config still

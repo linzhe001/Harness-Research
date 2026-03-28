@@ -47,6 +47,23 @@ ensure_shell_init_file() {
   mkdir -p "$(dirname "${target_file}")"
   touch "${target_file}"
   if grep -Fq "${SHELL_INIT_MARKER_START}" "${target_file}"; then
+    echo "Shell init already managed by harness marker: ${target_file}"
+    return 0
+  fi
+  if grep -Fq "${path_dir}" "${target_file}"; then
+    echo "Shell init already references ${path_dir}: ${target_file}"
+    return 0
+  fi
+  if [[ "${path_dir}" == "${HOME}/.local/bin" ]] && grep -Eq '(\$HOME|~|/[^[:space:]]+)/\.local/bin' "${target_file}"; then
+    echo "Shell init already references ~/.local/bin: ${target_file}"
+    return 0
+  fi
+  if grep -Eq '(^|[^#[:alnum:]_])(codex_all|cw)\(\)[[:space:]]*\{' "${target_file}"; then
+    echo "Shell init already defines codex_all/cw function: ${target_file}"
+    return 0
+  fi
+  if grep -Eq "^[[:space:]]*alias[[:space:]]+(codex_all|cw|ca)=" "${target_file}"; then
+    echo "Shell init already defines codex_all/cw alias: ${target_file}"
     return 0
   fi
   cat >>"${target_file}" <<EOF
