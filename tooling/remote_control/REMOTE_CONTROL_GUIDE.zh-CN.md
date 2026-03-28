@@ -57,6 +57,31 @@
 - 本地交互式 Codex 启动前，会把跨账号 transcript 镜像到当前 `CODEX_HOME`
 - 原生 Codex 终端中的 `/resume` 也能看到这些已镜像会话
 
+## 0. `codex_all` 命令到底在哪里
+
+如果你在拉取仓库后想确认 `codex_all` 是怎么来的，当前结构是：
+
+- 最外层入口：
+  - [tooling/remote_control/bin/codex_all](./bin/codex_all)
+- 实际本地命令分发：
+  - [tooling/remote_control/bin/cw](./bin/cw)
+- 真正的共享会话 CLI 逻辑：
+  - [tooling/remote_control/cc_connect_src/cmd/cc-connect/share.go](./cc_connect_src/cmd/cc-connect/share.go)
+
+也就是说：
+
+- `codex_all` 本身只是一个很薄的 wrapper
+- `cw` 负责把你的输入翻译成 `cc-connect share ...`
+- 真正的共享 slot、切号、resume、lease 逻辑都在 `share.go`
+
+之前的问题点在于：
+
+- repo 里虽然有 `tooling/remote_control/bin/codex_all`
+- 但把它变成“全局可用命令”的动作只做在本机 `~/.bashrc`
+- 这一步不属于仓库内容，所以别人拉取后不能靠文档独立完成配置
+
+现在这部分已经补成仓库内步骤，见下面的“1.7 安装本地命令到 PATH”。
+
 ## 1. 本地构建与配置
 
 ### 1.1 提交边界
@@ -81,6 +106,7 @@
   - [cc_connect_src](./cc_connect_src)
 - 构建脚本：
   - [build_patched_cc_connect.sh](./scripts/build_patched_cc_connect.sh)
+  - [install_user_commands.sh](./scripts/install_user_commands.sh)
 - wrapper：
   - [cc-connect](./bin/cc-connect)
   - [codex_all](./bin/codex_all)
@@ -93,9 +119,9 @@
 
 ### 1.3 当前 workspace 的本地配置重点
 
-当前 workspace 已经切成 repo-local 运行态：
+推荐把运行态固定成 repo-local：
 
-- `data_dir = "/home/linzhe/PCLR_compare/.cc-connect"`
+- `data_dir = "<workspace-root>/.cc-connect"`
 
 这意味着：
 
@@ -115,17 +141,27 @@ cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
 
 至少需要填这些字段：
 
+- `data_dir = "<workspace-root>/.cc-connect"`
+- `projects.name = "<workspace-name>"`
 - `admin_from`
 - `allow_from`
 - `app_id`
 - `app_secret`
 - 每个 provider 的 `CODEX_HOME`
-- 正确的 `work_dir` / `base_dir`
+- `projects.agent.options.work_dir = "<workspace-root>"`
+- `[[commands]].work_dir = "<workspace-root>"`
+
+如果你是“每个 git clone 都单独初始化”的使用方式：
+
+- 不要保留模板里的 `mode = "multi-workspace"`
+- 不要保留模板里的 `base_dir`
+- 一个 clone 对应一个 `projects.name`
+- `work_dir` 和 `data_dir` 都应指向当前 workspace
 
 ### 1.5 本地构建 patched cc-connect
 
 ```bash
-cd /home/linzhe/PCLR_compare
+cd "$(git rev-parse --show-toplevel)"
 tooling/remote_control/scripts/build_patched_cc_connect.sh
 ```
 
@@ -139,7 +175,7 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 ### 1.6 启动
 
 ```bash
-cd /home/linzhe/PCLR_compare
+cd "$(git rev-parse --show-toplevel)"
 tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_connect.local.toml
 ```
 
@@ -147,6 +183,53 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 - 优先执行本地 patched binary
 - 如果没有 patched binary，再回退到官方预编译 binary
+
+### 1.7 安装本地命令到 PATH
+
+如果你希望在任意新开的终端里直接使用：
+
+- `codex_all`
+- `cw`
+
+不要依赖手工把 shell function 写进 `~/.bashrc`。  
+更稳的方式是执行仓库内安装脚本：
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+tooling/remote_control/scripts/install_user_commands.sh --shell-init
+```
+
+这个脚本会把以下命令安装到 `~/.local/bin/`：
+
+- `codex_all`
+- `cw`
+
+这个命令还会：
+
+- 把 `codex_all` 和 `cw` 链接到 `~/.local/bin/`
+- 在 `~/.profile` 和 `~/.bashrc` 中补一段最小 PATH 配置（如果原来没有）
+
+如果当前 shell 还找不到命令，先执行：
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+之后重新开一个 shell 即可。
+
+如果你想换安装目录，也可以临时覆盖：
+
+```bash
+BIN_DIR="$HOME/bin" tooling/remote_control/scripts/install_user_commands.sh
+```
+
+如果你只想安装命令链接，不想自动补 shell 初始化，也可以不带 `--shell-init`：
+
+```bash
+tooling/remote_control/scripts/install_user_commands.sh
+```
+
+这一步补上之后，别人拉取仓库时就不需要复制你的私有 `~/.bashrc` 配置了。
 
 ## 2. 飞书 MVP 接入
 
@@ -239,6 +322,8 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 - `codex_all`
 - `cw`
+
+要直接在任意终端输入这两个命令，先完成“1.7 安装本地命令到 PATH”。
 
 当前行为：
 

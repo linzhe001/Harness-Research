@@ -206,6 +206,27 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 The resulting local binary belongs under `tooling/remote_control/vendor/bin/`
 and should stay out of Git history.
 
+### 3b.1 Reinstall local remote-control commands if needed
+
+If your harness pull changed either of these:
+
+- `tooling/remote_control/bin/**`
+- `tooling/remote_control/scripts/install_user_commands.sh`
+
+rerun the local command installer:
+
+```bash
+tooling/remote_control/scripts/install_user_commands.sh --shell-init
+```
+
+This refreshes the user-local command shims such as:
+
+- `codex_all`
+- `cw`
+
+If you do not want the installer to manage `~/.profile` / `~/.bashrc`, you can
+rerun it without `--shell-init`.
+
 ### 3c. Recheck live `cc-connect` workspace assumptions
 
 If you use Feishu / remote control, also verify the live local config still

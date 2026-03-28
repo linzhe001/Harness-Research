@@ -1,11 +1,9 @@
-data_dir = ""
+data_dir = "/abs/path/to/workspace/.cc-connect"
 attachment_send = ""
 language = "zh"
 
 [[projects]]
-  name = "harness-research"
-  mode = "multi-workspace"
-  base_dir = "/abs/path/to/workspaces"
+  name = "your-workspace-name"
   admin_from = "your_feishu_open_id"
 
   [projects.agent]
@@ -17,6 +15,7 @@ language = "zh"
       provider = "codex_primary"
       preferred_models = ["gpt-5.4", "gpt-5.4-codex", "gpt-5.3-codex", "o3"]
       reasoning_effort = "xhigh"
+      work_dir = "/abs/path/to/workspace"
 
     [[projects.agent.providers]]
       name = "codex_primary"
@@ -64,14 +63,14 @@ language = "zh"
   description = "Harness auto-iterate remote wrapper / 自动迭代远程控制"
   prompt = ""
   exec = "tooling/remote_control/scripts/harness_remote.sh ai {{args}}"
-  work_dir = "/abs/path/to/Harness-Research"
+  work_dir = "/abs/path/to/workspace"
 
 [[commands]]
   name = "home"
   description = "Harness workspace summary / 工作台概览"
   prompt = ""
   exec = "tooling/remote_control/scripts/harness_remote.sh summary"
-  work_dir = "/abs/path/to/Harness-Research"
+  work_dir = "/abs/path/to/workspace"
 
 [[aliases]]
   name = "工作台"
