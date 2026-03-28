@@ -11,9 +11,9 @@
 配套文档关系如下：
 
 - 框架初始化：
-  - [AI_AGENT_SETUP.md](/home/linzhe/PCLR_compare/AI_AGENT_SETUP.md)
+  - [AI_AGENT_SETUP.md](../../AI_AGENT_SETUP.md)
 - Harness 更新 / 重编流程：
-  - [Harness_Update_Guide.md](/home/linzhe/PCLR_compare/Harness_Update_Guide.md)
+  - [Harness_Update_Guide.md](../../Harness_Update_Guide.md)
 
 ## 适用范围
 
@@ -33,14 +33,14 @@
 
 如果你是新 workspace 第一次接入：
 
-1. [AI_AGENT_SETUP.md](/home/linzhe/PCLR_compare/AI_AGENT_SETUP.md)
+1. [AI_AGENT_SETUP.md](../../AI_AGENT_SETUP.md)
 2. 本文的“1. 本地构建与配置”
 3. 本文的“2. 飞书 MVP 接入”
 4. 本文的“3. 共享会话模型”
 
 如果你已经接好，只是在维护：
 
-1. [Harness_Update_Guide.md](/home/linzhe/PCLR_compare/Harness_Update_Guide.md)
+1. [Harness_Update_Guide.md](../../Harness_Update_Guide.md)
 2. 本文的“1. 本地构建与配置”
 3. 本文的“3. 共享会话模型”
 
@@ -78,18 +78,18 @@
 ### 1.2 关键目录
 
 - 源码：
-  - [cc_connect_src](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src)
+  - [cc_connect_src](./cc_connect_src)
 - 构建脚本：
-  - [build_patched_cc_connect.sh](/home/linzhe/PCLR_compare/tooling/remote_control/scripts/build_patched_cc_connect.sh)
+  - [build_patched_cc_connect.sh](./scripts/build_patched_cc_connect.sh)
 - wrapper：
-  - [cc-connect](/home/linzhe/PCLR_compare/tooling/remote_control/bin/cc-connect)
-  - [codex_all](/home/linzhe/PCLR_compare/tooling/remote_control/bin/codex_all)
-  - [cw](/home/linzhe/PCLR_compare/tooling/remote_control/bin/cw)
+  - [cc-connect](./bin/cc-connect)
+  - [codex_all](./bin/codex_all)
+  - [cw](./bin/cw)
 - 模板：
-  - [cc_connect.local.example.toml](/home/linzhe/PCLR_compare/tooling/remote_control/config/templates/cc_connect.local.example.toml)
-  - [cc_connect_feishu_codex.example.toml](/home/linzhe/PCLR_compare/tooling/remote_control/config/templates/cc_connect_feishu_codex.example.toml)
+  - [cc_connect.local.example.toml](./config/templates/cc_connect.local.example.toml)
+  - [cc_connect_feishu_codex.example.toml](./config/templates/cc_connect_feishu_codex.example.toml)
 - 本地配置：
-  - [cc_connect.local.toml](/home/linzhe/PCLR_compare/tooling/remote_control/config/cc_connect.local.toml)
+  - [cc_connect.local.toml](./config/cc_connect.local.toml)
 
 ### 1.3 当前 workspace 的本地配置重点
 
@@ -159,8 +159,8 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 关键脚本：
 
-- [harness_remote.sh](/home/linzhe/PCLR_compare/tooling/remote_control/scripts/harness_remote.sh)
-- [harness_remote.py](/home/linzhe/PCLR_compare/tooling/remote_control/scripts/harness_remote.py)
+- [harness_remote.sh](./scripts/harness_remote.sh)
+- [harness_remote.py](./scripts/harness_remote.py)
 
 ### 2.2 当前推荐命令映射
 
@@ -222,8 +222,8 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 核心实现：
 
-- [shared_slots.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/core/shared_slots.go)
-- [engine_shared.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/core/engine_shared.go)
+- [shared_slots.go](./cc_connect_src/core/shared_slots.go)
+- [engine_shared.go](./cc_connect_src/core/engine_shared.go)
 
 ### 3.3 远程默认共享
 
@@ -254,9 +254,9 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 本地入口实现：
 
-- [share.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/cmd/cc-connect/share.go)
-- [cw](/home/linzhe/PCLR_compare/tooling/remote_control/bin/cw)
-- [codex_all](/home/linzhe/PCLR_compare/tooling/remote_control/bin/codex_all)
+- [share.go](./cc_connect_src/cmd/cc-connect/share.go)
+- [cw](./bin/cw)
+- [codex_all](./bin/codex_all)
 
 ### 3.5 跨账号 transcript 可见性
 
@@ -273,7 +273,7 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 
 对应实现：
 
-- [codex.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/agent/codex/codex.go)
+- [codex.go](./cc_connect_src/agent/codex/codex.go)
 
 ### 3.6 本地切号
 
@@ -339,16 +339,16 @@ tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_c
 关键代码：
 
 - slot / lease / local binding：
-  - [shared_slots.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/core/shared_slots.go)
+  - [shared_slots.go](./cc_connect_src/core/shared_slots.go)
 - 远程默认共享：
-  - [engine_shared.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/core/engine_shared.go)
+  - [engine_shared.go](./cc_connect_src/core/engine_shared.go)
 - 本地共享 CLI：
-  - [share.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/cmd/cc-connect/share.go)
+  - [share.go](./cc_connect_src/cmd/cc-connect/share.go)
 - 交互式 catalog 同步：
-  - [codex.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/agent/codex/codex.go)
+  - [codex.go](./cc_connect_src/agent/codex/codex.go)
 
 关键测试：
 
-- [shared_slots_test.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/core/shared_slots_test.go)
-- [share_test.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/cmd/cc-connect/share_test.go)
-- [session_home_test.go](/home/linzhe/PCLR_compare/tooling/remote_control/cc_connect_src/agent/codex/session_home_test.go)
+- [shared_slots_test.go](./cc_connect_src/core/shared_slots_test.go)
+- [share_test.go](./cc_connect_src/cmd/cc-connect/share_test.go)
+- [session_home_test.go](./cc_connect_src/agent/codex/session_home_test.go)

@@ -9,11 +9,11 @@ same-worktree dual-repo project.
 
 For remote-control and Feishu specific operator docs, also see:
 
-- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](/home/linzhe/PCLR_compare/tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
+- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
 
 For full framework bootstrap, see:
 
-- [AI_AGENT_SETUP.md](/home/linzhe/PCLR_compare/AI_AGENT_SETUP.md)
+- [AI_AGENT_SETUP.md](./AI_AGENT_SETUP.md)
 
 In this layout:
 

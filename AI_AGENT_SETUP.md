@@ -16,11 +16,11 @@ The two repos share one worktree, but they must not track the same files.
 
 Framework-wide docs:
 
-- [Harness_Update_Guide.md](/home/linzhe/PCLR_compare/Harness_Update_Guide.md) for day-2 harness pull/push and rebuild workflow
+- [Harness_Update_Guide.md](./Harness_Update_Guide.md) for day-2 harness pull/push and rebuild workflow
 
 Remote-control docs:
 
-- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](/home/linzhe/PCLR_compare/tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md) as the canonical operator guide
+- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md) as the canonical operator guide
 
 ## Framework Contents
 
