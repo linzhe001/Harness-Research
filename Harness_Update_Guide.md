@@ -252,6 +252,11 @@ If you changed `cc_connect.local.toml`, restart `cc-connect` before testing in
 Feishu. If the bot still says no workspace is bound, run `/workspace bind
 <workspace-name>` in that channel.
 
+If you are editing an existing local config rather than creating a fresh one
+from the template, follow the in-place migration checklist in
+[`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md`](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
+section `1.4`.
+
 ### 4. Check the research repo separately
 
 ```bash

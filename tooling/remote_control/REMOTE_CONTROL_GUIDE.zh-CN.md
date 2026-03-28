@@ -139,6 +139,32 @@ cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
   tooling/remote_control/config/cc_connect.local.toml
 ```
 
+如果你本地已经有 `tooling/remote_control/config/cc_connect.local.toml`，
+不要直接覆盖。更稳的做法是基于现有文件原地修改：
+
+1. 先保留你现有的密钥、`allow_from`、`admin_from`、`CODEX_HOME`
+2. 再对照模板和下面这份 checklist 把 workspace 相关字段改对
+
+建议重点检查：
+
+- `data_dir = "<workspace-root>/.cc-connect"`
+- `projects.name = "<workspace-name>"`
+- `projects.agent.options.work_dir = "<workspace-root>"`
+- 每个 `[[commands]].work_dir = "<workspace-root>"`
+- 如果当前 clone 只服务一个 workspace：
+  - 删除 `mode = "multi-workspace"`
+  - 删除 `base_dir`
+
+可以直接这样做一轮自检：
+
+```bash
+CURRENT_WORKSPACE="$(git rev-parse --show-toplevel)"
+WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
+
+rg -n 'data_dir = |name = |mode = |base_dir = |work_dir = ' \
+  tooling/remote_control/config/cc_connect.local.toml
+```
+
 至少需要填这些字段：
 
 - `data_dir = "<workspace-root>/.cc-connect"`
@@ -157,6 +183,12 @@ cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
 - 不要保留模板里的 `base_dir`
 - 一个 clone 对应一个 `projects.name`
 - `work_dir` 和 `data_dir` 都应指向当前 workspace
+
+改完已有 `cc_connect.local.toml` 后，后续步骤不变：
+
+1. `tooling/remote_control/scripts/build_patched_cc_connect.sh`
+2. `tooling/remote_control/scripts/install_user_commands.sh --shell-init`
+3. 重启 `tooling/remote_control/bin/cc-connect -config tooling/remote_control/config/cc_connect.local.toml`
 
 ### 1.5 本地构建 patched cc-connect
 

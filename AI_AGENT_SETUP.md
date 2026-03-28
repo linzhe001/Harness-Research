@@ -391,6 +391,11 @@ tooling/remote_control/scripts/install_user_commands.sh --shell-init
 This installs `codex_all` and `cw` into `~/.local/bin/` and adds the minimal
 PATH snippet needed for new shells.
 
+If `tooling/remote_control/config/cc_connect.local.toml` already exists on your
+machine, edit it in place instead of overwriting it. The workspace migration
+checklist lives in
+`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md` section `1.4`.
+
 If you change `cc_connect.local.toml`, restart `cc-connect` so the live process
 reloads the new project name, ACL, and workspace settings.
 
