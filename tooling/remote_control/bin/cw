@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+CONFIG_PATH="${REPO_ROOT}/tooling/remote_control/config/cc_connect.local.toml"
+CC_CONNECT="${SCRIPT_DIR}/cc-connect"
+
+if [[ $# -eq 0 ]]; then
+  exec "${CC_CONNECT}" share --config "${CONFIG_PATH}"
+fi
+
+case "$1" in
+  list|new|use|next|status|release|help|-h|--help)
+    subcommand="$1"
+    shift
+    exec "${CC_CONNECT}" share "${subcommand}" --config "${CONFIG_PATH}" "$@"
+    ;;
+  s[0-9]*)
+    exec "${CC_CONNECT}" share use --config "${CONFIG_PATH}" "$@"
+    ;;
+  -*)
+    exec "${CC_CONNECT}" share --config "${CONFIG_PATH}" "$@"
+    ;;
+  *)
+    exec "${CC_CONNECT}" share new --config "${CONFIG_PATH}" --title "$*"
+    ;;
+esac

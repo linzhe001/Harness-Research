@@ -278,12 +278,32 @@ type stubFailoverAgent struct {
 	nextSession AgentSession
 }
 
+type stubProviderWorkDirAgent struct {
+	stubProviderAgent
+	workDir string
+}
+
+func (a *stubProviderWorkDirAgent) GetWorkDir() string {
+	return a.workDir
+}
+
 func (a *stubFailoverAgent) Name() string { return "codex" }
 func (a *stubFailoverAgent) StartSession(_ context.Context, _ string) (AgentSession, error) {
 	if a.nextSession != nil {
 		return a.nextSession, nil
 	}
 	return &stubAgentSession{}, nil
+}
+
+type resumeFallbackAgent struct {
+	stubProviderAgent
+	startedWith []string
+}
+
+func (a *resumeFallbackAgent) Name() string { return "codex" }
+func (a *resumeFallbackAgent) StartSession(_ context.Context, sessionID string) (AgentSession, error) {
+	a.startedWith = append(a.startedWith, sessionID)
+	return newControllableSession(sessionID), nil
 }
 
 type stubUsageAgent struct {
@@ -298,6 +318,219 @@ func (a *stubUsageAgent) GetUsage(_ context.Context) (*UsageReport, error) {
 
 func newTestEngine() *Engine {
 	return NewEngine("test", &stubAgent{}, []Platform{&stubPlatformEngine{n: "test"}}, "", LangEnglish)
+}
+
+func TestEngineCmdSharedNewBindsSlot(t *testing.T) {
+	tmp := t.TempDir()
+	workspace := filepath.Join(tmp, "workspace")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatalf("mkdir workspace: %v", err)
+	}
+
+	platform := &stubPlatformEngine{n: "feishu"}
+	agent := &stubProviderWorkDirAgent{
+		stubProviderAgent: stubProviderAgent{
+			active: "acc1",
+			providers: []ProviderConfig{{
+				Name: "acc1",
+				Env:  map[string]string{"CODEX_HOME": filepath.Join(tmp, ".codex-acc1")},
+			}},
+		},
+		workDir: workspace,
+	}
+	sessionStore := filepath.Join(tmp, "sessions", "test.json")
+	engine := NewEngine("test", agent, []Platform{platform}, sessionStore, LangEnglish)
+
+	msg := &Message{
+		SessionKey: "feishu:chat:user",
+		Platform:   "feishu",
+		UserName:   "Alice",
+		ReplyCtx:   "ctx",
+	}
+	engine.cmdShared(platform, msg, []string{"new", "train", "debug"})
+
+	if got := engine.sessions.GetSharedSlotBinding(msg.SessionKey); got != "s001" {
+		t.Fatalf("shared slot binding = %q, want s001", got)
+	}
+
+	manager := engine.sharedSlotManagerForSessions(engine.sessions)
+	view, err := manager.GetSlot(workspace, "s001")
+	if err != nil {
+		t.Fatalf("GetSlot: %v", err)
+	}
+	if view.Lease == nil || view.Lease.HolderID != msg.SessionKey {
+		t.Fatalf("slot lease = %+v, want remote holder %q", view.Lease, msg.SessionKey)
+	}
+
+	sent := platform.getSent()
+	if len(sent) == 0 || !strings.Contains(sent[len(sent)-1], "s001") {
+		t.Fatalf("sent replies = %v, want slot creation confirmation", sent)
+	}
+}
+
+func TestEngineEnsureBoundSharedSlotSetsScopedSession(t *testing.T) {
+	tmp := t.TempDir()
+	workspace := filepath.Join(tmp, "workspace")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatalf("mkdir workspace: %v", err)
+	}
+
+	codexHome := filepath.Join(tmp, ".codex-acc1")
+	platform := &stubPlatformEngine{n: "feishu"}
+	agent := &stubProviderWorkDirAgent{
+		stubProviderAgent: stubProviderAgent{
+			active: "acc1",
+			providers: []ProviderConfig{{
+				Name: "acc1",
+				Env:  map[string]string{"CODEX_HOME": codexHome},
+			}},
+		},
+		workDir: workspace,
+	}
+	sessionStore := filepath.Join(tmp, "sessions", "test.json")
+	engine := NewEngine("test", agent, []Platform{platform}, sessionStore, LangEnglish)
+	manager := engine.sharedSlotManagerForSessions(engine.sessions)
+
+	slot, err := manager.CreateSlot(workspace, "debug", "remote")
+	if err != nil {
+		t.Fatalf("CreateSlot: %v", err)
+	}
+	if _, err := manager.UpdateSlot(workspace, slot.Slot, SharedSlotRecordUpdate{
+		SessionID:    "sess_123",
+		ProviderName: "acc1",
+		CodexHome:    codexHome,
+		UpdatedBy:    "remote",
+	}); err != nil {
+		t.Fatalf("UpdateSlot: %v", err)
+	}
+
+	msg := &Message{
+		SessionKey: "feishu:chat:user",
+		Platform:   "feishu",
+		UserName:   "Alice",
+	}
+	engine.sessions.SetSharedSlotBinding(msg.SessionKey, slot.Slot)
+	session := engine.sessions.GetOrCreateActive(msg.SessionKey)
+
+	if err := engine.ensureBoundSharedSlot(msg, engine.sessions, agent, session); err != nil {
+		t.Fatalf("ensureBoundSharedSlot: %v", err)
+	}
+	if got := session.GetAgentSessionIDForScope(codexHome); got != "sess_123" {
+		t.Fatalf("scoped session id = %q, want sess_123", got)
+	}
+	view, err := manager.GetSlot(workspace, slot.Slot)
+	if err != nil {
+		t.Fatalf("GetSlot: %v", err)
+	}
+	if view.Lease == nil || view.Lease.HolderID != msg.SessionKey {
+		t.Fatalf("slot lease = %+v, want remote holder %q", view.Lease, msg.SessionKey)
+	}
+}
+
+func TestEngineEnsureBoundSharedSlotAutoCreatesBinding(t *testing.T) {
+	tmp := t.TempDir()
+	workspace := filepath.Join(tmp, "workspace")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatalf("mkdir workspace: %v", err)
+	}
+
+	codexHome := filepath.Join(tmp, ".codex-acc1")
+	agent := &stubProviderWorkDirAgent{
+		stubProviderAgent: stubProviderAgent{
+			active: "acc1",
+			providers: []ProviderConfig{{
+				Name: "acc1",
+				Env:  map[string]string{"CODEX_HOME": codexHome},
+			}},
+		},
+		workDir: workspace,
+	}
+	engine := NewEngine("test", agent, []Platform{&stubPlatformEngine{n: "feishu"}}, filepath.Join(tmp, "sessions", "test.json"), LangEnglish)
+	msg := &Message{
+		SessionKey: "feishu:chat:user",
+		Platform:   "feishu",
+		UserName:   "Alice",
+	}
+	session := engine.sessions.GetOrCreateActive(msg.SessionKey)
+	session.SetAgentInfoForScope(codexHome, "sess_legacy", agent.Name(), "legacy")
+
+	if err := engine.ensureBoundSharedSlot(msg, engine.sessions, agent, session); err != nil {
+		t.Fatalf("ensureBoundSharedSlot: %v", err)
+	}
+
+	if got := engine.sessions.GetSharedSlotBinding(msg.SessionKey); got != "s001" {
+		t.Fatalf("shared slot binding = %q, want s001", got)
+	}
+
+	manager := engine.sharedSlotManagerForSessions(engine.sessions)
+	view, err := manager.GetSlot(workspace, "s001")
+	if err != nil {
+		t.Fatalf("GetSlot: %v", err)
+	}
+	if view.Slot.SessionID != "sess_legacy" {
+		t.Fatalf("slot session id = %q, want sess_legacy", view.Slot.SessionID)
+	}
+	if view.Lease == nil || view.Lease.HolderID != msg.SessionKey {
+		t.Fatalf("slot lease = %+v, want remote holder %q", view.Lease, msg.SessionKey)
+	}
+}
+
+func TestEngineCmdNewRebindsFreshSharedSlot(t *testing.T) {
+	tmp := t.TempDir()
+	workspace := filepath.Join(tmp, "workspace")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatalf("mkdir workspace: %v", err)
+	}
+
+	platform := &stubPlatformEngine{n: "feishu"}
+	agent := &stubProviderWorkDirAgent{
+		stubProviderAgent: stubProviderAgent{
+			active: "acc1",
+			providers: []ProviderConfig{{
+				Name: "acc1",
+				Env:  map[string]string{"CODEX_HOME": filepath.Join(tmp, ".codex-acc1")},
+			}},
+		},
+		workDir: workspace,
+	}
+	engine := NewEngine("test", agent, []Platform{platform}, filepath.Join(tmp, "sessions", "test.json"), LangEnglish)
+	msg := &Message{
+		SessionKey: "feishu:chat:user",
+		Platform:   "feishu",
+		UserName:   "Alice",
+		ReplyCtx:   "ctx",
+	}
+	manager := engine.sharedSlotManagerForSessions(engine.sessions)
+
+	engine.cmdShared(platform, msg, []string{"new", "old"})
+	if got := engine.sessions.GetSharedSlotBinding(msg.SessionKey); got != "s001" {
+		t.Fatalf("shared slot binding after /shared new = %q, want s001", got)
+	}
+
+	engine.cmdNew(platform, msg, []string{"fresh"})
+
+	if got := engine.sessions.GetSharedSlotBinding(msg.SessionKey); got != "s002" {
+		t.Fatalf("shared slot binding after /new = %q, want s002", got)
+	}
+
+	oldView, err := manager.GetSlot(workspace, "s001")
+	if err != nil {
+		t.Fatalf("GetSlot old: %v", err)
+	}
+	if oldView.Lease != nil {
+		t.Fatalf("old slot lease = %+v, want released", oldView.Lease)
+	}
+
+	newView, err := manager.GetSlot(workspace, "s002")
+	if err != nil {
+		t.Fatalf("GetSlot new: %v", err)
+	}
+	if newView.Lease == nil || newView.Lease.HolderID != msg.SessionKey {
+		t.Fatalf("new slot lease = %+v, want remote holder %q", newView.Lease, msg.SessionKey)
+	}
+	if newView.Slot.Title != "fresh" {
+		t.Fatalf("new slot title = %q, want fresh", newView.Slot.Title)
+	}
 }
 
 func TestEngineSendToSessionWithAttachments(t *testing.T) {
@@ -3311,6 +3544,37 @@ func TestCleanupCAS_UnconditionalWithoutExpected(t *testing.T) {
 
 	if current != nil {
 		t.Fatal("expected unconditional cleanup to delete state")
+	}
+}
+
+func TestGetOrCreateInteractiveStateWith_ResumesAcrossScopes(t *testing.T) {
+	p := &stubPlatformEngine{n: "test"}
+	agent := &resumeFallbackAgent{
+		stubProviderAgent: stubProviderAgent{
+			providers: []ProviderConfig{
+				{Name: "acc1", Env: map[string]string{"CODEX_HOME": "/tmp/acc1"}},
+				{Name: "acc2", Env: map[string]string{"CODEX_HOME": "/tmp/acc2"}},
+			},
+			active: "acc2",
+		},
+	}
+	e := NewEngine("test", agent, []Platform{p}, "", LangEnglish)
+
+	key := "test:ch:user1"
+	session := e.sessions.GetOrCreateActive(key)
+	session.SetAgentSessionIDForScope("/tmp/acc1", "sess-shared", "codex")
+
+	state := e.getOrCreateInteractiveStateWith(key, p, "ctx", session, e.sessions, nil)
+	if state == nil || state.agentSession == nil {
+		t.Fatal("expected interactive state with agent session")
+	}
+	defer state.agentSession.Close()
+
+	if len(agent.startedWith) != 1 || agent.startedWith[0] != "sess-shared" {
+		t.Fatalf("StartSession called with %v, want [sess-shared]", agent.startedWith)
+	}
+	if got := session.GetAgentSessionIDForScope("/tmp/acc2"); got != "sess-shared" {
+		t.Fatalf("scope /tmp/acc2 = %q, want sess-shared after cross-scope resume", got)
 	}
 }
 

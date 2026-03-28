@@ -1100,6 +1100,10 @@ func (e *Engine) handleMessage(p Platform, msg *Message) {
 
 	session := sessions.GetOrCreateActive(msg.SessionKey)
 	sessions.UpdateUserMeta(msg.SessionKey, msg.UserName, msg.ChatName)
+	if err := e.ensureBoundSharedSlot(msg, sessions, agent, session); err != nil {
+		e.reply(p, msg.ReplyCtx, formatSharedSlotAutoAttachError(err))
+		return
+	}
 	if !session.TryLock() {
 		// Check for /btw — inject into the running session mid-turn
 		trimmed := strings.TrimSpace(content)
@@ -1747,7 +1751,7 @@ func (e *Engine) getOrCreateInteractiveStateWith(sessionKey string, p Platform, 
 		return state
 	}
 
-	agentSID := session.GetAgentSessionIDForScope(sessionScope)
+	agentSID := session.GetResumeAgentSessionIDForScope(sessionScope)
 	startAt := time.Now()
 	agentSession, err := agent.StartSession(e.ctx, agentSID)
 	startElapsed := time.Since(startAt)
@@ -2086,6 +2090,7 @@ func (e *Engine) processInteractiveEvents(state *interactiveState, session *Sess
 
 			session.AddHistory("assistant", fullResponse)
 			sessions.Save()
+			e.syncBoundSharedSlot(sessionKey, sessions, state.agent, currentScopedAgentSessionID(session, state.agent))
 
 			turnDuration := time.Since(turnStart)
 			slog.Info("turn complete",
@@ -2373,6 +2378,7 @@ var builtinCommands = []struct {
 	{[]string{"name", "rename"}, "name"},
 	{[]string{"current"}, "current"},
 	{[]string{"status"}, "status"},
+	{[]string{"shared"}, "shared"},
 	{[]string{"usage", "quota"}, "usage"},
 	{[]string{"history"}, "history"},
 	{[]string{"allow"}, "allow"},
@@ -2533,6 +2539,8 @@ func (e *Engine) handleCommand(p Platform, msg *Message, raw string) bool {
 		e.cmdCurrent(p, msg)
 	case "status":
 		e.cmdStatus(p, msg)
+	case "shared":
+		e.cmdShared(p, msg, args)
 	case "usage":
 		e.cmdUsage(p, msg)
 	case "history":
@@ -2852,7 +2860,7 @@ func (e *Engine) handleWorkspaceCommand(p Platform, msg *Message, args []string)
 }
 
 func (e *Engine) cmdNew(p Platform, msg *Message, args []string) {
-	_, sessions, interactiveKey, err := e.commandContext(p, msg)
+	agent, sessions, interactiveKey, err := e.commandContext(p, msg)
 	if err != nil {
 		e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgWsResolutionError, err))
 		return
@@ -2866,6 +2874,21 @@ func (e *Engine) cmdNew(p Platform, msg *Message, args []string) {
 		name = strings.Join(args, " ")
 	}
 	s := sessions.NewSession(msg.SessionKey, name)
+	workspace := e.commandWorkspaceDir(msg)
+	manager := e.sharedSlotManagerForSessions(sessions)
+	if currentSlot := sessions.GetSharedSlotBinding(msg.SessionKey); currentSlot != "" {
+		e.releaseSharedSlotBinding(workspace, manager, sessions, "remote", msg.SessionKey, currentSlot, false)
+		sessions.ClearSharedSlotBinding(msg.SessionKey)
+	}
+	if slotID, err := e.bindFreshRemoteSharedSlot(msg, sessions, manager, workspace, s); err == nil {
+		if title := strings.TrimSpace(name); title != "" {
+			_, _ = manager.UpdateSlot(workspace, slotID, SharedSlotRecordUpdate{
+				Title:     title,
+				UpdatedBy: "remote-new",
+			})
+		}
+		e.resetConversationState(s, sessions, agent)
+	}
 	if name != "" {
 		e.reply(p, msg.ReplyCtx, fmt.Sprintf(e.i18n.T(MsgNewSessionCreatedName), name))
 	} else {
@@ -5408,6 +5431,13 @@ func currentScopedAgentSessionID(session *Session, agent Agent) string {
 		return ""
 	}
 	return session.GetAgentSessionIDForScope(currentSessionScope(agent))
+}
+
+func resumeScopedAgentSessionID(session *Session, agent Agent) string {
+	if session == nil {
+		return ""
+	}
+	return session.GetResumeAgentSessionIDForScope(currentSessionScope(agent))
 }
 
 func activateConversationScope(session *Session, sessions *SessionManager, agent Agent) {
@@ -8695,7 +8725,7 @@ func (e *Engine) HandleRelay(ctx context.Context, fromProject, chatID, message s
 	}
 
 	scope := currentSessionScope(e.agent)
-	agentSession, err := e.agent.StartSession(ctx, session.GetAgentSessionIDForScope(scope))
+	agentSession, err := e.agent.StartSession(ctx, session.GetResumeAgentSessionIDForScope(scope))
 	if err != nil {
 		return "", fmt.Errorf("start relay session: %w", err)
 	}

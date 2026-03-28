@@ -370,6 +370,8 @@ func (a *Agent) StartSession(ctx context.Context, sessionID string) (core.AgentS
 	preferredModels := a.preferredModelCandidatesLocked()
 	extraEnv := a.providerEnvLocked()
 	extraEnv = append(extraEnv, a.sessionEnv...)
+	activeCodexHome := resolveCodexHome(codexHomeFromEnvList(extraEnv))
+	sessionHomes := a.sessionHomesLocked()
 	if a.activeIdx >= 0 && a.activeIdx < len(a.providers) {
 		if m := a.providers[a.activeIdx].Model; m != "" {
 			model = m
@@ -383,7 +385,48 @@ func (a *Agent) StartSession(ctx context.Context, sessionID string) (core.AgentS
 		cancel()
 	}
 
+	if sessionID != "" {
+		if err := ensureSessionTranscriptInHome(sessionID, activeCodexHome, sessionHomes); err != nil {
+			slog.Warn("codex: failed to sync transcript into active CODEX_HOME",
+				"session_id", sessionID,
+				"codex_home", activeCodexHome,
+				"error", err,
+			)
+		}
+	}
+
 	return newCodexSession(ctx, a.workDir, model, reasoningEffort, mode, sessionID, extraEnv)
+}
+
+func (a *Agent) PrepareInteractiveSessionCatalog(_ context.Context) error {
+	a.mu.RLock()
+	workDir := a.workDir
+	activeCodexHome := resolveCodexHome(a.currentCodexHomeLocked())
+	homes := a.sessionHomesLocked()
+	a.mu.RUnlock()
+
+	if strings.TrimSpace(workDir) == "" || strings.TrimSpace(activeCodexHome) == "" || len(homes) == 0 {
+		return nil
+	}
+
+	sessions, err := listCodexSessions(workDir, homes)
+	if err != nil {
+		return err
+	}
+
+	var syncErrs []string
+	for _, info := range sessions {
+		if strings.TrimSpace(info.ID) == "" {
+			continue
+		}
+		if err := ensureSessionTranscriptInHome(info.ID, activeCodexHome, homes); err != nil {
+			syncErrs = append(syncErrs, fmt.Sprintf("%s: %v", info.ID, err))
+		}
+	}
+	if len(syncErrs) > 0 {
+		return fmt.Errorf("sync workspace session catalog: %s", strings.Join(syncErrs, "; "))
+	}
+	return nil
 }
 
 func (a *Agent) ListSessions(_ context.Context) ([]core.AgentSessionInfo, error) {
@@ -405,11 +448,7 @@ func (a *Agent) DeleteSession(_ context.Context, sessionID string) error {
 	a.mu.RLock()
 	homes := a.sessionHomesLocked()
 	a.mu.RUnlock()
-	path := findSessionFile(sessionID, homes)
-	if path == "" {
-		return fmt.Errorf("session file not found: %s", sessionID)
-	}
-	return os.Remove(path)
+	return deleteSessionFiles(sessionID, homes)
 }
 
 func (a *Agent) Stop() error { return nil }

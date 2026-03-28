@@ -259,6 +259,20 @@ func TestSession_ScopedAgentSessionIDs(t *testing.T) {
 	}
 }
 
+func TestSession_GetResumeAgentSessionIDForScope_FallsBackAcrossScopes(t *testing.T) {
+	s := &Session{}
+
+	s.SetAgentSessionIDForScope("home-a", "sess-a", "codex")
+	if got := s.GetResumeAgentSessionIDForScope("home-b"); got != "sess-a" {
+		t.Fatalf("GetResumeAgentSessionIDForScope(home-b) = %q, want sess-a", got)
+	}
+
+	s.SetAgentSessionIDForScope("home-b", "sess-b", "codex")
+	if got := s.GetResumeAgentSessionIDForScope("home-b"); got != "sess-b" {
+		t.Fatalf("GetResumeAgentSessionIDForScope(home-b) after scoped set = %q, want sess-b", got)
+	}
+}
+
 func TestSession_GetName(t *testing.T) {
 	s := &Session{Name: "test-session"}
 	if got := s.GetName(); got != "test-session" {
@@ -360,6 +374,26 @@ func TestSessionManager_UserMetaPersistence(t *testing.T) {
 	meta := sm2.GetUserMeta("feishu:oc_abc:ou_xyz")
 	if meta == nil || meta.UserName != "Zhang San" || meta.ChatName != "Group Name" {
 		t.Errorf("expected persisted meta, got %+v", meta)
+	}
+}
+
+func TestSessionManager_SharedSlotBindingPersistence(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sessions.json")
+
+	sm1 := NewSessionManager(path)
+	sm1.NewSession("feishu:chat:user", "test")
+	sm1.SetSharedSlotBinding("feishu:chat:user", "s003")
+
+	sm2 := NewSessionManager(path)
+	if got := sm2.GetSharedSlotBinding("feishu:chat:user"); got != "s003" {
+		t.Fatalf("GetSharedSlotBinding = %q, want s003", got)
+	}
+
+	sm2.ClearSharedSlotBinding("feishu:chat:user")
+	sm3 := NewSessionManager(path)
+	if got := sm3.GetSharedSlotBinding("feishu:chat:user"); got != "" {
+		t.Fatalf("GetSharedSlotBinding after clear = %q, want empty", got)
 	}
 }
 

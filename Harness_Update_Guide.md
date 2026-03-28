@@ -5,6 +5,16 @@
 This guide explains the day-2 pull and push workflow for Harness Research in a
 same-worktree dual-repo project.
 
+## Related Framework Docs
+
+For remote-control and Feishu specific operator docs, also see:
+
+- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](/home/linzhe/PCLR_compare/tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
+
+For full framework bootstrap, see:
+
+- [AI_AGENT_SETUP.md](/home/linzhe/PCLR_compare/AI_AGENT_SETUP.md)
+
 In this layout:
 
 - the harness repo lives in `.harness`

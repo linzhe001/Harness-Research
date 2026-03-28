@@ -32,6 +32,7 @@
 /tooling/remote_control/vendor/package.json
 /tooling/remote_control/vendor/package-lock.json
 /.npm-cache/
+/.cc-connect/
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/

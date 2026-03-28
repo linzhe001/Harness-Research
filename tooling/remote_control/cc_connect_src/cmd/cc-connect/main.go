@@ -59,6 +59,9 @@ func main() {
 		case "sessions":
 			runSessions(os.Args[2:])
 			return
+		case "share":
+			runShare(os.Args[2:])
+			return
 		case "daemon":
 			runDaemon(os.Args[2:])
 			return
@@ -827,6 +830,15 @@ Commands:
   sessions           Browse session history
     list             List all sessions (pipe-friendly)
     show <id>        Show session messages (-n N for last N)
+
+  share              Share Codex sessions between local manual use and remote_control
+    list             List workspace shared slots
+    new              Start a new local interactive slot
+    use <slot>       Resume a shared slot locally
+    next             Switch the current local shared slot to another account automatically
+    status <slot>    Show slot registry + lease state
+    release <slot>   Release a slot lease (--force to override)
+                     No args defaults to the current local shared slot, or creates one if missing; passing s003 resumes that slot
 
   relay              Cross-project message relay
     send             Send a message to another project and get the response

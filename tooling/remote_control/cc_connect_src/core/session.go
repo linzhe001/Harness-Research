@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -58,13 +59,19 @@ func normalizeSessionScope(scope string) string {
 	return strings.TrimSpace(scope)
 }
 
+func (s *Session) getExactScopedAgentSessionIDLocked(scope string) string {
+	scope = normalizeSessionScope(scope)
+	if scope == "" || s.ScopedAgentSessionIDs == nil {
+		return ""
+	}
+	return strings.TrimSpace(s.ScopedAgentSessionIDs[scope])
+}
+
 func (s *Session) getScopedAgentSessionIDLocked(scope string) string {
 	scope = normalizeSessionScope(scope)
 	if scope != "" {
-		if s.ScopedAgentSessionIDs != nil {
-			if id := strings.TrimSpace(s.ScopedAgentSessionIDs[scope]); id != "" {
-				return id
-			}
+		if id := s.getExactScopedAgentSessionIDLocked(scope); id != "" {
+			return id
 		}
 		if legacyScope := normalizeSessionScope(s.AgentSessionScope); legacyScope != "" && legacyScope == scope {
 			return strings.TrimSpace(s.AgentSessionID)
@@ -77,6 +84,41 @@ func (s *Session) getScopedAgentSessionIDLocked(scope string) string {
 	}
 	if activeScope := normalizeSessionScope(s.AgentSessionScope); activeScope != "" && s.ScopedAgentSessionIDs != nil {
 		return strings.TrimSpace(s.ScopedAgentSessionIDs[activeScope])
+	}
+	return ""
+}
+
+func (s *Session) getResumeAgentSessionIDLocked(scope string) string {
+	if id := s.getScopedAgentSessionIDLocked(scope); id != "" {
+		return id
+	}
+	if id := strings.TrimSpace(s.AgentSessionID); id != "" {
+		return id
+	}
+
+	activeScope := normalizeSessionScope(s.AgentSessionScope)
+	if activeScope != "" {
+		if id := s.getExactScopedAgentSessionIDLocked(activeScope); id != "" {
+			return id
+		}
+	}
+
+	if len(s.ScopedAgentSessionIDs) == 0 {
+		return ""
+	}
+
+	scopes := make([]string, 0, len(s.ScopedAgentSessionIDs))
+	for candidateScope, id := range s.ScopedAgentSessionIDs {
+		if strings.TrimSpace(id) == "" {
+			continue
+		}
+		scopes = append(scopes, candidateScope)
+	}
+	sort.Strings(scopes)
+	for _, candidateScope := range scopes {
+		if id := strings.TrimSpace(s.ScopedAgentSessionIDs[candidateScope]); id != "" {
+			return id
+		}
 	}
 	return ""
 }
@@ -174,6 +216,15 @@ func (s *Session) GetAgentSessionIDForScope(scope string) string {
 	return s.getScopedAgentSessionIDLocked(scope)
 }
 
+// GetResumeAgentSessionIDForScope returns the best backend-session candidate to
+// resume for the given scope. It prefers an exact scoped binding, then falls
+// back to the currently active binding, then any other known scoped binding.
+func (s *Session) GetResumeAgentSessionIDForScope(scope string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.getResumeAgentSessionIDLocked(scope)
+}
+
 // GetName atomically reads the session name.
 func (s *Session) GetName() string {
 	s.mu.Lock()
@@ -265,6 +316,7 @@ type sessionSnapshot struct {
 	Counter       int64                `json:"counter"`
 	SessionNames  map[string]string    `json:"session_names,omitempty"` // agent session ID → custom name
 	UserMeta      map[string]*UserMeta `json:"user_meta,omitempty"`     // sessionKey → display info
+	SharedSlots   map[string]string    `json:"shared_slots,omitempty"`  // sessionKey → shared slot binding
 }
 
 // SessionManager supports multiple named sessions per user with active-session tracking.
@@ -276,6 +328,7 @@ type SessionManager struct {
 	userSessions  map[string][]string
 	sessionNames  map[string]string    // agent session ID → custom name
 	userMeta      map[string]*UserMeta // sessionKey → display info
+	sharedSlots   map[string]string    // sessionKey → shared slot binding
 	counter       int64
 	storePath     string // empty = no persistence
 }
@@ -287,6 +340,7 @@ func NewSessionManager(storePath string) *SessionManager {
 		userSessions:  make(map[string][]string),
 		sessionNames:  make(map[string]string),
 		userMeta:      make(map[string]*UserMeta),
+		sharedSlots:   make(map[string]string),
 		storePath:     storePath,
 	}
 	if storePath != "" {
@@ -429,6 +483,31 @@ func (sm *SessionManager) GetUserMeta(sessionKey string) *UserMeta {
 	return &cp
 }
 
+// SetSharedSlotBinding binds a platform session key to a shared slot.
+func (sm *SessionManager) SetSharedSlotBinding(sessionKey, slot string) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	slot = strings.TrimSpace(slot)
+	if slot == "" {
+		delete(sm.sharedSlots, sessionKey)
+	} else {
+		sm.sharedSlots[sessionKey] = slot
+	}
+	sm.saveLocked()
+}
+
+// GetSharedSlotBinding returns the currently bound shared slot for a platform session.
+func (sm *SessionManager) GetSharedSlotBinding(sessionKey string) string {
+	sm.mu.RLock()
+	defer sm.mu.RUnlock()
+	return strings.TrimSpace(sm.sharedSlots[sessionKey])
+}
+
+// ClearSharedSlotBinding removes any shared slot binding for a platform session.
+func (sm *SessionManager) ClearSharedSlotBinding(sessionKey string) {
+	sm.SetSharedSlotBinding(sessionKey, "")
+}
+
 // AllSessions returns all sessions across all user keys.
 func (sm *SessionManager) AllSessions() []*Session {
 	sm.mu.RLock()
@@ -542,6 +621,7 @@ func (sm *SessionManager) saveLocked() {
 		Counter:       sm.counter,
 		SessionNames:  sm.sessionNames,
 		UserMeta:      sm.userMeta,
+		SharedSlots:   sm.sharedSlots,
 	}
 	data, err := json.MarshalIndent(snap, "", "  ")
 	if err != nil {
@@ -575,6 +655,7 @@ func (sm *SessionManager) load() {
 	sm.userSessions = snap.UserSessions
 	sm.sessionNames = snap.SessionNames
 	sm.userMeta = snap.UserMeta
+	sm.sharedSlots = snap.SharedSlots
 	sm.counter = snap.Counter
 
 	if sm.sessions == nil {
@@ -591,6 +672,9 @@ func (sm *SessionManager) load() {
 	}
 	if sm.userMeta == nil {
 		sm.userMeta = make(map[string]*UserMeta)
+	}
+	if sm.sharedSlots == nil {
+		sm.sharedSlots = make(map[string]string)
 	}
 
 	slog.Info("session: loaded from disk", "path", sm.storePath, "sessions", len(sm.sessions))

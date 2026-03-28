@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,6 +21,12 @@ type sessionHomeRef struct {
 	SessionScope string
 }
 
+type sessionFileRef struct {
+	Home    sessionHomeRef
+	Path    string
+	ModTime time.Time
+}
+
 // listCodexSessions scans one or more CODEX_HOME/sessions/ trees for JSONL
 // transcript files whose cwd matches workDir.
 func listCodexSessions(workDir string, homes []sessionHomeRef) ([]core.AgentSessionInfo, error) {
@@ -32,7 +39,7 @@ func listCodexSessions(workDir string, homes []sessionHomeRef) ([]core.AgentSess
 		return nil, nil
 	}
 
-	var sessions []core.AgentSessionInfo
+	sessionsByID := make(map[string]core.AgentSessionInfo)
 	for _, home := range homes {
 		codexHome := resolveCodexHome(home.CodexHome)
 		if codexHome == "" {
@@ -59,8 +66,16 @@ func listCodexSessions(workDir string, homes []sessionHomeRef) ([]core.AgentSess
 			info.ProviderName = home.ProviderName
 			info.SessionScope = home.SessionScope
 			patchSessionSource(info.ID, codexHome)
-			sessions = append(sessions, *info)
+			if existing, ok := sessionsByID[info.ID]; ok && !info.ModifiedAt.After(existing.ModifiedAt) {
+				continue
+			}
+			sessionsByID[info.ID] = *info
 		}
+	}
+
+	sessions := make([]core.AgentSessionInfo, 0, len(sessionsByID))
+	for _, info := range sessionsByID {
+		sessions = append(sessions, info)
 	}
 
 	sort.Slice(sessions, func(i, j int) bool {
@@ -166,8 +181,26 @@ func parseCodexSessionFile(path, filterCwd string) *core.AgentSessionInfo {
 	}
 }
 
-// findSessionFile locates the JSONL transcript for a given session ID.
-func findSessionFile(sessionID string, homes []sessionHomeRef) string {
+func pickLatestSessionFile(refs []sessionFileRef) *sessionFileRef {
+	if len(refs) == 0 {
+		return nil
+	}
+	best := refs[0]
+	for _, ref := range refs[1:] {
+		if ref.ModTime.After(best.ModTime) {
+			best = ref
+		}
+	}
+	return &best
+}
+
+func findSessionFiles(sessionID string, homes []sessionHomeRef) []sessionFileRef {
+	sessionID = strings.TrimSpace(sessionID)
+	if sessionID == "" {
+		return nil
+	}
+
+	var refs []sessionFileRef
 	for _, home := range homes {
 		codexHome := resolveCodexHome(home.CodexHome)
 		if codexHome == "" {
@@ -175,21 +208,144 @@ func findSessionFile(sessionID string, homes []sessionHomeRef) string {
 		}
 		sessionsDir := filepath.Join(codexHome, "sessions")
 
-		var found string
 		_ = filepath.Walk(sessionsDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() || found != "" {
+			if err != nil || info == nil || info.IsDir() {
 				return nil
 			}
 			if strings.Contains(filepath.Base(path), sessionID) {
-				found = path
+				refs = append(refs, sessionFileRef{
+					Home: sessionHomeRef{
+						ProviderName: home.ProviderName,
+						CodexHome:    codexHome,
+						SessionScope: home.SessionScope,
+					},
+					Path:    path,
+					ModTime: info.ModTime(),
+				})
 			}
 			return nil
 		})
-		if found != "" {
-			return found
+	}
+	return refs
+}
+
+func filterSessionFilesByHome(refs []sessionFileRef, codexHome string) []sessionFileRef {
+	codexHome = resolveCodexHome(codexHome)
+	if codexHome == "" {
+		return nil
+	}
+
+	var filtered []sessionFileRef
+	for _, ref := range refs {
+		if resolveCodexHome(ref.Home.CodexHome) == codexHome {
+			filtered = append(filtered, ref)
 		}
 	}
+	return filtered
+}
+
+// findSessionFile locates the newest JSONL transcript for a given session ID.
+func findSessionFile(sessionID string, homes []sessionHomeRef) string {
+	if ref := pickLatestSessionFile(findSessionFiles(sessionID, homes)); ref != nil {
+		return ref.Path
+	}
 	return ""
+}
+
+func sessionFileDestinationForHome(sourcePath, sourceHome, targetHome string) string {
+	sourceHome = resolveCodexHome(sourceHome)
+	targetHome = resolveCodexHome(targetHome)
+	if sourceHome == "" || targetHome == "" {
+		return ""
+	}
+
+	sourceSessionsDir := filepath.Join(sourceHome, "sessions")
+	rel, err := filepath.Rel(sourceSessionsDir, sourcePath)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		rel = filepath.Base(sourcePath)
+	}
+	return filepath.Join(targetHome, "sessions", rel)
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return err
+	}
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	if err := out.Close(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ensureSessionTranscriptInHome(sessionID, codexHome string, homes []sessionHomeRef) error {
+	sessionID = strings.TrimSpace(sessionID)
+	codexHome = resolveCodexHome(codexHome)
+	if sessionID == "" || codexHome == "" {
+		return nil
+	}
+
+	allRefs := findSessionFiles(sessionID, homes)
+	latest := pickLatestSessionFile(allRefs)
+	if latest == nil {
+		return nil
+	}
+
+	targetRefs := filterSessionFilesByHome(allRefs, codexHome)
+	targetLatest := pickLatestSessionFile(targetRefs)
+	if targetLatest != nil && !latest.ModTime.After(targetLatest.ModTime) {
+		patchSessionSource(sessionID, codexHome)
+		return nil
+	}
+
+	for _, ref := range targetRefs {
+		_ = os.Remove(ref.Path)
+	}
+
+	dst := sessionFileDestinationForHome(latest.Path, latest.Home.CodexHome, codexHome)
+	if dst == "" {
+		return nil
+	}
+	if err := copyFile(latest.Path, dst); err != nil {
+		return err
+	}
+	_ = os.Chtimes(dst, latest.ModTime, latest.ModTime)
+	patchSessionSource(sessionID, codexHome)
+	return nil
+}
+
+func deleteSessionFiles(sessionID string, homes []sessionHomeRef) error {
+	refs := findSessionFiles(sessionID, homes)
+	if len(refs) == 0 {
+		return fmt.Errorf("session file not found: %s", sessionID)
+	}
+
+	seen := make(map[string]struct{}, len(refs))
+	for _, ref := range refs {
+		if _, ok := seen[ref.Path]; ok {
+			continue
+		}
+		seen[ref.Path] = struct{}{}
+		if err := os.Remove(ref.Path); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
 }
 
 // getSessionHistory reads the JSONL transcript and returns user/assistant messages.
@@ -279,6 +435,10 @@ func patchSessionSource(sessionID, codexHome string) {
 	if path == "" {
 		return
 	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -308,6 +468,7 @@ func patchSessionSource(sessionID, codexHome string) {
 	out = append(out, data[idx:]...)
 
 	_ = os.WriteFile(path, out, 0o644)
+	_ = os.Chtimes(path, info.ModTime(), info.ModTime())
 }
 
 func resolveCodexHome(codexHome string) string {
