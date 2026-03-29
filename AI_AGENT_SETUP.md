@@ -12,6 +12,31 @@ Set up one directory with two separate git histories:
 
 The two repos share one worktree, but they must not track the same files.
 
+## Bootstrap Preflight
+
+Before moving files around, identify which directory plays which role:
+
+- **target workspace**: the repo that should actually run harness
+- **framework source**: the place you copied Harness Research from
+- **baseline/reference repo**: an older project used only for comparison
+
+Only bootstrap the **target workspace**. Do not accidentally initialize the
+framework source clone or a baseline repo as the live workspace.
+
+Practical example from a real bring-up:
+
+- `Aegis/` was the target workspace
+- `Harness-Research/` was the framework source tree
+- `MARS/` was only a baseline reference repo
+
+Quick preflight checklist:
+
+- `pwd` is the intended live workspace root
+- this directory is the one that should own `.git`, `CLAUDE.md`, `AGENTS.md`,
+  `docs/auto_iterate_goal.md`, and runtime folders such as `.cc-connect/`
+- any baseline repo stays as a sibling reference directory, not the live root
+- any copied framework source directory is treated as bootstrap input only
+
 ## Documentation Map
 
 Framework-wide docs:
@@ -157,6 +182,18 @@ That split matters now that the harness repo also ships:
 - `tooling/auto_iterate/**`
 - `tooling/remote_control/**`
 
+Practical note from real bootstrap: because the root `.gitignore` sits at the
+shared project root, both git histories read it. If normal `git status` stops
+showing research files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, `src/`, or
+`configs/`, the root `.gitignore` is too aggressive for dual-repo use. In that
+case:
+
+- keep the root `.gitignore` limited to rules that are safe for both repos
+- move harness-only "hide research files from `hgit`" rules into
+  `.harness/info/exclude`
+- continue using `.git/info/exclude` to hide harness-owned files from the
+  research repo
+
 ## Bootstrap
 
 ### 1. Put the harness worktree at the project root
@@ -241,6 +278,32 @@ Notes:
 - keep harness branding and shared documentation assets in the root `media/` directory, but place project-specific figures under research-owned paths such as `docs/media/` or `docs/figures/`
 - if the project needs shared ignore rules for its own generated files, prefer subdirectory `.gitignore` files inside research-owned paths such as `experiments/`, `data/`, or `artifacts/`
 
+### 4b. Recommended: add harness-side exclude rules for research-owned paths
+
+If the root `.gitignore` no longer hides research-owned files from `hgit`,
+mirror those rules into `.harness/info/exclude` instead:
+
+```bash
+cat >> .harness/info/exclude <<'EOF'
+# Research-owned files hidden from harness git
+/CLAUDE.md
+/AGENTS.md
+/PROJECT_STATE.json
+/iteration_log.json
+/project_map.json
+/src/
+/scripts/
+/configs/
+/baselines/
+/experiments/
+/docs/
+/tests/
+EOF
+```
+
+This keeps normal `git status` honest while still preventing `hgit status`
+noise.
+
 ## 5. Create project directories
 
 ```bash
@@ -284,6 +347,18 @@ config files from templates:
 [ ! -f tooling/remote_control/config/remote_control.local.yaml ] && cp tooling/remote_control/config/templates/remote_control.example.yaml tooling/remote_control/config/remote_control.local.yaml
 [ ! -f tooling/remote_control/config/cc_connect.local.toml ] && cp tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml
 ```
+
+Important distinction:
+
+- `tooling/remote_control/config/templates/` is the template source directory
+- `tooling/remote_control/config/cc_connect.local.toml` is the live
+  `cc-connect` runtime config
+- `tooling/remote_control/config/remote_control.local.yaml` is the lightweight
+  wrapper config for `harness_remote.py`
+
+On a fresh framework clone, `tooling/remote_control/config/` may contain only
+`README.md` and `templates/`. That is normal. The two `.local` files appear
+only after workspace bootstrap.
 
 When filling `cc_connect.local.toml` for a same-worktree project, derive the
 workspace values from the current repository root instead of editing random
@@ -357,6 +432,16 @@ Keep this boundary:
 - do not commit built binaries under `tooling/remote_control/vendor/bin/`
 - do not use `git add -f` to force-add ignored local config or local binaries
 
+Field roles to verify in `cc_connect.local.toml`:
+
+- `app_id` / `app_secret`: Feishu app credentials
+- `allow_from`: the allowed Feishu user `open_id` list for normal access
+- `admin_from`: the Feishu user `open_id` list allowed to run privileged
+  commands
+
+If you do not yet know the real operator `open_id`, it is safer to leave
+`admin_from` empty temporarily than to guess a value and lock yourself out.
+
 You can verify that the main local files are ignored before continuing:
 
 ```bash
@@ -410,10 +495,14 @@ Minimal remote-control verification:
 
 ```bash
 tooling/remote_control/bin/cc-connect -version
-test -d tooling/remote_control/cc_connect_src
-/workspace
-/workspace bind <workspace-name>
+tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cw list
+tooling/remote_control/bin/codex_all help
 ```
+
+`cc-connect -version` only proves that some binary starts. The shared-session
+stack required by `cw` and `codex_all` is only validated once `share list`,
+`cw list`, and `codex_all help` all succeed.
 
 See:
 
@@ -506,6 +595,18 @@ Practical notes from a successful bring-up:
 - for current Codex CLI versions, the harness runtime should invoke
   `codex exec --full-auto ...`; the older `--approval-mode full-auto` form is
   not accepted by newer CLIs
+- `--dry-run` validates controller plumbing but does not satisfy the plan-stage
+  postcondition that a new iteration entry exists; `plan did not create a new
+  iteration entry` is expected in a dry-run smoke test
+- the first real `start` should happen only after the workspace has a stable
+  research contract, at minimum `CLAUDE.md`, `AGENTS.md`, and
+  `docs/auto_iterate_goal.md`, and ideally `PROJECT_STATE.json`,
+  `iteration_log.json`, and `project_map.json`
+- the machine running `codex exec` needs outbound network access; otherwise the
+  controller may be healthy while the Codex subprocess still fails during
+  websocket/login startup
+- interrupted bring-up can leave `.auto_iterate/state.json` stuck in `running`;
+  normalize or clean runtime state before the next real launch
 
 Recommended local account layout:
 

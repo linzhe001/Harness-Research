@@ -66,6 +66,13 @@ Remote-control local files follow the same pattern:
 - do not commit `tooling/remote_control/vendor/go/`
 - do not commit built binaries under `tooling/remote_control/vendor/bin/`
 
+One more dual-repo nuance: the shared root `.gitignore` is read by both git
+histories. If normal `git status --untracked-files=all` suddenly stops showing
+research files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, or `src/`, the root
+`.gitignore` is hiding too much. In that case, move those research-side hide
+rules into `.harness/info/exclude` instead of keeping them in the shared root
+`.gitignore`.
+
 ## Daily Pull Workflow
 
 ### Preferred command
@@ -261,6 +268,23 @@ If you changed `cc_connect.local.toml`, restart `cc-connect` before testing in
 Feishu. If the bot still says no workspace is bound, run `/workspace bind
 <workspace-name>` in that channel.
 
+### 3c.1 Verify the shared-session entrypoints
+
+After a rebuild or config migration, do not stop at `cc-connect -version`.
+Verify the whole local chain:
+
+```bash
+tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cw list
+tooling/remote_control/bin/codex_all help
+```
+
+These checks prove that:
+
+- the patched shared-session subcommands are available
+- the `cw` wrapper is routing to the expected binary and config
+- `codex_all` is installed and can reach the shared-session layer
+
 If you are editing an existing local config rather than creating a fresh one
 from the template, follow the in-place migration checklist in
 [`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md`](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
@@ -334,6 +358,31 @@ git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
 git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
 ```
 
+### Research files disappear from normal `git status`
+
+This is the opposite failure mode: the shared root `.gitignore` is hiding
+research-owned files from the research repo.
+
+Symptoms:
+
+- `git status --untracked-files=all` does not show `CLAUDE.md`, `AGENTS.md`,
+  `docs/`, `src/`, or other research scaffolding you just created
+- the files exist on disk, but normal `git` behaves as if they are ignored
+
+Fix:
+
+- keep the root `.gitignore` limited to rules safe for both repos
+- move "hide research files from harness git" rules into `.harness/info/exclude`
+- keep hiding harness-owned files from research git via `.git/info/exclude`
+
+Quick check:
+
+```bash
+git check-ignore -v CLAUDE.md AGENTS.md docs src 2>/dev/null || true
+git --git-dir=.harness --work-tree=. status --short
+git status --untracked-files=all
+```
+
 ### `build_patched_cc_connect.sh` fails because `go` is missing
 
 The remote-control tree expects Go 1.25. The build helper already prefers a
@@ -352,6 +401,42 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 
 This keeps the toolchain local to the harness tree and avoids depending on a
 system-wide Go install.
+
+### `tooling/remote_control/config/` only has `README.md` and `templates/`
+
+That is normal in a freshly pulled framework source tree.
+
+The live files:
+
+- `tooling/remote_control/config/cc_connect.local.toml`
+- `tooling/remote_control/config/remote_control.local.yaml`
+
+are workspace-local bootstrap outputs, not framework templates. Create them in
+the target workspace before trying to start `cc-connect`, `cw`, or `codex_all`.
+
+### `cw` or `codex_all` cannot see shared slots
+
+If `cc-connect -version` works but `cw list`, `codex_all`, or
+`cc-connect share list` fail, assume the patched binary is missing or the
+wrapper is still resolving to the wrong binary/config.
+
+Recommended checks:
+
+```bash
+tooling/remote_control/bin/cc-connect -version
+tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cw list
+tooling/remote_control/bin/codex_all help
+command -v cw
+command -v codex_all
+```
+
+If `share list` fails, rebuild patched `cc-connect` first. If `share list`
+works but `cw` still fails, rerun the local installer:
+
+```bash
+tooling/remote_control/scripts/install_user_commands.sh --shell-init
+```
 
 ### Bot replies `No workspace found for this channel`
 
@@ -406,9 +491,11 @@ After every harness pull:
 1. verify `hgit status`
 2. read updated framework docs
 3. diff templates against project-owned files
-4. verify normal `git status` is still clean with respect to harness paths
+4. verify normal `git status` is still clean with respect to harness paths and
+   is still able to see research-owned files
 5. rebuild patched `cc-connect` if remote-control source changed
-6. restart `cc-connect` and re-check workspace binding if remote-control config changed
+6. verify `cc-connect share list`, `cw list`, and `codex_all help`
+7. restart `cc-connect` and re-check workspace binding if remote-control config changed
 
 After every harness push:
 

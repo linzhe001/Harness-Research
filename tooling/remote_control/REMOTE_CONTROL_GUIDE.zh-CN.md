@@ -117,6 +117,38 @@
 - 本地配置：
   - [cc_connect.local.toml](./config/cc_connect.local.toml)
 
+### 1.2.1 模板目录和 live local 文件不是一回事
+
+这次初始化里，一个很常见的误解是：
+
+- `Harness-Research/tooling/remote_control/config/` 里没有 `.yaml`
+- 看起来像是 remote-control 配置“不完整”
+
+但在新 clone 的 framework source 里，这其实是正常状态。通常一开始只有：
+
+- `config/README.md`
+- `config/templates/`
+
+真正运行时会读取的是 workspace 里的 live local 文件：
+
+- `tooling/remote_control/config/cc_connect.local.toml`
+- `tooling/remote_control/config/remote_control.local.yaml`
+
+它们需要在目标 workspace bootstrap 时创建，而不是指望 framework source
+目录里天然就已经存在。
+
+### 1.2.2 `cc_connect.local.toml` 和 `remote_control.local.yaml` 分别做什么
+
+- `cc_connect.local.toml`
+  - `cc-connect` 主配置
+  - 负责 workspace、provider、共享 slot、飞书 app、slash commands
+- `remote_control.local.yaml`
+  - `harness_remote.py` 的轻量 wrapper 配置
+  - 主要给 `/home`、`/ai` 这种 harness wrapper 使用
+
+如果你只创建了 `cc_connect.local.toml`，`cc-connect` 本体可能能起来；
+但 `/ai`、`/home` 这一层的 wrapper 仍然可能缺配置。
+
 ### 1.3 当前 workspace 的本地配置重点
 
 推荐把运行态固定成 repo-local：
@@ -134,9 +166,13 @@
 
 ### 1.4 从模板生成本地配置
 
+至少要准备两份 live local 文件：
+
 ```bash
 cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
   tooling/remote_control/config/cc_connect.local.toml
+cp tooling/remote_control/config/templates/remote_control.example.yaml \
+  tooling/remote_control/config/remote_control.local.yaml
 ```
 
 如果你本地已经有 `tooling/remote_control/config/cc_connect.local.toml`，
@@ -177,6 +213,18 @@ rg -n 'data_dir = |name = |mode = |base_dir = |work_dir = ' \
 - `projects.agent.options.work_dir = "<workspace-root>"`
 - `[[commands]].work_dir = "<workspace-root>"`
 
+字段职责建议明确区分：
+
+- `app_id` / `app_secret`
+  - 飞书应用凭据
+- `allow_from`
+  - 允许正常访问 bot 的飞书用户 `open_id`
+- `admin_from`
+  - 允许执行管理/敏感命令的飞书用户 `open_id`
+
+如果你还没拿到真实 `open_id`，不要随便写一个占位值。短期内把
+`admin_from` 留空，通常比填错后把自己锁在外面更安全。
+
 如果你是“每个 git clone 都单独初始化”的使用方式：
 
 - 不要保留模板里的 `mode = "multi-workspace"`
@@ -203,6 +251,41 @@ tooling/remote_control/scripts/build_patched_cc_connect.sh
 - 否则回退到系统 `go`
 - 从 `cc_connect_src/` 构建 patched binary
 - 输出到 `tooling/remote_control/vendor/bin/cc-connect-harness-patched-linux-amd64`
+
+如果系统里没有可用 `go`，建议直接把 Go 1.25 解到：
+
+- `tooling/remote_control/vendor/go/`
+
+构建脚本会优先使用这个 repo-local toolchain。
+
+### 1.5.1 为什么 patched build 对 `codex_all` / `cw` 是必须的
+
+这次 bring-up 里，官方 binary 能做到的事情和 harness 需要的事情不是一回事。
+
+只看到下面这个成功，还不能说明共享会话链路已经可用：
+
+```bash
+tooling/remote_control/bin/cc-connect -version
+```
+
+原因是：
+
+- `codex_all`
+  - 只是薄 wrapper
+- `cw`
+  - 本质上会下钻到 `cc-connect share ...`
+- 共享 slot / lease / resume / 切号
+  - 依赖 harness patch 过的 `share.go`
+
+所以真正需要验证的是：
+
+```bash
+tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cw list
+tooling/remote_control/bin/codex_all help
+```
+
+只有这三步都过了，才能认为 `cw` / `codex_all` 这条链打通了。
 
 ### 1.6 启动
 
@@ -294,6 +377,8 @@ cd "$(git rev-parse --show-toplevel)"
 
 - 如果没有 `tooling/remote_control/config/cc_connect.local.toml`：
   - 从模板复制一份
+- 如果没有 `tooling/remote_control/config/remote_control.local.yaml`：
+  - 也从模板复制一份
 - 如果已经有：
   - 不要覆盖
   - 按“1.4 从模板生成本地配置”里的 checklist 原地修改
@@ -302,6 +387,11 @@ cd "$(git rev-parse --show-toplevel)"
 if [ ! -f tooling/remote_control/config/cc_connect.local.toml ]; then
   cp tooling/remote_control/config/templates/cc_connect.local.example.toml \
     tooling/remote_control/config/cc_connect.local.toml
+fi
+
+if [ ! -f tooling/remote_control/config/remote_control.local.yaml ]; then
+  cp tooling/remote_control/config/templates/remote_control.example.yaml \
+    tooling/remote_control/config/remote_control.local.yaml
 fi
 ```
 
@@ -333,6 +423,9 @@ hash -r
 command -v codex_all
 command -v cw
 tooling/remote_control/bin/cc-connect -version
+tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
+tooling/remote_control/bin/cw list
+tooling/remote_control/bin/codex_all help
 ```
 
 7. 启动 `cc-connect`
@@ -400,10 +493,12 @@ codex_all s003
 ### 2.5 飞书接入顺序
 
 1. 本地确认 `tooling/remote_control/scripts/harness_remote.sh summary` 能跑
-2. 本地确认 `cc-connect` 的 `/home` 能响应
-3. 再验证 `/help auto`
-4. 再验证 `/ai status`
-5. 再去飞书开放平台配置菜单
+2. 本地确认 `tooling/remote_control/scripts/harness_remote.sh ai status --json` 能跑
+3. 本地确认 `cc-connect share list`、`cw list`、`codex_all help` 都通过
+4. 本地确认 `cc-connect` 的 `/home` 能响应
+5. 再验证 `/help auto`
+6. 再验证 `/ai status`
+7. 再去飞书开放平台配置菜单
 
 ## 3. 共享会话模型
 

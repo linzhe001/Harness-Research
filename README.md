@@ -16,6 +16,50 @@ A structured 10-stage research workflow framework for CV/ML projects, designed t
 
 This repo contains the **framework only** — skills, rules, templates, workflow definitions, and the auto-iterate controller. It does **not** contain any research code. Each research project has its own separate git repo; this framework is layered on top via a dual-repo setup (harness `.harness` + research `.git` sharing one worktree).
 
+## Practical Bootstrap Order
+
+When you initialize a new project, identify the three roles first:
+
+- **target workspace**: the new repo that will actually run harness
+- **framework source**: this repo (`Harness-Research/`), used as the bootstrap source
+- **baseline/reference repo**: an optional old project used only for comparison
+
+Only the **target workspace** should receive the harness bootstrap. In the Aegis
+bring-up, that meant:
+
+- `Aegis/` was the real workspace root
+- `MARS/` was only a baseline reference
+- `Harness-Research/` was only the framework source tree
+
+Recommended order:
+
+1. choose the real workspace root
+2. move the framework git history to `.harness`
+3. initialize or reuse the normal research `.git`
+4. create `CLAUDE.md`, `AGENTS.md`, and `docs/auto_iterate_goal.md`
+5. create remote-control and auto-iterate local configs in the workspace
+6. verify `cc-connect`, `cw`, `codex_all`, and `auto_iterate_ctl.sh`
+
+For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
+
+## Common Bootstrap Gotchas
+
+- A sibling repo such as `MARS/` can be a baseline, but it should not be turned
+  into the live harness workspace unless that is the intended project root.
+- `Harness-Research/tooling/remote_control/config/` may only contain
+  `README.md` and `templates/` in a fresh framework clone. The live files
+  `cc_connect.local.toml` and `remote_control.local.yaml` are created later in
+  the target workspace.
+- A successful `tooling/remote_control/bin/cc-connect -version` is not enough
+  to prove the shared-session stack works. Also verify:
+  - `tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml`
+  - `tooling/remote_control/bin/cw list`
+  - `tooling/remote_control/bin/codex_all help`
+- In dual-repo mode, the shared root `.gitignore` is read by both git histories.
+  If normal `git status` stops showing research files such as `CLAUDE.md`,
+  `AGENTS.md`, `docs/`, or `src/`, move those research-side hide rules into
+  `.harness/info/exclude` instead of leaving them in the root `.gitignore`.
+
 ## Workflow Overview
 
 ```
