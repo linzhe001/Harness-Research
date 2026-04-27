@@ -152,6 +152,13 @@ Training scripts should generally include:
 - tracking through tensorboard or wandb
 - config-driven execution through `--config` or the project standard equivalent
 
+## Fail-Fast Error Policy
+
+- Do not introduce fallback behavior that hides invalid state, missing data, bad configuration, import errors, shape mismatches, or failed optional dependencies.
+- Do not add broad `try`/`except` blocks, silent `except` handlers, default substitute values, or best-effort continuation paths unless the user explicitly requests tolerant behavior for a specific boundary.
+- Do not add `assert` statements in runtime code. For conditions that must be checked, use explicit validation and raise `ValueError`, `TypeError`, `RuntimeError`, or the narrowest appropriate exception with actionable context.
+- Let unexpected errors propagate so the failing command, stack trace, and root cause remain visible during development, training, and evaluation.
+
 ## Enforcement Guidance
 
 - Treat this file as a style reference, not as an automatic hook.
