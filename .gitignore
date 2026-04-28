@@ -33,6 +33,7 @@
 /tooling/remote_control/vendor/package-lock.json
 /.npm-cache/
 /.cc-connect/
+/.codex
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/

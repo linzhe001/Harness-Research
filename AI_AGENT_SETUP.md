@@ -318,13 +318,15 @@ and should appear only after the first auto-iterate `start`.
 ## 6. Bootstrap auto-iterate project files
 
 The harness repo owns the controller code, remote-control wrapper, and reusable
-templates. The project should create one research goal file plus local
-controller/account YAMLs.
+templates. The project should create one research goal file plus a local
+controller YAML. The Codex account YAML is generated from Cockpit-managed
+accounts; do not create manual `.codex-acc*` homes.
 
 ```bash
 [ ! -f docs/auto_iterate_goal.md ] && cp tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
 [ ! -f tooling/auto_iterate/config/controller.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
-[ ! -f tooling/auto_iterate/config/accounts.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 Keep this boundary:
@@ -332,6 +334,9 @@ Keep this boundary:
 - edit `docs/auto_iterate_goal.md` in the research repo
 - edit `tooling/auto_iterate/config/*.local.yaml` as local operator inputs for
   this workspace
+- refresh `accounts.local.yaml` with
+  `tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py` after adding
+  or reauthenticating Cockpit Codex accounts
 - do not edit templates under `tooling/auto_iterate/config/templates/`
 - do not create `.auto_iterate/` by hand
 - do not commit `.auto_iterate/`
@@ -428,6 +433,8 @@ Keep this boundary:
 
 - edit `tooling/remote_control/config/*.local.*` only for your own machine
 - do not commit Feishu credentials, operator IDs, or `CODEX_HOME` values
+- do not commit generated Codex credential projection directories such as
+  `~/.cache/auto_iterate/codex/`
 - do not commit `tooling/remote_control/vendor/go/`
 - do not commit built binaries under `tooling/remote_control/vendor/bin/`
 - do not use `git add -f` to force-add ignored local config or local binaries
@@ -561,6 +568,9 @@ Run the harness-managed controller from the project root so it operates on the
 research worktree:
 
 ```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
   --goal docs/auto_iterate_goal.md \
   --config tooling/auto_iterate/config/controller.local.yaml \
@@ -588,10 +598,13 @@ Practical notes from a successful bring-up:
 - keep `docs/auto_iterate_goal.md` research-owned; keep
   `tooling/auto_iterate/config/*.local.yaml` as local operator inputs; keep
   `.auto_iterate/` runtime-only and out of git
-- use one dedicated `CODEX_HOME` per controller account instead of sharing a
-  single Codex home across multiple accounts
-- if an auth flow keeps failing on an old `CODEX_HOME`, prefer creating a fresh
-  directory over reusing a dirty one
+- use Cockpit-managed Codex accounts as the credential source, then project
+  each account into its own generated WSL `CODEX_HOME`
+- never point multiple controller accounts at the same Cockpit current
+  `~/.codex/auth.json`; that only follows the currently selected account and
+  does not provide real account switching
+- if an auth flow keeps failing, reauthenticate in Cockpit and rerun the
+  projection script instead of creating hand-managed `.codex-acc*` directories
 - for current Codex CLI versions, the harness runtime should invoke
   `codex exec --full-auto ...`; the older `--approval-mode full-auto` form is
   not accepted by newer CLIs
@@ -608,35 +621,31 @@ Practical notes from a successful bring-up:
 - interrupted bring-up can leave `.auto_iterate/state.json` stuck in `running`;
   normalize or clean runtime state before the next real launch
 
-Recommended local account layout:
+Recommended local account projection:
 
 ```bash
-mkdir -p ~/.codex-acc1 ~/.codex-acc2
-
-CODEX_HOME=~/.codex-acc1 codex login --device-auth
-CODEX_HOME=~/.codex-acc1 codex login status
-
-CODEX_HOME=~/.codex-acc2 codex login --device-auth
-CODEX_HOME=~/.codex-acc2 codex login status
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
-Then point the project account registry at those homes:
+This writes one generated `CODEX_HOME` per Cockpit account under
+`~/.cache/auto_iterate/codex/` and updates the account registry:
 
 ```yaml
 accounts:
-  - id: codex_primary
-    codex_home: /home/<user>/.codex-acc1
+  - id: codex_acc1
+    codex_home: /home/<user>/.cache/auto_iterate/codex/codex_acc1
     enabled: true
     priority: 100
     cooldown_sec: 1800
-    tags: [local, primary]
+    tags: [cockpit, team]
 
-  - id: codex_secondary
-    codex_home: /home/<user>/.codex-acc2
+  - id: codex_acc2
+    codex_home: /home/<user>/.cache/auto_iterate/codex/codex_acc2
     enabled: true
     priority: 90
     cooldown_sec: 1800
-    tags: [local, secondary]
+    tags: [cockpit, plus]
 ```
 
 ### Tracking a live auto-iterate run
@@ -708,6 +717,7 @@ git check-ignore -v .claude/ .agents/ tooling/ README.md AI_AGENT_SETUP.md Harne
 test -f docs/auto_iterate_goal.md
 test -f tooling/auto_iterate/config/controller.local.yaml
 test -f tooling/auto_iterate/config/accounts.local.yaml
+test -d ~/.cache/auto_iterate/codex
 test -d docs/iterations
 ```
 
@@ -717,4 +727,6 @@ Expected outcome:
 - `git status` is clean or only shows research files
 - `tooling/auto_iterate/**` stays harness-managed
 - `tooling/auto_iterate/config/*.local.yaml` exist as local operator inputs
+- `accounts.local.yaml` points at Cockpit-generated `~/.cache/auto_iterate/codex/*`
+  homes, not manual `.codex-acc*` directories
 - `.auto_iterate/**` remains runtime-only and uncommitted

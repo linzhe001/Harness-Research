@@ -1,9 +1,12 @@
 """Account registry for per-process Codex home selection.
 
 Accounts are defined in a project-supplied YAML registry such as
-``tooling/auto_iterate/config/accounts.local.yaml``. The controller picks an
-account before each phase launch and sets ``CODEX_HOME`` in the subprocess
-environment — it never modifies the global ``~/.codex/auth.json``.
+``tooling/auto_iterate/config/accounts.local.yaml``. In normal operation that
+registry is generated from Cockpit-managed Codex accounts by
+``project_cockpit_codex_accounts.py``. The controller picks an account before
+each phase launch and sets ``CODEX_HOME`` in the subprocess environment — it
+never modifies the global ``~/.codex/auth.json`` and does not use hand-created
+``~/.codex-acc*`` homes.
 
 Selection follows the frozen rules in ``02_controller_runtime_plan.md`` §8:
 

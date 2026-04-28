@@ -5,11 +5,14 @@ This guide explains how to operate the auto-iterate controller locally and how r
 ## 1. Starting a Loop
 
 ```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
   --tool codex \
   --goal docs/auto_iterate_goal.md \
-  --config tooling/auto_iterate/config/auto_iterate_controller.yaml \
-  --accounts tooling/auto_iterate/config/auto_iterate_accounts.yaml
+  --config tooling/auto_iterate/config/controller.local.yaml \
+  --accounts tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 Optional flags:
@@ -57,9 +60,12 @@ Both commands create a signal file (`.auto_iterate_pause` or `.auto_iterate_stop
 ## 4. Resuming
 
 ```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume \
-  --config tooling/auto_iterate/config/auto_iterate_controller.yaml \
-  --accounts tooling/auto_iterate/config/auto_iterate_accounts.yaml
+  --config tooling/auto_iterate/config/controller.local.yaml \
+  --accounts tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 Resume handles:
@@ -105,8 +111,9 @@ If `start` or `resume` returns exit code `102` (lock conflict):
 If the controller pauses with `halt_reason=waiting_for_account`:
 
 1. Check account status: `cat .auto_iterate/state.json | jq .accounts`
-2. Wait for cooldown to expire, or
-3. Fix auth issues in the account's `CODEX_HOME` directory
+2. Wait for cooldown to expire, or reauthenticate the account in Cockpit
+3. Refresh the WSL account projections:
+   `tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml`
 4. Run `resume` to continue
 
 ## 9. Reading stdout/stderr Logs

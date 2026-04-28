@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="media/harness_simple_banner.jpeg" alt="Harness Research banner inspired by The Defect from Slay the Spire 2, blending the visual ideas of Coolheaded and Iterate." width="100%" />
+  <img src="media/harness_simple_banner.jpeg" alt="Harness Research banner inspired by The Defect from Slay the Spire 2". width="100%" />
 </p>
 
 <p align="center">
-  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>, combining the card motifs of Coolheaded and Iterate.
+  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>.
 </p>
 
 
@@ -100,6 +100,22 @@ Both agents share the same iteration schema (`iteration_log.json`), the same ski
 - Thin wrappers (Codex) are DRY and low-maintenance, but depend on the model correctly interpreting the reference chain
 
 In practice: use **Claude Code** for interactive research sessions, use **Codex** via the auto-iterate controller for unattended multi-round optimization.
+
+## Codex Accounts
+
+WF8 auto-iterate uses Cockpit-managed Codex accounts as the credential source.
+The controller still isolates phases by setting one `CODEX_HOME` per account,
+but those homes are generated projections under `~/.cache/auto_iterate/codex/`,
+not hand-created `.codex-acc*` login directories.
+
+Before long unattended runs, refresh the local account registry:
+
+```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+```
+
+Then start the controller with `--accounts tooling/auto_iterate/config/accounts.local.yaml`.
 
 ## For AI Agents
 

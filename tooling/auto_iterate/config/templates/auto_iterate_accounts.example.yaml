@@ -1,25 +1,30 @@
 # Auto-Iterate Account Registry
-# Defines Codex accounts available to the controller.
-# Each account has its own CODEX_HOME directory with separate auth credentials.
-# The controller selects accounts per-phase via CODEX_HOME environment variable.
+# Generate the live local file from Cockpit-managed Codex accounts instead of
+# manually creating ~/.codex-acc* homes:
+#
+#   tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+#     --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+#
+# The generated credential projections are written outside the repo under
+# ~/.cache/auto_iterate/codex/ by default. Do not commit those directories.
 
 accounts:
   - id: codex_acc1
-    codex_home: /home/user/.codex-acc1
+    codex_home: /home/user/.cache/auto_iterate/codex/codex_acc1
     enabled: true
     priority: 100          # Higher = preferred
     cooldown_sec: 1800     # 30 min cooldown after quota/rate-limit
-    tags: [local, primary]
+    tags: [cockpit, team]
 
   - id: codex_acc2
-    codex_home: /home/user/.codex-acc2
+    codex_home: /home/user/.cache/auto_iterate/codex/codex_acc2
     enabled: true
     priority: 90
     cooldown_sec: 1800
-    tags: [local, backup]
+    tags: [cockpit, plus]
 
 # --- Optional fields (not used by V1 core logic) ---
 #   max_calls_hint: 1000   # Informational; not enforced by controller
-#   notes: "Personal account, lower rate limits"
+#   notes: "Projected from Cockpit account store"
 #   provider: openai
 #   base_url: https://api.openai.com/v1

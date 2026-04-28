@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+"""Project Cockpit-managed Codex accounts into per-account CODEX_HOME dirs.
+
+The generated directories contain credentials. Keep them outside the repo.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+def _windows_path_to_wsl(raw: str) -> Path:
+    if len(raw) >= 3 and raw[1:3] == ":\\":
+        drive = raw[0].lower()
+        rest = raw[3:].replace("\\", "/")
+        return Path(f"/mnt/{drive}/{rest}")
+    return Path(raw)
+
+
+def _resolve_cockpit_dir() -> Path:
+    explicit = os.environ.get("COCKPIT_CODEX_DIR") or os.environ.get("COCKPIT_DATA_DIR")
+    if explicit:
+        return _windows_path_to_wsl(explicit)
+
+    userprofile = os.environ.get("USERPROFILE")
+    if userprofile:
+        candidate = _windows_path_to_wsl(userprofile) / ".antigravity_cockpit"
+        if candidate.exists():
+            return candidate
+
+    linked_auth = Path.home() / ".codex" / "auth.json"
+    try:
+        target = linked_auth.resolve(strict=True)
+    except OSError:
+        target = None
+    if target is not None:
+        # /mnt/c/Users/<user>/.codex/auth.json -> /mnt/c/Users/<user>/.antigravity_cockpit
+        if target.name == "auth.json" and target.parent.name == ".codex":
+            candidate = target.parent.parent / ".antigravity_cockpit"
+            if candidate.exists():
+                return candidate
+
+    wsl_user = os.environ.get("USER") or ""
+    for name in (wsl_user, wsl_user.capitalize()):
+        if not name:
+            continue
+        candidate = Path("/mnt/c/Users") / name / ".antigravity_cockpit"
+        if candidate.exists():
+            return candidate
+
+    users_root = Path("/mnt/c/Users")
+    if users_root.exists():
+        matches = sorted(users_root.glob("*/.antigravity_cockpit"))
+        if len(matches) == 1:
+            return matches[0]
+
+    return Path.home() / ".antigravity_cockpit"
+
+
+def _default_output_dir() -> Path:
+    return Path.home() / ".cache" / "auto_iterate" / "codex"
+
+
+def _default_config_template() -> Path:
+    codex_home = os.environ.get("CODEX_HOME")
+    if codex_home:
+        return Path(codex_home) / "config.toml"
+    return Path.home() / ".codex" / "config.toml"
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected JSON object: {path}")
+    return data
+
+
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp.{os.getpid()}")
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    os.chmod(tmp, 0o600)
+    tmp.replace(path)
+
+
+def _copy_config_template(src: Path, dest: Path) -> None:
+    if not src.exists():
+        return
+    tmp = dest.with_name(f".{dest.name}.tmp.{os.getpid()}")
+    shutil.copyfile(src, tmp)
+    os.chmod(tmp, 0o600)
+    tmp.replace(dest)
+
+
+def _mask_email(email: str) -> str:
+    if "@" not in email:
+        return "***"
+    local, domain = email.split("@", 1)
+    first = local[:1] or "*"
+    return f"{first}***@{domain}"
+
+
+def _build_auth_file(account: dict[str, Any]) -> dict[str, Any]:
+    auth_mode = str(account.get("auth_mode") or "").strip().lower()
+    if auth_mode == "apikey":
+        api_key = (account.get("openai_api_key") or "").strip()
+        if not api_key:
+            raise ValueError("API key account is missing openai_api_key")
+        return {
+            "auth_mode": "apikey",
+            "OPENAI_API_KEY": api_key,
+        }
+
+    tokens = account.get("tokens")
+    if not isinstance(tokens, dict):
+        raise ValueError("OAuth account is missing tokens")
+    for key in ("id_token", "access_token", "refresh_token"):
+        if not str(tokens.get(key) or "").strip():
+            raise ValueError(f"OAuth account is missing tokens.{key}")
+
+    return {
+        "OPENAI_API_KEY": None,
+        "tokens": {
+            "id_token": tokens["id_token"],
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens["refresh_token"],
+            "account_id": account.get("account_id"),
+        },
+        "last_refresh": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+
+
+def _projection_marker(account: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "writer": "auto_iterate_cockpit_projection",
+        "account_id": account["id"],
+        "email": account.get("email", ""),
+        "token_generation": account.get("token_generation", 0),
+        "written_at": int(datetime.now(timezone.utc).timestamp()),
+    }
+
+
+def _write_accounts_yaml(path: Path, projected: list[dict[str, str]]) -> None:
+    lines = [
+        "# Generated by tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py",
+        "# These paths point to local credential projections; do not commit machine-specific edits blindly.",
+        "accounts:",
+    ]
+    for i, item in enumerate(projected):
+        priority = 100 - i
+        lines.extend(
+            [
+                f"  - id: {item['id']}",
+                f"    codex_home: {item['codex_home']}",
+                "    enabled: true",
+                f"    priority: {priority}",
+                "    cooldown_sec: 1800",
+                f"    tags: [cockpit, {item['plan_type']}]",
+            ]
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp.{os.getpid()}")
+    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def project_accounts(
+    cockpit_dir: Path,
+    output_dir: Path,
+    config_template: Path,
+) -> list[dict[str, str]]:
+    index_path = cockpit_dir / "codex_accounts.json"
+    accounts_dir = cockpit_dir / "codex_accounts"
+    index = _load_json(index_path)
+    summaries = index.get("accounts") or []
+    if not isinstance(summaries, list):
+        raise ValueError(f"Invalid accounts list in {index_path}")
+
+    projected: list[dict[str, str]] = []
+    for summary in summaries:
+        if not isinstance(summary, dict) or not summary.get("id"):
+            continue
+        account_id = str(summary["id"])
+        account_path = accounts_dir / f"{account_id}.json"
+        account = _load_json(account_path)
+        if account.get("requires_reauth"):
+            continue
+
+        dest = output_dir / account_id
+        dest.mkdir(parents=True, exist_ok=True)
+        os.chmod(dest, 0o700)
+
+        _write_json_atomic(dest / "auth.json", _build_auth_file(account))
+        _write_json_atomic(dest / ".cockpit_codex_auth.json", _projection_marker(account))
+        _copy_config_template(config_template, dest / "config.toml")
+
+        projected.append(
+            {
+                "id": account_id,
+                "codex_home": str(dest),
+                "email": _mask_email(str(account.get("email") or "")),
+                "plan_type": str(account.get("plan_type") or "unknown"),
+            }
+        )
+    return projected
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cockpit-dir", type=Path, default=_resolve_cockpit_dir())
+    parser.add_argument("--output-dir", type=Path, default=_default_output_dir())
+    parser.add_argument("--config-template", type=Path, default=_default_config_template())
+    parser.add_argument("--accounts-yaml", type=Path)
+    args = parser.parse_args()
+
+    projected = project_accounts(
+        cockpit_dir=args.cockpit_dir,
+        output_dir=args.output_dir,
+        config_template=args.config_template,
+    )
+    if args.accounts_yaml:
+        _write_accounts_yaml(args.accounts_yaml, projected)
+
+    print(f"projected_accounts={len(projected)}")
+    for item in projected:
+        print(
+            f"- id={item['id']} email={item['email']} plan={item['plan_type']} "
+            f"codex_home={item['codex_home']}"
+        )
+    if args.accounts_yaml:
+        print(f"accounts_yaml={args.accounts_yaml}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

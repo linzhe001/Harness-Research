@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import sys
 import textwrap
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -32,6 +33,7 @@ from auto_iterate.goal import (
 )
 from auto_iterate.policy import PolicyConfig
 from auto_iterate.state import load_json
+from project_cockpit_codex_accounts import project_accounts, _write_accounts_yaml
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
 
@@ -303,6 +305,91 @@ class TestPolicyConfig:
         frozen = pc.freeze()
         assert frozen["timeouts"]["plan"] == 1800
         assert frozen["terminate_grace_sec"] == 30
+
+
+# ===================================================================
+# Cockpit account projection
+# ===================================================================
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+class TestCockpitCodexProjection:
+    def test_projects_oauth_accounts_into_codex_homes(self, tmp_path: Path) -> None:
+        cockpit_dir = tmp_path / "cockpit"
+        account_id = "codex_acc1"
+        _write_json(
+            cockpit_dir / "codex_accounts.json",
+            {
+                "version": 1,
+                "current_account_id": account_id,
+                "accounts": [
+                    {
+                        "id": account_id,
+                        "email": "person@example.com",
+                        "plan_type": "team",
+                    }
+                ],
+            },
+        )
+        _write_json(
+            cockpit_dir / "codex_accounts" / f"{account_id}.json",
+            {
+                "id": account_id,
+                "email": "person@example.com",
+                "plan_type": "team",
+                "auth_mode": "oauth",
+                "account_id": "acct_123",
+                "token_generation": 3,
+                "tokens": {
+                    "id_token": "id-token",
+                    "access_token": "access-token",
+                    "refresh_token": "refresh-token",
+                },
+            },
+        )
+        config_template = tmp_path / "config.toml"
+        config_template.write_text('model = "gpt-5.5"\n', encoding="utf-8")
+
+        output_dir = tmp_path / "codex_homes"
+        projected = project_accounts(cockpit_dir, output_dir, config_template)
+
+        assert projected == [
+            {
+                "id": account_id,
+                "codex_home": str(output_dir / account_id),
+                "email": "p***@example.com",
+                "plan_type": "team",
+            }
+        ]
+        auth = json.loads((output_dir / account_id / "auth.json").read_text())
+        assert auth["OPENAI_API_KEY"] is None
+        assert auth["tokens"]["account_id"] == "acct_123"
+        assert auth["tokens"]["refresh_token"] == "refresh-token"
+        assert (output_dir / account_id / "config.toml").read_text() == 'model = "gpt-5.5"\n'
+        marker = json.loads((output_dir / account_id / ".cockpit_codex_auth.json").read_text())
+        assert marker["account_id"] == account_id
+        assert marker["writer"] == "auto_iterate_cockpit_projection"
+
+    def test_writes_accounts_yaml(self, tmp_path: Path) -> None:
+        yaml_path = tmp_path / "accounts.local.yaml"
+        _write_accounts_yaml(
+            yaml_path,
+            [
+                {
+                    "id": "codex_acc1",
+                    "codex_home": "/tmp/codex_acc1",
+                    "email": "p***@example.com",
+                    "plan_type": "team",
+                }
+            ],
+        )
+
+        content = yaml_path.read_text(encoding="utf-8")
+        assert "codex_home: /tmp/codex_acc1" in content
+        assert "tags: [cockpit, team]" in content
 
 
 # ===================================================================

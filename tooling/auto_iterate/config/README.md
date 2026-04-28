@@ -11,9 +11,9 @@ controller for a specific workspace.
   - this repo also versions a shared default copy for convenience
 - `accounts.local.yaml`
   - the live local Codex account pool
-  - keep machine-specific `CODEX_HOME` paths here
-  - this repo also versions a shared default copy with inline comments showing
-    what to edit
+  - generate it from Cockpit-managed Codex accounts with
+    `tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py`
+  - do not hand-create `.codex-acc*` homes
 - `templates/`
   - reusable examples and presets
   - do not treat templates as the active local config
@@ -41,6 +41,25 @@ Only the **target workspace** should own:
 Do not point the controller at a framework source clone or a baseline repo by
 mistake.
 
+## Account Projection
+
+Refresh the local Codex account projections before long unattended runs, after
+adding/removing Cockpit accounts, or after reauthenticating in Cockpit:
+
+```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+```
+
+The script reads Cockpit's `codex_accounts.json` store, writes one per-account
+`CODEX_HOME` under `~/.cache/auto_iterate/codex/`, and writes the YAML registry
+consumed by the controller. The generated credential directories contain
+secrets and must stay outside Git.
+
+Do not point multiple controller accounts at a shared Cockpit current
+`~/.codex/auth.json`; that only follows the currently selected account and does
+not provide real controller account switching.
+
 ## Preflight Checklist
 
 Before the first real `start`, verify all of these:
@@ -50,16 +69,17 @@ Before the first real `start`, verify all of these:
 - `CLAUDE.md` and `AGENTS.md` exist for the current workspace
 - ideally `PROJECT_STATE.json`, `iteration_log.json`, and `project_map.json`
   also exist before the first unattended run
-- every configured `CODEX_HOME` is a dedicated account home, not a shared
-  multi-account directory
-- each account passes `CODEX_HOME=/path/to/home codex login status`
+- `accounts.local.yaml` points at generated `~/.cache/auto_iterate/codex/*`
+  homes, not manual `.codex-acc*` directories
 - the machine that will run `codex exec` has outbound network access
 
 Recommended account verification:
 
 ```bash
-CODEX_HOME=/path/to/acc1 codex login status
-CODEX_HOME=/path/to/acc2 codex login status
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+PYTHONPATH=tooling/auto_iterate/scripts python3 -c \
+  "from auto_iterate.accounts import AccountRegistry; r=AccountRegistry.load('tooling/auto_iterate/config/accounts.local.yaml'); print(len(r.accounts), r.select_account({})['id'])"
 ```
 
 Recommended controller verification:
@@ -91,7 +111,7 @@ is expected during a dry-run smoke test.
 ## Recommended First-Run Flow
 
 1. Validate the current workspace and goal file.
-2. Verify each `CODEX_HOME` with `codex login status`.
+2. Refresh Cockpit account projections.
 3. Run `tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json`.
 4. If needed, run one short `--dry-run` only to check controller plumbing.
 5. Launch the first real run only after the workspace contract is stable.
@@ -101,6 +121,9 @@ is expected during a dry-run smoke test.
 Example real start:
 
 ```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
   --goal docs/auto_iterate_goal.md \
   --config tooling/auto_iterate/config/controller.local.yaml \
@@ -110,6 +133,9 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
 Example resume:
 
 ```bash
+tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
+  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume \
   --config tooling/auto_iterate/config/controller.local.yaml \
   --accounts tooling/auto_iterate/config/accounts.local.yaml
