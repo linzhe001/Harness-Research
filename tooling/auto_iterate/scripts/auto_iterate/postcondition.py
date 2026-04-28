@@ -151,6 +151,18 @@ class PostconditionValidator:
         missing = []
         if not it.get("hypothesis"):
             missing.append("hypothesis")
+        if not it.get("date"):
+            missing.append("date")
+        if not it.get("changes_summary"):
+            missing.append("changes_summary")
+        if "config_diff" not in it or not isinstance(it.get("config_diff"), dict):
+            missing.append("config_diff")
+        screening = it.get("screening")
+        if not isinstance(screening, dict) or not isinstance(screening.get("recommended"), bool):
+            missing.append("screening.recommended")
+        codex_review = it.get("codex_review")
+        if codex_review in (None, ""):
+            missing.append("codex_review")
         if missing:
             return _fail("plan", "postcondition_failed", iter_id,
                          {"missing_fields": missing})
@@ -226,6 +238,16 @@ class PostconditionValidator:
         if status not in ("completed", "recoverable_failed", "failed"):
             return _fail("run_full", "postcondition_failed", iteration_id,
                          {"error": f"full_run.status={status!r}, expected completed|recoverable_failed|failed"})
+        if status == "completed":
+            metrics = full_run.get("metrics", {})
+            if not isinstance(metrics, dict) or not metrics:
+                return _fail("run_full", "postcondition_failed", iteration_id,
+                             {"error": "full_run.metrics are required when full_run.status=completed"})
+        if status in ("recoverable_failed", "failed"):
+            run_manifest = it.get("run_manifest", {}) or {}
+            if not full_run.get("error") and not run_manifest.get("error"):
+                return _fail("run_full", "postcondition_failed", iteration_id,
+                             {"error": "error is required for failed full_run status"})
 
         return _ok("run_full", status, iteration_id,
                     {"full_run_status": status})
@@ -263,6 +285,10 @@ class PostconditionValidator:
         if not isinstance(metrics, dict) or not metrics:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": "Finalized metrics are required"})
+        report_path = self.root / "docs" / "iterations" / f"{iteration_id}.md"
+        if not report_path.exists():
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": f"Per-iteration report is required: {report_path.relative_to(self.root)}"})
 
         return _ok("eval", "completed", iteration_id,
                     {"decision": decision})

@@ -23,6 +23,8 @@ On success → WF6 (build-plan). On failure → debug reproduction issues or ski
 First, read PROJECT_STATE.json to get project context and Technical_Spec.md for the baseline list.
 For the output format, see [templates/baseline-report.md](templates/baseline-report.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

@@ -80,6 +80,8 @@ class TestDecisionTransitions:
             "phase_attempt": 1,
             "goal": {"source_path": "goal.md", "activated_at": "2026-01-01T00:00:00Z"},
             "objective": {"primary_metric": {"name": "PSNR", "direction": "maximize", "target": 32.0}},
+            "initial_hypotheses": [],
+            "forbidden_directions": [],
             "best": {"iteration_id": "iter2", "round_index": 2, "primary_metric": 30.0, "updated_at": None},
             "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
             "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
@@ -233,6 +235,8 @@ class TestStopConditions:
             "phase_attempt": 1,
             "goal": {"source_path": "goal.md", "activated_at": "2026-01-01T00:00:00Z"},
             "objective": {"primary_metric": {"name": "PSNR", "direction": direction, "target": target}},
+            "initial_hypotheses": [],
+            "forbidden_directions": [],
             "best": {"iteration_id": "iter2", "round_index": 2, "primary_metric": best, "updated_at": None},
             "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
             "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
@@ -357,6 +361,12 @@ class TestGoalValidation:
         - **enabled**: false
         - **threshold_pct**: 95
         - **default_steps**: 1234
+
+        ## Initial Hypotheses
+        1. Try a lighter decoder.
+
+        ## Forbidden Directions
+        - Do not replace the metric protocol.
         """))
 
         ctl.goal_mgr.snapshot_to(active_goal)
@@ -366,6 +376,8 @@ class TestGoalValidation:
             "status": "running",
             "goal": {"source_path": str(active_goal), "activated_at": "2026-01-01T00:00:00Z"},
             "objective": {"primary_metric": {"name": "PSNR", "direction": "maximize", "target": 32.0}},
+            "initial_hypotheses": [],
+            "forbidden_directions": [],
             "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 1},
             "budget": {"max_rounds": 20, "completed_rounds": 3, "gpu_count": 1,
                        "max_gpu_hours": 100.0, "used_gpu_hours": 4.0},
@@ -382,6 +394,8 @@ class TestGoalValidation:
         assert ctl.state["budget"]["completed_rounds"] == 3
         assert ctl.state["screening_policy"]["enabled"] is False
         assert ctl.state["screening_policy"]["default_steps"] == 1234
+        assert ctl.state["initial_hypotheses"] == ["Try a lighter decoder."]
+        assert ctl.state["forbidden_directions"] == ["Do not replace the metric protocol."]
 
 
 class TestRetryCeiling:

@@ -37,6 +37,17 @@ conda activate {env_name or "<pending>"}
 Any skill must sync-update `project_map.json` after **creating, deleting, or renaming** files.
 See `.claude/rules/project-map.md` for detailed rules.
 
+## Global Rule: Code Style
+- Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.claude/shared/code-style.md` and apply its Pre-Edit Checklist.
+- Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
+- After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
+
+## Global Rule: Documentation Style
+- Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
+- Also read `.claude/shared/documentation-style.md`.
+- Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
+
 ## Workflow
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
 WF8 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF9 | PIVOT→WF2 | ABORT→stop)

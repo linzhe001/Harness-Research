@@ -18,6 +18,25 @@
 
 ## Required Sections
 
+### 0. evidence_sources
+
+```markdown
+## Evidence Sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| `{path_or_command}` | | |
+
+## Verified Facts
+- ...
+
+## Inferences
+- ...
+
+## Open Questions
+- ...
+```
+
 ### 1. training_analysis
 
 ```markdown

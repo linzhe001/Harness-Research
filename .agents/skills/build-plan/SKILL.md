@@ -11,6 +11,8 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `../../../.agents/references/project-map-rule.md`
 - `./references/implementation-roadmap.md`
 - `./references/project-map-schema.json`
@@ -39,6 +41,7 @@ Use this skill for WF6 when the user wants the implementation roadmap and stable
 - Use `./references/implementation-roadmap.md`.
 - Use `./references/project-map-schema.json`.
 - Apply `../../../.agents/references/project-map-rule.md` when deciding what belongs in `project_map.json`.
+- Include evidence sources for all source docs, discovered stable files, entry scripts, and interface assumptions.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

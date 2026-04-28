@@ -9,7 +9,12 @@ description: Codex wrapper for WF8 structured iteration. Use when the user wants
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
+- `../../../.agents/references/reviewer-independence.md`
+- `../../../.agents/references/review-tracing.md`
 - `./references/iteration-log-schema.json`
 - `./references/iteration-context.md`
 - `./references/iteration-constraints.md`
@@ -60,6 +65,7 @@ Interpret natural-language requests as one of these canonical intents:
 3. Check prior lessons to avoid repeating known failed ideas blindly.
 4. Record hypothesis, changes summary, config diff, and screening recommendation (`screening.recommended` as a structured boolean field).
 5. Preserve the canonical `codex_review` field behavior in `iteration_log.json`.
+6. If reviewer cross-validation is used, follow reviewer independence and tracing protocols.
 
 ### `code`
 
@@ -67,8 +73,9 @@ Interpret natural-language requests as one of these canonical intents:
 2. Write canonical iteration context to `.agents/state/iterations/<iter-id>/context.json`.
 3. Mirror active context to `.agents/state/current_iteration.json`.
 4. Follow `./references/iteration-context.md` when creating both the persistent and active context files.
-5. Invoke `$code-debug`.
-6. Require a semantic commit before moving from `coding` to `training`.
+5. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
+6. Invoke `$code-debug`.
+7. Require a semantic commit before moving from `coding` to `training`.
 
 ### `run`
 
@@ -90,6 +97,7 @@ Interpret natural-language requests as one of these canonical intents:
    - decision
    - lessons
    - completion state
+7. Produce or refresh the human-readable `MEMORY.md` lesson entry for the evaluated iteration.
 
 ### `ablate`, `status`, `log`
 

@@ -36,7 +36,7 @@ Recommended order:
 1. choose the real workspace root
 2. move the framework git history to `.harness`
 3. initialize or reuse the normal research `.git`
-4. create `CLAUDE.md`, `AGENTS.md`, and `docs/auto_iterate_goal.md`
+4. create `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, and `docs/auto_iterate_goal.md`
 5. create remote-control and auto-iterate local configs in the workspace
 6. verify `cc-connect`, `cw`, `codex_all`, and `auto_iterate_ctl.sh`
 
@@ -59,11 +59,13 @@ For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
   If normal `git status` stops showing research files such as `CLAUDE.md`,
   `AGENTS.md`, `docs/`, or `src/`, move those research-side hide rules into
   `.harness/info/exclude` instead of leaving them in the root `.gitignore`.
+- Current project docs should stay concise in `docs/`; superseded Markdown
+  snapshots should move under `docs/legacy/`.
 
 ## Workflow Overview
 
 ```
-WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
+WF1(survey) → optional WF1.5(idea-debate) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
 → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
 ```
 

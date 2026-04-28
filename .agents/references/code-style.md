@@ -18,6 +18,19 @@ Use this spec when writing or refactoring project code, especially under:
 - `tests/`
 - durable configs and supporting utilities
 
+## Pre-Edit Checklist
+
+Before editing code:
+
+- Re-read the target files and nearby local patterns in the current turn.
+- Prefer the smallest readable change that solves the request.
+- Keep functions and classes focused; split code only when it reduces real complexity.
+- Use explicit names and straightforward control flow instead of clever one-liners.
+- Preserve fail-fast behavior; do not hide invalid state with broad fallbacks.
+- Avoid unrelated refactors, formatting churn, and style rewrites outside the touched scope.
+- Add or update focused tests when behavior changes.
+- Run the phase-appropriate validation commands, or state clearly why they could not run.
+
 ## Linting Levels
 
 ### MVP Phase

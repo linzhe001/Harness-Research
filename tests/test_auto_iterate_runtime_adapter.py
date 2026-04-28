@@ -85,7 +85,8 @@ class TestBuildBrief:
             "schema_version", "loop_id", "round_index",
             "phase_family", "phase_key", "run_type", "tool",
             "auto_mode", "recovery_mode", "round_type",
-            "objective", "current_best", "recent_lessons",
+            "objective", "current_best", "initial_hypotheses",
+            "forbidden_directions", "recent_lessons",
             "failed_hypotheses", "budget_status",
             "screening_policy", "timeouts",
         }
@@ -99,6 +100,8 @@ class TestBuildBrief:
         )
         assert brief["recent_lessons"] == ["lesson1", "lesson2"]
         assert brief["failed_hypotheses"] == ["bad idea"]
+        assert brief["initial_hypotheses"]
+        assert brief["forbidden_directions"]
 
 
 # ===================================================================
@@ -145,6 +148,10 @@ class TestRenderPrompt:
         assert "auto_mode" in prompt
         assert "plan" in prompt.lower()
         assert "PSNR" in prompt
+        assert "Seed hypotheses" in prompt
+        assert "Forbidden directions" in prompt
+        assert "config_diff object" in prompt
+        assert "codex_review" in prompt
 
     def test_eval_prompt(self) -> None:
         state = load_json(FIXTURES / "state.valid.json")
@@ -330,10 +337,21 @@ class TestPostconditionValidator:
         self,
         tmp_path: Path,
         iterations: list[dict],
+        *,
+        create_reports: bool = True,
     ) -> PostconditionValidator:
         """Create a minimal fixture project with the given iterations."""
         log = {"project": "test", "iterations": iterations}
         atomic_write_json(tmp_path / "iteration_log.json", log)
+        if create_reports:
+            report_dir = tmp_path / "docs" / "iterations"
+            report_dir.mkdir(parents=True, exist_ok=True)
+            for it in iterations:
+                if it.get("status") == "completed" and it.get("decision"):
+                    (report_dir / f"{it['id']}.md").write_text(
+                        f"# {it['id']}\n",
+                        encoding="utf-8",
+                    )
         return PostconditionValidator(tmp_path)
 
     # -- plan ---------------------------------------------------------------
@@ -343,7 +361,16 @@ class TestPostconditionValidator:
         v = self._make_project(tmp_path, [
             {"id": "iter1", "status": "completed"},
             {"id": "iter2", "status": "completed"},
-            {"id": "iter3", "status": "planned", "hypothesis": "test hypothesis"},
+            {
+                "id": "iter3",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test hypothesis",
+                "changes_summary": "try a small loss change",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": "unavailable",
+            },
         ])
         result = v.validate("plan", None, pre_ids=pre_ids)
         assert result["ok"] is True
@@ -449,11 +476,20 @@ class TestPostconditionValidator:
     def test_run_full_recoverable_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
-             "full_run": {"status": "recoverable_failed"}},
+             "full_run": {"status": "recoverable_failed", "error": "OOM"}},
         ])
         result = v.validate("run_full", "iter3")
         assert result["ok"] is True
         assert result["payload"]["full_run_status"] == "recoverable_failed"
+
+    def test_run_full_completed_requires_metrics(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "full_run": {"status": "completed"}},
+        ])
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is False
+        assert "metrics" in result["payload"]["error"]
 
     def test_run_full_no_full_run(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -519,6 +555,18 @@ class TestPostconditionValidator:
         result = v.validate("eval", "iter3")
         assert result["ok"] is False
         assert "metrics" in result["payload"]["error"].lower()
+
+    def test_eval_report_required(self, tmp_path: Path) -> None:
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "completed",
+              "decision": "NEXT_ROUND", "lessons": ["x"],
+              "metrics": {"PSNR": 31.5}}],
+            create_reports=False,
+        )
+        result = v.validate("eval", "iter3")
+        assert result["ok"] is False
+        assert "report" in result["payload"]["error"].lower()
 
     def test_eval_wrong_status(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [

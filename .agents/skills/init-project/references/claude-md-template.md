@@ -22,6 +22,7 @@ conda activate {env_name or "<pending>"}
 
 ## Core Artifacts
 <!-- will be filled by $init-project update after WF6 completes -->
+- `MEMORY.md` — Human-readable append-only lessons and decisions once WF8 starts
 
 ## Language Policy
 - `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
@@ -38,9 +39,15 @@ Any skill must sync-update `project_map.json` after **creating, deleting, or ren
 See `.agents/references/project-map-rule.md` for detailed rules.
 
 ## Workflow
-WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
+WF1(survey) → optional WF1.5(idea-debate) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
 WF8 iteration loop: $iterate plan → $iterate code → $iterate run → $iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF9 | PIVOT→WF2 | ABORT→stop)
 Current stage: {current_stage or "not initialized"}
+
+## Documentation Evidence Rule
+- Before writing docs, re-read relevant source artifacts from disk.
+- Separate verified facts, inferences, and open questions.
+- Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
 
 ## Custom
 <!-- user-added content goes here; preserved during updates -->

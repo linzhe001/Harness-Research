@@ -1,0 +1,22 @@
+# {project_name} Memory
+
+Append-only human-readable research memory. `iteration_log.json` remains the machine source of truth; this file is for fast human recovery and lesson review.
+
+## Lessons
+
+### {YYYY-MM-DD} — {iteration_id}
+
+- **Hypothesis:** {one_sentence_hypothesis}
+- **Result:** {metric_or_verdict_summary}
+- **Lesson:** {what should be remembered}
+- **Evidence Source:** `{docs/iterations/iterN.md}` / `{log_path}` / `{commit_hash}`
+- **Future Guidance:** avoid / retry / scale / ablate {specific_action}
+
+## Decisions
+
+### {YYYY-MM-DD} — {decision_title}
+
+- **Decision:** {decision}
+- **Rationale:** {why}
+- **Alternatives Considered:** {alternatives}
+- **Evidence Source:** `{path}`

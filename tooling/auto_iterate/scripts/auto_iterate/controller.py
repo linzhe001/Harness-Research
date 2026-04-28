@@ -182,6 +182,8 @@ class LoopController:
                 "activated_at": iso_now(),
             },
             "objective": obj,
+            "initial_hypotheses": parsed_goal.get("initial_hypotheses", []),
+            "forbidden_directions": parsed_goal.get("forbidden_directions", []),
             "best": {
                 "iteration_id": None,
                 "round_index": None,
@@ -1041,6 +1043,8 @@ class LoopController:
 
     def _apply_goal_fields(self, parsed_goal: dict[str, Any]) -> None:
         self.state["objective"] = parsed_goal.get("objective", self.state.get("objective", {}))
+        self.state["initial_hypotheses"] = parsed_goal.get("initial_hypotheses", [])
+        self.state["forbidden_directions"] = parsed_goal.get("forbidden_directions", [])
 
         patience = parsed_goal.get("patience", {})
         if patience:

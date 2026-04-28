@@ -8,6 +8,7 @@ Use these rules instead of helper scripts.
 - `iteration_log.json` stays at the repository root.
 - `project_map.json` stays at the repository root.
 - `CLAUDE.md` stays at the repository root.
+- `MEMORY.md` stays at the repository root.
 
 ## Section-Safe Editing
 
@@ -41,6 +42,7 @@ Render section bodies from project state rather than inventing new structure:
   - prefer `PROJECT_STATE.json`
   - prefer `iteration_log.json`
   - prefer `project_map.json`
+  - include `MEMORY.md` as the human-readable lessons bank when present or when initializing templates
   - include artifact paths recorded in `PROJECT_STATE.json`
 - `Entry Scripts`
   - prefer:

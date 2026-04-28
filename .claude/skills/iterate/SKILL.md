@@ -1,6 +1,6 @@
 ---
 name: iterate
-description: WF8 structured experiment iteration. Manages the hypothesis→code→run→eval cycle, maintains iteration_log.json, with optional Codex cross-validation. Supported commands: plan (design iteration), code (implement changes), run (execute training + collect metrics), eval (evaluate results), ablate (ablation experiments), status (view progress), log (full history).
+description: "WF8 structured experiment iteration. Manages the hypothesis→code→run→eval cycle, maintains iteration_log.json, with optional Codex cross-validation. Supported commands: plan (design iteration), code (implement changes), run (execute training + collect metrics), eval (evaluate results), ablate (ablation experiments), status (view progress), log (full history)."
 argument-hint: "[plan|code|run|eval|ablate|status|log] [details]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Skill, WebSearch
@@ -24,7 +24,10 @@ On CONTINUE (final) → WF9 (final-exp).
 
 The iteration log file is at `iteration_log.json` in the project root.
 For the schema, see [templates/iteration-log-schema.json](templates/iteration-log-schema.json).
+For code style behavior, see [../../shared/code-style.md](../../shared/code-style.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 
 ## State Ownership
 
@@ -153,13 +156,14 @@ If there are incomplete iterations, prompt the user to complete or abandon them 
    }
    ```
 4. **Create symlink** `.claude/current_iteration.json` → `.claude/iterations/iter{N}/context.json`
-5. Call `/code-debug {description}`, letting code-debug perform the actual code changes and commit
-6. **Remove symlink** `.claude/current_iteration.json` (keep persistent context)
-7. **Force-fetch git commit**: Get commit hash and message from git log
+5. Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md)
+6. Call `/code-debug {description}`, letting code-debug perform the actual code changes and commit
+7. **Remove symlink** `.claude/current_iteration.json` (keep persistent context)
+8. **Force-fetch git commit**: Get commit hash and message from git log
    - **If commit hash cannot be obtained** (code-debug did not successfully commit) → keep status="coding",
      report error and prompt user to check manually. **Must not advance to training status**.
    - If successfully obtained → continue
-8. Update iteration_log.json:
+9. Update iteration_log.json:
    - `git_commit`: commit hash (required, cannot be null)
    - `git_message`: commit message
    - `status`: "training" (code is ready, awaiting training registration)
@@ -356,6 +360,7 @@ If `.claude/iterations/` directory does not exist, create it.
 - ALWAYS update iteration_log.json after every sub-command
 - NEVER delete or modify completed iteration entries (append-only for completed)
 - ALWAYS use /code-debug for actual code changes (don't modify code directly)
+- ALWAYS apply `../../shared/code-style.md` before code edits in `/iterate code`
 - ALWAYS use /evaluate for detailed analysis when available
 - ALWAYS persist iteration context to `.claude/iterations/iter{N}/context.json`, use symlink for `.claude/current_iteration.json`
 - ALWAYS output recommended next-step command after eval decision

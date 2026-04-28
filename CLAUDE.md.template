@@ -25,6 +25,7 @@ conda activate {{ENV_NAME}}
 - `PROJECT_STATE.json` — Stage progression (single source of truth for stages)
 - `iteration_log.json` — Experiment history (single source of truth for iterations)
 - `project_map.json` — Code architecture (single source of truth for structure, stable files only)
+- `MEMORY.md` — Human-readable append-only lessons and decisions
 - `.auto_iterate/` — Controller-owned runtime state (if auto-iterate is enabled; do not edit manually)
 
 ## Language Policy
@@ -40,7 +41,12 @@ conda activate {{ENV_NAME}}
 ## Global Rule: project_map.json Maintenance
 Only **stable architecture files** (src/, baselines/, core configs/scripts) are tracked in project_map.json.
 Volatile experiment assets (per-iteration scripts/configs) are not tracked.
-See `.agents/references/project-map-rule.md` for detailed rules.
+See `.claude/rules/project-map.md` for detailed rules.
+
+## Global Rule: Code Style
+- Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.claude/shared/code-style.md` and apply its Pre-Edit Checklist.
+- Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
+- After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
 
 ## Challenge Quick Ref
 <!-- Fill in competition details -->
@@ -52,9 +58,16 @@ See `.agents/references/project-map-rule.md` for detailed rules.
 - Deadline: {{DEADLINE}}
 
 ## Workflow
-WF1(survey) -> WF2(arch) -> WF3(check) -> WF4(data) -> WF5(baseline) -> WF6(plan) -> WF7(code) -> WF7.5(validate) -> WF8(iterate) -> WF9(final-exp) -> WF10(release)
+WF1(survey) -> optional WF1.5(idea-debate) -> WF2(arch) -> WF3(check) -> WF4(data) -> WF5(baseline) -> WF6(plan) -> WF7(code) -> WF7.5(validate) -> WF8(iterate) -> WF9(final-exp) -> WF10(release)
 WF8 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF9 | PIVOT->WF2 | ABORT->stop)
 Current stage: WF1 (not started)
+
+## Documentation Evidence and Style Rule
+- Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
+- Separate verified facts, inferences, and open questions.
+- Also read `.claude/shared/documentation-style.md`.
+- Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
 
 ## Custom
 ### Codex MCP

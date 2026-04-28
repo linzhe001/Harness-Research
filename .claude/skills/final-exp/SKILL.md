@@ -22,6 +22,8 @@ On completion → project concludes, ready for paper writing.
 First, read PROJECT_STATE.json to get target_venue and experiment context.
 For the output format, see [templates/experiment-matrix.md](templates/experiment-matrix.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

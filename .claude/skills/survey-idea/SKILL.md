@@ -23,6 +23,8 @@ If "PIVOT" or "ABANDON", the project is re-scoped or terminated.
 First, read PROJECT_STATE.json (if it exists) to get project context.
 For the output format, see [templates/feasibility-report.md](templates/feasibility-report.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

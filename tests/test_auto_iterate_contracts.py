@@ -160,6 +160,7 @@ class TestStateStore:
             "current_round_index", "current_phase_key",
             "current_iteration_id", "phase_attempt",
             "goal", "objective", "best", "patience",
+            "initial_hypotheses", "forbidden_directions",
             "budget", "llm_budget", "accounts",
             "last_decision", "halt_reason", "last_failure",
         }
@@ -376,6 +377,7 @@ class TestFixtureIntegrity:
             "phase_family", "phase_key", "run_type", "tool",
             "auto_mode", "recovery_mode", "round_type",
             "objective", "current_best", "recent_lessons",
+            "initial_hypotheses", "forbidden_directions",
             "failed_hypotheses", "budget_status",
             "screening_policy", "timeouts",
         }

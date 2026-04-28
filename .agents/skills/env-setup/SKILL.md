@@ -10,6 +10,7 @@ description: Codex wrapper for environment creation and refresh. Use when the us
 Read these first:
 - `../../../.agents/references/deps-update-rule.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/environment-refresh.md`
 - `../../../CLAUDE.md` if it exists
 - `../init-project/references/claude-maintenance.md`

@@ -67,6 +67,8 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 
 3. **Precise fix**
 
+   Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md) before editing code.
+
    Use the Edit tool to modify code, following the minimal change principle:
    - Only change what must be changed
    - Do not perform unrelated refactoring or cosmetic improvements
@@ -107,6 +109,7 @@ User-facing debugging summaries should follow [../../shared/language-policy.md](
 <constraints>
 - NEVER make changes beyond the scope of the reported issue
 - NEVER refactor or "improve" unrelated code
+- ALWAYS apply the Pre-Edit Checklist in `../../shared/code-style.md` before editing code
 - NEVER skip py_compile validation after modification
 - NEVER re-train without committing first (semantic commit message required)
 - Core training/evaluation logic MUST stay in files listed in CLAUDE.md `## Entry Scripts`. Auxiliary scripts (ablation runners, submission packagers) may be created in `scripts/` as needed, but must not duplicate core logic.

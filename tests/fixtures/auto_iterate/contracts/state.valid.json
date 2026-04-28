@@ -22,6 +22,14 @@
       "Parameters <= 50M"
     ]
   },
+  "initial_hypotheses": [
+    "Adding channel attention to the decoder skip connections should improve detail reconstruction.",
+    "Replacing L1 loss with a hybrid SSIM+L1 loss may improve perceptual quality."
+  ],
+  "forbidden_directions": [
+    "Do not replace the backbone architecture entirely.",
+    "Do not reduce input resolution below 256x256."
+  ],
   "best": {
     "iteration_id": "iter2",
     "round_index": 2,

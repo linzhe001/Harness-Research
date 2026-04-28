@@ -22,6 +22,8 @@ Sub-commands:
 - `create` — Create a new conda environment from scratch as a maintenance action
 - `refresh` — Detect current environment and update CLAUDE.md `## Environment` section
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

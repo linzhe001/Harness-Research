@@ -13,6 +13,8 @@ Use these checks when validating `PROJECT_STATE.json` progress.
 
 - `survey_idea`
   - `docs/Feasibility_Report.md`
+- `idea_debate` (recommended, non-blocking for legacy projects)
+  - `docs/Idea_Debate.md`
 - `refine_arch`
   - `docs/Technical_Spec.md`
 - `deep_check`
@@ -35,7 +37,8 @@ Use these checks when validating `PROJECT_STATE.json` progress.
   - `scripts/train_smoke.py`
   - `scripts/eval_smoke.py`
   - `scripts/train_all_scenes.py` when the project uses it
-  - pass/fail evidence is usually in stage history or logs, not a dedicated file
+  - `docs/Validate_Run_Report.md`
+  - report must include raw log paths, review trace path or `unavailable`, command evidence, and PASS/REVIEW/FAIL verdict
 - `iterate`
   - `iteration_log.json`
   - `PROJECT_STATE.json.current_stage.latest_iteration` synchronized with the latest iteration record

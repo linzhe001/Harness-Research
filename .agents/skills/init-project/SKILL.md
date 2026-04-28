@@ -11,6 +11,8 @@ Read these first:
 - `./references/claude-md-template.md`
 - `./references/claude-maintenance.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `../../../PROJECT_STATE.json` if it exists
 - `../../../CLAUDE.md` if it exists
 

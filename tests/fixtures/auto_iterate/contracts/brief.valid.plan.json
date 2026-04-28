@@ -24,6 +24,14 @@
     "iteration_id": "iter3",
     "primary_metric": 30.5
   },
+  "initial_hypotheses": [
+    "Adding channel attention to the decoder skip connections should improve detail reconstruction.",
+    "Replacing L1 loss with a hybrid SSIM+L1 loss may improve perceptual quality."
+  ],
+  "forbidden_directions": [
+    "Do not replace the backbone architecture entirely.",
+    "Do not reduce input resolution below 256x256."
+  ],
   "recent_lessons": [
     "Larger learning rate caused training instability after epoch 20",
     "Channel attention on skip connections improved PSNR by 0.3 dB",

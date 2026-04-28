@@ -29,6 +29,7 @@ These are mandatory behavior rules for `$iterate`.
   - `changes_summary`
   - `config_diff`
   - `status=planned`
+  - `screening.recommended`
   - `codex_review`
 - Must check prior `lessons` and warn when the new hypothesis repeats a known failed pattern.
 
@@ -81,6 +82,7 @@ These are mandatory behavior rules for `$iterate`.
   - non-empty `lessons`
   - `status=completed` when evaluation is complete
 - Must produce or refresh the per-iteration report under `docs/iterations/` when the workflow uses those reports.
+- Must append or refresh a human-readable lesson entry in `MEMORY.md`.
 - Must output the recommended next-step command that matches the decision:
   - `NEXT_ROUND` -> `$iterate plan "..."` (ordinary improvement round)
   - `DEBUG` -> `$iterate plan "..." [debug-oriented]`

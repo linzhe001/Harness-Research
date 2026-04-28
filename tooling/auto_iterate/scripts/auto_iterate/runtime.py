@@ -176,6 +176,8 @@ def build_brief(
             "iteration_id": best.get("iteration_id"),
             "primary_metric": best.get("primary_metric"),
         },
+        "initial_hypotheses": state.get("initial_hypotheses", []),
+        "forbidden_directions": state.get("forbidden_directions", []),
         "recent_lessons": recent_lessons or [],
         "failed_hypotheses": failed_hypotheses or [],
         "budget_status": {
@@ -208,10 +210,17 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "\n"
         "Failed hypotheses:\n{failed}\n"
         "\n"
+        "Seed hypotheses from the active goal:\n{initial_hypotheses}\n"
+        "\n"
+        "Forbidden directions:\n{forbidden_directions}\n"
+        "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Prefer seed hypotheses when they are still viable.\n"
+        "- Do not propose any plan that violates a forbidden direction.\n"
         "- Write exactly 1 new iteration entry with status=planned.\n"
-        "- Include screening.recommended field.\n"
+        "- Include id, date, hypothesis, changes_summary, status=planned, "
+        "config_diff object, screening.recommended boolean, and codex_review.\n"
         "- iteration_log.json is the source of truth.\n"
     ),
     "code": (
@@ -292,6 +301,18 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
         if failed
         else "  (none)"
     )
+    initial_hypotheses = brief.get("initial_hypotheses", [])
+    initial_hypotheses_str = (
+        "\n".join(f"  - {hypothesis}" for hypothesis in initial_hypotheses)
+        if initial_hypotheses
+        else "  (none)"
+    )
+    forbidden_directions = brief.get("forbidden_directions", [])
+    forbidden_directions_str = (
+        "\n".join(f"  - {direction}" for direction in forbidden_directions)
+        if forbidden_directions
+        else "  (none)"
+    )
 
     return template.format(
         round_index=brief.get("round_index", "?"),
@@ -304,6 +325,8 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
         iteration_id=iteration_id or "?",
         lessons=lessons_str,
         failed=failed_str,
+        initial_hypotheses=initial_hypotheses_str,
+        forbidden_directions=forbidden_directions_str,
         screening_steps=sp.get("default_steps", 5000),
         threshold_pct=sp.get("threshold_pct", 90),
     )

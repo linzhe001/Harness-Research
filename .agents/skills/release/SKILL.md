@@ -10,6 +10,8 @@ description: Codex wrapper for WF10 release and submission packaging. Use when t
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/release-checklist.md`
 - `./references/release-manifest.md`
 - `../../../PROJECT_STATE.json`
@@ -44,6 +46,7 @@ Interpret natural-language requests as one of the canonical intents:
 - Treat natural-language requests as the canonical `$release {validate|package|submit}` interface.
 - Preserve the original validate-before-submit rule and checkpoint-tracking requirements.
 - Do not overwrite existing packages without explicit confirmation.
+- Include evidence sources for package contents, chosen checkpoints, manifests, and validation commands.
 - Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language packaging summaries; keep manifest keys, file names, paths, commands, and intent labels in English.
 
 ## Execution Rule

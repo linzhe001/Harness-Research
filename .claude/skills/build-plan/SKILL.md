@@ -27,6 +27,8 @@ For code style requirements, see [../../shared/code-style.md](../../shared/code-
 For the roadmap format, see [templates/implementation-roadmap.md](templates/implementation-roadmap.md).
 For the project map schema, see [templates/project-map-schema.json](templates/project-map-schema.json).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

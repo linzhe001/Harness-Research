@@ -31,6 +31,8 @@ If PROJECT_STATE.json exists, read it to determine current stage.
 If CLAUDE.md already exists, read it first.
 For the template format, see [templates/claude-md-template.md](templates/claude-md-template.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
@@ -76,6 +78,17 @@ Python, PyTorch, CUDA, GPU, dependency versions...
 - `artifact_language`: Use the same language as `interaction_language` for natural-language sections in generated docs and reports unless the user asks otherwise.
 - Keep file names, paths, commands, code identifiers, JSON/YAML keys, schema fields, workflow IDs, metric keys, and placeholder tokens in English.
 - Treat English wording in templates and examples as structural guidance only; localize headings and narrative text unless a field is explicitly marked English-only.
+
+## Global Rule: Code Style
+- Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.claude/shared/code-style.md` and apply its Pre-Edit Checklist.
+- Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
+- After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
+
+## Global Rule: Documentation Style
+- Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
+- Also read `.claude/shared/documentation-style.md`.
+- Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
 
 ## Workflow
 WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
@@ -125,6 +138,8 @@ Fill in:
 - `## Project Structure` — top-level directory overview + description detail level annotations
 - `## Core Artifacts` — project_map.json and PROJECT_STATE.json
 - `## Global Rule` — project_map.json maintenance rule reference
+- `## Global Rule: Code Style` — `.claude/shared/code-style.md` Pre-Edit Checklist reference if missing
+- `## Global Rule: Documentation Style` — `.claude/shared/documentation-evidence-rule.md` plus `.claude/shared/documentation-style.md` readability and `docs/legacy/` rules if missing
 
 ### After WF7 first experiment → Lock Entry Scripts
 

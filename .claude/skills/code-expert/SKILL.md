@@ -38,6 +38,9 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `project_map.json`: File locations, responsibilities, input/output shapes, dependencies
    - `docs/Implementation_Roadmap.md`: Module pseudocode and generation order
    - PROJECT_STATE.json: Project state
+   - `../../shared/code-style.md`: Code style guidelines and the Pre-Edit Checklist
+
+   Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md) before writing or editing code.
 
 2. **Generate all code in dependency order**
 
@@ -93,6 +96,7 @@ User-facing progress notes and summaries should follow [../../shared/language-po
 - NEVER generate code without reading project_map.json and Implementation_Roadmap.md first
 - NEVER make architectural decisions — follow project_map.json exactly
 - NEVER create files not defined in project_map.json without first updating it
+- ALWAYS apply the Pre-Edit Checklist in `../../shared/code-style.md` before writing code
 - ALWAYS run py_compile after generating each file
 - ALWAYS update project_map.json after creating any file
 </constraints>

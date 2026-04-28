@@ -21,6 +21,8 @@ See `tooling/auto_iterate/docs/auto_iterate_goal_template.md` for the canonical 
 - `initial_hypotheses[]` — seed hypotheses for first rounds
 - `forbidden_directions[]` — hard boundaries the AI must not cross
 
+These optional fields are passed into the auto-iterate plan prompt. Seed hypotheses should guide early planning when still viable; forbidden directions are hard constraints.
+
 ## Field Sources
 
 | Field | Primary Source |

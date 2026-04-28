@@ -2,7 +2,20 @@
 
 This guide defines the style standards that all CV research project code must follow.
 
-## 1. Staged Linting Rules
+## 1. Pre-Edit Checklist
+
+Before editing code:
+
+- Re-read the target files and nearby local patterns in the current turn.
+- Prefer the smallest readable change that solves the request.
+- Keep functions and classes focused; split code only when it reduces real complexity.
+- Use explicit names and straightforward control flow instead of clever one-liners.
+- Preserve fail-fast behavior; do not hide invalid state with broad fallbacks.
+- Avoid unrelated refactors, formatting churn, and style rewrites outside the touched scope.
+- Add or update focused tests when behavior changes.
+- Run the phase-appropriate validation commands, or state clearly why they could not run.
+
+## 2. Staged Linting Rules
 
 ### MVP Stage (Quick Validation)
 ```bash
@@ -21,7 +34,7 @@ ruff check --select=E,W,F,I,N,D,UP,ANN --ignore=ANN101,ANN102,D100,D104
 mypy --strict --ignore-missing-imports
 ```
 
-## 2. Type Hints Guidelines
+## 3. Type Hints Guidelines
 
 ### Comment Annotation Approach (Recommended for MVP)
 
@@ -51,7 +64,7 @@ PointPositions: TypeAlias = Float[Tensor, "num_points 3"]
 PointFeatures: TypeAlias = Float[Tensor, "num_points feat_dim 3"]
 ```
 
-## 3. Docstring Template (Google Style)
+## 4. Docstring Template (Google Style)
 
 ```python
 def forward_pass(
@@ -75,7 +88,7 @@ def forward_pass(
     """
 ```
 
-## 4. Config Management (dataclass-based)
+## 5. Config Management (dataclass-based)
 
 ```python
 from dataclasses import dataclass, field
@@ -105,7 +118,7 @@ class ExperimentConfig:
     train: TrainConfig = field(default_factory=TrainConfig)
 ```
 
-## 5. File Length Limits
+## 6. File Length Limits
 
 | File Type | Max Lines | Split Strategy When Exceeded |
 |-----------|-----------|------------------------------|
@@ -114,7 +127,7 @@ class ExperimentConfig:
 | Training script | 300 | train.py, trainer.py, callbacks.py |
 | Utility functions | 200 | Split into utils/ subdirectories by functionality |
 
-## 6. Required Elements in Training Scripts
+## 7. Required Elements in Training Scripts
 
 - `set_seed()`: Set all random seeds
 - Gradient clipping
@@ -123,7 +136,7 @@ class ExperimentConfig:
 - Logging (tensorboard / wandb)
 - Support `--config` parameter-driven execution
 
-## 7. Fail-Fast Error Policy
+## 8. Fail-Fast Error Policy
 
 - Do not introduce fallback behavior that hides invalid state, missing data, bad configuration, import errors, shape mismatches, or failed optional dependencies.
 - Do not add broad `try`/`except` blocks, silent `except` handlers, default substitute values, or best-effort continuation paths unless the user explicitly requests tolerant behavior for a specific boundary.

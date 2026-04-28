@@ -18,6 +18,14 @@
 
 ## Required Sections
 
+### 0. evidence_sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| `{path_or_command}` | | |
+
+Separate verified facts from inferences. Put unverifiable assumptions under open issues.
+
 ### 1. architecture_overview
 - Include ASCII architecture diagram
 - Data flow description

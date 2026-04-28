@@ -11,6 +11,8 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/pre-training-rule.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/baseline-report.md`
 - `../../../PROJECT_STATE.json`
 
@@ -36,6 +38,7 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 ## Output Rules
 
 - Keep adaptation notes, training config notes, and reproduced-versus-paper comparison.
+- Include evidence sources for reproduced metrics, commit hashes, configs, and any paper-reported values.
 - Treat environment creation here as part of the canonical WF5 gate, not as a separate pre-workflow step.
 - Use the canonical pre-training commit rule for baseline code changes.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.

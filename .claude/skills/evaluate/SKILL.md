@@ -29,6 +29,8 @@ When called standalone, the decision is recorded in PROJECT_STATE.json.
    If present, **prioritize the baseline and best info within it** for comparison.
 2. `PROJECT_STATE.json` — fallback, to get baseline metrics and experiment context.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

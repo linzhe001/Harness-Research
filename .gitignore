@@ -5,18 +5,23 @@
 /config/
 /baselines/
 /experiments/
-/docs/
+/docs/*
+!/docs/legacy/
+/docs/legacy/*
+!/docs/legacy/.gitkeep
 /tests/
 /PROJECT_STATE.json
 /iteration_log.json
 /project_map.json
 /CLAUDE.md
 /AGENTS.md
+/MEMORY.md
 /Reference_tool_repo/
 /.claude/settings.local.json
 /.claude/iterations/
 /.agents/state/iterations/
 /.agents/state/current_iteration.json
+/.agents/state/review_traces/
 
 # === Local-only paths (kept out of harness history) ===
 /.harness/

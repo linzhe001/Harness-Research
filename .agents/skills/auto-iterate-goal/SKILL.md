@@ -17,6 +17,8 @@ Bridge skill between WF7.5 PASS and WF8 auto-iterate `start`. Produces or valida
 
 - `./references/goal-template.md`
 - `.agents/references/workflow-guide.md`
+- `.agents/references/documentation-evidence-rule.md`
+- `.agents/references/documentation-style.md`
 - `../evaluate/references/stage-report.md`
 - `tooling/auto_iterate/docs/auto_iterate_goal_template.md`
 

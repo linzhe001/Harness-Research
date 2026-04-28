@@ -31,10 +31,11 @@ Use this skill for all post-WF7 code changes:
 3. Read active iteration context from `.agents/state/current_iteration.json` when it exists.
 4. Treat `.agents/state/` as a reserved local runtime directory, but do not assume an active context file exists.
 5. Read the latest iteration report when a DEBUG decision triggered the work.
-6. Make the smallest defensible change.
-7. Validate changed Python files with `py_compile` and `ruff`.
-8. Sync `project_map.json` when stable interfaces changed.
-9. Create the required semantic commit before handing the code back to training.
+6. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
+7. Make the smallest defensible change.
+8. Validate changed Python files with `py_compile` and `ruff`.
+9. Sync `project_map.json` when stable interfaces changed.
+10. Create the required semantic commit before handing the code back to training.
 
 ## Codex Adaptation
 

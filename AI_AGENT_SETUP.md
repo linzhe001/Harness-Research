@@ -51,9 +51,9 @@ Remote-control docs:
 
 | Path | Purpose |
 |------|---------|
-| `.claude/skills/` | Claude Code skill definitions (18 skills) |
+| `.claude/skills/` | Claude Code skill definitions (17 skills) |
 | `.claude/rules/` | Auto-triggered rules (pre-training, project-map, deps-update) |
-| `.claude/shared/` | Shared references (code style, language policy) |
+| `.claude/shared/` | Shared references (code style, language policy, documentation rules) |
 | `.claude/Workflow_Guide.md` | Full workflow documentation for Claude Code |
 | `.agents/skills/` | Codex agent skill definitions (18 skills) |
 | `.agents/references/` | Shared behavior constraints for Codex |
@@ -74,7 +74,7 @@ Remote-control docs:
 ## Workflow Stages
 
 ```
-WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
+WF1(survey) → optional WF1.5(idea-debate) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline)
 → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
 ```
 
@@ -103,12 +103,14 @@ Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE**
 
 - `CLAUDE.md`
 - `AGENTS.md`
+- `MEMORY.md`
 - `PROJECT_STATE.json`
 - `iteration_log.json`
 - `project_map.json`
 - `src/`, `scripts/`, `configs/`, `docs/`, `tests/`
 - `docs/auto_iterate_goal.md`
 - `docs/iterations/**`
+- `docs/legacy/**` for archived superseded docs
 - project-specific figures/screenshots under research-owned paths such as `docs/media/`, `docs/figures/`, or `experiments/`
 
 ### Media placement
@@ -247,6 +249,7 @@ Only copy when the target file does not already exist:
 ```bash
 [ ! -f CLAUDE.md ] && cp CLAUDE.md.template CLAUDE.md
 [ ! -f AGENTS.md ] && cp AGENTS.md.template AGENTS.md
+[ ! -f MEMORY.md ] && cp MEMORY.md.template MEMORY.md
 [ ! -f .claude/settings.local.json ] && cp settings.local.json.template .claude/settings.local.json
 ```
 
@@ -288,6 +291,7 @@ cat >> .harness/info/exclude <<'EOF'
 # Research-owned files hidden from harness git
 /CLAUDE.md
 /AGENTS.md
+/MEMORY.md
 /PROJECT_STATE.json
 /iteration_log.json
 /project_map.json
@@ -307,7 +311,7 @@ noise.
 ## 5. Create project directories
 
 ```bash
-mkdir -p src scripts configs baselines experiments docs docs/iterations tests
+mkdir -p src scripts configs baselines experiments docs docs/iterations docs/legacy tests
 mkdir -p .claude/iterations
 mkdir -p .agents/state/iterations
 ```
@@ -595,6 +599,8 @@ Practical notes from a successful bring-up:
   `events.jsonl`, `runtime/`, and the goal snapshot
 - create `docs/iterations/` during bootstrap so per-iteration reports and notes
   have a stable home from day 1
+- create `docs/legacy/` during bootstrap so refreshed docs can archive old
+  versions instead of keeping stale Markdown in the root docs view
 - keep `docs/auto_iterate_goal.md` research-owned; keep
   `tooling/auto_iterate/config/*.local.yaml` as local operator inputs; keep
   `.auto_iterate/` runtime-only and out of git

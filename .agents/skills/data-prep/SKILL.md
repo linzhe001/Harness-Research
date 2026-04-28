@@ -10,6 +10,8 @@ description: Codex wrapper for WF4 data engineering. Use when the user wants dat
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/dataset-stats.md`
 - `../../../PROJECT_STATE.json`
 
@@ -35,6 +37,7 @@ Use this skill for WF4 when the user wants dataset analysis, subset design, and 
 
 - Use `./references/dataset-stats.md`.
 - Keep the `context_summary`, dataset format summary, full stats, subset strategy, and expected speedup.
+- Include evidence sources and separate verified dataset facts from inferred dataset properties.
 - Dataset path synchronization into `CLAUDE.md` is required WF4 output, not an optional downstream refresh.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 

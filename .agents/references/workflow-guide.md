@@ -115,9 +115,12 @@ Orchestrator does not perform the research work itself. It manages state transit
 | Stage | Skill | Output | Decision |
 |------|-------|------|------|
 | WF1 survey-idea | `$survey-idea` | docs/Feasibility_Report.md | PROCEED/PIVOT/ABANDON |
+| WF1.5 idea-debate | `$idea-debate` | docs/Idea_Debate.md | SELECT/PILOT_FIRST/MERGE/PIVOT/ABANDON |
 | WF2 refine-arch | `$refine-arch` | docs/Technical_Spec.md | — |
 | WF3 deep-check | `$deep-check` | docs/Sanity_Check_Log.md | GO/CONDITIONAL GO/NO-GO |
 | WF4 data-prep | `$data-prep` | docs/Dataset_Stats.md + data pipeline + CLAUDE.md dataset path sync | — |
+
+WF1.5 is a recommended non-numbered gate for projects with multiple plausible ideas or high uncertainty. Missing `docs/Idea_Debate.md` should warn the operator but must not break legacy projects.
 
 ### WF5: Baseline Reproduction (with Mandatory Gating)
 
@@ -144,6 +147,7 @@ WF5 also creates the first runnable environment and synchronizes the `## Environ
 | **Skill** | `$validate-run [config_path]` |
 | **Review items** | Codex code review (equivalence between new code and the baseline: data pipeline, model, loss, evaluation metrics, common ML bugs) |
 | **Validation items** | 100-step training, checkpoint save/load, eval flow, wandb connection, git_snapshot |
+| **Output** | `docs/Validate_Run_Report.md` with evidence sources, review traces, raw log paths, commands, and verdict |
 | **Gate** | PASS → WF8, REVIEW → continue or fix after user confirmation, FAIL → repair with `$code-debug` |
 
 This ensures that code correctness and infrastructure issues are caught before the iteration stage.
@@ -309,6 +313,7 @@ Core functions:
 
 **Per-iteration report**: when invoked from `$iterate eval`, write to `docs/iterations/iter{N}.md`.
 `docs/Stage_Report.md` serves as the latest summary index.
+`MEMORY.md` is the human-readable append-only lessons bank; `iteration_log.json` remains the machine source of truth.
 
 ---
 
@@ -326,7 +331,21 @@ project_map.json tracks only **stable architectural files**:
 - temporary experiment configs
 - everything under `experiments/`
 
-### 5.2 Pre-Training Git + wandb Integration
+### 5.2 Documentation Surface and Legacy Archive
+
+`docs/` is the current human-facing documentation surface. Keep root-level `docs/*.md` limited to the necessary Markdown files that best describe the current codebase state.
+
+When a workflow refreshes an existing current doc, archive the previous version first:
+
+```text
+docs/Foo.md
+  -> docs/legacy/YYYY-MM-DD/Foo__HHMMSS.md
+  -> docs/Foo.md  (new current version)
+```
+
+Use `.agents/references/documentation-style.md` for concise writing, ASCII flow diagrams, and archive naming.
+
+### 5.3 Pre-Training Git + wandb Integration
 
 Three layers of safeguards ensure that every training run has complete version records:
 
@@ -334,7 +353,7 @@ Three layers of safeguards ensure that every training run has complete version r
 2. **git_snapshot.py safety net** (in code)
 3. **wandb + checkpoint records** (in code)
 
-### 5.3 Codex Cross-Validation
+### 5.4 Codex Cross-Validation
 
 | Trigger Point | Trigger Condition | Review Target | Review Focus |
 |--------|---------|---------|---------|
@@ -344,10 +363,10 @@ Three layers of safeguards ensure that every training run has complete version r
 
 Recorded values: `"used"` / `"skipped_low_value"` / `"unavailable"` (null is no longer used)
 
-### 5.4 Stage-Wise Generation of CLAUDE.md
+### 5.5 Stage-Wise Generation of CLAUDE.md
 
 CLAUDE.md is kept as a **stable operations guide** (≤80 lines) and should not contain fast-changing experiment content.
-Fast-changing content (current best, current risk, next experiment) lives in iteration_log.json and MEMORY.md.
+Fast-changing content (current best, current risk, next experiment) lives in `iteration_log.json` and `MEMORY.md`.
 
 | Timing | Content Added |
 |------|---------|
@@ -359,7 +378,7 @@ Fast-changing content (current best, current risk, next experiment) lives in ite
 | After WF6 | Project Structure + Core Artifacts |
 | After the first WF7 experiment | Entry Scripts (locked entry scripts) |
 
-### 5.5 Automated Training Execution
+### 5.6 Automated Training Execution
 
 `$iterate run` implements end-to-end automation from code to metrics:
 
@@ -472,7 +491,7 @@ Fast-changing content (current best, current risk, next experiment) lives in ite
 **`--manual` fallback**: if training must run on a cluster or the user passes `--manual`, the flow degrades into metadata-registration mode
 (only records command, config_path, exp_dir, expected_steps), sets `status → "running"`, and the user calls `$iterate eval` after training finishes.
 
-### 5.6 Per-Iteration Reports
+### 5.7 Per-Iteration Reports
 
 Evaluation reports are stored by iteration:
 - `docs/iterations/iter1.md`, `docs/iterations/iter2.md`, ...

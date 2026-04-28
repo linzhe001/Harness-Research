@@ -325,7 +325,21 @@ project_map.json only tracks **stable architecture files**:
 - Temporary experiment configs
 - Everything under experiments/
 
-### 5.2 Pre-Training Git + wandb Integration
+### 5.2 Documentation Surface and Legacy Archive
+
+`docs/` is the current human-facing documentation surface. Keep root-level `docs/*.md` limited to the necessary Markdown files that best describe the current codebase state.
+
+When a workflow refreshes an existing current doc, archive the previous version first:
+
+```text
+docs/Foo.md
+  -> docs/legacy/YYYY-MM-DD/Foo__HHMMSS.md
+  -> docs/Foo.md  (new current version)
+```
+
+Use `.claude/shared/documentation-evidence-rule.md` for source-grounded claims and `.claude/shared/documentation-style.md` for concise writing, ASCII flow diagrams, and archive naming.
+
+### 5.3 Pre-Training Git + wandb Integration
 
 Three layers of safeguards ensure complete version records for every training run:
 
@@ -333,7 +347,7 @@ Three layers of safeguards ensure complete version records for every training ru
 2. **git_snapshot.py safety net** (in code)
 3. **wandb + checkpoint records** (in code)
 
-### 5.3 Codex Cross-Validation
+### 5.4 Codex Cross-Validation
 
 | Trigger Point | Trigger Condition | Review Target | Review Focus |
 |---------------|-------------------|---------------|--------------|
@@ -343,7 +357,7 @@ Three layers of safeguards ensure complete version records for every training ru
 
 Recorded values: `"used"` / `"skipped_low_value"` / `"unavailable"` (no longer using null)
 
-### 5.4 CLAUDE.md Staged Generation
+### 5.5 CLAUDE.md Staged Generation
 
 CLAUDE.md is maintained as a **stable operations guide** (≤80 lines), without fast-changing experiment content.
 Fast-changing content (current best, current risks, next experiment) resides in iteration_log.json and MEMORY.md.
@@ -358,7 +372,7 @@ Fast-changing content (current best, current risks, next experiment) resides in 
 | After WF6 | Project Structure + Core Artifacts |
 | After WF7 first experiment | Entry Scripts (lock entry scripts) |
 
-### 5.5 Automated Training Execution
+### 5.6 Automated Training Execution
 
 `/iterate run` implements full pipeline automation from code to metrics:
 
@@ -481,7 +495,7 @@ Fast-changing content (current best, current risks, next experiment) resides in 
 **`--manual` fallback**: If training needs to run on a cluster or user passes `--manual`, degrades to metadata registration mode
 (only records command, config_path, exp_dir, expected_steps), status→"running", user calls `/iterate eval` after training completes.
 
-### 5.6 Per-iteration Reports
+### 5.7 Per-iteration Reports
 
 Evaluation reports are stored per iteration:
 - `docs/iterations/iter1.md`, `docs/iterations/iter2.md`, ...

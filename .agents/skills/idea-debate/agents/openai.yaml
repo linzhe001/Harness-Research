@@ -1,0 +1,7 @@
+interface:
+  display_name: "Idea Debate"
+  short_description: "Stress-test candidate research ideas"
+  default_prompt: "Use $idea-debate to compare candidate ideas, objections, MVP pilots, and kill criteria before architecture design."
+
+policy:
+  allow_implicit_invocation: false

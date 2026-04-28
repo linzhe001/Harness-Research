@@ -10,7 +10,12 @@ description: Codex wrapper for WF7.5 validation. Use when the user wants the tra
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
+- `../../../.agents/references/reviewer-independence.md`
+- `../../../.agents/references/review-tracing.md`
 - `./references/review-checklist.md`
+- `./references/validate-run-report.md`
 - `../../../project_map.json`
 - `../../../docs/Technical_Spec.md`
 - `../../../CLAUDE.md`
@@ -38,7 +43,8 @@ Use this skill for WF7.5 when the user wants to verify the codebase is safe to e
    - `PASS`
    - `REVIEW`
    - `FAIL`
-5. Clean up temporary smoke-test artifacts.
+5. Write `docs/Validate_Run_Report.md` with evidence sources, raw log paths, review trace paths, commands, and verdict.
+6. Clean up temporary smoke-test artifacts.
 
 ## Codex Adaptation
 

@@ -31,6 +31,24 @@ Every output file must begin with a context_summary block, no more than 20 lines
 - **Most Relevant Competitor:** {top_competitor}
 </context_summary>
 
+## Evidence Sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| {path_or_url_or_query} | | |
+
+## Verified Facts
+
+- ...
+
+## Inferences
+
+- ...
+
+## Open Questions
+
+- ...
+
 ## 1. Feasibility Score
 
 **Overall Score: {total_score}/10**

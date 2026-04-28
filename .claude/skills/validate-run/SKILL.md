@@ -28,6 +28,8 @@ Input: Working codebase from WF7 + config file + baseline code (from baselines/)
 Output: Code review findings + smoke test pass/fail report.
 On PASS → WF8 (iterate). On FAIL → fix issues via /code-debug.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>

@@ -24,18 +24,19 @@ Use this skill for WF7 first-pass code generation only.
 ## Required Work
 
 1. Read `project_map.json`, `docs/Implementation_Roadmap.md`, `PROJECT_STATE.json`, and the style/rule files before editing.
-2. Generate code in dependency order, following the canonical sequence:
+2. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
+3. Generate code in dependency order, following the canonical sequence:
    - `src/utils/`
    - `src/models/`
    - `src/data/`
    - `src/losses/`
    - `scripts/`
    - `tests/`
-3. After each stable-file creation or interface change, sync `project_map.json`.
-4. Validate modified Python files with:
+4. After each stable-file creation or interface change, sync `project_map.json`.
+5. Validate modified Python files with:
    - `python -m py_compile`
    - `ruff check --select=E,F,I`
-5. Update `PROJECT_STATE.json` on full success.
+6. Update `PROJECT_STATE.json` on full success.
 
 ## Routing Rule
 

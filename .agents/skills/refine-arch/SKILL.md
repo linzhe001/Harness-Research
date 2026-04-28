@@ -11,6 +11,8 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/technical-spec.md`
 - `../../../PROJECT_STATE.json`
 
@@ -31,6 +33,7 @@ Use this skill for WF2 when the user wants to translate an approved idea into a 
 
 - Use `./references/technical-spec.md`.
 - Include the required sections: architecture overview, module modification plan, MVP definition, alternative plans, integration points, resource estimation, and risk mitigation.
+- Include evidence sources and separate verified facts from inferences.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

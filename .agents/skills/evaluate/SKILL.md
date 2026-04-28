@@ -10,6 +10,10 @@ description: Codex wrapper for experiment analysis and decision-making. Use when
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
+- `../../../.agents/references/reviewer-independence.md`
+- `../../../.agents/references/review-tracing.md`
 - `./references/stage-report.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
@@ -28,13 +32,15 @@ Use this skill when the user wants training or evaluation results interpreted an
    - gradient and numerical issues
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
 4. Produce the canonical report using `./references/stage-report.md`.
-5. Recommend exactly one of:
+5. Append or refresh the matching human-readable lesson in `MEMORY.md`.
+6. Recommend exactly one of:
    - `NEXT_ROUND` — ordinary improvement round, stay in WF8
    - `DEBUG` — fixable technical issue, stay in WF8
    - `CONTINUE` — handoff to orchestrator/WF9, not continue iterating
    - `PIVOT`
    - `ABORT`
-6. If invoked from `$iterate`, do not take over stage-transition ownership.
+7. If invoked from `$iterate`, do not take over stage-transition ownership.
+8. Include evidence sources and keep unverifiable result interpretations under open questions.
 
 ## Codex Adaptation
 

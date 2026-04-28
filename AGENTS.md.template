@@ -15,6 +15,7 @@
 - `PROJECT_STATE.json`: stage and milestone state. Stage transitions require explicit user confirmation.
 - `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
 - `project_map.json`: stable architecture map for core code and configs.
+- `MEMORY.md`: human-readable append-only lessons and decisions. `iteration_log.json` remains the machine source of truth.
 - `.auto_iterate/`: controller-owned runtime state (if auto-iterate is enabled; do not edit manually).
 - These canonical state files must stay at the repository root, not under `.agents/`.
 
@@ -32,6 +33,7 @@
 - Use `$code-expert` only for first-pass implementation from the roadmap and project map.
 - Use `$code-debug` for post-WF7 code changes, bug fixes, or iteration-driven edits.
 - Use `$evaluate` for experiment analysis and per-iteration reports.
+- Use `$idea-debate` after WF1 when multiple plausible directions need a skeptical comparison before architecture design.
 - Use the stage-specific skills only for their intended outputs.
 
 ## Entry Scripts
@@ -41,8 +43,10 @@
 
 ## Stable Code Rules
 
+- Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.agents/references/code-style.md` and apply its pre-edit checklist.
 - Read `project_map.json` before any non-trivial stable-code change.
 - Update `project_map.json` when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
+- Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
 
 ## Training Rules
@@ -58,3 +62,5 @@
 
 - Never auto-advance a workflow stage without explicit user confirmation.
 - Use `.agents/references/workflow-guide.md` for the full stage flow and detailed skill behavior.
+- When writing docs, follow `.agents/references/documentation-evidence-rule.md`: re-read source artifacts and list evidence rather than relying on memory.
+- Also follow `.agents/references/documentation-style.md`: keep docs concise, human-readable, use ASCII flow diagrams for workflows, and archive replaced docs under `docs/legacy/`.

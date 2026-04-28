@@ -18,6 +18,12 @@
 
 ## Required Sections
 
+### 0. evidence_sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| `{path_or_command}` | | |
+
 ### 1. file_tree
 
 ```

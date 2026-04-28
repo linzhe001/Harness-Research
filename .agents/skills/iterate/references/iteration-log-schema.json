@@ -136,6 +136,11 @@
               { "type": "null" }
             ]
           },
+          "codex_review_detail": {
+            "type": ["object", "null"],
+            "description": "Optional reviewer trace metadata, reviewer findings, or skip rationale",
+            "additionalProperties": true
+          },
           "run_manifest": {
             "type": ["object", "null"],
             "description": "Training run metadata, populated by /iterate run",

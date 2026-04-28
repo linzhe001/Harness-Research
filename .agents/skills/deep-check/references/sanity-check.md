@@ -18,6 +18,14 @@
 
 ## Required Sections
 
+### 0. evidence_sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| `{path_or_query}` | | |
+
+List reviewer trace paths when external review was used.
+
 ### 1. failure_case_search_results
 - Negative findings from the search
 - Failure cases and their causes

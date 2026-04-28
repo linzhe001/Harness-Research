@@ -10,6 +10,8 @@ description: Codex wrapper for WF9 final experiment planning. Use when the user 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/documentation-evidence-rule.md`
+- `../../../.agents/references/documentation-style.md`
 - `./references/experiment-matrix.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
@@ -32,6 +34,7 @@ Use this skill for WF9 when the user wants the final validation matrix after the
 - Treat natural-language requests as the canonical `$final-exp` flow.
 - Preserve the original emphasis on ablation isolation, reviewer expectations, and compute budgeting.
 - Keep the canonical output path and state updates.
+- Include evidence sources for selected iterations, component definitions, metrics, and compute estimates.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule

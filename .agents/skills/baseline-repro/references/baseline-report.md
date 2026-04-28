@@ -3,6 +3,12 @@
 ## Context Summary
 <!-- ≤20 lines: project name, target venue, baselines being reproduced, data used -->
 
+## Evidence Sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| `{path_or_command}` | | |
+
 ## Reproduction Results
 
 | Baseline | Scene | Metric | Paper | Repro | Delta | Status |

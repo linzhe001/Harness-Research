@@ -25,6 +25,8 @@ Note: WF4 itself must ensure dataset paths are written into `CLAUDE.md`; do not 
 First, read PROJECT_STATE.json to get dataset_name and codebase_path.
 For the output format, see [templates/dataset-stats.md](templates/dataset-stats.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
+For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
