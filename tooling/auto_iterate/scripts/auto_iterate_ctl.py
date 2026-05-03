@@ -42,6 +42,16 @@ def main(argv: list[str] | None = None) -> int:
     p_start.add_argument("--tool", default="codex", choices=["codex"])
     p_start.add_argument("--dry-run", action="store_true", help="Skip real Codex invocation")
     p_start.add_argument("--max-rounds", type=int, default=None)
+    p_start.add_argument(
+        "--skip-dynamic-preflight",
+        action="store_true",
+        help="Skip the WF10 dynamic-context gate suite before starting",
+    )
+    p_start.add_argument(
+        "--allow-draft-contract",
+        action="store_true",
+        help="Allow a draft Evaluation Contract during dynamic-context preflight",
+    )
 
     # -- status -------------------------------------------------------------
     p_status = sub.add_parser("status", help="Show loop status")
@@ -86,6 +96,8 @@ def main(argv: list[str] | None = None) -> int:
             accounts_path=args.accounts,
             tool=args.tool,
             cli_overrides=cli_overrides or None,
+            skip_dynamic_preflight=args.skip_dynamic_preflight,
+            allow_draft_contract=args.allow_draft_contract,
         )
 
     elif args.command == "status":

@@ -30,7 +30,6 @@ budget:
 # Limits on LLM (Codex) usage across all rounds.
 llm_budget:
   max_calls: 200
-  max_cost_usd: 50.0
 
 # --- Patience ---
 patience:
@@ -44,6 +43,12 @@ event_log:
   # Rotate events.jsonl when it exceeds this size (bytes).
   # Rotation only happens at round boundaries.
   rotate_bytes: 1048576  # 1 MB
+
+# --- Runtime ---
+runtime:
+  # Run phases default to full host access so local GPU training is visible.
+  # Set false for CPU-only or externally scheduled run phases.
+  run_phase_full_access: true
 
 # --- Heartbeat ---
 heartbeat:

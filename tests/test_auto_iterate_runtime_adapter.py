@@ -216,6 +216,15 @@ class TestResultAndClassify:
         assert "exec" in cmd
         assert "--full-auto" not in cmd
 
+    def test_build_codex_command_run_phase_can_keep_full_auto(self) -> None:
+        cmd = build_codex_command(
+            "/tmp/work",
+            "run_full",
+            run_phase_full_access=False,
+        )
+        assert "--full-auto" in cmd
+        assert "--dangerously-bypass-approvals-and-sandbox" not in cmd
+
     def test_build_codex_command_non_run_phase_keeps_full_auto(self) -> None:
         cmd = build_codex_command("/tmp/work", "plan")
         assert "--full-auto" in cmd

@@ -269,7 +269,7 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "PIVOT, ABORT.\n"
         "  - NEXT_ROUND: ordinary improvement, continue loop.\n"
         "  - DEBUG: bug/stability issue, continue with debug focus.\n"
-        "  - CONTINUE: target met or ready for WF9 handoff.\n"
+        "  - CONTINUE: target met or ready for WF11 handoff.\n"
         "  - PIVOT: fundamental approach change needed.\n"
         "  - ABORT: terminate this research direction.\n"
         "- Record at least 1 lesson.\n"
@@ -438,14 +438,21 @@ def _actual_model(stderr_path: str) -> str | None:
     return None
 
 
-def build_codex_command(workspace_root: str | Path, phase_key: str) -> list[str]:
+def build_codex_command(
+    workspace_root: str | Path,
+    phase_key: str,
+    *,
+    run_phase_full_access: bool = True,
+) -> list[str]:
     """Build the codex CLI command for a given phase.
 
-    Run phases need direct host access so training can see the local GPU.
+    Run phases default to direct host access so training can see the local GPU.
+    Set ``run_phase_full_access=False`` to keep them in ``--full-auto`` when a
+    project uses CPU-only or separately managed execution.
     Other phases stay on the safer workspace-write sandbox.
     """
     cmd = ["codex"]
-    if phase_key in _GPU_VISIBLE_PHASES:
+    if phase_key in _GPU_VISIBLE_PHASES and run_phase_full_access:
         cmd.append("--dangerously-bypass-approvals-and-sandbox")
     else:
         cmd.append("--full-auto")
@@ -483,6 +490,7 @@ class PhaseSupervisor:
         *,
         iteration_id: str | None = None,
         dry_run: bool = False,
+        run_phase_full_access: bool = True,
     ) -> dict[str, Any]:
         """Launch the runtime, wait with timeout, and return result dict.
 
@@ -517,6 +525,7 @@ class PhaseSupervisor:
             terminate_grace_sec=terminate_grace_sec,
             stdout_path=stdout_path,
             stderr_path=stderr_path,
+            run_phase_full_access=run_phase_full_access,
         )
 
         exit_class = classify_exit(exit_code, timed_out, stderr_path=stderr_path)
@@ -562,12 +571,17 @@ class PhaseSupervisor:
         terminate_grace_sec: int,
         stdout_path: str,
         stderr_path: str,
+        run_phase_full_access: bool = True,
     ) -> tuple[int, bool, float]:
         """Spawn ``codex exec`` and return ``(exit_code, timed_out, duration_sec)``."""
         env = os.environ.copy()
         env["CODEX_HOME"] = codex_home
 
-        cmd = build_codex_command(self.workspace_root, phase_key)
+        cmd = build_codex_command(
+            self.workspace_root,
+            phase_key,
+            run_phase_full_access=run_phase_full_access,
+        )
 
         start = time.monotonic()
         timed_out = False

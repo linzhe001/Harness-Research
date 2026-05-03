@@ -52,8 +52,6 @@
   "llm_budget": {
     "max_calls": 200,
     "used_calls": 24,
-    "max_cost_usd": 50.0,
-    "used_cost_usd": 6.80,
     "tracking_method": "runtime_invocation_count"
   },
   "accounts": {

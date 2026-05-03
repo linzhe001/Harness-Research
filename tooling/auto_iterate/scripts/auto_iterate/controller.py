@@ -13,6 +13,7 @@ The controller does NOT write ``iteration_log.json`` or
 from __future__ import annotations
 
 import copy
+import importlib.util
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -38,7 +39,7 @@ from .runtime import (
     PhaseSupervisor,
     build_brief,
 )
-from .state import StateLoadError, StateStore
+from .state import StateLoadError, StateStore, atomic_write_json
 
 # ---------------------------------------------------------------------------
 # Exit codes (frozen in 01§8.5)
@@ -66,7 +67,14 @@ _DECISION_HALT: dict[str, str] = {
 
 # Canonical phase sequence.
 _PHASE_SEQUENCE = ["plan", "code", "run_screening", "run_full", "eval"]
-_PERSISTED_POLICY_KEYS = ("timeouts", "terminate_grace_sec", "retry_policy", "heartbeat")
+_PERSISTED_POLICY_KEYS = (
+    "timeouts",
+    "terminate_grace_sec",
+    "retry_policy",
+    "heartbeat",
+    "event_log",
+    "runtime",
+)
 
 
 def _merge_with_fallback(
@@ -122,6 +130,8 @@ class LoopController:
         accounts_path: str | None = None,
         tool: str = "codex",
         cli_overrides: dict[str, Any] | None = None,
+        skip_dynamic_preflight: bool = False,
+        allow_draft_contract: bool = False,
     ) -> int:
         """Initialize and run a new auto-iterate loop. Returns exit code."""
         # 1. Parse and validate goal.
@@ -206,8 +216,6 @@ class LoopController:
             "llm_budget": {
                 "max_calls": llm_budget.get("max_calls", 200),
                 "used_calls": 0,
-                "max_cost_usd": llm_budget.get("max_cost_usd", 50.0),
-                "used_cost_usd": 0.0,
                 "tracking_method": "runtime_invocation_count",
             },
             "accounts": self.accounts.to_state_dict(),
@@ -218,6 +226,8 @@ class LoopController:
             "terminate_grace_sec": self.policy.get("terminate_grace_sec", 30),
             "retry_policy": copy.deepcopy(self.policy.get("retry_policy", {})),
             "heartbeat": copy.deepcopy(self.policy.get("heartbeat", {})),
+            "event_log": copy.deepcopy(self.policy.get("event_log", {})),
+            "runtime": copy.deepcopy(self.policy.get("runtime", {})),
             # Internal: not persisted but used during run.
             "_policy": self.policy,
             "screening_policy": screening_policy,
@@ -230,23 +240,41 @@ class LoopController:
             self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
             acquired = True
 
-            # 7. Persist initial runtime state.
+            # 7. Run dynamic-context gates before launching autonomous WF10.
             self.store.ensure_dirs()
+            if not skip_dynamic_preflight:
+                preflight_ok = self._run_dynamic_context_preflight(
+                    allow_draft=allow_draft_contract,
+                )
+                if not preflight_ok:
+                    self.state["status"] = "paused"
+                    self.state["halt_reason"] = "manual_action_required"
+                    self.state["last_failure"] = "dynamic_context_preflight_failed"
+                    self._persist_state()
+                    self.events.emit(
+                        "MANUAL_ACTION_REQUIRED",
+                        loop_id,
+                        "paused",
+                        payload={"reason": "dynamic_context_preflight_failed"},
+                    )
+                    return EXIT_MANUAL_ACTION
+
+            # 8. Persist initial runtime state.
             self.goal_mgr.snapshot_to(goal_path)
             self._persist_state()
 
-            # 8. Start heartbeat.
+            # 9. Start heartbeat.
             hb_interval = self.policy.get("heartbeat", {}).get("interval_sec", 30)
             self.heartbeat = HeartbeatWorker(self.lock_mgr, interval_sec=hb_interval)
             self.heartbeat.start()
 
-            # 9. Emit event.
+            # 10. Emit event.
             self.events.emit(
                 "LOOP_STARTED", loop_id, "running",
                 payload={"tool": tool, "goal_source": goal_path},
             )
 
-            # 10. Run.
+            # 11. Run.
             return self.run_main_loop()
         except LockConflictError:
             return EXIT_LOCK_CONFLICT
@@ -522,6 +550,7 @@ class LoopController:
                 terminate_grace_sec=grace,
                 iteration_id=iteration_id,
                 dry_run=self.dry_run,
+                run_phase_full_access=self._run_phase_full_access(),
             )
         except BriefValidationError as e:
             self.state["status"] = "failed"
@@ -616,6 +645,11 @@ class LoopController:
             self.state["last_decision"] = decision
             return self._apply_decision(decision, round_idx, validation)
 
+        if self._advance_after_success(phase_key, validation):
+            self.state["phase_attempt"] = 1
+            self._persist_state()
+            return validation
+
         # Advance to next phase.
         self._advance_phase()
         self.state["phase_attempt"] = 1
@@ -641,6 +675,7 @@ class LoopController:
                 "ROUND_COMPLETED", loop_id, "running",
                 round_index=round_idx,
             )
+            self._rotate_events_if_needed(round_idx)
 
             # Reset for next round.
             self.state["current_phase_key"] = "plan"
@@ -659,6 +694,7 @@ class LoopController:
                 "ROUND_COMPLETED", loop_id, "stopped",
                 round_index=round_idx,
             )
+            self._rotate_events_if_needed(round_idx)
             self.events.emit(
                 "LOOP_STOPPED", loop_id, "stopped",
                 payload={"halt_reason": halt_reason, "decision": decision},
@@ -681,6 +717,27 @@ class LoopController:
                 self._reset_phase_retry_state()
         except ValueError:
             pass
+
+    def _advance_after_success(self, phase_key: str, validation: dict[str, Any]) -> bool:
+        """Apply phase-specific success transitions.
+
+        Screening failure is a valid screening outcome, but it must not spend a
+        full training run. The next phase is eval, where the iteration records
+        the failed hypothesis and decision.
+        """
+        if phase_key == "run_screening" and validation.get("classification") == "failed":
+            self.events.emit(
+                "SCREENING_FAILED",
+                self.state["loop_id"],
+                "running",
+                round_index=self.state.get("current_round_index"),
+                phase_key=phase_key,
+                payload={"next_phase": "eval", "reason": "screening_failed"},
+            )
+            self.state["current_phase_key"] = "eval"
+            self._reset_phase_retry_state()
+            return True
+        return False
 
     def _plan_context(
         self,
@@ -1015,6 +1072,85 @@ class LoopController:
     def _reset_phase_retry_state(self) -> None:
         self.state["phase_attempt"] = 1
         self.state["phase_account_attempts"] = {}
+
+    def _run_phase_full_access(self) -> bool:
+        runtime = self.state.get("runtime", self.policy.get("runtime", {}))
+        if not isinstance(runtime, dict):
+            return True
+        return bool(runtime.get("run_phase_full_access", True))
+
+    def _rotate_events_if_needed(self, round_idx: int | None = None) -> None:
+        event_log = self.state.get("event_log", self.policy.get("event_log", {}))
+        if not isinstance(event_log, dict):
+            return
+        try:
+            rotate_bytes = int(event_log.get("rotate_bytes", 0))
+        except (TypeError, ValueError):
+            return
+        if rotate_bytes <= 0:
+            return
+        archive = self.events.rotate_if_needed(rotate_bytes)
+        if archive:
+            self.events.emit(
+                "EVENT_LOG_ROTATED",
+                self.state.get("loop_id", ""),
+                self.state.get("status", "running"),
+                round_index=round_idx,
+                payload={"archive": archive, "rotate_bytes": rotate_bytes},
+            )
+
+    def _run_dynamic_context_preflight(self, *, allow_draft: bool = False) -> bool:
+        """Run the dynamic-context gate suite before autonomous WF10 starts."""
+        preflight_path = self.auto_dir / "dynamic_context_preflight.json"
+        checker_path = self.workspace_root / "tooling" / "evidence" / "check_dynamic_context.py"
+        if not checker_path.exists():
+            atomic_write_json(
+                preflight_path,
+                {
+                    "ok": True,
+                    "applicability": "not_applicable_tooling_missing",
+                    "stage": "wf10",
+                },
+            )
+            return True
+
+        spec = importlib.util.spec_from_file_location(
+            "harness_auto_iterate_check_dynamic_context",
+            checker_path,
+        )
+        if spec is None or spec.loader is None:
+            atomic_write_json(
+                preflight_path,
+                {
+                    "ok": False,
+                    "applicability": "dynamic_context",
+                    "stage": "wf10",
+                    "error": "cannot_load_check_dynamic_context",
+                },
+            )
+            return False
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        result = module.check_dynamic_context(
+            self.workspace_root,
+            stage="wf10",
+            allow_draft=allow_draft,
+            write_review_packet=True,
+        )
+        atomic_write_json(
+            preflight_path,
+            {
+                "ok": bool(result.get("ok")),
+                "applicability": "dynamic_context",
+                "stage": result.get("stage", "wf10"),
+                "summary": result.get("summary", {}),
+                "error_count": result.get("error_count", 0),
+                "warning_count": result.get("warning_count", 0),
+                "review_packet": result.get("review_packet"),
+            },
+        )
+        return bool(result.get("ok"))
 
     def _phase_retry_ceiling(self) -> int:
         retry_policy = self.state.get("retry_policy", self.policy.get("retry_policy", {}))

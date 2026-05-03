@@ -42,7 +42,6 @@ DEFAULT_POLICY: dict[str, Any] = {
     },
     "llm_budget": {
         "max_calls": 200,
-        "max_cost_usd": 50.0,
     },
     "patience": {
         "max_no_improve_rounds": 5,
@@ -50,6 +49,9 @@ DEFAULT_POLICY: dict[str, Any] = {
     },
     "event_log": {
         "rotate_bytes": 1_048_576,  # 1 MB
+    },
+    "runtime": {
+        "run_phase_full_access": True,
     },
     "heartbeat": {
         "interval_sec": 30,

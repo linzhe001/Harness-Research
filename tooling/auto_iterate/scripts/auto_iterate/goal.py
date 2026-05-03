@@ -43,6 +43,7 @@ _FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(\w+)\*\*\s*:\s*(.+)$")
 _CONSTRAINT_RE = re.compile(r"^\s*[-*]\s+(.+)$")
 _HEADING_RE = re.compile(r"^#+\s+(.+)$")
 _NUMBERED_RE = re.compile(r"^\s*\d+\.\s+(.+)$")
+_PLACEHOLDER_RE = re.compile(r"\{\{[^}]+\}\}")
 
 
 def parse(goal_path: str | Path) -> dict[str, Any]:
@@ -146,7 +147,7 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             cm = _CONSTRAINT_RE.match(stripped)
             if cm:
                 item = cm.group(1).strip()
-                if item and not item.startswith("{{") and not item.startswith("<!--"):
+                if item and not item.startswith("<!--"):
                     result["objective"]["constraints"].append(item)
             continue
 
@@ -154,7 +155,7 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             nm = _NUMBERED_RE.match(stripped)
             if nm:
                 item = nm.group(1).strip()
-                if item and not item.startswith("{{"):
+                if item:
                     result["initial_hypotheses"].append(item)
             continue
 
@@ -162,7 +163,7 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             cm = _CONSTRAINT_RE.match(stripped)
             if cm:
                 item = cm.group(1).strip()
-                if item and not item.startswith("{{") and not item.startswith("<!--"):
+                if item and not item.startswith("<!--"):
                     result["forbidden_directions"].append(item)
             continue
 
@@ -181,6 +182,10 @@ def validate(parsed_goal: dict[str, Any]) -> list[str]:
     """Return a list of validation errors (empty = valid)."""
     errors: list[str] = []
 
+    placeholder_paths = _find_placeholders(parsed_goal)
+    for path in placeholder_paths:
+        errors.append(f"{path} still contains a {{...}} placeholder")
+
     pm = parsed_goal.get("objective", {}).get("primary_metric", {})
     for field in _REQUIRED_METRIC_FIELDS:
         if field not in pm or pm[field] is None:
@@ -190,28 +195,76 @@ def validate(parsed_goal: dict[str, Any]) -> list[str]:
             f"objective.primary_metric.direction must be one of {_VALID_DIRECTIONS}, "
             f"got {pm['direction']!r}"
         )
+    if "target" in pm and not _is_number(pm.get("target")):
+        errors.append("objective.primary_metric.target must be numeric")
 
     patience = parsed_goal.get("patience", {})
     if "max_no_improve_rounds" not in patience:
         errors.append("patience.max_no_improve_rounds is required")
+    elif not _is_positive_int(patience.get("max_no_improve_rounds")):
+        errors.append("patience.max_no_improve_rounds must be a positive integer")
     if "min_primary_delta" not in patience:
         errors.append("patience.min_primary_delta is required")
+    elif not _is_positive_number(patience.get("min_primary_delta")):
+        errors.append("patience.min_primary_delta must be a positive number")
 
     budget = parsed_goal.get("budget", {})
     if "max_rounds" not in budget:
         errors.append("budget.max_rounds is required")
+    elif not _is_positive_int(budget.get("max_rounds")):
+        errors.append("budget.max_rounds must be a positive integer")
     if "max_gpu_hours" not in budget:
         errors.append("budget.max_gpu_hours is required")
+    elif not _is_positive_number(budget.get("max_gpu_hours")):
+        errors.append("budget.max_gpu_hours must be a positive number")
 
     sp = parsed_goal.get("screening_policy", {})
     if "enabled" not in sp:
         errors.append("screening_policy.enabled is required")
+    elif not isinstance(sp.get("enabled"), bool):
+        errors.append("screening_policy.enabled must be boolean")
     if "threshold_pct" not in sp:
         errors.append("screening_policy.threshold_pct is required")
+    elif not _is_threshold_pct(sp.get("threshold_pct")):
+        errors.append("screening_policy.threshold_pct must be an integer from 1 to 100")
     if "default_steps" not in sp:
         errors.append("screening_policy.default_steps is required")
+    elif not _is_positive_int(sp.get("default_steps")):
+        errors.append("screening_policy.default_steps must be a positive integer")
 
     return errors
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_positive_number(value: Any) -> bool:
+    return _is_number(value) and value > 0
+
+
+def _is_positive_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def _is_threshold_pct(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 100
+
+
+def _find_placeholders(value: Any, path: str = "goal") -> list[str]:
+    if isinstance(value, str):
+        return [path] if _PLACEHOLDER_RE.search(value) else []
+    if isinstance(value, dict):
+        found: list[str] = []
+        for key, child in value.items():
+            found.extend(_find_placeholders(child, f"{path}.{key}"))
+        return found
+    if isinstance(value, list):
+        found = []
+        for index, child in enumerate(value):
+            found.extend(_find_placeholders(child, f"{path}[{index}]"))
+        return found
+    return []
 
 
 def check_metric_identity(

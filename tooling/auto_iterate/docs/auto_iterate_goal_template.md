@@ -19,6 +19,12 @@
 - {{CONSTRAINT_1}}
 - {{CONSTRAINT_2}}
 
+## Contract Readiness
+<!-- Human-facing only. The parser ignores this section, but $auto-iterate-goal
+     should verify it before unattended runs in dynamic-context projects. -->
+- **evaluation_contract**: {{approved|draft_accepted|legacy_protocol}}
+- **source**: {{docs/10_contract/Evaluation_Contract.md or PROJECT_STATE.json.evaluation_protocol}}
+
 ## Patience
 - **max_no_improve_rounds**: {{5}}
 - **min_primary_delta**: {{0.1}}

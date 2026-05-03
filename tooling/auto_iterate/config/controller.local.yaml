@@ -21,7 +21,6 @@ budget:
 
 llm_budget:
   max_calls: 120      # Raise/lower depending on how many Codex turns you allow.
-  max_cost_usd: 30.0  # Optional soft cap for this loop.
 
 patience:
   max_no_improve_rounds: 5  # Increase for broader search, decrease for tighter loops.
@@ -29,6 +28,11 @@ patience:
 
 event_log:
   rotate_bytes: 1048576
+
+runtime:
+  # Run phases default to full host access so local GPU training is visible.
+  # Set false for CPU-only or externally scheduled run phases.
+  run_phase_full_access: true
 
 heartbeat:
   interval_sec: 30

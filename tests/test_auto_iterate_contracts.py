@@ -174,8 +174,7 @@ class TestStateStore:
             assert field in budget, f"budget.{field} missing"
 
         llm = data["llm_budget"]
-        for field in ["max_calls", "used_calls", "max_cost_usd",
-                       "used_cost_usd", "tracking_method"]:
+        for field in ["max_calls", "used_calls", "tracking_method"]:
             assert field in llm, f"llm_budget.{field} missing"
 
     def test_fixture_accounts_consistency(self) -> None:

@@ -162,6 +162,76 @@ class TestGoalValidation:
         errors = validate(parsed)
         assert any("patience.min_primary_delta" in e for e in errors)
 
+    def test_template_placeholders_are_rejected(self) -> None:
+        parsed = parse(REPO_ROOT / "tooling" / "auto_iterate" / "docs" / "auto_iterate_goal_template.md")
+        errors = validate(parsed)
+        assert any("placeholder" in e for e in errors)
+
+    def test_invalid_numeric_and_boolean_values_are_rejected(self) -> None:
+        parsed = parse(FIXTURES / "goal.valid.md")
+        parsed["objective"]["primary_metric"]["target"] = "32.0"
+        parsed["patience"]["max_no_improve_rounds"] = 0
+        parsed["patience"]["min_primary_delta"] = -0.1
+        parsed["budget"]["max_rounds"] = 0
+        parsed["budget"]["max_gpu_hours"] = "100"
+        parsed["screening_policy"]["enabled"] = "true"
+        parsed["screening_policy"]["threshold_pct"] = 101
+        parsed["screening_policy"]["default_steps"] = 0
+
+        errors = validate(parsed)
+
+        assert any("objective.primary_metric.target must be numeric" in e for e in errors)
+        assert any("patience.max_no_improve_rounds must be a positive integer" in e for e in errors)
+        assert any("patience.min_primary_delta must be a positive number" in e for e in errors)
+        assert any("budget.max_rounds must be a positive integer" in e for e in errors)
+        assert any("budget.max_gpu_hours must be a positive number" in e for e in errors)
+        assert any("screening_policy.enabled must be boolean" in e for e in errors)
+        assert any("screening_policy.threshold_pct must be an integer from 1 to 100" in e for e in errors)
+        assert any("screening_policy.default_steps must be a positive integer" in e for e in errors)
+
+    def test_list_placeholders_are_rejected(self, tmp_path: Path) -> None:
+        goal_path = tmp_path / "goal.md"
+        goal_path.write_text(textwrap.dedent("""\
+        # Auto-Iterate Goal
+
+        ## Objective
+
+        ### Primary Metric
+        - **name**: PSNR
+        - **direction**: maximize
+        - **target**: 32.0
+
+        ### Constraints
+        - {{CONSTRAINT_1}}
+
+        ## Patience
+        - **max_no_improve_rounds**: 5
+        - **min_primary_delta**: 0.1
+
+        ## Budget
+        - **max_rounds**: 20
+        - **max_gpu_hours**: 100.0
+
+        ## Screening Policy
+        - **enabled**: true
+        - **threshold_pct**: 90
+        - **default_steps**: 5000
+
+        ## Initial Hypotheses
+        1. {{HYPOTHESIS_1}}
+
+        ## Forbidden Directions
+        - {{FORBIDDEN_1}}
+        """))
+
+        parsed = parse(goal_path)
+        errors = validate(parsed)
+
+        assert parsed["objective"]["constraints"] == ["{{CONSTRAINT_1}}"]
+        assert parsed["initial_hypotheses"] == ["{{HYPOTHESIS_1}}"]
+        assert parsed["forbidden_directions"] == ["{{FORBIDDEN_1}}"]
+        assert sum("placeholder" in error for error in errors) == 3
+
 
 class TestMetricIdentity:
     def test_same_metric_passes(self) -> None:

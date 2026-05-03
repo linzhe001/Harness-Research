@@ -16,7 +16,14 @@ Per-project runtime state is still written to the project root under
 `.auto_iterate/`. Research artifacts such as `docs/auto_iterate_goal.md`,
 `iteration_log.json`, and `PROJECT_STATE.json` remain project-owned files.
 
-Before starting or resuming long WF8 runs, refresh the local account registry:
+`start` runs the WF10 dynamic-context preflight through
+`tooling/evidence/check_dynamic_context.py --stage wf10 --review-packet` when
+that tooling exists in the workspace. The result is recorded in
+`.auto_iterate/dynamic_context_preflight.json`; use
+`--allow-draft-contract` only after explicit operator acceptance, and
+`--skip-dynamic-preflight` only for legacy or manually gated runs.
+
+Before starting or resuming long WF10 runs, refresh the local account registry:
 
 ```bash
 tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \

@@ -86,8 +86,7 @@ class TestDecisionTransitions:
             "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
             "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
                         "max_gpu_hours": 100, "used_gpu_hours": 5, "tracking_method": "wall_time_hours_x_gpu_count"},
-            "llm_budget": {"max_calls": 200, "used_calls": 20, "max_cost_usd": 50,
-                           "used_cost_usd": 5, "tracking_method": "runtime_invocation_count"},
+            "llm_budget": {"max_calls": 200, "used_calls": 20, "tracking_method": "runtime_invocation_count"},
             "accounts": {"selected_account_id": None, "by_account": {}},
             "last_decision": None,
             "halt_reason": None,
@@ -145,6 +144,100 @@ class TestDecisionTransitions:
 
         assert ctl.state["status"] == "stopped"
         assert ctl.state["halt_reason"] == "workflow_abort"
+
+    def test_round_boundary_rotates_event_log(self, tmp_path: Path) -> None:
+        ctl = self._make_controller_at_eval(tmp_path, "NEXT_ROUND")
+        ctl.state["event_log"] = {"rotate_bytes": 1}
+
+        ctl._apply_decision("NEXT_ROUND", 3, {"ok": True, "payload": {"decision": "NEXT_ROUND"}})
+
+        archives = list(ctl.auto_dir.glob("events.*.jsonl"))
+        active_events = [
+            json.loads(line)
+            for line in (ctl.auto_dir / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert archives
+        assert active_events[-1]["event"] == "EVENT_LOG_ROTATED"
+        assert active_events[-1]["payload"]["archive"] == str(archives[0])
+
+
+class TestDynamicPreflight:
+    def test_start_loop_pauses_when_dynamic_preflight_fails(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+
+        def fail_preflight(self, *, allow_draft: bool = False):
+            return False
+
+        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", fail_preflight)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(
+            goal_path=str(CONTRACTS / "goal.valid.md"),
+            cli_overrides={"budget": {"max_rounds": 0}},
+        )
+
+        state = load_json(project / ".auto_iterate" / "state.json")
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert code == EXIT_MANUAL_ACTION
+        assert state["status"] == "paused"
+        assert state["halt_reason"] == "manual_action_required"
+        assert state["last_failure"] == "dynamic_context_preflight_failed"
+        assert events[-1]["event"] == "MANUAL_ACTION_REQUIRED"
+        assert events[-1]["payload"]["reason"] == "dynamic_context_preflight_failed"
+
+    def test_start_loop_passes_allow_draft_contract_to_preflight(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        calls = []
+
+        def pass_preflight(self, *, allow_draft: bool = False):
+            calls.append(allow_draft)
+            return True
+
+        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", pass_preflight)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(
+            goal_path=str(CONTRACTS / "goal.valid.md"),
+            cli_overrides={"budget": {"max_rounds": 0}},
+            allow_draft_contract=True,
+        )
+
+        assert code == EXIT_OK
+        assert calls == [True]
+
+    def test_start_loop_can_skip_dynamic_preflight(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+
+        def unexpected_preflight(self, *, allow_draft: bool = False):
+            raise AssertionError("preflight should be skipped")
+
+        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", unexpected_preflight)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(
+            goal_path=str(CONTRACTS / "goal.valid.md"),
+            cli_overrides={"budget": {"max_rounds": 0}},
+            skip_dynamic_preflight=True,
+        )
+
+        assert code == EXIT_OK
 
 
 # ===================================================================
@@ -241,8 +334,7 @@ class TestStopConditions:
             "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
             "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
                         "max_gpu_hours": 100.0, "used_gpu_hours": 1.0, "tracking_method": "wall_time_hours_x_gpu_count"},
-            "llm_budget": {"max_calls": 200, "used_calls": 10, "max_cost_usd": 50.0,
-                           "used_cost_usd": 1.0, "tracking_method": "runtime_invocation_count"},
+            "llm_budget": {"max_calls": 200, "used_calls": 10, "tracking_method": "runtime_invocation_count"},
             "accounts": {"selected_account_id": None, "by_account": {}},
             "last_decision": "NEXT_ROUND",
             "halt_reason": None,
@@ -432,6 +524,54 @@ class TestRetryCeiling:
         assert result is None
         assert ctl.state["status"] == "paused"
         assert ctl.state["halt_reason"] == "manual_action_required"
+
+
+class TestScreeningTransitions:
+    def test_screening_failed_skips_full_run_and_moves_to_eval(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.state = {
+            "loop_id": "loop_screening",
+            "status": "running",
+            "current_round_index": 1,
+            "current_phase_key": "run_screening",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 3,
+            "phase_account_attempts": {"codex": 2},
+        }
+
+        handled = ctl._advance_after_success("run_screening", {"classification": "failed"})
+
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert handled is True
+        assert ctl.state["current_phase_key"] == "eval"
+        assert ctl.state["phase_attempt"] == 1
+        assert ctl.state["phase_account_attempts"] == {}
+        assert events[-1]["event"] == "SCREENING_FAILED"
+        assert events[-1]["payload"]["next_phase"] == "eval"
+
+    def test_screening_passed_uses_normal_phase_advance(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.state = {
+            "loop_id": "loop_screening",
+            "status": "running",
+            "current_round_index": 1,
+            "current_phase_key": "run_screening",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 1,
+        }
+
+        handled = ctl._advance_after_success("run_screening", {"classification": "passed"})
+
+        assert handled is False
+        assert ctl.state["current_phase_key"] == "run_screening"
 
 
 # ===================================================================
