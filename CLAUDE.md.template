@@ -16,17 +16,27 @@ conda activate {{ENV_NAME}}
 <!-- Filled by /init-project update after WF4 -->
 
 ## Tech Stack
-<!-- Filled by /init-project update after WF2 -->
+<!-- Filled by /init-project update after WF6 -->
 
 ## Project Structure
-<!-- Filled by /init-project update after WF6 -->
+<!-- Filled by /init-project update after WF7 -->
 
 ## Core Artifacts
 - `PROJECT_STATE.json` — Stage progression (single source of truth for stages)
 - `iteration_log.json` — Experiment history (single source of truth for iterations)
-- `project_map.json` — Code architecture (single source of truth for structure, stable files only)
+- `project_map.json` — Stable implementation map (single source of truth for durable files and interfaces)
 - `MEMORY.md` — Human-readable append-only lessons and decisions
+- `OPERATOR_CONTEXT.md` — Optional operator preferences, not project facts; write only from explicit operator input
+- `.evidence/` — Evidence-chain artifacts for compiled current docs when enabled
 - `.auto_iterate/` — Controller-owned runtime state (if auto-iterate is enabled; do not edit manually)
+
+## Context Layers
+- Read `.claude/shared/context-layering-policy.md` and `.claude/shared/research-invariants.md` before research planning, documentation, iteration, auto-iteration, or release work.
+- Current fact-layer summaries belong in `docs/20_facts/`; they must come from project artifacts or evidence chains.
+- Research evidence belongs in `docs/30_evidence/`; it records sources and candidate norms, not permanent rules.
+- Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
+- Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
+- Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
 - `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
@@ -35,12 +45,14 @@ conda activate {{ENV_NAME}}
 - Treat English wording in templates and examples as structural guidance only; localize headings and narrative text unless a field is explicitly marked English-only.
 
 ## Entry Scripts
-<!-- Filled by /init-project update after WF7 first run -->
+<!-- Filled by /init-project update after WF10 first run -->
 <!-- Core entry scripts are locked here after first successful training -->
 
 ## Global Rule: project_map.json Maintenance
-Only **stable architecture files** (src/, baselines/, core configs/scripts) are tracked in project_map.json.
+Only **stable implementation files** (src/, baselines/, core configs/scripts) are tracked in project_map.json.
 Volatile experiment assets (per-iteration scripts/configs) are not tracked.
+Read this rule and `project_map.json` before non-trivial stable-code changes,
+and update `project_map.json` when stable files or stable interfaces change.
 See `.claude/rules/project-map.md` for detailed rules.
 
 ## Global Rule: Code Style
@@ -58,16 +70,23 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Deadline: {{DEADLINE}}
 
 ## Workflow
-WF1(survey) -> optional WF1.5(idea-debate) -> WF2(arch) -> WF3(check) -> WF4(data) -> WF5(baseline) -> WF6(plan) -> WF7(code) -> WF7.5(validate) -> WF8(iterate) -> WF9(final-exp) -> WF10(release)
-WF8 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF9 | PIVOT->WF2 | ABORT->stop)
+WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline) -> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
+WF10 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF11 | PIVOT->WF2 idea-debate/refine-idea | ABORT->stop)
 Current stage: WF1 (not started)
 
 ## Documentation Evidence and Style Rule
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
 - Separate verified facts, inferences, and open questions.
+- Use `/protocol-compiler` to compile `docs/30_evidence/**` into reviewable `docs/35_protocol/**` drafts without field profiles.
+- For contract, fact, protocol, or release docs, also read `.claude/shared/evidence-chain-rule.md` and compile evidence_chain/source_manifest/doc_audit before replacing current Markdown.
+- Before implementation, validation, iteration, auto-iteration, or release, read `.claude/shared/contract-gating-rule.md`.
+- Use `/protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
+- Use `/review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
+- After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
+- Before promoting lessons into `MEMORY.md`, read `.claude/shared/lesson-quality-rule.md`.
 - Also read `.claude/shared/documentation-style.md`.
 - Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
-- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
 
 ## Custom
 ### Codex MCP

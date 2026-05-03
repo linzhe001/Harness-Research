@@ -1,26 +1,26 @@
 ---
 name: build-plan
-description: WF6 Code Architecture and Execution Plan. Design the project file structure (separating main research code from reproduced baselines), module pseudocode, configuration schema, and training pipeline. Outputs Implementation_Roadmap.md + project_map.json.
+description: WF7 implementation planning. Translate the WF6 architecture into project file structure, module pseudocode, configuration schema, training pipeline, Implementation_Roadmap.md, and project_map.json.
 argument-hint: "[project_path]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep
 ---
 
-# WF6: Code Architecture and Execution Plan
+# WF7: Implementation Roadmap and Project Map
 
 <role>
-You are a Software Architect who designs project structure and creates
-detailed implementation plans. You have two core responsibilities:
-1. **Architecture**: Design the file structure, separating research code from baselines,
-   and generate project_map.json as the structural blueprint.
-2. **Planning**: Create step-by-step execution plans for code generation.
+You are a Software Architect who translates an already selected architecture
+into a concrete implementation roadmap. You do not choose the architecture here.
+WF6 `/refine-arch` owns architecture decisions; WF7 owns file structure,
+implementation order, stable module interfaces, config schemas, tests, and
+project_map.json.
 </role>
 
 <context>
-This is Stage 6 of the 10-stage CV research workflow.
-Input: Technical_Spec.md (WF2) + Dataset_Stats.md (WF4) + Baseline_Report.md (WF5).
+This is WF7 of the Harness research workflow.
+Input: Technical_Spec.md (WF6) + Refined_Idea.md (WF3) + Dataset_Stats.md (WF4) + Baseline_Report.md (WF5) + evaluation contract/protocol.
 Output: Implementation_Roadmap.md + project_map.json for WF7.
-On success → WF7 (code-expert). On failure → rollback to WF2 to adjust architecture.
+On success → WF8 (code-expert). On failure → return to WF6 or `/deep-check` if a new architecture decision is needed.
 
 First, read PROJECT_STATE.json to locate input artifacts.
 For code style requirements, see [../../shared/code-style.md](../../shared/code-style.md).
@@ -28,13 +28,15 @@ For the roadmap format, see [templates/implementation-roadmap.md](templates/impl
 For the project map schema, see [templates/project-map-schema.json](templates/project-map-schema.json).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
 1. **Read prerequisite materials**
-   - Technical_Spec.md: Architecture design, MVP definition, chosen approach
-   - Dataset_Stats.md: Data statistics
+	   - Technical_Spec.md: Architecture design, MVP definition, chosen approach
+	   - Refined_Idea.md: task framing, success criteria, and baselines to verify
+	   - Dataset_Stats.md: Data statistics
+	   - Baseline_Report.md and evaluation protocol/contract
    - Codebase structure: Existing files and modules
    - Identify which parts are **main research code** (your innovation) and which are **reproduced baselines** (comparison methods)
 
@@ -64,7 +66,7 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    └── docs/                         # [medium] Documentation
    ```
 
-   **Key principle**: The directory structure is driven by the architecture design in Technical_Spec.md — do not apply a fixed template.
+	   **Key principle**: The directory structure is driven by the architecture design in Technical_Spec.md — do not apply a fixed template and do not introduce new architecture choices here.
 
 3. **Generate project_map.json**
 
@@ -82,13 +84,21 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - `status`: verified / untested / modified / broken
    - `entry_point`: Training entry file
 
-4. **Write module pseudocode**
+4. **Write module pseudocode and shared interfaces**
 
    For each **new** file under `src/`, provide:
    - Class/function signatures (with Type Hints)
    - Pseudocode description of core logic
    - Input/output examples (with tensor shapes)
    - Dependency descriptions
+   - Required config keys and validation behavior
+   - Error conditions and invariants that downstream modules may rely on
+
+   Also define project-level shared interfaces that multiple files must agree
+   on, such as dataset item shape, model forward signature, loss inputs,
+   metric output schema, checkpoint metadata, and train/eval command contracts.
+   These are implementation details of the approved architecture, not new
+   architecture choices.
 
    Preserve the roadmap structure and schema fields, but localize roadmap headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
@@ -144,7 +154,7 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
       - validation_checkpoints (checkpoints for each stage)
 
    b. `project_map.json` (project root), containing the complete tiered file structure description.
-      This is the **architectural blueprint** for WF7 code-expert; code-expert must strictly generate code according to this file's structure.
+      This is the **architectural blueprint** for WF8 code-expert; code-expert must strictly generate code according to this file's structure.
 
 8. **Update project state**
 

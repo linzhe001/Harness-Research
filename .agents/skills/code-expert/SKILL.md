@@ -1,6 +1,6 @@
 ---
 name: code-expert
-description: Codex wrapper for WF7 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, the roadmap, and the original Claude skill contract.
+description: Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, the roadmap, and the original Claude skill contract.
 ---
 
 # Code Expert
@@ -19,7 +19,7 @@ Read these first:
 
 ## When To Use
 
-Use this skill for WF7 first-pass code generation only.
+Use this skill for WF8 first-pass code generation only.
 
 ## Required Work
 
@@ -40,7 +40,7 @@ Use this skill for WF7 first-pass code generation only.
 
 ## Routing Rule
 
-- If the request is a narrow bug fix, planned iteration change, or post-WF7 edit, use `$code-debug` instead.
+- If the request is a narrow bug fix, planned iteration change, or post-WF8 edit, use `$code-debug` instead.
 
 ## Codex Adaptation
 
@@ -51,4 +51,4 @@ Use this skill for WF7 first-pass code generation only.
 
 ## Execution Rule
 
-Follow the local prompt and language policy as the source of truth for WF7 code generation behavior.
+Follow the local prompt and language policy as the source of truth for WF8 code generation behavior.

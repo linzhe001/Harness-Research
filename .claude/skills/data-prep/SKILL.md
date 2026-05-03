@@ -15,18 +15,18 @@ requirements of different CV tasks (NVS, 3DGS, detection, segmentation).
 </role>
 
 <context>
-This is Stage 4 of the 10-stage CV research workflow.
-Input: Sanity_Check_Log.md (GO decision) from WF3.
+This is Stage 4 of the 12-stage Harness research workflow.
+Input: Refined_Idea.md from WF3, plus dataset information from PROJECT_STATE.json or user input.
 Output: Data_Pipeline_Script.py, Dataset_Stats.md, subset config.
 On success → WF5 (baseline-repro). On failure → requires human intervention for data issues.
 
-Note: WF4 itself must ensure dataset paths are written into `CLAUDE.md`; do not leave this as a best-effort downstream refresh.
+Note: WF4 itself must ensure dataset paths are written into `CLAUDE.md`; do not leave this as a best-effort downstream refresh. When `AGENTS.md` exists, check that it still points to `CLAUDE.md` for volatile dataset/environment paths instead of duplicating stale paths.
 
 First, read PROJECT_STATE.json to get dataset_name and codebase_path.
 For the output format, see [templates/dataset-stats.md](templates/dataset-stats.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
@@ -107,10 +107,12 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - `dataset_paths` → normalized dataset paths
    - `history` append completion record
 
-8. **Sync CLAUDE.md**
+8. **Sync CLAUDE.md and AGENTS.md pointer**
 
-   Before WF4 concludes, trigger `/init-project update` or an equivalent section-safe update
-   to ensure `CLAUDE.md`'s `### Dataset Paths` is consistent with `PROJECT_STATE.json.dataset_paths`.
+	   Before WF4 concludes, trigger `/init-project update` or an equivalent section-safe update
+	   to ensure `CLAUDE.md`'s `### Dataset Paths` is consistent with `PROJECT_STATE.json.dataset_paths`.
+	   If `AGENTS.md` exists, keep it stable but verify that it points operators to `CLAUDE.md`
+	   for current dataset and environment paths.
 </instructions>
 
 <constraints>

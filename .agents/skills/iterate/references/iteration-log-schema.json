@@ -114,12 +114,38 @@
           "decision": {
             "type": ["string", "null"],
             "enum": ["NEXT_ROUND", "CONTINUE", "DEBUG", "PIVOT", "ABORT", null],
-            "description": "Post-evaluation decision: NEXT_ROUND=continue loop, DEBUG=debug round, CONTINUE=handoff to WF9, PIVOT=WF2, ABORT=terminate"
+            "description": "Post-evaluation decision: NEXT_ROUND=continue loop, DEBUG=debug round, CONTINUE=handoff to WF11, PIVOT=rollback to WF2 idea-debate/refine-idea, ABORT=terminate"
           },
           "lessons": {
             "type": "array",
             "items": { "type": "string" },
-            "description": "Key takeaways from this iteration"
+            "description": "Key takeaways from this iteration; required for completed iterations as machine-readable eval output"
+          },
+          "lesson_candidates": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "claim": { "type": "string" },
+                "level": { "type": "string", "enum": ["observation", "finding", "lesson", "invariant_candidate"] },
+                "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+                "evidence": { "type": "array", "items": { "type": "string" } },
+                "boundary": { "type": ["string", "null"] },
+                "future_action": { "type": ["string", "null"] },
+                "promotion_status": { "type": "string", "enum": ["candidate", "accepted", "rejected"] }
+              },
+              "additionalProperties": true
+            },
+            "description": "Promotion-ready lesson candidates for docs/50_memory/Lessons.md"
+          },
+          "lesson_promotion_status": {
+            "type": ["string", "null"],
+            "enum": ["none", "candidate", "accepted", "rejected", null],
+            "description": "Summary status for promotion into MEMORY.md"
+          },
+          "evidence_chain": {
+            "type": ["string", "null"],
+            "description": "Optional evidence chain path for the iteration report"
           },
           "codex_review": {
             "description": "Cross-validation result from external AI review",
@@ -176,8 +202,9 @@
                   "type": "object",
                   "properties": {
                     "component": { "type": "string" },
-                    "psnr": { "type": "number" },
-                    "delta": { "type": "number" },
+                    "metric_name": { "type": ["string", "null"] },
+                    "metric_value": { "type": ["number", "string", "null"] },
+                    "delta": { "type": ["number", "null"] },
                     "contribution": { "type": "string", "enum": ["significant", "moderate", "minimal", "negative"] }
                   }
                 }

@@ -1,6 +1,6 @@
 ---
 name: idea-debate
-description: Codex workflow for debating and stress-testing candidate research ideas after WF1 feasibility and before WF2 architecture design. Use when the user wants idea debate, devil's-advocate critique, minimum viable experiments, kill criteria, compute estimates, or `docs/Idea_Debate.md`.
+description: Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design.
 ---
 
 # Idea Debate
@@ -9,6 +9,8 @@ description: Codex workflow for debating and stress-testing candidate research i
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/research-invariants.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -17,12 +19,16 @@ Read these first:
 - `./references/idea-debate-report.md`
 - `../../../PROJECT_STATE.json` if it exists
 - `../../../docs/Feasibility_Report.md` if it exists
+- `../../../docs/30_evidence/Evidence_Index.md` if it exists
+- `../../../docs/35_protocol/Research_Protocol.md` if it exists
 
 ## When To Use
 
-Use this skill after WF1 when there are multiple plausible directions or when the chosen idea needs a skeptical debate before WF2.
+Use this skill for WF2 after WF1 survey.
 
-This is a recommended gate, not a numbered workflow stage. Missing `docs/Idea_Debate.md` should warn but not break older projects.
+For new projects this is a numbered required stage. Legacy projects that predate
+WF2 idea-debate may warn instead of failing, but new dynamic-context projects
+should not skip from WF1 directly to architecture design.
 
 ## Required Work
 
@@ -36,16 +42,18 @@ This is a recommended gate, not a numbered workflow stage. Missing `docs/Idea_De
    - estimated compute and implementation effort
    - fallback or pivot path
 4. When an external reviewer is available, follow reviewer independence and tracing protocols for a fresh critique of the candidate artifacts.
-5. Write `docs/Idea_Debate.md` using the local template.
-6. Update `PROJECT_STATE.json` only if the user wants stage-state synchronization.
+5. When dynamic context is enabled, write or refresh `docs/35_protocol/Research_Protocol.md`, `docs/35_protocol/Protocol_Assumptions.md`, and `docs/35_protocol/Protocol_Changelog.md` with project-local protocol implications.
+6. Write `docs/Idea_Debate.md` using the local template.
+7. Update `PROJECT_STATE.json` when stage-state synchronization is requested or required by the orchestrator.
 
 ## Output Rules
 
 - Use `./references/idea-debate-report.md`.
 - Include `Evidence Sources` and separate verified facts from inferences.
+- Protocol updates are drafts only; do not mark them as approved contracts.
 - Keep the final recommendation explicit: `SELECT`, `PILOT_FIRST`, `MERGE`, `PIVOT`, or `ABANDON`.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule
 
-Use this skill to reduce idea risk before architecture design. Do not turn it into another generic feasibility summary.
+Use this skill to reduce idea risk before WF3 refine-idea. Do not turn it into another generic feasibility summary or an architecture design stage.

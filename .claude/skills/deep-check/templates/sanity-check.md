@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF3 - Secondary Validation
+- **Current Stage:** WF6 - Architecture Design Review
 - **Prior Inputs:** Technical_Spec.md
 - **Deliverables:** Sanity_Check_Log.md
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF4 data-prep (if GO) / WF2 rollback (if NO-GO)
+- **Next Step:** WF7 build-plan (if GO) / WF6 revise architecture or WF2 idea-debate/refine-idea rollback (if NO-GO/PIVOT)
 </context_summary>
 ```
 

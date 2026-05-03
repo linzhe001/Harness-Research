@@ -15,22 +15,25 @@ under identical data and evaluation conditions.
 </role>
 
 <context>
-This is Stage 5 of the 10-stage CV research workflow.
-Input: Dataset from WF4 + Technical_Spec.md baseline list from WF2.
+This is Stage 5 of the 12-stage Harness research workflow.
+Input: Refined_Idea.md baseline candidates from WF3 + Dataset_Stats.md from WF4 + evidence tables. Legacy projects may fall back to Technical_Spec.md when no refined idea exists.
 Output: docs/Baseline_Report.md, updated PROJECT_STATE.json with baseline_metrics, updated project_map.json baselines section.
-On success → WF6 (build-plan). On failure → debug reproduction issues or skip problematic baselines.
+On success → WF6 (refine-arch). On failure → debug reproduction issues or skip problematic baselines with explicit partial status.
 
-First, read PROJECT_STATE.json to get project context and Technical_Spec.md for the baseline list.
+First, read PROJECT_STATE.json to get project context and `docs/Refined_Idea.md` / evidence tables for the baseline list.
 For the output format, see [templates/baseline-report.md](templates/baseline-report.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
+When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving tracked metrics; otherwise surface the missing-contract gap as draft/legacy protocol.
 </context>
 
 <instructions>
 1. **Read prerequisite materials**
 
-   - `docs/Technical_Spec.md`: Extract the list of baselines to reproduce (including repo URLs, paper citations)
+	   - `docs/Refined_Idea.md` and `docs/30_evidence/Baseline_Table.md`: Extract baseline candidates to reproduce (including repo URLs, paper citations)
+	   - `docs/Technical_Spec.md`: Legacy fallback only when refined idea is missing
    - `docs/Dataset_Stats.md` / WF4 output: Data paths and formats
    - PROJECT_STATE.json: Project context
    - If `$ARGUMENTS` specifies a particular baseline name, only reproduce that method
@@ -74,8 +77,9 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
 
    - Reproduced metrics vs paper-reported metrics: Is the difference within a reasonable range (±1 dB PSNR)?
    - If the difference is too large, analyze the cause: data differences? training configuration? evaluation method?
-   - Determine which baseline serves as the primary comparison target
-   - Finalize the evaluation protocol to be used in subsequent WF8: metric names, direction (max/min), primary metric, comparison thresholds
+	   - Determine which baseline serves as the primary comparison target
+	   - Finalize the evaluation protocol to be used in subsequent WF10: metric names, direction (max/min), primary metric, comparison thresholds
+	   - In dynamic-context projects, surface the Baseline/Evaluation Contract status and use protocol drift, context gates, docchain gates, and review packets when approval or explicit draft acceptance is needed
 
 4. **Output report**
 
@@ -98,7 +102,7 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - `current_stage.status` → "completed"
    - `artifacts.baseline_report` → "docs/Baseline_Report.md"
    - `baseline_metrics` → Baseline metrics for each scene (for comparison in subsequent /iterate eval)
-   - `evaluation_protocol` or equivalent tracked metric definitions → for use by WF8 run/eval
+   - `evaluation_protocol` or equivalent tracked metric definitions → for use by WF10 run/eval
    - `history` append completion record
 </instructions>
 

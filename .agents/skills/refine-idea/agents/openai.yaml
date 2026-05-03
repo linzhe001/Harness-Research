@@ -1,0 +1,7 @@
+interface:
+  display_name: "Refine Idea"
+  short_description: "Codex wrapper for WF3 idea refinement"
+  default_prompt: "Use $refine-idea after survey and idea debate to produce a feasible, testable research framing without architecture design."
+
+policy:
+  allow_implicit_invocation: false

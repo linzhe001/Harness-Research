@@ -32,6 +32,9 @@ When you update harness, the following paths are framework files managed by
 - `.claude/**`
 - `.agents/**`
 - `*.template`
+- `templates/**`
+- `schemas/**`
+- `tooling/evidence/**`
 - `tooling/auto_iterate/**`
 - `tooling/remote_control/**`
 - `README.md`
@@ -178,10 +181,56 @@ Check at least:
 ```bash
 diff CLAUDE.md.template CLAUDE.md
 diff AGENTS.md.template AGENTS.md
+diff OPERATOR_CONTEXT.md.template OPERATOR_CONTEXT.md
 diff tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
 diff tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
 diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
+
+If the project uses the dynamic context layout, also compare the framework
+templates and schemas before refreshing project-owned docs:
+
+```bash
+diff -r schemas .evidence/schemas 2>/dev/null || true
+find templates/docs -type f | sort
+python tooling/evidence/check_context_gates.py --workspace-root . --stage status
+python tooling/evidence/compile_protocol.py --workspace-root .
+python tooling/evidence/check_dynamic_context.py --workspace-root . --stage status --review-packet
+python tooling/evidence/check_protocol_drift.py --workspace-root . --stage status
+python tooling/evidence/build_review_packet.py --workspace-root . --stage status
+```
+
+Do not overwrite approved contract docs automatically. Treat template changes as
+new guidance and merge them into `docs/10_contract/**`, `docs/30_evidence/**`,
+`docs/35_protocol/**`, `.evidence/schemas/**`, or committed docchains only
+after reviewing the current project state.
+
+If a project has not yet opted into dynamic context and wants to do so after a
+harness update, initialize without overwriting existing docs:
+
+```bash
+python tooling/evidence/init_context.py --workspace-root . --set-state
+```
+
+If an updated contract/fact/protocol doc needs an evidence chain, regenerate and
+validate it:
+
+```bash
+python tooling/evidence/compile_doc.py --workspace-root . --doc <doc.md> --source <source...>
+python tooling/evidence/compile_protocol.py --workspace-root .
+python tooling/evidence/validate_docchain.py .evidence/chains/<doc_id>/<build_id>
+python tooling/evidence/check_docchain_gates.py --workspace-root .
+python tooling/evidence/check_dynamic_context.py --workspace-root . --stage status --review-packet
+python tooling/evidence/check_protocol_drift.py --workspace-root . --stage status
+python tooling/evidence/build_review_packet.py --workspace-root . --stage status
+```
+
+`compile_doc.py` refreshes the Markdown evidence headers and
+`.evidence/index.json`. Commit `.evidence/index.json` and any
+`.evidence/chains/**` directory referenced by current docs together with those
+docs; leave `.evidence/protocol_compiler/**` and `.evidence/review_packets/**`
+as local/generated review artifacts unless the project explicitly archives
+them.
 
 If you use remote control / Feishu integration, also check:
 

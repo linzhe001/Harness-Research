@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF7.5 - Validate Run
+- **Current Stage:** WF9 - Validate Run
 - **Prior Inputs:** project_map.json, Technical_Spec.md, baseline code, entry scripts
 - **Deliverables:** Validate_Run_Report.md
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF8 iterate if PASS / $code-debug if FAIL
+- **Next Step:** WF10 iterate if PASS / $code-debug if FAIL
 </context_summary>
 ```
 

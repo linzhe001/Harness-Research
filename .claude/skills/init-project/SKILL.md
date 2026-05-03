@@ -21,18 +21,20 @@ CLAUDE.md content is only finalized at different workflow stages:
 | Environment placeholder | init time | init |
 | Workflow overview | init time | init |
 | Idea description | After WF1 survey-idea | update |
-| Tech Stack details | After WF2 refine-arch | update |
+| Idea debate decision | After WF2 idea-debate | update |
+| Refined idea and target framing | After WF3 refine-idea | update |
 | Dataset paths and statistics | After WF4 data-prep | update |
 | Environment ground truth + Baseline metric references | After WF5 baseline-repro | update |
-| Project Structure + Core Artifacts | After WF6 build-plan | update |
-| Entry Scripts (lock entry scripts) | After WF7 first experiment | update |
+| Tech Stack and architecture summary | After WF6 refine-arch | update |
+| Project Structure + Core Artifacts | After WF7 build-plan | update |
+| Entry Scripts (lock entry scripts) | After first WF10 experiment | update |
 
 If PROJECT_STATE.json exists, read it to determine current stage.
 If CLAUDE.md already exists, read it first.
 For the template format, see [templates/claude-md-template.md](templates/claude-md-template.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
@@ -70,8 +72,8 @@ Write the following content:
 conda activate {env_name}
 Python, PyTorch, CUDA, GPU, dependency versions...
 
-## Tech Stack
-<!-- Detailed tech stack will be filled in after WF2 completion -->
+	## Tech Stack
+	<!-- Detailed tech stack will be filled in after WF6 completion -->
 
 ## Language Policy
 - `interaction_language`: Match the language of the latest substantive user input unless the user explicitly requests another language.
@@ -88,11 +90,11 @@ Python, PyTorch, CUDA, GPU, dependency versions...
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
 - Also read `.claude/shared/documentation-style.md`.
 - Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
-- Before refreshing an existing `docs/*.md`, move the old version into `docs/legacy/`.
+- Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
 
 ## Workflow
-WF1(survey) → WF2(arch) → WF3(check) → WF4(data) → WF5(baseline) → WF6(plan) → WF7(code) → WF7.5(validate) → WF8(iterate) → WF9(final-exp) → WF10(release)
-WF8 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF9 | PIVOT→WF2 | ABORT→stop)
+	WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline) → WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
+WF10 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF11 | PIVOT→WF2 idea-debate/refine-idea | ABORT→stop)
 Current stage: WF1 not_started
 ```
 
@@ -110,20 +112,30 @@ Read the existing CLAUDE.md and PROJECT_STATE.json, **incrementally fill in** ba
 Read the context_summary from `docs/Feasibility_Report.md`, extract the confirmed idea description.
 Replace `<!-- Idea description will be filled in after WF1 completion -->` in CLAUDE.md with a one-sentence idea.
 
-### After WF2 completion → Fill in Tech Stack
+	### After WF2 completion → Fill in Idea Debate Decision
 
-Read `docs/Technical_Spec.md`, extract:
+	Read `docs/Idea_Debate.md`, extract the selected direction and decision vocabulary.
+	Add a compact reference without duplicating the full debate.
+
+	### After WF3 completion → Fill in Refined Idea
+
+	Read `docs/Refined_Idea.md`, extract target task, success criteria, baseline candidates, and open questions.
+
+	### After WF6 completion → Fill in Tech Stack
+
+	Read `docs/Technical_Spec.md`, extract:
 - Configuration management approach (dataclass / Hydra / argparse)
 - Linting tools
 - Experiment tracking tools (wandb / tensorboard)
 - Base codebase (if any)
 
-Replace the placeholder content in `## Tech Stack` in CLAUDE.md.
+	Replace the placeholder content in `## Tech Stack` in CLAUDE.md.
 
-### After WF4 completion → Fill in Dataset
+	### After WF4 completion → Fill in Dataset
 
-Read `docs/Dataset_Stats.md`, extract dataset paths, split information, key statistics.
-Replace the placeholder content in `### Dataset Paths` in CLAUDE.md.
+	Read `docs/Dataset_Stats.md`, extract dataset paths, split information, key statistics.
+	Replace the placeholder content in `### Dataset Paths` in CLAUDE.md.
+	If `AGENTS.md` exists, verify that it points operators to `CLAUDE.md` for current dataset and environment paths rather than duplicating volatile paths.
 
 ### After WF5 completion → Fill in Environment + Baseline references
 
@@ -131,7 +143,7 @@ Read `docs/Baseline_Report.md`, extract main baseline metrics.
 Read the real environment information created during WF5, replace the placeholder content in `## Environment`.
 Add baseline references and evaluation protocol summary after the dataset paths section.
 
-### After WF6 completion → Fill in Structure + Artifacts
+	### After WF7 completion → Fill in Structure + Artifacts
 
 Read `project_map.json`, extract the top-level directory structure.
 Fill in:
@@ -139,11 +151,11 @@ Fill in:
 - `## Core Artifacts` — project_map.json and PROJECT_STATE.json
 - `## Global Rule` — project_map.json maintenance rule reference
 - `## Global Rule: Code Style` — `.claude/shared/code-style.md` Pre-Edit Checklist reference if missing
-- `## Global Rule: Documentation Style` — `.claude/shared/documentation-evidence-rule.md` plus `.claude/shared/documentation-style.md` readability and `docs/legacy/` rules if missing
+- `## Global Rule: Documentation Style` — `.claude/shared/documentation-evidence-rule.md` plus `.claude/shared/documentation-style.md` readability and `docs/90_legacy/` rules if missing
 
-### After WF7 first experiment → Lock Entry Scripts
+### After first WF10 experiment → Lock Entry Scripts
 
-When WF7 (code-expert) is complete and the first training/evaluation succeeds, **scan the `scripts/` directory** and write the actual entry script paths into the `## Entry Scripts` section of CLAUDE.md.
+When WF10 has produced the first successful training/evaluation record, **scan the `scripts/` directory** and write the actual entry script paths into the `## Entry Scripts` section of CLAUDE.md.
 
 Steps:
 1. Scan `.py` and `.sh` files in the `scripts/` directory

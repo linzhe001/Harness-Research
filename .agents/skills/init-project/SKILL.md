@@ -10,11 +10,14 @@ description: Codex wrapper for staged `CLAUDE.md` generation and updates. Use wh
 Read these first:
 - `./references/claude-md-template.md`
 - `./references/claude-maintenance.md`
+- `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `../../../PROJECT_STATE.json` if it exists
 - `../../../CLAUDE.md` if it exists
+- `../../../AGENTS.md` if it exists
+- `../../../OPERATOR_CONTEXT.md` if it exists
 
 ## When To Use
 
@@ -30,14 +33,17 @@ Interpret natural-language requests as one of:
 1. Gather project name and, if already known, an environment name.
 2. If no runnable environment exists yet, create the minimal `CLAUDE.md` with an explicit placeholder that WF5 baseline-repro owns first environment creation.
 3. Create the minimal `CLAUDE.md` using the canonical template.
-4. Use `./references/claude-maintenance.md` when editing individual sections instead of rewriting the whole file.
+4. If the project opts into dynamic context, create the numbered docs directories and `.evidence/` directories, but do not fabricate evidence.
+5. If the operator explicitly provides stable preferences or local constraints, create or update `OPERATOR_CONTEXT.md`. Do not infer preferences from project facts.
+6. Use `./references/claude-maintenance.md` when editing individual sections instead of rewriting the whole file.
 
 ### `update`
 
 1. Read `PROJECT_STATE.json` and the stage artifacts.
 2. Fill only the sections whose source artifacts are now known:
-   - idea
-   - tech stack
+	   - idea
+	   - idea debate decision and refined idea
+	   - tech stack
    - environment and dataset paths
    - baseline reference
    - project structure
@@ -45,7 +51,7 @@ Interpret natural-language requests as one of:
    - language policy
    - entry scripts
 3. Preserve `## Custom`.
-4. At WF4, dataset paths must be refreshed into `CLAUDE.md` immediately.
+4. At WF4, dataset paths must be refreshed into `CLAUDE.md` immediately, and `AGENTS.md` must be checked for a stable pointer to `CLAUDE.md` when it exists.
 5. At WF5, environment facts must stop being placeholders and be replaced with the first runnable environment.
 6. Update the current stage line.
 7. Use `./references/claude-maintenance.md` for section-safe updates.

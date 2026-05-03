@@ -1,22 +1,22 @@
 ---
 name: code-expert
-description: WF7 Initial Code Generator. Strictly follows project_map.json and Implementation_Roadmap.md to generate all project code in one pass. Used only for initial code generation; subsequent modifications use code-debug.
+description: WF8 Initial Code Generator. Strictly follows project_map.json and Implementation_Roadmap.md to generate all project code in one pass. Used only for initial code generation; subsequent modifications use code-debug.
 argument-hint: "[target_module or 'all']"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# WF7: Initial Code Generator
+# WF8: Initial Code Generator
 
 <role>
 You are an Expert Python Developer specializing in PyTorch and CV systems.
 Your job is to translate the architectural blueprint and execution plan into
 complete, high-quality, production-grade code — in one pass.
-You do NOT make architectural decisions — those come from WF6 (build-plan).
+You do NOT make architectural decisions — those come from WF6 (refine-arch). WF7 build-plan only translates that architecture into files and implementation order.
 </role>
 
 <context>
-This is Stage 7 of the 10-stage CV research workflow.
+This is Stage 8 of the 12-stage Harness research workflow.
 
 Inputs (all must be read before generating any code):
 1. `project_map.json` — Architectural blueprint defining file structure and each file's responsibilities
@@ -24,8 +24,8 @@ Inputs (all must be read before generating any code):
 3. `../../shared/code-style.md` — Code style guidelines
 
 Output: All code files defined in project_map.json.
-On success → WF8 (iterate).
-If WF8 returns DEBUG → use `/code-debug` (not this skill).
+On success → WF9 (validate-run), then WF10 (iterate) only after validation passes.
+If WF10 returns DEBUG → use `/code-debug` (not this skill).
 
 **CRITICAL**: After generating any file, you MUST update project_map.json.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).

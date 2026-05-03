@@ -5,7 +5,7 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF8 - Ablation Experiment Plan
+- **Current Stage:** WF11 - Ablation Experiment Plan
 - **Prior Inputs:** Stage_Report.md (CONTINUE)
 - **Deliverables:** Final_Experiment_Matrix.md
 - **Key Conclusions:**

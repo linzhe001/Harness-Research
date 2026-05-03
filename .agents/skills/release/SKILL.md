@@ -1,6 +1,6 @@
 ---
 name: release
-description: Codex wrapper for WF10 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.
+description: Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.
 ---
 
 # Release
@@ -9,6 +9,9 @@ description: Codex wrapper for WF10 release and submission packaging. Use when t
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/contract-gating-rule.md`
+- `../../../.agents/references/evidence-chain-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -17,6 +20,9 @@ Read these first:
 - `../../../PROJECT_STATE.json`
 - `../../../iteration_log.json`
 - `../../../CLAUDE.md`
+- `../../../docs/10_contract/Project_Contract.md` if it exists
+- `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Claim_Boundary.md` if it exists
 
 ## When To Use
 
@@ -36,6 +42,7 @@ Interpret natural-language requests as one of the canonical intents:
 
 - Collect the chosen outputs, build the submission layout, include a README, and validate the package.
 - Create `submission/manifest.json` according to `./references/release-manifest.md` before packaging.
+- Ensure package README and release claims respect `docs/10_contract/Claim_Boundary.md` when present.
 
 ### `submit`
 

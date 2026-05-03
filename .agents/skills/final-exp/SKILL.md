@@ -1,6 +1,6 @@
 ---
 name: final-exp
-description: Codex wrapper for WF9 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.
+description: Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.
 ---
 
 # Final Exp
@@ -9,25 +9,31 @@ description: Codex wrapper for WF9 final experiment planning. Use when the user 
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/contract-gating-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `./references/experiment-matrix.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
+- `../../../docs/10_contract/Project_Contract.md` if it exists
+- `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Claim_Boundary.md` if it exists
 
 ## When To Use
 
-Use this skill for WF9 when the user wants the final validation matrix after the main approach is stable.
+Use this skill for WF11 when the user wants the final validation matrix after the main approach is stable.
 
 ## Required Work
 
-1. Read the best iteration and available iteration reports.
+1. Read the best iteration, available iteration reports, and any approved contracts.
 2. Design canonical ablations that isolate major component contributions.
 3. Define hyperparameter search, robustness tests, and cross-dataset evaluation.
 4. Estimate compute budget and execution order.
-5. Write `docs/Final_Experiment_Matrix.md` using the canonical template.
-6. Update `PROJECT_STATE.json` when appropriate.
+5. Ensure the matrix respects the Evaluation Contract and Claim Boundary when present.
+6. Write `docs/Final_Experiment_Matrix.md` using the canonical template.
+7. Update `PROJECT_STATE.json` when appropriate.
 
 ## Codex Adaptation
 

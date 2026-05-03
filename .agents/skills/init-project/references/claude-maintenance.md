@@ -9,6 +9,9 @@ Use these rules instead of helper scripts.
 - `project_map.json` stays at the repository root.
 - `CLAUDE.md` stays at the repository root.
 - `MEMORY.md` stays at the repository root.
+- `OPERATOR_CONTEXT.md` stays at the repository root when used.
+- `OPERATOR_CONTEXT.md` is written only from explicit operator-provided preferences or local constraints; do not infer it from project facts.
+- `.evidence/` stays at the repository root when evidence-compiled docs are enabled.
 
 ## Section-Safe Editing
 
@@ -43,6 +46,8 @@ Render section bodies from project state rather than inventing new structure:
   - prefer `iteration_log.json`
   - prefer `project_map.json`
   - include `MEMORY.md` as the human-readable lessons bank when present or when initializing templates
+  - include `OPERATOR_CONTEXT.md` as preference context when present
+  - include `.evidence/` as evidence-chain storage when the dynamic context layout is enabled
   - include artifact paths recorded in `PROJECT_STATE.json`
 - `Entry Scripts`
   - prefer:
@@ -58,4 +63,5 @@ Render section bodies from project state rather than inventing new structure:
 
 - `init` creates the minimal `CLAUDE.md`.
 - `update` fills only sections whose source artifacts are known.
+- WF4 dataset updates also check `AGENTS.md` for a stable pointer to `CLAUDE.md`; volatile dataset paths stay in `CLAUDE.md`.
 - `deps-changed` updates only the runtime environment facts in `## Environment` and preserves `### Dataset Paths`.

@@ -1,11 +1,11 @@
 ---
 name: validate-run
-description: WF7.5 training pipeline validation. Before entering WF8 iteration, first use Codex to review code for baseline equivalence, then run a 100-step smoke test to verify end-to-end pipeline functionality.
+description: WF9 training pipeline validation. Before entering WF10 iteration, first use Codex to review code for baseline equivalence, then run a 100-step smoke test to verify end-to-end pipeline functionality.
 argument-hint: "[config_path]"
 allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
-# WF7.5: Training Pipeline Validation (Code Review + Smoke Test)
+# WF9: Training Pipeline Validation (Code Review + Smoke Test)
 
 <role>
 You are a DevOps/ML Engineer and Code Reviewer who validates that the codebase
@@ -14,7 +14,7 @@ before committing to expensive iteration cycles.
 </role>
 
 <context>
-This is a gate between WF7 (code generation) and WF8 (iteration).
+This is a gate between WF8 (code generation) and WF10 (iteration).
 WF7 writes the full codebase, often by adapting baseline code. Two types of bugs
 can slip through:
 - **Semantic bugs**: data normalization mismatch, loss sign errors, metric
@@ -22,14 +22,14 @@ can slip through:
 - **Infrastructure bugs**: import errors, shape mismatches, OOM — code crashes.
 
 This skill catches both: Codex code review (semantic) + smoke test (infrastructure).
-Failure here means issues that must be fixed before entering WF8.
+Failure here means issues that must be fixed before entering WF10.
 
 Input: Working codebase from WF7 + config file + baseline code (from baselines/).
 Output: Code review findings + smoke test pass/fail report.
-On PASS → WF8 (iterate). On FAIL → fix issues via /code-debug.
+On PASS → WF10 (iterate). On FAIL → fix issues via /code-debug.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
 
 <instructions>
@@ -53,11 +53,11 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - Prefer baselines with `status: verified` as reference
 
    **③ Design documents** (implementation intent reference):
-   - `docs/Technical_Spec.md` (architecture design from WF2, specifying which parts should be equivalent to baseline and which are new additions)
+   - `docs/Technical_Spec.md` (architecture design from WF6, specifying which parts should be equivalent to baseline and which are new additions)
 
 2. **Codex code review** (always attempt)
 
-   WF7.5 is the **only review gate** before code enters iteration, so always attempt Codex review.
+   WF9 is the **only review gate** before code enters iteration, so always attempt Codex review.
 
    If Codex MCP is available (`mcp__codex__codex` tool exists):
 
@@ -215,7 +215,7 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
 10. **Update project state**
 
    If PASS or REVIEW (user confirms to proceed):
-   - Update PROJECT_STATE.json: current_stage → WF7.5 completed
+   - Update PROJECT_STATE.json: current_stage → WF9 completed
    - Append validate_run pass record to history (including code review summary)
    If FAIL or REVIEW (user requests fixes):
    - List failed items + critical review findings
@@ -223,7 +223,7 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
 </instructions>
 
 <constraints>
-- ALWAYS attempt Codex code review before smoke test (this is the only review gate before WF8)
+- ALWAYS attempt Codex code review before smoke test (this is the only review gate before WF10)
 - ALWAYS run the full validation chain (review → train → checkpoint → eval → wandb → git)
 - ALWAYS clean up smoke test artifacts after validation
 - NEVER skip any validation step even if previous steps passed

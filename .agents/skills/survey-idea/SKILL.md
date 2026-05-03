@@ -9,6 +9,8 @@ description: Codex wrapper for WF1 idea survey and feasibility analysis. Use whe
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/research-invariants.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -30,17 +32,26 @@ Use this skill for WF1 when the user wants to know whether a research idea is wo
    - prerequisite checklist
    - risk table
    - final recommendation
-4. Write `docs/Feasibility_Report.md` using the canonical template.
-5. Update `PROJECT_STATE.json` if the user wants stage-state synchronization.
+4. When the project uses or requests the dynamic context layout, also write or refresh:
+   - `docs/30_evidence/Evidence_Index.md`
+   - `docs/30_evidence/Paper_Table.md`
+   - `docs/30_evidence/Repo_Table.md`
+   - `docs/30_evidence/Dataset_Table.md`
+   - `docs/30_evidence/Baseline_Table.md`
+   - `docs/30_evidence/Metric_Table.md`
+   - `docs/30_evidence/Open_Questions.md`
+5. Write `docs/Feasibility_Report.md` using the canonical template.
+6. Update `PROJECT_STATE.json` if the user wants stage-state synchronization.
 
 ## Output Rules
 
 - Use the template at `./references/feasibility-report.md`.
 - Keep the `context_summary` block.
 - Include evidence sources and separate verified facts from inferences.
+- Treat `docs/30_evidence/**` as evidence tables only; do not turn findings into approved field rules.
 - Use the canonical decision vocabulary: `PROCEED`, `PIVOT`, or `ABANDON`.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
-- If multiple plausible directions remain after WF1, recommend `$idea-debate` before WF2.
+- Route new projects to WF2 `$idea-debate` before WF3 refine-idea, even when one direction appears strongest. If only one idea exists, WF2 should compare conservative, balanced, and aggressive variants.
 
 ## Codex Adaptation
 

@@ -30,7 +30,8 @@ When called standalone, the decision is recorded in PROJECT_STATE.json.
 2. `PROJECT_STATE.json` — fallback, to get baseline metrics and experiment context.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write findings and candidates to iteration docs or `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
 </context>
 
 <instructions>
@@ -83,10 +84,10 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - What is the risk-reward ratio of continued investment?
    </thinking>
 
-   - **NEXT_ROUND**: Ordinary improvement round — stay in WF8, plan next iteration
-   - **DEBUG**: Fixable technical issues exist (bugs, config errors); stay in WF8, fix via `/code-debug`
-   - **CONTINUE**: Performance meets the success criteria set by the protocol; handoff to orchestrator/WF9 (not continue iterating)
-   - **PIVOT**: Performance gap too large (< baseline by 5%+); recommend rolling back to WF2 for alternative approach
+   - **NEXT_ROUND**: Ordinary improvement round — stay in WF10, plan next iteration
+   - **DEBUG**: Fixable technical issues exist (bugs, config errors); stay in WF10, fix via `/code-debug`
+   - **CONTINUE**: Performance meets the success criteria set by the protocol; handoff to orchestrator/WF11 (not continue iterating)
+   - **PIVOT**: Performance gap too large (< baseline by 5%+); recommend rolling back to WF2 idea-debate/refine-idea for an alternative direction
    - **ABORT**: Theoretical failure (core hypothesis disproven); abandon this idea
 
    Provide detailed reasoning and specific actionable recommendations.

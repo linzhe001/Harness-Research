@@ -1,6 +1,9 @@
 # {project_name} Memory
 
-Append-only human-readable research memory. `iteration_log.json` remains the machine source of truth; this file is for fast human recovery and lesson review.
+Append-only human-readable research memory. `iteration_log.json` remains the machine source of truth; this file is for accepted lessons and decisions only.
+
+Raw observations, auto-run notes, and candidate lessons stay in iteration reports
+or `docs/50_memory/Lessons.md` until promoted.
 
 ## Lessons
 
@@ -10,7 +13,11 @@ Append-only human-readable research memory. `iteration_log.json` remains the mac
 - **Result:** {metric_or_verdict_summary}
 - **Lesson:** {what should be remembered}
 - **Evidence Source:** `{docs/iterations/iterN.md}` / `{log_path}` / `{commit_hash}`
+- **Evidence Chain:** `{.evidence/chains/.../evidence_chain.json}` or `N/A`
+- **Boundary:** {where_this_lesson_applies}
+- **Alternative Explanations:** {remaining_uncertainty}
 - **Future Guidance:** avoid / retry / scale / ablate {specific_action}
+- **Promotion Status:** accepted by {human_or_main_eval}
 
 ## Decisions
 

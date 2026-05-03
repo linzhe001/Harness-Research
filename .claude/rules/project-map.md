@@ -1,5 +1,5 @@
 ---
-description: project_map.json maintenance rules — must sync updates when files are added or removed
+description: project_map.json maintenance rules — sync when stable files or stable interfaces change
 globs:
   - "src/**/*.py"
   - "baselines/**/*"
@@ -15,7 +15,7 @@ globs:
 
 ## Stable vs Volatile Layering
 
-project_map.json only tracks **stable architecture files** (long-lived files that define module interfaces).
+project_map.json only tracks **stable implementation files** (long-lived files that define module interfaces). It describes file layout and interfaces; it does not replace the WF6 architecture decision in `docs/Technical_Spec.md`.
 **Volatile experiment assets** (per-iteration configs, ablation scripts, one-off utilities) do not need to be maintained in project_map.json.
 
 ### Stable (must track)
@@ -42,9 +42,10 @@ Rule of thumb: if a file is only used in 1-2 iterations, it is volatile.
 ## When to Update project_map.json
 - **New stable file added** → add a node under the corresponding directory in project_map.json
 - **Stable file deleted** → remove the corresponding node
-- **Interface changed** (function signature, tensor shape changes) → update the corresponding fields
-- Internal implementation changes only, no interface changes — no update needed
-- **Volatile file added/deleted** → no update to project_map.json needed
+- **Stable file renamed** → update the old and new paths
+- **Stable interface changed** (exports, function signature, tensor shape, durable config schema, responsibilities, dependencies) → update the corresponding fields
+- Internal implementation changes only, no stable interface changes — no update needed
+- **Volatile file added/deleted/renamed** → no update to project_map.json needed
 
 ## Description Detail Level by Directory
 

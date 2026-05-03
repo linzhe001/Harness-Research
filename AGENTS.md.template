@@ -14,10 +14,21 @@
 
 - `PROJECT_STATE.json`: stage and milestone state. Stage transitions require explicit user confirmation.
 - `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
-- `project_map.json`: stable architecture map for core code and configs.
+- `project_map.json`: stable implementation map for core code and configs.
 - `MEMORY.md`: human-readable append-only lessons and decisions. `iteration_log.json` remains the machine source of truth.
+- `OPERATOR_CONTEXT.md`: optional operator preferences. It may guide defaults, but it is not evidence for project facts. Write it only from explicit operator input; later stages read it without inferring new preferences.
+- `.evidence/`: evidence-chain artifacts for compiled current docs when the dynamic context layout is enabled.
 - `.auto_iterate/`: controller-owned runtime state (if auto-iterate is enabled; do not edit manually).
 - These canonical state files must stay at the repository root, not under `.agents/`.
+
+## Context Layers
+
+- Read `.agents/references/context-layering-policy.md` and `.agents/references/research-invariants.md` before research planning, documentation, iteration, auto-iteration, or release work.
+- Current fact-layer summaries belong in `docs/20_facts/`; they must come from project artifacts or evidence chains.
+- Research evidence belongs in `docs/30_evidence/`; it records sources and candidate norms, not permanent rules.
+- Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
+- Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
+- Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
 
@@ -29,11 +40,19 @@
 ## Skills
 
 - Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.
-- Use `$iterate` for WF8 `plan -> code -> run -> eval`.
+- Use `$doc-compiler` for contract, fact, protocol, or release docs that need evidence-chain JSON.
+- Use `$protocol-compiler` to compile `docs/30_evidence/**` into reviewable `docs/35_protocol/**` drafts without field profiles.
+- Use `$protocol-drift-check` before turning protocol drafts into contracts or before WF5/WF10/WF11/WF12 gates in dynamic-context projects.
+- Use `$review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
+- After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
+- Use `$iterate` for WF10 `plan -> code -> run -> eval`.
 - Use `$code-expert` only for first-pass implementation from the roadmap and project map.
-- Use `$code-debug` for post-WF7 code changes, bug fixes, or iteration-driven edits.
+- Use `$code-debug` for post-WF8 code changes, bug fixes, or iteration-driven edits.
 - Use `$evaluate` for experiment analysis and per-iteration reports.
-- Use `$idea-debate` after WF1 when multiple plausible directions need a skeptical comparison before architecture design.
+- Use `$idea-debate` as WF2 after WF1 to skeptically compare directions before refinement.
+- Use `$refine-idea` as WF3 to turn survey and debate into a feasible, testable idea without architecture design.
+- Use `$refine-arch` as WF6 after WF4/WF5 evidence to design the MVP architecture.
+- Use `$build-plan` as WF7 to translate architecture into files, tests, and `project_map.json`.
 - Use the stage-specific skills only for their intended outputs.
 
 ## Entry Scripts
@@ -44,7 +63,7 @@
 ## Stable Code Rules
 
 - Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.agents/references/code-style.md` and apply its pre-edit checklist.
-- Read `project_map.json` before any non-trivial stable-code change.
+- Read `.agents/references/project-map-rule.md` and `project_map.json` before any non-trivial stable-code change.
 - Update `project_map.json` when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
@@ -62,5 +81,9 @@
 
 - Never auto-advance a workflow stage without explicit user confirmation.
 - Use `.agents/references/workflow-guide.md` for the full stage flow and detailed skill behavior.
+- Use `.agents/references/contract-gating-rule.md` before implementation, validation, iteration, auto-iteration, and release.
+- Use `$protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
 - When writing docs, follow `.agents/references/documentation-evidence-rule.md`: re-read source artifacts and list evidence rather than relying on memory.
-- Also follow `.agents/references/documentation-style.md`: keep docs concise, human-readable, use ASCII flow diagrams for workflows, and archive replaced docs under `docs/legacy/`.
+- For compiled current docs, also follow `.agents/references/evidence-chain-rule.md`: write evidence_chain, source_manifest, and doc_audit before replacing current Markdown.
+- Also follow `.agents/references/documentation-style.md`: keep docs concise, human-readable, use ASCII flow diagrams for workflows, and archive replaced docs under `docs/90_legacy/`.
+- Use `.agents/references/lesson-quality-rule.md` before promoting lessons into `MEMORY.md`.

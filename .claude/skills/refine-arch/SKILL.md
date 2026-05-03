@@ -1,12 +1,12 @@
 ---
 name: refine-arch
-description: WF2 Architecture refinement and MVP design. Reads the feasibility report, analyzes the base codebase architecture, designs plug-and-play new modules, defines the MVP, provides A/B/C alternative plans, and outputs Technical_Spec.md. Use when a research idea needs to be translated into a concrete technical architecture design.
+description: WF6 architecture design and MVP specification. Reads the refined idea, dataset facts, baseline evidence, and evaluation contract/protocol before designing the MVP architecture and outputting Technical_Spec.md.
 argument-hint: "[codebase_path]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep, Bash, WebSearch, WebFetch
 ---
 
-# WF2: Architecture Refinement and MVP Design
+# WF6: Architecture Design and MVP Specification
 
 <role>
 You are a Senior ML Systems Architect with deep expertise in PyTorch,
@@ -15,21 +15,23 @@ used by thousands of researchers.
 </role>
 
 <context>
-This is Stage 2 of the 10-stage CV research workflow.
-Input: Feasibility_Report.md from WF1.
-Output: Technical_Spec.md for WF3 review.
-On success → WF3 (deep-check). On failure → rollback to WF1.
+This is WF6 of the Harness research workflow.
+Input: Refined_Idea.md from WF3, Dataset_Stats.md from WF4, Baseline_Report.md from WF5, and the evaluation contract/protocol.
+Output: Technical_Spec.md for WF7 implementation planning.
+On success → WF7 (build-plan) or WF6 deep-check design review. On failure → return to WF3 refine-idea or WF2 idea-debate.
 
-First, read PROJECT_STATE.json to get project context and locate the feasibility report.
+First, read PROJECT_STATE.json to get project context and locate the refined idea, data, baseline, and evaluation artifacts.
 For the output format, see [templates/technical-spec.md](templates/technical-spec.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For dynamic context boundaries, see [../../shared/context-layering-policy.md](../../shared/context-layering-policy.md) and [../../shared/research-invariants.md](../../shared/research-invariants.md).
+When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_protocol/**`; run protocol drift or request contract review if the proposed architecture changes evaluation assumptions, claim boundaries, or project scope.
 </context>
 
 <instructions>
 1. **Read Prerequisite Materials**
-   - Read Feasibility_Report.md's context_summary and recommendations
+   - Read Feasibility_Report.md, Idea_Debate.md, Refined_Idea.md, Dataset_Stats.md, Baseline_Report.md, and evaluation contract/protocol
    - Read the codebase's README.md and directory structure
    - Locate core files: models/, configs/, train.py
 
@@ -44,13 +46,13 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - What are the code style and naming conventions?
    </thinking>
 
-3. **Design Plug-and-Play Architecture**
+3. **Design Evidence-Backed MVP Architecture**
 
    Follow these principles:
-   - New modules must inherit from existing abstract base classes
-   - Do not modify existing files; only add new files
-   - Register new modules via Registry
-   - Switch between old and new implementations via Config
+	   - Architecture must be justified by WF1-WF5 evidence
+	   - New modules should follow existing abstract base classes and registry/config patterns when present
+	   - Integration must preserve fair baseline/evaluation comparison
+	   - If architecture conflicts with an approved contract, stop and request review instead of editing the contract silently
 
 4. **Define MVP (Minimum Viable Prototype)**
 
@@ -106,13 +108,14 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
    - `current_stage.status` → "completed"
    - `artifacts.technical_spec` → file path
    - `history` append completion record
-   - `decisions` record key design decisions
-</instructions>
+	   - `decisions` record key design decisions
+	</instructions>
 
-<constraints>
-- NEVER propose changes that require modifying > 5 existing files
-- NEVER design without first reading the codebase structure
-- ALWAYS provide at least 2 alternative approaches for each key decision
-- ALWAYS include a "rollback plan" for each major change
-- ALWAYS include resource estimation with GPU type, memory, and duration
-</constraints>
+	<constraints>
+	- NEVER propose changes that require modifying > 5 existing files
+	- NEVER design before reading refined idea, dataset stats, baseline report, and evaluation protocol/contract
+	- ALWAYS provide at least 2 alternative approaches for each key decision
+	- ALWAYS include a "rollback plan" for each major change
+	- ALWAYS include resource estimation with GPU type, memory, and duration
+	- NEVER write Implementation_Roadmap.md or project_map.json here; those belong to WF7 build-plan
+	</constraints>

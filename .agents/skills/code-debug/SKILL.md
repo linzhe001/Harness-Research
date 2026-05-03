@@ -1,6 +1,6 @@
 ---
 name: code-debug
-description: Codex wrapper for post-WF7 code modification and debugging. Use when the user wants planned iteration changes, bug fixes, or tightly scoped performance edits while preserving the original workflow constraints.
+description: Codex wrapper for post-WF8 code modification and debugging. Use when the user wants planned iteration changes, bug fixes, or tightly scoped performance edits while preserving the original workflow constraints.
 ---
 
 # Code Debug
@@ -19,7 +19,7 @@ Read these first:
 
 ## When To Use
 
-Use this skill for all post-WF7 code changes:
+Use this skill for all post-WF8 code changes:
 - planned iteration changes
 - bug fixes
 - narrow performance tuning
@@ -34,7 +34,7 @@ Use this skill for all post-WF7 code changes:
 6. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
 7. Make the smallest defensible change.
 8. Validate changed Python files with `py_compile` and `ruff`.
-9. Sync `project_map.json` when stable interfaces changed.
+9. Sync `project_map.json` when stable files were added, removed, renamed, or when stable interfaces changed.
 10. Create the required semantic commit before handing the code back to training.
 
 ## Codex Adaptation

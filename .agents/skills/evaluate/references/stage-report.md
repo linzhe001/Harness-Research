@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF8 - Results Analysis
+- **Current Stage:** WF10 - Results Analysis
 - **Prior Inputs:** Training logs, eval output, baseline protocol
 - **Deliverables:** `docs/iterations/iter{N}.md` or `Stage_Report.md`
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** $iterate plan (NEXT_ROUND) / $iterate plan [debug] (DEBUG) / WF9 final-exp (CONTINUE) / WF2 (PIVOT)
+- **Next Step:** $iterate plan (NEXT_ROUND) / $iterate plan [debug] (DEBUG) / WF11 final-exp (CONTINUE) / WF2 idea-debate/refine-idea (PIVOT)
 </context_summary>
 ```
 
@@ -117,8 +117,8 @@ Based on current protocol and existing experiments:
 
 | Situation | Decision | Next Step |
 |-----------|----------|-----------|
-| Ordinary improvement round, not yet ready for WF9 | NEXT_ROUND | $iterate plan (next round) |
+| Ordinary improvement round, not yet ready for WF11 | NEXT_ROUND | $iterate plan (next round) |
 | Bug, stability issue, or pipeline failure | DEBUG | $iterate plan (debug-oriented round) |
-| Target met or ready for final experiments | CONTINUE | WF9 (handoff to orchestrator) |
-| Fundamental approach change needed | PIVOT | WF2 (alternative approach) |
+| Target met or ready for final experiments | CONTINUE | WF11 (handoff to orchestrator) |
+| Fundamental approach change needed | PIVOT | WF2 idea-debate/refine-idea |
 | Theoretical failure / insufficient resources | ABORT | Record lessons and terminate |

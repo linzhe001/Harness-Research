@@ -14,7 +14,7 @@ Every output file must begin with a context_summary block, no more than 20 lines
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF2 refine-arch
+- **Next Step:** WF2 idea-debate
 </context_summary>
 ```
 

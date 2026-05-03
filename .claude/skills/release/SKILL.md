@@ -1,12 +1,12 @@
 ---
 name: release
-description: WF10 Submission/Release Tool. Multi-scene training, result packaging, filename validation, dry-run submission checks. Used after ablation experiments are complete and before competition submission.
+description: WF12 Submission/Release Tool. Multi-scene training, result packaging, filename validation, dry-run submission checks. Used after ablation experiments are complete and before competition submission.
 argument-hint: "[submit|package|validate] [details]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# WF10: Submission and Release
+# WF12: Submission and Release
 
 <role>
 You are a Release Engineer who ensures the final submission package is correct,
@@ -14,15 +14,17 @@ complete, and meets all competition/publication requirements.
 </role>
 
 <context>
-This is the final stage of the CV research workflow.
-Input: Best checkpoint from WF8/WF9 + evaluation results.
+This is the final stage of the Harness research workflow.
+Input: Best checkpoint from WF10/WF11 + evaluation results.
 Output: Submission-ready package.
 
 Competition/release requirements are read from PROJECT_STATE.json `project_meta` or CLAUDE.md `## Challenge Quick Ref`.
 Typical requirements include: submission file format, filename conventions, evaluation metrics, etc.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
+For claim-bearing release docs, also follow [../../shared/evidence-chain-rule.md](../../shared/evidence-chain-rule.md).
 </context>
 
 <instructions>

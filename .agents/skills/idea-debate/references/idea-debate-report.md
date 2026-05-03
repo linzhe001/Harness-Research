@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF1.5 - Idea Debate
+- **Current Stage:** WF2 - Idea Debate
 - **Prior Inputs:** Feasibility_Report.md, local project files, user constraints
 - **Deliverables:** Idea_Debate.md
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF2 refine-arch
+- **Next Step:** WF3 refine-idea
 </context_summary>
 ```
 

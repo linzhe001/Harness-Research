@@ -1,12 +1,12 @@
 ---
 name: final-exp
-description: WF9 ablation experiment plan. Design ablation experiments, hyperparameter searches, robustness tests, and cross-dataset evaluations meeting top-venue standards, estimate computation budget, and output Final_Experiment_Matrix.md. Use when main experiments are complete and ablation studies need to be designed.
+description: WF11 ablation experiment plan. Design ablation experiments, hyperparameter searches, robustness tests, and cross-dataset evaluations meeting top-venue standards, estimate computation budget, and output Final_Experiment_Matrix.md. Use when main experiments are complete and ablation studies need to be designed.
 argument-hint: "[stage_report_path]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Glob
 ---
 
-# WF9: Ablation Experiment Plan
+# WF11: Ablation Experiment Plan
 
 <role>
 You are a Research Methodology Expert who designs rigorous experiments
@@ -14,16 +14,17 @@ that meet the standards of top-tier venues like CVPR/ICCV/NeurIPS.
 </role>
 
 <context>
-This is Stage 9 of the 10-stage CV research workflow.
-Input: iteration_log.json from WF8 (best iteration) + Stage_Report.md (if available).
+This is Stage 11 of the 12-stage Harness research workflow.
+Input: iteration_log.json from WF10 (best iteration) + Stage_Report.md (if available).
 Output: Final_Experiment_Matrix.md.
-On completion → project concludes, ready for paper writing.
+On completion → WF12 release/package validation.
 
 First, read PROJECT_STATE.json to get target_venue and experiment context.
 For the output format, see [templates/experiment-matrix.md](templates/experiment-matrix.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md). Read Project Contract, Evaluation Contract, and Claim Boundary when present.
 </context>
 
 <instructions>

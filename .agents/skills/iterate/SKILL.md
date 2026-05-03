@@ -1,6 +1,6 @@
 ---
 name: iterate
-description: Codex wrapper for WF8 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.
+description: Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.
 ---
 
 # Iterate
@@ -9,6 +9,9 @@ description: Codex wrapper for WF8 structured iteration. Use when the user wants
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/contract-gating-rule.md`
+- `../../../.agents/references/lesson-quality-rule.md`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
@@ -21,10 +24,12 @@ Read these first:
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
 - `../../../CLAUDE.md`
+- `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
 
-Use this skill for WF8 structured experimentation.
+Use this skill for WF10 structured experimentation.
 
 Interpret natural-language requests as one of these canonical intents:
 - `plan`
@@ -39,7 +44,9 @@ Interpret natural-language requests as one of these canonical intents:
 
 - `iteration_log.json` is the only experiment source of truth.
 - Do not write stage transitions into `PROJECT_STATE.json`; `$orchestrator` owns those.
-- Stable interface changes still require `project_map.json` sync through `$code-debug`.
+- Stable file or stable interface changes during `code` still require
+  `project_map.json` sync by the code-writing step, normally through
+  `$code-debug`.
 
 ## Controller Coexistence
 
@@ -63,9 +70,10 @@ Interpret natural-language requests as one of these canonical intents:
 1. Ensure there is no blocking unfinished iteration.
 2. Allocate the next iteration ID.
 3. Check prior lessons to avoid repeating known failed ideas blindly.
-4. Record hypothesis, changes summary, config diff, and screening recommendation (`screening.recommended` as a structured boolean field).
-5. Preserve the canonical `codex_review` field behavior in `iteration_log.json`.
-6. If reviewer cross-validation is used, follow reviewer independence and tracing protocols.
+4. Read `docs/50_memory/Lessons.md` and `MEMORY.md` when present; accepted lessons are stronger than candidate lessons.
+5. Record hypothesis, changes summary, config diff, and screening recommendation (`screening.recommended` as a structured boolean field).
+6. Preserve the canonical `codex_review` field behavior in `iteration_log.json`.
+7. If reviewer cross-validation is used, follow reviewer independence and tracing protocols.
 
 ### `code`
 
@@ -96,8 +104,11 @@ Interpret natural-language requests as one of these canonical intents:
    - metrics
    - decision
    - lessons
+   - lesson_candidates when a finding may be promoted later
+   - lesson_promotion_status
    - completion state
-7. Produce or refresh the human-readable `MEMORY.md` lesson entry for the evaluated iteration.
+7. Produce or refresh the per-iteration report and, when useful, `docs/50_memory/Lessons.md`.
+8. Append to `MEMORY.md` only for accepted lessons that satisfy `lesson-quality-rule.md`.
 
 ### `ablate`, `status`, `log`
 

@@ -14,6 +14,8 @@ Read these first:
 - `../../../.agents/references/documentation-style.md`
 - `./references/dataset-stats.md`
 - `../../../PROJECT_STATE.json`
+- `../../../CLAUDE.md` if it exists
+- `../../../AGENTS.md` if it exists
 
 ## When To Use
 
@@ -32,6 +34,7 @@ Use this skill for WF4 when the user wants dataset analysis, subset design, and 
 7. Create or update the data pipeline script path expected by the canonical prompt.
 8. Update `PROJECT_STATE.json`, especially `dataset_paths`, when appropriate.
 9. Refresh `CLAUDE.md` so `### Dataset Paths` reflects the resolved dataset addresses immediately after WF4.
+10. Check `AGENTS.md` when it exists. Keep it stable, but ensure it points operators to `CLAUDE.md` for volatile dataset and environment paths instead of carrying stale duplicated paths.
 
 ## Output Rules
 
@@ -39,6 +42,7 @@ Use this skill for WF4 when the user wants dataset analysis, subset design, and 
 - Keep the `context_summary`, dataset format summary, full stats, subset strategy, and expected speedup.
 - Include evidence sources and separate verified dataset facts from inferred dataset properties.
 - Dataset path synchronization into `CLAUDE.md` is required WF4 output, not an optional downstream refresh.
+- `AGENTS.md` synchronization means consistency of the stable pointer to `CLAUDE.md`; do not duplicate volatile dataset paths into `AGENTS.md` unless the user explicitly changes the project policy.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

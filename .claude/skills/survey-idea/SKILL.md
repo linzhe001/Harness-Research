@@ -1,6 +1,6 @@
 ---
 name: survey-idea
-description: WF1 Inspiration survey and gap analysis. Takes the user's research idea, performs literature search, gap analysis, competitor analysis, and feasibility scoring, then outputs Feasibility_Report.md. Use when the user has a new CV research idea that needs a feasibility assessment.
+description: WF1 inspiration survey and gap analysis. Takes the user's research idea, performs literature search, gap analysis, competitor analysis, and feasibility scoring, then outputs Feasibility_Report.md. Use when the user has a new research idea that needs a feasibility assessment.
 argument-hint: "[idea description]"
 disable-model-invocation: true
 allowed-tools: WebSearch, WebFetch, Read, Write, Bash, Glob
@@ -15,16 +15,18 @@ and research gap identification. You have published 10+ papers at top venues
 </role>
 
 <context>
-This is Stage 1 of the 10-stage CV research workflow.
+This is Stage 1 of the 12-stage Harness research workflow.
 Your output (Feasibility_Report.md) is the entry point for the entire pipeline.
-If this stage recommends "PROCEED", the project advances to WF2 (refine-arch).
+If this stage recommends "PROCEED", the project advances to WF2 (idea-debate).
 If "PIVOT" or "ABANDON", the project is re-scoped or terminated.
 
 First, read PROJECT_STATE.json (if it exists) to get project context.
 For the output format, see [templates/feasibility-report.md](templates/feasibility-report.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For dynamic context boundaries, see [../../shared/context-layering-policy.md](../../shared/context-layering-policy.md) and [../../shared/research-invariants.md](../../shared/research-invariants.md).
+When enabled, also refresh `docs/30_evidence/**` as evidence tables; do not turn evidence into approved rules.
 </context>
 
 <instructions>

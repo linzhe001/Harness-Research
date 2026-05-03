@@ -26,7 +26,7 @@ It can be called by `/iterate code` or used standalone.
 
 Inputs:
 1. Error log or issue description (from $ARGUMENTS)
-2. `project_map.json` — Locate relevant files and dependency chains (stable architecture files only)
+2. `project_map.json` — Locate relevant files and dependency chains (stable implementation files only)
 3. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
    Contains mode, iteration_id, hypothesis, config_diff, files_to_modify, lessons_from_previous, etc.
    If this file exists, **prioritize its information** to understand the modification intent and scope.

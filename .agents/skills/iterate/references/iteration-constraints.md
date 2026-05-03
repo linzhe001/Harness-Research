@@ -12,7 +12,8 @@ These are mandatory behavior rules for `$iterate`.
 
 - `iteration_log.json` is the only experiment source of truth and must stay at the repository root.
 - `PROJECT_STATE.json` must stay at the repository root and is read-only from `$iterate`.
-- `project_map.json` must stay at the repository root and is updated only when stable interfaces change through code work.
+- `project_map.json` must stay at the repository root and is updated whenever
+  stable file presence or stable interfaces change through code work.
 - `.agents/state/` is volatile local context only; never move canonical project state there.
 - Keep `.agents/state/` as the reserved local context directory, but create context files inside it only when needed.
 
@@ -32,6 +33,7 @@ These are mandatory behavior rules for `$iterate`.
   - `screening.recommended`
   - `codex_review`
 - Must check prior `lessons` and warn when the new hypothesis repeats a known failed pattern.
+- Must read accepted lessons from `MEMORY.md` and candidate/accepted lessons from `docs/50_memory/Lessons.md` when those files exist.
 
 ### `code`
 
@@ -80,9 +82,13 @@ These are mandatory behavior rules for `$iterate`.
   - finalized `metrics`
   - exactly one `decision` from {NEXT_ROUND, DEBUG, CONTINUE, PIVOT, ABORT}
   - non-empty `lessons`
+  - `lesson_candidates` when promotion-worthy findings are identified
+  - `lesson_promotion_status` when a lesson is accepted or rejected
   - `status=completed` when evaluation is complete
 - Must produce or refresh the per-iteration report under `docs/iterations/` when the workflow uses those reports.
-- Must append or refresh a human-readable lesson entry in `MEMORY.md`.
+- Should produce or refresh `docs/40_iterations/<iter-id>.md` and `docs/40_iterations/latest.md` when the dynamic context layout is enabled.
+- Should append or refresh candidate lessons in `docs/50_memory/Lessons.md`.
+- Must append to `MEMORY.md` only for accepted lessons that satisfy the lesson quality rule; raw observations and auto-run findings must not enter `MEMORY.md` directly.
 - Must output the recommended next-step command that matches the decision:
   - `NEXT_ROUND` -> `$iterate plan "..."` (ordinary improvement round)
   - `DEBUG` -> `$iterate plan "..." [debug-oriented]`

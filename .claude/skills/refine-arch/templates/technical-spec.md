@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF2 - Architecture Refinement
-- **Prior Input:** Feasibility_Report.md
+- **Current Stage:** WF6 - Architecture Design
+- **Prior Input:** Feasibility_Report.md, Idea_Debate.md, Refined_Idea.md, Dataset_Stats.md, Baseline_Report.md, evaluation contract/protocol
 - **Output:** Technical_Spec.md
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF3 deep-check
+- **Next Step:** WF7 build-plan or WF6 deep-check design review
 </context_summary>
 ```
 

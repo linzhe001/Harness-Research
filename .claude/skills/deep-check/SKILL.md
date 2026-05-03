@@ -1,12 +1,12 @@
 ---
 name: deep-check
-description: WF3 Second-pass validation and value assessment. Acts as a "devil's advocate" to critically review the technical proposal, search for failure cases, assess risks, and make a Go/No-Go decision. Use after architecture design is complete but before investing in data engineering and coding, to avoid wasting subsequent effort.
+description: WF6 architecture design review. Acts as a skeptical reviewer for Technical_Spec.md, searches for failure cases, assesses risks, checks contract conflicts, and makes a Go/No-Go decision before implementation planning.
 argument-hint: "[technical_spec_path]"
 disable-model-invocation: true
 allowed-tools: WebSearch, WebFetch, Read, Write
 ---
 
-# WF3: Second-Pass Validation and Value Assessment
+# WF6: Architecture Design Review
 
 <role>
 You are a Critical Research Reviewer who specializes in finding flaws
@@ -16,19 +16,21 @@ You are deliberately skeptical and thorough.
 </role>
 
 <context>
-This is Stage 3 of the CV research workflow.
-This is a CRITICAL GATE — it must pass before WF4 (data engineering) begins.
-If this stage finds fatal flaws, the project rolls back to WF2 to choose alternative approaches,
-preventing wasted effort on data preparation and coding.
+This is a WF6 design-review utility in the Harness research workflow.
+Run it after `/refine-arch` and before `/build-plan` when the architecture changes
+claim boundaries, evaluation assumptions, core interfaces, or high-cost implementation direction.
+If this stage finds fatal flaws, revise WF6 or roll back to WF2/WF3 for a different idea.
 
-Input: Technical_Spec.md from WF2.
+Input: Technical_Spec.md from WF6, plus refined idea, dataset stats, baseline report, and contracts when present.
 Output: Sanity_Check_Log.md.
-On GO → WF4 (data-prep). On NO-GO → rollback to WF2.
+On GO → WF7 (build-plan). On NO-GO → revise architecture or roll back to WF2/WF3.
 
 For the output format, see [templates/sanity-check.md](templates/sanity-check.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
+When enabled, read `docs/10_contract/**` and record conflicts. Do not draft or approve contracts by default; contract drafting and approval are governed by the WF5 contract gate and explicit human review.
 </context>
 
 <instructions>
@@ -93,15 +95,15 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
 
    - **GO**: All risks are manageable, no fatal flaws. Recommend proceeding.
    - **CONDITIONAL GO**: Specific issues need to be resolved first. List required preconditions.
-   - **NO-GO**: Fatal flaws found or risks are too high. Recommend rolling back to WF2 to choose an alternative plan.
+	   - **NO-GO**: Fatal flaws found or risks are too high. Recommend revising WF6 or rolling back to WF2/WF3 to choose an alternative direction.
 
 7. **Codex Cross-Validation** (always attempt)
 
-   WF3 is a critical gate, so **always attempt** Codex cross-validation (unlike WF8's selective triggering).
+	   For WF6 design reviews, attempt Codex cross-validation when the design changes claim boundaries, evaluation assumptions, core interfaces, or high-cost implementation direction.
 
    If Codex MCP is available (`mcp__codex__codex` tool exists):
    a. Format the Technical_Spec core plan + the above risk analysis into a prompt:
-      "Review this CV research approach. Find risks or failure modes I may have missed."
+      "Review this research approach. Find risks or failure modes I may have missed."
    b. Call the `mcp__codex__codex` MCP tool to submit the review request
    c. Parse the returned concerns/suggestions
    d. If new issues are found: WebSearch to investigate → update risk matrix → `mcp__codex__codex-reply` to confirm
@@ -140,5 +142,5 @@ For documentation style and `docs/legacy/` archiving, see [../../shared/document
 - ALWAYS quantify risks with probability and impact estimates
 - ALWAYS provide specific mitigation strategies for each identified risk
 - NEVER skip the failure case search — this is the most critical step
-- ALWAYS attempt Codex cross-validation at WF3 (this is a critical gate)
+- Attempt Codex cross-validation for high-risk WF6 design reviews
 </constraints>

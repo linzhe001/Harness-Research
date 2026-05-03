@@ -2,12 +2,12 @@
 
 ## Type
 
-- `always_on` for stable architecture work
+- `always_on` for stable implementation work
 - `skill_scoped` for `$build-plan`, `$code-expert`, and `$code-debug`
 
 ## Purpose
 
-Keep `project_map.json` as the single stable architecture map for the repository.
+Keep `project_map.json` as the single stable implementation map for durable repository files. It describes file layout and interfaces; it does not replace the WF6 architecture decision in `docs/Technical_Spec.md`.
 
 ## Scope
 
@@ -28,7 +28,7 @@ This rule does not require updates for volatile assets such as:
 
 ## Stable vs Volatile Policy
 
-`project_map.json` tracks only stable architecture files.
+`project_map.json` tracks only stable implementation files.
 
 ### Stable
 
@@ -74,8 +74,8 @@ Do not apply this rule for pure internal refactors that preserve the documented 
    - stable `configs/`, `scripts/`, `docs/`: concise `description`
    - `experiments/`: minimal purpose-only coverage
 5. For non-trivial code changes, route implementation through the appropriate workflow skill:
-   - `$code-expert` for first-pass WF7 implementation
-   - `$code-debug` for post-WF7 changes and fixes
+   - `$code-expert` for first-pass WF8 implementation
+   - `$code-debug` for post-WF8 changes and fixes
 6. After Python edits, run:
    - `python -m py_compile <modified files>`
    - `ruff check --select=E,F,I <modified files>`

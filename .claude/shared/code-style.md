@@ -1,6 +1,6 @@
 # CV Research Code Style Guide
 
-This guide defines the style standards that all CV research project code must follow.
+This guide defines the style standards that all Harness research project code must follow.
 
 ## 1. Pre-Edit Checklist
 
@@ -12,6 +12,10 @@ Before editing code:
 - Use explicit names and straightforward control flow instead of clever one-liners.
 - Preserve fail-fast behavior; do not hide invalid state with broad fallbacks.
 - Avoid unrelated refactors, formatting churn, and style rewrites outside the touched scope.
+- Before changing stable implementation files, read `.claude/rules/project-map.md`;
+  update `project_map.json` when a stable file is added, deleted, renamed, or
+  when stable interfaces, responsibilities, exports, config schema, or tensor
+  shapes change.
 - Add or update focused tests when behavior changes.
 - Run the phase-appropriate validation commands, or state clearly why they could not run.
 
@@ -140,5 +144,6 @@ class ExperimentConfig:
 
 - Do not introduce fallback behavior that hides invalid state, missing data, bad configuration, import errors, shape mismatches, or failed optional dependencies.
 - Do not add broad `try`/`except` blocks, silent `except` handlers, default substitute values, or best-effort continuation paths unless the user explicitly requests tolerant behavior for a specific boundary.
+- Do not silently substitute an empty string for missing semantic data. Required values such as dataset names, metric names, contract statuses, run IDs, evidence references, paths, or claim boundaries must raise an explicit error when absent. Optional values may fall back only with an explicit warning that names the field, source, and fallback behavior.
 - Do not add `assert` statements in runtime code. For conditions that must be checked, use explicit validation and raise `ValueError`, `TypeError`, `RuntimeError`, or the narrowest appropriate exception with actionable context.
 - Let unexpected errors propagate so the failing command, stack trace, and root cause remain visible during development, training, and evaluation.

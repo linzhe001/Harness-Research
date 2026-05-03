@@ -1,7 +1,9 @@
-# CV Research Workflow Complete Guide
+# Harness Research Workflow Complete Guide
 
-This document provides a detailed introduction to the CV research workflow system built on Claude Code Skills.
-The system drives a CV research project from "idea" to "competition submission / paper-ready" through a fully automated process, managing and ensuring quality at every step.
+This document provides a detailed introduction to the domain-neutral research
+workflow system built on Claude Code Skills. The system drives an AI/ML research
+project from idea to release or paper-ready state while keeping evidence,
+protocols, contracts, runtime state, and lessons separated.
 
 ---
 
@@ -21,67 +23,75 @@ The system uses Claude Code's three-layer configuration mechanism, layered by lo
 
 ### 1.2 State Ownership
 
-Each state file has a single write-responsible owner to avoid multi-source divergence:
+Each state file has a designated ownership boundary to avoid multi-source divergence:
 
-| File | Sole Writer | Purpose |
+| File | Write Responsibility | Purpose |
 |------|------------|---------|
-| `PROJECT_STATE.json` | orchestrator + each WF skill | Stage transitions (single source of truth for stages) |
+| `PROJECT_STATE.json` | orchestrator owns stage transitions; stage skills may record their own artifact metadata when invoked by the workflow | Stage transitions (single source of truth for stages) |
 | `iteration_log.json` | iterate skill | Experiment history (single source of truth for experiments) |
-| `project_map.json` | build-plan generates, code-debug maintains | Code structure (single source of truth for architecture, stable files only) |
+| `project_map.json` | build-plan generates; code-expert, code-debug, or any workflow step that adds/removes/renames stable files or changes stable interfaces must update it | Stable implementation structure (single source of truth for durable files, not the architecture decision) |
 | `CLAUDE.md` | init-project generates in stages | Global context for each Claude Code session |
+| `OPERATOR_CONTEXT.md` | operator, recorded by init/orchestrator only from explicit input | Stable operator preferences; not evidence for project facts |
 
 **Key rule**: iterate **does not write** PROJECT_STATE.json; orchestrator **does not write** iteration_log.json. Cross-file information is obtained through **reading**.
 
-| File | Sole Writer | Purpose |
+| File | Owner | Purpose |
 |------|------------|---------|
 | `.auto_iterate/` | auto-iterate controller | Controller-owned runtime state (e.g. `state.json`, phase logs). The controller only **reads** `iteration_log.json` and `PROJECT_STATE.json`; it never writes them. |
 
-### 1.3 Workflow Overview
+### 1.3 Dynamic Context Model
 
+Harness core does not predefine field-specific profiles. Each project derives
+its protocol from current evidence:
+
+```text
+operator context -> research evidence -> dynamic protocol -> approved contract
+  -> evidence-compiled docs -> reproducible iteration -> promoted lessons
 ```
-┌──────────────── Early Research & Design ────────────────┐
-│                                                          │
-│  ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐    ┌─────┐   │
-│  │ WF1 │ →  │ WF2 │ →  │ WF3 │ →  │ WF4 │ →  │ WF5 │   │
-│  │survey│    │ arch│    │check│    │ data│    │ base│   │
-│  │      │    │      │ ←──│NO-GO│    │      │    │ line│   │
-│  └─────┘    └──↑───┘    └─────┘    └─────┘    └─────┘   │
-│                │                                          │
-└────────────────│──────────────────────────────────────────┘
-                 │
-┌────────────────│──── Implementation & Validation ────┐
-│                │                                      │
-│  ┌─────┐    ┌──┴──┐    ┌──────┐                      │
-│  │ WF6 │ →  │ WF7 │ →  │WF7.5 │                      │
-│  │ plan│    │ code│    │valid │                      │
-│  └─────┘    └─────┘    └──┬───┘                      │
-│                        FAIL│→ /code-debug → retry     │
-│                            │                          │
-└────────────────────────────│──────────────────────────┘
-                          PASS│
-┌─────────────────────────────│── Iterative Optimization ──────────────┐
-│                             ▼                                        │
-│  ┌──────────────────────────────────────────────────────┐            │
-│  │                    WF8 Iteration                      │            │
-│  │                                                       │            │
-│  │    /plan ──→ /code ──→ /run ──→ /eval ──→ decision   │            │
-│  │      ↑                                     │          │            │
-│  │      │              DEBUG                  │          │            │
-│  │      └─────────────────────────────────────┘          │            │
-│  │                                                       │            │
-│  │    Optional: /ablate (component contribution analysis)│            │
-│  └───────────────────────┬───────────────────────────────┘            │
-│                          │                                            │
-│           ┌──────────┬───────────┬──────────┐                        │
-│       NEXT_ROUND  CONTINUE    PIVOT      ABORT                       │
-│           │         │          │          │                           │
-│           ▼         ▼          │          ▼                           │
-│     back to plan  ┌──────┐  ┌──────┐  Terminate project              │
-│     (default)     │ WF9  │→ │ WF10 │                                 │
-│                   │ablate│  │submit│  └──→ Rollback to WF2 (re-arch) │
-│  └──────┘   └──────┘                                                 │
-│                                                                      │
-└──────────────────────────────────────────────────────────────────────┘
+
+Current-project dynamic context files are research-owned:
+
+- `OPERATOR_CONTEXT.md` stores operator preferences, not project facts. It is
+  written only from explicit operator input during init or an explicit preference
+  update; later stages read it but must not infer or rewrite preferences.
+- `docs/20_facts/**` stores current fact-layer summaries compiled from project
+  artifacts, logs, configs, metrics, or evidence chains.
+- `docs/30_evidence/**` stores evidence tables and open questions.
+- `docs/35_protocol/**` stores evidence-derived protocol drafts.
+- `docs/10_contract/**` stores human-approved project, evaluation, baseline,
+  and claim contracts.
+- `.evidence/chains/**` stores evidence_chain/source_manifest/doc_audit JSON
+  for compiled current docs.
+- `docs/50_memory/**` stores decisions, negative results, and candidate or
+  accepted lessons; `MEMORY.md` stores accepted high-value lessons only.
+
+Legacy flat docs such as `docs/Feasibility_Report.md`,
+`docs/Technical_Spec.md`, and `docs/Baseline_Report.md` are compatibility
+inputs to the fact layer. When refreshed, migrate current facts into
+`docs/20_facts/**` or the numbered context docs, and archive superseded flat
+docs under `docs/90_legacy/`.
+
+### 1.4 Workflow Overview
+
+```text
+WF1 survey
+  -> WF2 idea-debate
+  -> WF3 refine-idea
+  -> WF4 data-prep
+  -> WF5 baseline-repro
+  -> WF6 architecture-design
+  -> WF7 build-plan
+  -> WF8 code-expert
+  -> WF9 validate-run
+  -> WF10 iterate
+  -> WF11 final-exp
+  -> WF12 release
+
+WF10 decisions:
+  NEXT_ROUND or DEBUG -> stay in WF10
+  CONTINUE            -> WF11
+  PIVOT               -> roll back to WF2 idea-debate/refine-idea
+  ABORT               -> terminate project
 ```
 
 Utility skills (non-numbered stages):
@@ -98,25 +108,34 @@ Utility skills (non-numbered stages):
 The orchestrator does not perform specific research work, but manages the state transitions of the entire workflow:
 
 - **`init`** — Initialize project: create directory structure, generate PROJECT_STATE.json, call `/init-project init` to generate minimal CLAUDE.md
-- **`status`** — View current progress: includes stage consistency checks, reads iteration_log.json additionally during WF8
+- **`status`** — View current progress: includes stage consistency checks, reads iteration_log.json additionally during WF10
 - **`next`** — Advance to next stage: verify prerequisites (are artifacts complete, any blockers), then call the corresponding skill
 - **`rollback`** — Roll back to a specified stage: preserves history, does not delete any artifacts
 - **`decision`** — Record key decisions: content, reasoning, alternatives considered
 
-**Auto-trigger**: The `next` command automatically calls `/init-project update` to update CLAUDE.md after stage completion (upon WF1/WF2/WF4/WF5/WF6 completion).
+**Auto-trigger**: The `next` command automatically calls `/init-project update` to update CLAUDE.md after WF1, WF2, WF3, WF4, WF5, WF6, and WF7.
 
 ---
 
 ## 3. Stage Details
 
-### WF1–WF4: Survey → Architecture → Deep Check → Data
+### WF1-WF4: Survey → Idea Debate → Refine Idea → Data
 
 | Stage | Skill | Output | Decision |
 |-------|-------|--------|----------|
-| WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md | PROCEED/PIVOT/ABANDON |
-| WF2 refine-arch | `/refine-arch` | docs/Technical_Spec.md | — |
-| WF3 deep-check | `/deep-check` | docs/Sanity_Check_Log.md | GO/CONDITIONAL GO/NO-GO |
-| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + data pipeline + CLAUDE.md dataset path sync | — |
+| WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md + optional `docs/30_evidence/**` | PROCEED/PIVOT/ABANDON |
+| WF2 idea-debate | `/idea-debate` | docs/Idea_Debate.md + optional protocol updates | SELECT/PILOT_FIRST/MERGE/PIVOT/ABANDON |
+| WF3 refine-idea | `/refine-idea` | docs/Refined_Idea.md + optional protocol drafts | SELECT/PILOT_FIRST/PIVOT/ABANDON |
+| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + data pipeline + CLAUDE.md dataset path sync + AGENTS.md consistency check | — |
+
+WF2 is mandatory for new projects. Legacy projects that predate idea-debate may warn instead of failing, but a new dynamic-context project must hard-fail if it tries to move from WF1 directly to data preparation, baseline reproduction, or architecture design.
+
+When dynamic context is enabled, `/protocol-compiler` can compile
+`docs/30_evidence/**` into a reviewable draft packet before updating
+`docs/35_protocol/**`.
+Use `/review-packet` when a human approval decision is needed; the packet
+summarizes context gates, protocol drift, docchain status, open questions, and
+the exact approve/revise/reject action.
 
 ### WF5: Baseline Reproduction (with Mandatory Gate)
 
@@ -128,34 +147,72 @@ The orchestrator does not perform specific research work, but manages the state 
 
 If intentionally skipping certain baselines, they must be marked as `partial` with reasons explained in the report.
 WF5 is also responsible for creating the first runnable environment and syncing `CLAUDE.md`'s `## Environment` and baseline summary.
+When `docs/10_contract/Evaluation_Contract.md` exists, WF5 reads it first. If
+the contract is missing, WF5 may derive a draft evaluation contract from
+baseline evidence and `PROJECT_STATE.json.evaluation_protocol`.
+WF5 is the first hard contract approval point: dynamic-context projects should
+run protocol drift, context contract gates, docchain gates, and a review packet
+before unattended WF10 or final experiments rely on the evaluation protocol.
 
-### WF6–WF7: Planning → Coding
+### WF6-WF8: Architecture → Planning → Coding
 
 | Stage | Skill | Output |
 |-------|-------|--------|
-| WF6 build-plan | `/build-plan` | docs/Implementation_Roadmap.md + project_map.json |
-| WF7 code-expert | `/code-expert` | Complete project code |
+| WF6 architecture-design | `/refine-arch` | docs/Technical_Spec.md |
+| WF7 build-plan | `/build-plan` | docs/Implementation_Roadmap.md + project_map.json |
+| WF8 code-expert | `/code-expert` | Complete project code |
 
-### WF7.5: Code Review + Training Pipeline Validation (Gate)
+WF6 chooses the MVP architecture from WF1-WF5 evidence, dataset constraints,
+baseline behavior, and the Evaluation Contract. WF7 translates that design into
+file ownership, implementation order, smoke tests, and `project_map.json`.
+Architecture answers what should exist and why; the plan answers how to build
+and verify it.
+
+Run `/deep-check` as a design-review gate after WF6 and before WF7 when the
+architecture changes claim boundaries, evaluation assumptions, core model/data
+interfaces, or high-cost implementation direction.
+
+### Dynamic Contract and Gate Timing
+
+| Point | Required handling |
+|------|-------------------|
+| WF1 | Evidence tables may be compiled into draft protocol candidates. |
+| WF2 | Idea debate may refresh protocol assumptions; drafts remain unapproved. |
+| WF3 | Refined idea records task framing, metric needs, baselines to test, and open questions; use `/protocol-compiler` when evidence changed. |
+| WF4 | Dataset and execution facts should be compiled or audited as fact docs when dynamic context is enabled. |
+| WF5 | Baseline and Evaluation Contract are drafted or approved; run protocol drift, context gates, docchain gates, and `/review-packet` for approval. |
+| WF6/WF7 | Architecture and plan must read the Project/Baseline/Evaluation/Claim contracts when they exist; changing scope requires contract review instead of silent edits. |
+| WF8/WF9 | Run contract gating before implementation and validation; do not rewrite contracts unless scope changes. |
+| WF10 | Manual iteration reads `iteration_log.json`; unattended auto-iteration requires approved or explicitly accepted Evaluation Contract plus protocol-drift and dynamic-context gates. |
+| WF11 | Final experiment design must pass dynamic-context checks and respect Evaluation Contract and Claim Boundary. |
+| WF12 | Release claims must pass docchain/context gates and stay inside the Claim Boundary. |
+
+### WF9: Code Review + Training Pipeline Validation (Gate)
 
 | | |
 |---|---|
 | **Skill** | `/validate-run [config_path]` |
 | **Review Items** | Codex code review (new code vs baseline equivalence: data pipeline, model, loss, evaluation metrics, common ML bugs) |
 | **Validation Items** | 100-step training, checkpoint save/load, eval pipeline, wandb connection, git_snapshot |
-| **Gate** | PASS → WF8, REVIEW → user confirms then continue or fix, FAIL → /code-debug to fix |
+| **Gate** | PASS → WF10, REVIEW → user confirms then continue or fix, FAIL → /code-debug to fix |
 
 Ensures no code correctness or infrastructure issues are encountered during iteration.
 
-**WF7.5 → WF8 bridge**: after validate-run PASS, the orchestrator auto-triggers `/auto-iterate-goal` to verify that the iteration goal is well-defined and ready before WF8 can start.
+**WF9 → WF10 bridge**: after validate-run PASS, the orchestrator auto-triggers `/auto-iterate-goal` to verify that the iteration goal is well-defined and ready before WF10 can start.
+For dynamic-protocol projects, this bridge must also check the Evaluation
+Contract. Auto-iteration requires an approved contract or an explicit operator
+decision to proceed with a draft.
+It should also run `/protocol-drift-check` for WF10. Blocking open questions,
+due low-confidence assumptions, unreviewed negative results, or an unreviewed
+PIVOT/ABORT signal require protocol review before unattended iteration.
 
-### WF8: Structured Experiment Iteration (Core)
+### WF10: Structured Experiment Iteration (Core)
 
 | | |
 |---|---|
 | **Skill** | `/iterate [plan|code|run|eval|ablate|status|log]` |
 | **Output** | iteration_log.json (continuously updated), best checkpoint |
-| **Decision** | NEXT_ROUND → stay in WF8 / DEBUG → debug round in WF8 / CONTINUE → WF9 / PIVOT → WF2 / ABORT → terminate |
+| **Decision** | NEXT_ROUND → stay in WF10 / DEBUG → debug round in WF10 / CONTINUE → WF11 / PIVOT → WF2 idea-debate/refine-idea / ABORT → terminate |
 
 **Seven subcommands**:
 
@@ -243,28 +300,28 @@ Supports resumption: already completed sub-iterations are automatically skipped.
 - **Auto mode**: when `auto_mode=true`, the controller drives the plan→code→run→eval loop without blocking on user confirmation
 - **Controller resume**: on restart, the controller recovers state from `.auto_iterate/state.json` combined with repository inspection (iteration_log.json, git status) to determine where to resume
 
-### WF9: Formal Ablation Experiments
+### WF11: Formal Ablation Experiments
 
 | | |
 |---|---|
 | **Skill** | `/final-exp [stage_report_path]` |
 | **Output** | docs/Final_Experiment_Matrix.md |
-| **Prerequisite** | WF8 final iteration decision is CONTINUE |
+| **Prerequisite** | WF10 final iteration decision is CONTINUE |
 
 Design a complete experiment matrix meeting top-venue standards:
-- **Ablation experiments**: each innovation component ON/OFF, isolating individual contributions (can reuse preliminary results from WF8 `/iterate ablate`)
+- **Ablation experiments**: each innovation component ON/OFF, isolating individual contributions (can reuse preliminary results from WF10 `/iterate ablate`)
 - **Hyperparameter search**: search space and strategy for key hyperparameters
 - **Robustness tests**: different resolutions, extreme scenarios, OOD data
 - **Cross-dataset evaluation**: verify generalizability
 - **Compute budget**: estimate total GPU hours, plan execution order
 
-### WF10: Submission & Release
+### WF12: Submission & Release
 
 | | |
 |---|---|
 | **Skill** | `/release [submit|package|validate]` |
 | **Output** | Submission package (multi-scene rendering + packaging + filename validation) |
-| **Prerequisite** | WF9 ablation experiments completed |
+| **Prerequisite** | WF11 ablation experiments completed |
 
 Three subcommands:
 - **`validate`** — Check submission package completeness (filename format, resolution, scene coverage)
@@ -308,6 +365,11 @@ Core features:
 
 **Per-iteration reports**: when called from /iterate eval, writes to `docs/iterations/iter{N}.md`.
 `docs/Stage_Report.md` serves as the latest summary index.
+`docs/50_memory/Lessons.md` is the candidate/accepted lesson workspace.
+`MEMORY.md` stores accepted human-readable lessons; `iteration_log.json` remains
+the machine source of truth. Auto-iteration may generate observations, findings,
+and lesson candidates, but raw auto-run output must not be promoted directly
+into `MEMORY.md`.
 
 ---
 
@@ -315,7 +377,7 @@ Core features:
 
 ### 5.1 Stable vs Volatile File Layering
 
-project_map.json only tracks **stable architecture files**:
+project_map.json only tracks **stable implementation files**:
 - src/ core modules
 - baselines/ subdirectories
 - Core configs and scripts (listed in CLAUDE.md Entry Scripts)
@@ -333,7 +395,7 @@ When a workflow refreshes an existing current doc, archive the previous version 
 
 ```text
 docs/Foo.md
-  -> docs/legacy/YYYY-MM-DD/Foo__HHMMSS.md
+  -> docs/90_legacy/YYYY-MM-DD/Foo__HHMMSS.md
   -> docs/Foo.md  (new current version)
 ```
 
@@ -351,9 +413,9 @@ Three layers of safeguards ensure complete version records for every training ru
 
 | Trigger Point | Trigger Condition | Review Target | Review Focus |
 |---------------|-------------------|---------------|--------------|
-| WF3 deep-check | **Always triggered** (critical gate) | Technical_Spec technical approach | Find missed risks and failure modes |
-| WF7.5 validate-run | **Always triggered** (code entry gate) | src/ new code vs baselines/ reference impl | Baseline equivalence: data pipeline, model computation, loss, evaluation metrics |
-| WF8 /iterate plan | **Selectively triggered**: new loss family, architecture changes, post-PIVOT, 3 consecutive DEBUGs | Single iteration hypothesis | Hypothesis validation, avoid repeated failures |
+| WF6 design review | **Triggered for architecture, claim-boundary, metric, or high-cost interface changes** | Technical_Spec technical approach | Find missed risks and failure modes before implementation planning |
+| WF9 validate-run | **Always triggered** (code entry gate) | src/ new code vs baselines/ reference impl | Baseline equivalence: data pipeline, model computation, loss, evaluation metrics |
+| WF10 /iterate plan | **Selectively triggered**: new loss family, architecture changes, post-PIVOT, 3 consecutive DEBUGs | Single iteration hypothesis | Hypothesis validation, avoid repeated failures |
 
 Recorded values: `"used"` / `"skipped_low_value"` / `"unavailable"` (no longer using null)
 
@@ -366,11 +428,13 @@ Fast-changing content (current best, current risks, next experiment) resides in 
 |--------|--------------|
 | `init` | Environment placeholder + Workflow overview |
 | After WF1 | Idea description |
-| After WF2 | Tech Stack details |
+| After WF2 | Idea debate decision reference |
+| After WF3 | Refined idea and target framing |
 | After WF4 | Dataset paths and statistics |
 | After WF5 | Baseline metrics reference |
-| After WF6 | Project Structure + Core Artifacts |
-| After WF7 first experiment | Entry Scripts (lock entry scripts) |
+| After WF6 | Tech stack and architecture summary |
+| After WF7 | Project Structure + Core Artifacts |
+| After the first WF10 experiment | Entry Scripts (lock entry scripts) |
 
 ### 5.6 Automated Training Execution
 
@@ -526,22 +590,28 @@ Evaluation reports are stored per iteration:
 
 ### 7.1 Workflow Stage Transitions (Managed by PROJECT_STATE.json)
 
-```
-┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌─────┐  ┌────┐  ┌──────┐  ┌──────┐
-│WF1 │→ │WF2 │→ │WF3 │→ │WF4 │→ │WF5 │→ │WF6 │→ │WF7 │→ │WF7.5│→ │WF8 │→ │ WF9  │→ │ WF10 │
-│surv│  │arch│  │chck│  │data│  │base│  │plan│  │code│  │valid│  │iter│  │ablate│  │submit│
-└────┘  └─┬──┘  └─┬──┘  └────┘  └────┘  └────┘  └────┘  └──┬──┘  └─┬──┘  └──────┘  └──────┘
-          ↑       │                                          │       │
-          │    NO-GO → rollback to WF2                       │       │
-          │                                            FAIL → fix    │
-          ↑                                                          │
-          │  PIVOT                                                   │
-          └──────────────────────────────────────────────────────────┘
+```text
+WF1 survey
+  -> WF2 idea-debate
+  -> WF3 refine-idea
+  -> WF4 data-prep
+  -> WF5 baseline-repro
+  -> WF6 architecture-design
+  -> WF7 build-plan
+  -> WF8 code-expert
+  -> WF9 validate-run
+  -> WF10 iterate
+  -> WF11 final-exp
+  -> WF12 release
+
+WF10 PIVOT rolls back to WF2. WF9 FAIL stays before WF10 and routes through
+code-debug. WF6 design review can block WF7 until the architecture issue is
+resolved or explicitly accepted.
 ```
 
 After each stage completes, the orchestrator auto-triggers `/init-project update` to update CLAUDE.md.
 
-### 7.2 WF8 Internal Iteration State Machine (Managed by iteration_log.json)
+### 7.2 WF10 Internal Iteration State Machine (Managed by iteration_log.json)
 
 ```
                         /iterate plan "hypothesis"
@@ -638,9 +708,9 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
               NEXT_ROUND   DEBUG    CONTINUE          PIVOT     ABORT
                   │          │          │               │         │
                   ▼          ▼          ▼               ▼         ▼
-            back to plan back to plan → WF9           → WF2   Terminate
-            (ordinary    (debug-      (exit WF8,    (re-arch)  project
-             round)       oriented)    ablation)
+            back to plan back to plan → WF11          → WF2   Terminate
+            (ordinary    (debug-      (exit WF10,   (idea     project
+             round)       oriented)    ablation)      pivot)
                             │
                             └──→ /iterate plan "new hypothesis based on lessons"
                                         │
@@ -681,9 +751,11 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
 │   Single source of truth│     │   Single source of truth│
 │   for stages            │     │   for experiments       │
 │                         │     │                         │
-│   Writer:               │     │   Writer:               │
-│     orchestrator        │     │     /iterate skill      │
-│     each WF skill       │     │                         │
+│   Write responsibility: │     │   Writer:               │
+│     orchestrator owns   │     │     /iterate skill      │
+│     stage transitions;  │     │                         │
+│     stage skills record │     │                         │
+│     artifact metadata   │     │                         │
 │                         │     │   Contents:             │
 │   Contents:             │     │     iterations[]        │
 │     current_stage       │     │     best_iteration      │
@@ -692,11 +764,13 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
 ├─────────────────────────┤     ├─────────────────────────┤
 │   project_map.json      │     │   CLAUDE.md             │
 │   Single source of truth│     │   Global context        │
-│   for architecture      │     │                         │
+│   for stable file layout│     │                         │
 │                         │     │   Writer:               │
-│   Writer:               │     │     /init-project       │
-│     build-plan generates│     │     staged incremental  │
-│     code-debug maintains│     │     population          │
+│   Write responsibility: │     │     /init-project       │
+│     build-plan creates; │     │     staged incremental  │
+│     code-expert/debug   │     │     population          │
+│     and stable-file     │     │                         │
+│     writers keep synced │     │                         │
 │                         │     │                         │
 │   Tracks stable files   │     │   ≤80 lines, stable     │
 │   only                  │     │   operations guide      │
@@ -725,11 +799,11 @@ Key rule: /iterate does not write PROJECT_STATE.json
 
 ### 7.4 Consistency Anti-Drift Rules
 
-- Always use single definitions: `WF5=baseline`, `WF6=build-plan`, `WF7=code-expert`, `WF7.5=validate-run`, `WF8=iterate`.
-- After WF4 completes, `PROJECT_STATE.json.dataset_paths` and `CLAUDE.md`'s `### Dataset Paths` must be immediately synced.
+- Always use single definitions: `WF2=idea-debate`, `WF3=refine-idea`, `WF5=baseline`, `WF6=refine-arch/architecture-design`, `WF7=build-plan`, `WF8=code-expert`, `WF9=validate-run`, `WF10=iterate`.
+- After WF4 completes, `PROJECT_STATE.json.dataset_paths` and `CLAUDE.md`'s `### Dataset Paths` must be immediately synced. `AGENTS.md` must remain stable but should be checked so it still points operators to `CLAUDE.md` for volatile dataset and environment paths.
 - After WF5 completes, `CLAUDE.md`'s `## Environment` must no longer contain placeholder content.
-- WF8's `run/eval` must use the baseline/evaluation protocol from WF5 output to determine which metrics to record; training traces and final evaluation metrics are stored separately.
-- After any WF8 subcommand completes, `PROJECT_STATE.json.current_stage.latest_iteration`, `iteration_count`, and `CLAUDE.md Current stage` must be consistent with the latest iteration in `iteration_log.json`.
+- WF10 `run/eval` must use the baseline/evaluation protocol from WF5 output to determine which metrics to record; training traces and final evaluation metrics are stored separately.
+- After any WF10 subcommand completes, `iteration_log.json` is the authoritative experiment state. Any `PROJECT_STATE.json.current_stage.latest_iteration`, `iteration_count`, or `CLAUDE.md Current stage` summary must be synchronized by orchestrator/init-project by reading `iteration_log.json`, not by the auto-iterate controller.
 - Iterations missing semantic commits, `run_manifest`, or `lessons` must not be marked as completed.
 
 ---
@@ -741,11 +815,11 @@ Key rule: /iterate does not write PROJECT_STATE.json
 /orchestrator init          # Initialize project
 /orchestrator status        # View current status
 /orchestrator next          # Advance to next stage
-/orchestrator rollback 2    # Roll back to WF2
+/orchestrator rollback 2    # Roll back to WF2 idea-debate/refine-idea
 /orchestrator decision      # Record key decision
 
 /baseline-repro all         # Reproduce all baselines
-/validate-run               # WF7.5 training pipeline validation
+/validate-run               # WF9 training pipeline validation
 
 /iterate plan "hypothesis"  # Plan new iteration (with repeated lessons check)
 /iterate code "description" # Implement changes (enforced git commit)

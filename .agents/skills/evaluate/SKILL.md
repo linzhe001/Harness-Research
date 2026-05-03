@@ -9,6 +9,8 @@ description: Codex wrapper for experiment analysis and decision-making. Use when
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/lesson-quality-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -17,6 +19,8 @@ Read these first:
 - `./references/stage-report.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
+- `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
 
@@ -32,15 +36,16 @@ Use this skill when the user wants training or evaluation results interpreted an
    - gradient and numerical issues
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
 4. Produce the canonical report using `./references/stage-report.md`.
-5. Append or refresh the matching human-readable lesson in `MEMORY.md`.
-6. Recommend exactly one of:
-   - `NEXT_ROUND` — ordinary improvement round, stay in WF8
-   - `DEBUG` — fixable technical issue, stay in WF8
-   - `CONTINUE` — handoff to orchestrator/WF9, not continue iterating
+5. Write findings and lesson candidates to the iteration report and, when useful, `docs/50_memory/Lessons.md`.
+6. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
+7. Recommend exactly one of:
+   - `NEXT_ROUND` — ordinary improvement round, stay in WF10
+   - `DEBUG` — fixable technical issue, stay in WF10
+   - `CONTINUE` — handoff to orchestrator/WF11, not continue iterating
    - `PIVOT`
    - `ABORT`
-7. If invoked from `$iterate`, do not take over stage-transition ownership.
-8. Include evidence sources and keep unverifiable result interpretations under open questions.
+8. If invoked from `$iterate`, do not take over stage-transition ownership.
+9. Include evidence sources and keep unverifiable result interpretations under open questions.
 
 ## Codex Adaptation
 

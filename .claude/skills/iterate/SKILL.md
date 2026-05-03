@@ -1,12 +1,12 @@
 ---
 name: iterate
-description: "WF8 structured experiment iteration. Manages the hypothesis→code→run→eval cycle, maintains iteration_log.json, with optional Codex cross-validation. Supported commands: plan (design iteration), code (implement changes), run (execute training + collect metrics), eval (evaluate results), ablate (ablation experiments), status (view progress), log (full history)."
+description: "WF10 structured experiment iteration. Manages the hypothesis→code→run→eval cycle, maintains iteration_log.json, with optional Codex cross-validation. Supported commands: plan (design iteration), code (implement changes), run (execute training + collect metrics), eval (evaluate results), ablate (ablation experiments), status (view progress), log (full history)."
 argument-hint: "[plan|code|run|eval|ablate|status|log] [details]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Skill, WebSearch
 ---
 
-# WF8: Structured Experiment Iteration
+# WF10: Structured Experiment Iteration
 
 <role>
 You are an Experiment Manager who runs disciplined research iterations.
@@ -15,26 +15,30 @@ You maintain a complete audit trail and learn from every experiment.
 </role>
 
 <context>
-This is Stage 8 of the 10-stage CV research workflow.
+This is Stage 10 of the 12-stage Harness research workflow.
 It replaces the old WF7 evaluate + code-debug loop with a structured iteration system.
 
-Input: Working codebase from WF7 (code-expert) + baseline metrics from WF5.
-Output: iteration_log.json (continuously updated), best checkpoint for WF9.
-On CONTINUE (final) → WF9 (final-exp).
+Input: Working codebase from WF8 (code-expert) + baseline metrics from WF5.
+Output: iteration_log.json (continuously updated), best checkpoint for WF11.
+On CONTINUE (final) → WF11 (final-exp).
 
 The iteration log file is at `iteration_log.json` in the project root.
 For the schema, see [templates/iteration-log-schema.json](templates/iteration-log-schema.json).
 For code style behavior, see [../../shared/code-style.md](../../shared/code-style.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
+For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Raw observations and auto-run findings must not enter `MEMORY.md` directly.
 
 ## State Ownership
 
 - **`iteration_log.json`** — The single source of truth for experiments. All iteration data (hypothesis, metrics, decisions, lessons) is written here only.
 - **`PROJECT_STATE.json`** — Only manages stage transitions. iterate **does not write directly** to PROJECT_STATE.json.
-  Stage-level decisions (CONTINUE→WF9, PIVOT→WF2) are handled by orchestrator reading iteration_log.json and then updating.
-- **`project_map.json`** — Only manages code structure. Maintained by code-debug when interfaces change.
+  Stage-level decisions (CONTINUE→WF11, PIVOT→WF2 idea-debate/refine-idea) are handled by orchestrator reading iteration_log.json and then updating.
+- **`project_map.json`** — Only manages stable code structure. It must be
+  updated by the code-writing step, normally code-debug, when stable files or
+  stable interfaces change.
 
 Utility skills available:
 - `/code-debug` — for implementing code changes (called by `code` sub-command)
@@ -244,8 +248,8 @@ user calls `/iterate eval` after training completes.
 8. Make a decision:
    - **NEXT_ROUND**: Ordinary improvement round — results show progress but more iteration needed
    - **DEBUG**: Debug-oriented round — fixable issues found, new iteration needed for fixes
-   - **CONTINUE**: Satisfactory level reached, handoff to WF9 orchestrator
-   - **PIVOT**: Current direction is hopeless, roll back to WF2
+   - **CONTINUE**: Satisfactory level reached, handoff to WF11 orchestrator
+   - **PIVOT**: Current direction is hopeless, roll back to WF2 idea-debate/refine-idea
    - **ABORT**: Terminate the project
 9. Extract lessons learned (at least 1)
 10. Update iteration_log.json (**single source of truth for experiments**):
@@ -258,13 +262,13 @@ user calls `/iterate eval` after training completes.
 12. **Output recommended next-step command** (based on decision):
     - NEXT_ROUND → `Recommended: /iterate plan "{improvement hypothesis based on lessons}"`
     - DEBUG → `Recommended: /iterate plan "{improvement hypothesis based on lessons}" [debug-oriented]`
-    - CONTINUE → `Recommended: /orchestrator next  (advance to WF9 ablation experiments)`
+    - CONTINUE → `Recommended: /orchestrator next  (advance to WF11 ablation experiments)`
     - PIVOT → `Recommended: /orchestrator rollback 2  (roll back to architecture design)`
     - ABORT → `Recommended: /orchestrator decision  (record termination decision)`
 
 ### 5. `ablate [base_iter_id] --components "comp1,comp2,..."` — Ablation experiments
 
-Quickly determine individual component contributions during WF8 iteration, without waiting for WF9.
+Quickly determine individual component contributions during WF10 iteration, without waiting for WF11.
 
 **Usage**: `/iterate ablate {base_iter} --components "name1:override1,name2:override2"`
 

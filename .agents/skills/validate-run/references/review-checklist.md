@@ -1,6 +1,6 @@
 # Validate Run Review Checklist
 
-Use this checklist before entering WF8.
+Use this checklist before entering WF10.
 
 ## Semantic Review
 

@@ -5,14 +5,14 @@
 ```markdown
 <context_summary>
 - **Project:** {project_name}
-- **Current Stage:** WF5 - Code Execution Plan
+- **Current Stage:** WF7 - Code Execution Plan
 - **Prior Inputs:** Technical_Spec.md, Dataset_Stats.md
 - **Deliverables:** Implementation_Roadmap.md
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}
 - **Open Issues:** {open_issues}
-- **Next Step:** WF7 code-expert
+- **Next Step:** WF8 code-expert
 </context_summary>
 ```
 
@@ -51,6 +51,22 @@ For each new file, provide:
 - Core logic pseudocode
 - Input/output examples (with tensor shapes)
 - Dependency descriptions
+- Interface contracts: accepted input types, return types, tensor/data shapes,
+  required config keys, error conditions, and invariants that downstream code
+  may rely on
+- Implementation constraints: stable extension points, forbidden shortcuts,
+  compatibility requirements with baselines or evaluation scripts, and ownership
+  notes for the next code generation step
+
+### 2b. shared_interfaces
+
+List the project-level interfaces that multiple files must agree on:
+
+| Interface | Owner File | Consumers | Signature / Schema | Shape or Type Contract | Failure Behavior |
+|---|---|---|---|---|---|
+| Dataset item | `src/data/dataset.py` | `scripts/train.py`, model forward | | | |
+| Model forward | `src/models/...` | trainer, eval | | | |
+| Metric output | `scripts/eval.py` | `/iterate eval`, reports | | | |
 
 ### 3. config_schema
 

@@ -1,6 +1,6 @@
 ---
 name: validate-run
-description: Codex wrapper for WF7.5 validation. Use when the user wants the training chain reviewed and smoke-tested before entering WF8.
+description: Codex wrapper for WF9 validation. Use when the user wants the training chain reviewed and smoke-tested before entering WF10.
 ---
 
 # Validate Run
@@ -22,7 +22,7 @@ Read these first:
 
 ## When To Use
 
-Use this skill for WF7.5 when the user wants to verify the codebase is safe to enter the iteration loop.
+Use this skill for WF9 when the user wants to verify the codebase is safe to enter the iteration loop.
 
 ## Required Work
 
