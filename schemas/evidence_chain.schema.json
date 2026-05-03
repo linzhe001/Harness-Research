@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence Chain",
+  "type": "object",
+  "required": ["schema_version", "chain_id", "doc", "git", "facts", "evidence", "unresolved", "doc_links"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "chain_id": { "type": "string" },
+    "doc": {
+      "type": "object",
+      "required": ["path", "doc_id", "compiled_at", "compiled_by"],
+      "properties": {
+        "path": { "type": "string" },
+        "doc_id": { "type": "string" },
+        "compiled_at": { "type": "string" },
+        "compiled_by": { "type": "string" },
+        "skill": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "git": {
+      "type": "object",
+      "required": ["commit", "branch", "is_dirty"],
+      "properties": {
+        "commit": { "type": ["string", "null"] },
+        "branch": { "type": ["string", "null"] },
+        "is_dirty": { "type": "boolean" },
+        "status_summary": { "type": ["string", "null"] },
+        "diff_path": { "type": ["string", "null"] },
+        "diff_hash": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fact_id", "claim", "epistemic_status", "evidence_refs"],
+        "properties": {
+          "fact_id": { "type": "string" },
+          "fact_type": { "type": ["string", "null"] },
+          "claim": { "type": "string" },
+          "epistemic_status": { "type": "string", "enum": ["FACT", "INFERENCE", "DECISION", "LESSON"] },
+          "confidence": { "type": ["string", "null"], "enum": ["low", "medium", "high", null] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "support_summary": { "type": ["string", "null"] },
+          "limitations": { "type": "array", "items": { "type": "string" } },
+          "used_in_doc": { "type": "boolean" },
+          "doc_anchors": { "type": "array" },
+          "review_status": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "kind", "path", "supports"],
+        "properties": {
+          "evidence_id": { "type": "string" },
+          "kind": { "type": "string" },
+          "path": { "type": "string" },
+          "git_commit": { "type": ["string", "null"] },
+          "start_line": { "type": ["integer", "null"] },
+          "end_line": { "type": ["integer", "null"] },
+          "symbol": { "type": ["string", "null"] },
+          "excerpt_hash": { "type": ["string", "null"] },
+          "supports": { "type": "array", "items": { "type": "string" } },
+          "support_relation": {
+            "type": "string",
+            "enum": ["supports", "partially_supports", "contradicts", "context_only"]
+          },
+          "human_note": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "unresolved": { "type": "array" },
+    "doc_links": {
+      "type": "object",
+      "required": ["markdown_path", "audit_path", "source_manifest_path"],
+      "properties": {
+        "markdown_path": { "type": "string" },
+        "audit_path": { "type": "string" },
+        "source_manifest_path": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

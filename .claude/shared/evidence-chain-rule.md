@@ -1,0 +1,198 @@
+# Evidence Chain Rule
+
+## Purpose
+
+Make current project documents auditable without stuffing raw evidence into
+human-facing Markdown.
+
+## Scope
+
+Apply this rule when compiling or refreshing:
+
+- `docs/10_contract/**/*.md`
+- `docs/20_facts/**/*.md`
+- `docs/35_protocol/**/*.md`
+- release documents
+- any document whose claims decide workflow direction, evaluation, or final
+  research claims
+
+Legacy reports such as `docs/Feasibility_Report.md` and
+`docs/Baseline_Report.md` may still be written directly, but must include
+Evidence Sources, Verified Facts, Inferences, and Open Questions.
+
+## Required Artifacts
+
+For each compiled current document, write:
+
+- `.evidence/chains/{doc_id}/{build_id}/evidence_chain.json`
+- `.evidence/chains/{doc_id}/{build_id}/source_manifest.json`
+- `.evidence/chains/{doc_id}/{build_id}/doc_audit.json`
+- update `.evidence/index.json` so the latest build for each doc is discoverable
+
+The Markdown document should include a short header pointing to these files.
+Run `python tooling/evidence/check_docchain_gates.py --workspace-root .` before
+accepting current contract, fact, or protocol docs as ready.
+
+`.evidence/**` is tooling-owned. A workflow stage that needs evidence-chain
+artifacts must invoke the evidence tooling (`compile_doc.py`,
+`compile_protocol.py`, `check_dynamic_context.py`, or `build_review_packet.py`)
+instead of hand-writing files under `.evidence/**`.
+
+## Stage Invocation Rule
+
+- When a stage creates or changes current docs under `docs/10_contract/**`,
+  `docs/20_facts/**`, `docs/35_protocol/**`, or release docs, run
+  `compile_doc.py` with explicit `--source` paths for the artifacts that support
+  the changed claims.
+- When evidence tables under `docs/30_evidence/**` change the draft protocol,
+  run `compile_protocol.py`; use `--apply --overwrite` only after reviewing the
+  generated draft under `.evidence/protocol_compiler/<build_id>/`.
+- Before WF10 auto-iteration, WF11, or WF12 readiness, run
+  `check_dynamic_context.py --stage <stage> --review-packet` so humans can
+  inspect the same gate result the workflow uses.
+
+## Mandatory Tool Calls By Stage
+
+| Workflow Point | Required Python Tool | Output Used Later |
+|---|---|---|
+| Dynamic-context project init | `init_context.py --set-state` | Numbered docs dirs, `.evidence/schemas/**`, `PROJECT_STATE.json` dynamic markers |
+| Evidence tables changed | `compile_protocol.py` | Draft protocol packet under `.evidence/protocol_compiler/**`; optionally applied to `docs/35_protocol/**` after review |
+| Current contract/fact/protocol/release doc changed | `compile_doc.py --doc ... --source ...` | `.evidence/chains/**`, Markdown evidence headers, `.evidence/index.json` latest pointer |
+| WF5 contract readiness | `check_dynamic_context.py --stage wf5 --review-packet` | Gate result and review packet for Evaluation Contract approval/revision |
+| Human approves a contract | `approve_contract.py` then `check_dynamic_context.py --stage <stage> --review-packet` | Dual approval markers in Markdown and `PROJECT_STATE.json`; fresh gate result |
+| WF10 auto-iterate readiness | `check_dynamic_context.py --stage wf10 --review-packet` | Controller/orchestrator preflight and human-readable review packet |
+| WF11 final experiment readiness | `check_dynamic_context.py --stage wf11 --review-packet` | Final experiment gate against approved contracts and protocol drift |
+| WF12 release readiness | `check_dynamic_context.py --stage wf12 --review-packet` | Release claim gate against Claim Boundary and docchains |
+| Stage transition or state edits | `check_workflow_state.py` | Cross-file consistency checks for `PROJECT_STATE.json`, `iteration_log.json`, `project_map.json`, and auto-iterate state |
+
+If shell access is unavailable, the stage skill must explicitly report that the
+tool call could not run and must not describe the gate as machine-verified.
+
+## Artifact Value
+
+Evidence tooling outputs are not decorative:
+
+- `source_manifest.json` lets later gates detect stale docs when the Markdown or
+  source artifacts change.
+- `evidence_chain.json` gives reviewers a compact map from fact markers to the
+  exact source files and hashes used for that document.
+- `doc_audit.json` records whether explicit sources were provided, fact markers
+  were captured, open questions remain, and semantic support still needs review.
+- `.evidence/index.json` lets later stages find the latest docchain for a
+  current document without scanning every build directory.
+- review packets summarize the same gate results used by workflow preflight, so
+  approval discussions cite a stable packet path.
+- `approve_contract.py` records the packet/conversation provenance in
+  `approval_source`, which later gates require before treating a contract as
+  approved.
+
+## Update Lifecycle
+
+Evidence outputs are versioned by build id. Do not edit old build directories in
+place. Update by rerunning the relevant tool:
+
+- Rerun `compile_protocol.py` when evidence tables, open questions, baseline
+  evidence, dataset evidence, or metric evidence changes.
+- Rerun `compile_doc.py` when the current Markdown changes, any explicit source
+  artifact changes, the fact markers change, or a reviewer upgrades
+  `--fact-confidence` / `--support-relation`.
+- Rerun `check_dynamic_context.py --review-packet` before each human approval
+  decision and before WF10/WF11/WF12 readiness.
+- Rerun `approve_contract.py` only after explicit human approval. If approved
+  contract content later changes, set it back to `draft` or `superseded`, rerun
+  `compile_doc.py`, rebuild the review packet, and seek approval again.
+- Rerun `check_workflow_state.py` whenever `PROJECT_STATE.json`,
+  `iteration_log.json`, `project_map.json`, or `.auto_iterate/state.json`
+  changes near a transition.
+
+The current Markdown headers and `.evidence/index.json` are updated to point to
+the latest build; older builds remain audit history.
+
+## Why Python Writes `.evidence/**`
+
+Python tooling writes evidence artifacts to make the record deterministic and
+auditable. The tool records:
+
+- every explicit source path read for the compilation
+- source hashes in `source_manifest.json`
+- the current Markdown hash used by stale-source checks
+- git commit, branch, dirty status, and preserved patch/untracked snapshots when
+  available
+- extracted `[F:*]`, `[U:*]`, `[D:*]`, and `[L:*]` markers
+- audit checks and the generated evidence-chain/index paths
+
+This is different from an AI manually writing `.evidence/**`: the AI may choose
+or omit fields inconsistently, while the tool produces the same schema and hash
+logic every time. The AI or human still chooses the explicit `--source` list and
+may set reviewed `--fact-confidence` / `--support-relation`; the tool records
+that choice but does not prove semantic truth by itself.
+
+Completeness limit: `compile_doc.py` records only the Markdown document,
+explicit `--source` artifacts, and git context it can see. If a source was read
+by a human or AI but not passed with `--source`, it is not part of the auditable
+read set. Contract readiness therefore requires both the Python docchain and
+human review of whether the recorded sources actually support the marked claims.
+
+## Semantic Pollution Controls
+
+The tooling is designed to prevent semantic pollution, but it cannot prove
+truth. The protected boundary is:
+
+- Python records provenance, hashes, markers, and review metadata.
+- Python does not invent facts, contract scope, metric meaning, or claim
+  boundaries.
+- `compile_doc.py` defaults to `support_relation=context_only` and
+  `fact_confidence=low`; stronger semantic support requires explicit reviewed
+  options.
+- Contract gates reject contract docchains that only have context-only evidence.
+- Research evidence, protocol drafts, and review packets cannot mark a contract
+  approved; only `approve_contract.py` after explicit human approval records the
+  approved state.
+
+If a reviewer finds a semantic error, fix the source Markdown or source
+artifact, rerun the compiler, and rerun the gate. Do not manually patch the JSON
+to hide the problem.
+
+## Fact Markers
+
+Use lightweight anchors in Markdown:
+
+- `[F:<id>]` for verified facts or evidence-backed interpretations
+- `[U:<id>]` for unresolved questions
+- `[D:<id>]` for decisions
+- `[L:<id>]` for lessons
+
+Keep detailed evidence in JSON, not in the Markdown body.
+
+## Git Context
+
+Record git commit, branch, dirty status, patch path, and untracked source
+snapshots when available.
+Contract and release docs require a clean source commit before compilation.
+Iteration and execution docs may be dirty if the patch is preserved in the
+evidence chain. If dirty context includes untracked files, preserve their
+content under `.evidence/chains/{doc_id}/{build_id}/untracked/` and record
+hashes in `git.untracked_snapshots`.
+
+## Contract Evidence Strength
+
+Contract docs under `docs/10_contract/**` require stronger evidence than
+ordinary draft notes. A ready contract docchain must include:
+
+- explicit fact markers in the compiled Markdown
+- at least one non-Markdown source artifact
+- at least one medium/high-confidence fact
+- at least one evidence entry with `support_relation` of `supports` or
+  `partially_supports`
+
+The v0 compiler records explicit sources and markers, but it does not infer
+semantic support automatically. Contract docchains may need human or agent
+review to upgrade support relations before they pass readiness gates.
+
+## Audit Behavior
+
+- If audit passes, the current Markdown may be updated.
+- If audit fails, write or keep a draft and do not replace the current document.
+- Unsupported strong claims must be moved to Open Questions or removed.
+- A current Markdown document is stale if its hash no longer matches the
+  `source_manifest.json` read set for the docchain.

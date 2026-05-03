@@ -1,0 +1,3 @@
+name: review-packet
+description: Build concise human review packets for dynamic context gates.
+prompt: "Use $review-packet to generate a concise review packet for the requested stage."

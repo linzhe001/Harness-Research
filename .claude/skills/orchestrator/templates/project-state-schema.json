@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PROJECT_STATE",
-  "description": "CV research project state file schema. Note: this is a reference schema; the actual PROJECT_STATE.json may use a simplified flat structure (e.g., project_name instead of project_meta.name). The schema guides field semantics and is not used for runtime validation.",
+  "description": "Harness research project state file schema. Note: this is a reference schema; the actual PROJECT_STATE.json may use a simplified flat structure (e.g., project_name instead of project_meta.name). The schema guides field semantics and is not used for runtime validation.",
   "type": "object",
   "required": ["project_meta", "current_stage", "artifacts", "decisions", "history"],
   "properties": {
@@ -49,6 +49,15 @@
         }
       }
     },
+    "context_model_version": {
+      "type": ["string", "null"],
+      "description": "Optional dynamic context mode marker. Use dynamic-protocol-v1 for numbered evidence/protocol/contract docs."
+    },
+    "workflow_mode": {
+      "type": ["string", "null"],
+      "enum": ["dynamic_context", "standard", "compatibility", null],
+      "description": "Workflow gate mode. Use dynamic_context for new numbered-context projects, standard for new projects without numbered context docs, and compatibility only for older projects that predate mandatory WF2/dynamic gates."
+    },
     "current_stage": {
       "type": "object",
       "description": "Current workflow stage",
@@ -57,13 +66,15 @@
         "workflow_id": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 10,
-          "description": "Current stage ID (1-10, 7.5 maps to 7)"
+          "maximum": 12,
+          "description": "Current stage ID (1-12, continuous numbering)"
         },
         "workflow_name": {
           "type": "string",
           "enum": [
             "survey_idea",
+            "idea_debate",
+            "refine_idea",
             "refine_arch",
             "deep_check",
             "data_prep",
@@ -79,7 +90,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["not_started", "in_progress", "completed", "blocked"],
+          "enum": ["not_started", "in_progress", "completed", "blocked", "active"],
           "description": "Stage status"
         },
         "started_at": {
@@ -94,11 +105,11 @@
         },
         "iteration_count": {
           "type": ["integer", "null"],
-          "description": "Iteration count during WF8"
+          "description": "Iteration count during WF10"
         },
         "latest_iteration": {
           "type": ["string", "null"],
-          "description": "Latest iteration ID during WF8"
+          "description": "Latest iteration ID during WF10"
         }
       }
     },
@@ -110,13 +121,21 @@
           "type": ["string", "null"],
           "description": "WF1 output: docs/Feasibility_Report.md"
         },
+        "idea_debate_report": {
+          "type": ["string", "null"],
+          "description": "WF2 output: docs/Idea_Debate.md"
+        },
+        "refined_idea": {
+          "type": ["string", "null"],
+          "description": "WF3 output: docs/Refined_Idea.md"
+        },
         "technical_spec": {
           "type": ["string", "null"],
-          "description": "WF2 output: docs/Technical_Spec.md"
+          "description": "WF6 output: docs/Technical_Spec.md"
         },
         "sanity_check_log": {
           "type": ["string", "null"],
-          "description": "WF3 output: docs/Sanity_Check_Log.md"
+          "description": "WF6 design-review output: docs/Sanity_Check_Log.md"
         },
         "data_pipeline_script": {
           "type": ["string", "null"],
@@ -128,12 +147,12 @@
         },
         "implementation_roadmap": {
           "type": ["string", "null"],
-          "description": "WF6 output: docs/Implementation_Roadmap.md"
+          "description": "WF7 output: docs/Implementation_Roadmap.md"
         },
         "code_modules": {
           "type": ["array", "null"],
           "items": { "type": "string" },
-          "description": "WF7 output: list of code file paths"
+          "description": "WF8 output: list of code file paths"
         },
         "baseline_report": {
           "type": ["string", "null"],
@@ -145,15 +164,15 @@
         },
         "iteration_log": {
           "type": ["string", "null"],
-          "description": "WF8 output: iteration_log.json (iteration records, continuously updated)"
+          "description": "WF10 output: iteration_log.json (iteration records, continuously updated)"
         },
         "experiment_matrix": {
           "type": ["string", "null"],
-          "description": "WF9 output: docs/Final_Experiment_Matrix.md"
+          "description": "WF11 output: docs/Final_Experiment_Matrix.md"
         },
         "project_map": {
           "type": ["string", "null"],
-          "description": "WF6 output: project_map.json (project file structure blueprint, continuously maintained)"
+          "description": "WF7 output: project_map.json (project file structure blueprint, continuously maintained)"
         }
       }
     },
@@ -170,24 +189,84 @@
     },
     "evaluation_protocol": {
       "type": ["object", "null"],
-      "description": "Evaluation protocol established in WF5, inherited by WF8 run/eval",
+      "description": "Evaluation protocol established in WF5, inherited by WF10 run/eval",
       "properties": {
-        "primary_metric": { "type": ["string", "null"] },
+        "primary_metric": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string" },
+                "direction": { "type": ["string", "null"], "enum": ["maximize", "minimize", "max", "min", null] },
+                "target": { "type": ["number", "string", "null"] }
+              },
+              "additionalProperties": true
+            },
+            { "type": "null" }
+          ],
+          "description": "Primary metric name or object. Checker supports both legacy string and object forms."
+        },
         "tracked_metrics": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "goal": { "type": "string", "enum": ["max", "min"] }
+              "goal": { "type": "string", "enum": ["max", "min", "maximize", "minimize"] },
+              "direction": { "type": "string", "enum": ["max", "min", "maximize", "minimize"] }
             }
           }
         }
       }
     },
+    "contracts": {
+      "type": ["object", "null"],
+      "description": "Human-approved contract tracking for dynamic-protocol projects",
+      "properties": {
+        "project_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "evaluation_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "claim_boundary": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
     "dataset_paths": {
       "type": ["object", "null"],
-      "description": "Dataset paths established in WF4, must be synced with CLAUDE.md",
+      "description": "Dataset paths established in WF4, must be synced with CLAUDE.md; AGENTS.md keeps only a stable pointer to CLAUDE.md",
       "additionalProperties": { "type": "string" }
     },
     "decisions": {

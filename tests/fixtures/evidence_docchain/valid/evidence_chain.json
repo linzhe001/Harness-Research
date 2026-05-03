@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.1",
+  "chain_id": "docchain_test",
+  "doc": {
+    "path": "docs/10_contract/Project_Contract.md",
+    "doc_id": "docs__10_contract__Project_Contract",
+    "compiled_at": "2026-04-29T00:00:00Z",
+    "compiled_by": "test",
+    "skill": "doc-compiler"
+  },
+  "git": {
+    "commit": "abc123",
+    "branch": "main",
+    "is_dirty": false,
+    "status_summary": "",
+    "diff_path": null,
+    "diff_hash": null
+  },
+  "facts": [
+    {
+      "fact_id": "project.scope",
+      "fact_type": "contract",
+      "claim": "The project contract is a draft.",
+      "epistemic_status": "FACT",
+      "confidence": "high",
+      "evidence_refs": ["E001"],
+      "support_summary": "The document status line says draft.",
+      "limitations": [],
+      "used_in_doc": true,
+      "doc_anchors": [
+        {
+          "doc_path": "docs/10_contract/Project_Contract.md",
+          "anchor": "[F:project.scope]"
+        }
+      ],
+      "review_status": "auto_verified"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E001",
+      "kind": "doc_span",
+      "path": "docs/10_contract/Project_Contract.md",
+      "git_commit": "abc123",
+      "start_line": 1,
+      "end_line": 4,
+      "symbol": null,
+      "excerpt_hash": "sha256:test",
+      "supports": ["project.scope"],
+      "support_relation": "supports",
+      "human_note": "Minimal fixture evidence."
+    }
+  ],
+  "unresolved": [],
+  "doc_links": {
+    "markdown_path": "docs/10_contract/Project_Contract.md",
+    "audit_path": ".evidence/chains/docs__10_contract__Project_Contract/test/doc_audit.json",
+    "source_manifest_path": ".evidence/chains/docs__10_contract__Project_Contract/test/source_manifest.json"
+  }
+}

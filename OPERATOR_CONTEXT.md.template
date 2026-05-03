@@ -1,0 +1,30 @@
+# Operator Context
+
+This file stores stable operator preferences for a research workspace.
+It is preference context only; it must not be used as evidence for project facts.
+Write this file only from explicit operator-provided preferences or local
+constraints. Do not infer preferences from project behavior, logs, or model
+memory.
+
+## Stable Preferences
+
+- Tracking:
+- Documentation:
+- Execution environment:
+- Config style:
+- Review style:
+
+## Local Constraints
+
+- Preferred compute:
+- Preferred scheduler:
+- Local-only paths to remember:
+- Paths or secrets that must never be copied into docs:
+
+## Call Policy
+
+- Use these preferences when proposing commands, scripts, docs, and experiment
+  templates.
+- Do not override approved project contracts with operator preferences.
+- Do not treat this file as proof that a tool, dataset, path, or environment
+  exists; verify those from current repo artifacts or command output.

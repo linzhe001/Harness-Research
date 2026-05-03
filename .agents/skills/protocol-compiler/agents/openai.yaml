@@ -1,0 +1,3 @@
+name: protocol-compiler
+description: Compile dynamic protocol drafts from evidence tables.
+prompt: "Use $protocol-compiler to generate or refresh docs/35_protocol from current docs/30_evidence tables."

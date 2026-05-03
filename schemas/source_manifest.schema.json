@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Source Manifest",
+  "type": "object",
+  "required": ["schema_version", "chain_id", "read_set"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "chain_id": { "type": "string" },
+    "read_set": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "kind", "reason", "hash"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "type": "string" },
+          "reason": { "type": "string" },
+          "hash": { "type": ["string", "null"] },
+          "facts_extracted": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ignored_candidates": { "type": "array" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,3 @@
+name: protocol-drift-check
+description: Check dynamic protocol drift signals before baseline, iteration, final experiment, or release.
+prompt: "Use $protocol-drift-check to run the protocol drift gate for the requested workflow stage."

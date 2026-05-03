@@ -13,7 +13,10 @@ Apply this rule whenever a skill writes or refreshes natural-language artifacts,
 - `MEMORY.md`
 - reports generated from `PROJECT_STATE.json`, `iteration_log.json`, `project_map.json`, logs, code, configs, or experiment outputs
 
-Pair this rule with `documentation-style.md`: this file controls evidence and hallucination prevention; the style rule controls readability, brevity, ASCII flow diagrams, and `docs/legacy/` archiving.
+Pair this rule with `documentation-style.md`: this file controls evidence and hallucination prevention; the style rule controls readability, brevity, ASCII flow diagrams, and `docs/90_legacy/` archiving.
+For contract, fact, protocol, or release docs, also use `evidence-chain-rule.md`
+and compile evidence_chain/source_manifest/doc_audit artifacts before replacing
+current Markdown.
 
 ## Required Behavior
 

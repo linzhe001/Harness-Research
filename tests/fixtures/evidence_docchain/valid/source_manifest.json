@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "chain_id": "docchain_test",
+  "read_set": [
+    {
+      "path": "docs/10_contract/Project_Contract.md",
+      "kind": "markdown",
+      "reason": "verify status",
+      "hash": "sha256:test",
+      "facts_extracted": ["project.scope"]
+    }
+  ],
+  "ignored_candidates": []
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "0.1",
+  "doc_path": "docs/10_contract/Project_Contract.md",
+  "evidence_chain_path": ".evidence/chains/docs__10_contract__Project_Contract/test/evidence_chain.json",
+  "audit_result": "PASS",
+  "checks": [
+    {
+      "check": "all_fact_markers_resolved",
+      "result": "PASS",
+      "detail": null
+    }
+  ],
+  "unsupported_claims": [],
+  "unresolved_fact_markers": [],
+  "stale_sources": []
+}

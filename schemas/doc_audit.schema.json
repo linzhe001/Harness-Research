@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Document Audit",
+  "type": "object",
+  "required": ["schema_version", "doc_path", "evidence_chain_path", "audit_result", "checks"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "doc_path": { "type": "string" },
+    "evidence_chain_path": { "type": "string" },
+    "audit_result": { "type": "string", "enum": ["PASS", "FAIL", "DRAFT_ONLY"] },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check", "result"],
+        "properties": {
+          "check": { "type": "string" },
+          "result": { "type": "string", "enum": ["PASS", "FAIL", "WARN"] },
+          "detail": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "unsupported_claims": { "type": "array" },
+    "unresolved_fact_markers": { "type": "array" },
+    "stale_sources": { "type": "array" }
+  },
+  "additionalProperties": true
+}
