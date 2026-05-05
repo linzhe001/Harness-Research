@@ -249,6 +249,18 @@
           },
           "additionalProperties": true
         },
+        "baseline_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
         "claim_boundary": {
           "type": ["object", "null"],
           "properties": {

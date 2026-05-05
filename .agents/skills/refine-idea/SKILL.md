@@ -52,6 +52,7 @@ The goal is to refine the research idea, not to design the architecture. Archite
 - Include evidence sources and separate verified facts, inferences, operator preferences, and open questions.
 - Protocol updates are drafts only; do not mark any contract as approved.
 - Use the decision vocabulary: `SELECT`, `PILOT_FIRST`, `PIVOT`, or `ABANDON`.
+- Report a Gate ledger when refined idea docs, protocol assumptions, or canonical state are written. If protocol compilation, drift checks, or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule

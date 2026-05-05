@@ -160,6 +160,7 @@ def evidence_sources(workspace_root: Path) -> list[list[str]]:
         ("docs/35_protocol/Protocol_Review.md", "Protocol review verdict and checks"),
         ("docs/10_contract/Project_Contract.md", "Project execution boundary"),
         ("docs/10_contract/Evaluation_Contract.md", "Evaluation approval surface"),
+        ("docs/10_contract/Baseline_Contract.md", "Baseline reproduction and skip boundary"),
         ("docs/10_contract/Claim_Boundary.md", "Release claim boundary"),
     ]
     rows = []
@@ -174,7 +175,7 @@ def contract_rows(context_result: dict[str, Any]) -> list[list[str]]:
     contracts = context_result.get("contracts", {})
     if not isinstance(contracts, dict):
         return rows
-    for key in ["project_contract", "evaluation_contract", "claim_boundary"]:
+    for key in ["project_contract", "evaluation_contract", "baseline_contract", "claim_boundary"]:
         info = contracts.get(key, {})
         if not isinstance(info, dict):
             continue
@@ -300,6 +301,11 @@ def render_packet(packet: dict[str, Any]) -> str:
         [
             "",
             "## Human Action",
+            "",
+            "- Reviewer:",
+            "- Decision:",
+            "- Contract to record:",
+            "- Approval note:",
             "",
             "- [ ] Approve",
             "- [ ] Approve with edits",

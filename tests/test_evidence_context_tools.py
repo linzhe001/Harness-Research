@@ -76,6 +76,11 @@ def test_init_context_can_set_project_state(tmp_path: Path) -> None:
     assert state["context_model_version"] == "dynamic-protocol-v1"
     assert state["contracts"]["evaluation_contract"]["path"] == "docs/10_contract/Evaluation_Contract.md"
     assert state["contracts"]["evaluation_contract"]["status"] == "draft"
+    assert (
+        state["contracts"]["baseline_contract"]["path"]
+        == "docs/10_contract/Baseline_Contract.md"
+    )
+    assert state["contracts"]["baseline_contract"]["status"] == "draft"
 
 
 def test_context_gate_legacy_wf10_uses_evaluation_protocol(tmp_path: Path) -> None:
@@ -129,12 +134,46 @@ def test_context_gate_dynamic_wf10_accepts_approved_contract(tmp_path: Path) -> 
     write_json(tmp_path / "PROJECT_STATE.json", state)
     contract = tmp_path / "docs" / "10_contract" / "Evaluation_Contract.md"
     contract.parent.mkdir(parents=True)
-    contract.write_text("# Evaluation Contract\n\nStatus: approved\nHuman approved: yes\n", encoding="utf-8")
+    contract.write_text(
+        "# Evaluation Contract\n\nStatus: approved\nHuman approved: yes\n",
+        encoding="utf-8",
+    )
 
     result = gates.gate_result(tmp_path, stage="wf10-auto")
 
     assert result["ok"] is True
     assert result["contracts"]["evaluation_contract"]["status"] == "approved"
+
+
+def test_context_gate_dynamic_wf5_blocks_missing_baseline_contract(tmp_path: Path) -> None:
+    gates = load_tool("check_context_gates")
+    state = minimal_state()
+    state["context_model_version"] = "dynamic-protocol-v1"
+    state["contracts"] = {
+        "evaluation_contract": {
+            "path": "docs/10_contract/Evaluation_Contract.md",
+            "status": "approved",
+            "approved_at": "2026-04-29T00:00:00Z",
+            "approved_by": "human",
+            "approval_source": "test",
+        }
+    }
+    write_json(tmp_path / "PROJECT_STATE.json", state)
+    contract = tmp_path / "docs" / "10_contract" / "Evaluation_Contract.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "# Evaluation Contract\n\nStatus: approved\nHuman approved: yes\n",
+        encoding="utf-8",
+    )
+
+    result = gates.gate_result(tmp_path, stage="wf5-eval-contract")
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "baseline_contract_exists"
+        and check["severity"] == "error"
+        for check in result["checks"]
+    )
 
 
 def test_context_gate_dynamic_wf10_rejects_unconfirmed_approved_contract(tmp_path: Path) -> None:
@@ -202,6 +241,43 @@ def test_approve_contract_records_dual_approval_markers(tmp_path: Path) -> None:
     assert updated_state["contracts"]["evaluation_contract"]["status"] == "approved"
     assert updated_state["contracts"]["evaluation_contract"]["approval_source"].endswith("review_packet.md")
     assert gate["ok"] is True
+
+
+def test_approve_contract_supports_baseline_contract(tmp_path: Path) -> None:
+    approve = load_tool("approve_contract")
+    checker = load_tool("check_workflow_state")
+    state = minimal_state()
+    state["workflow_mode"] = "compatibility"
+    state["contracts"] = {
+        "baseline_contract": {
+            "path": "docs/10_contract/Baseline_Contract.md",
+            "status": "draft",
+        }
+    }
+    write_json(tmp_path / "PROJECT_STATE.json", state)
+    contract = tmp_path / "docs" / "10_contract" / "Baseline_Contract.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "# Baseline Contract\n\nStatus: draft\nHuman approved: no\n",
+        encoding="utf-8",
+    )
+
+    summary = approve.approve_contract(
+        tmp_path,
+        "baseline_contract",
+        approved_by="expert",
+        approval_source=".evidence/review_packets/wf5/test/review_packet.md",
+        approved_at="2026-04-30T00:00:00Z",
+    )
+
+    updated_state = json.loads(
+        (tmp_path / "PROJECT_STATE.json").read_text(encoding="utf-8")
+    )
+    workflow_gate = checker.gate_result(tmp_path)
+    assert summary["ok"] is True
+    assert "Status: approved" in contract.read_text(encoding="utf-8")
+    assert updated_state["contracts"]["baseline_contract"]["status"] == "approved"
+    assert workflow_gate["ok"] is True
 
 
 def test_approve_contract_requires_approval_provenance(tmp_path: Path) -> None:

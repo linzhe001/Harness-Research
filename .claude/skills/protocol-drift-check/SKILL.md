@@ -53,6 +53,7 @@ note, not a forced migration.
    `Protocol_Changelog.md` before promoting protocol content into contracts.
 5. For updated current docs, use `/doc-compiler` and rerun
    `check_docchain_gates.py`.
+6. Report a gate ledger for the drift check and any docchain gate rerun.
 
 ## Output Rules
 

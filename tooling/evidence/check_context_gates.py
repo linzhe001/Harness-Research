@@ -144,6 +144,7 @@ def gate_result(workspace_root: Path, *, stage: str, allow_draft: bool = False) 
     contracts = {
         "project_contract": contract_info(workspace_root, state, "project_contract", "docs/10_contract/Project_Contract.md"),
         "evaluation_contract": contract_info(workspace_root, state, "evaluation_contract", "docs/10_contract/Evaluation_Contract.md"),
+        "baseline_contract": contract_info(workspace_root, state, "baseline_contract", "docs/10_contract/Baseline_Contract.md"),
         "claim_boundary": contract_info(workspace_root, state, "claim_boundary", "docs/10_contract/Claim_Boundary.md"),
     }
 
@@ -185,6 +186,35 @@ def gate_result(workspace_root: Path, *, stage: str, allow_draft: bool = False) 
             add_check(checks, "evaluation_contract_draft_accepted", True, "warn", "Evaluation Contract is draft but explicitly accepted for this run.")
         else:
             add_check(checks, "evaluation_contract_not_approved", False, "error", f"Evaluation Contract status is {eval_contract['status']!r}.")
+
+    if stage == "wf5-eval-contract":
+        baseline_contract = contracts["baseline_contract"]
+        if not baseline_contract["exists"]:
+            add_check(
+                checks,
+                "baseline_contract_exists",
+                False,
+                "error",
+                "Missing docs/10_contract/Baseline_Contract.md; WF5 should draft or approve baseline requirements before later stages depend on reproduced baselines.",
+            )
+        elif baseline_contract["status"] == "approved" and baseline_contract["approval_confirmed"]:
+            add_check(checks, "baseline_contract_approved", True, "info", "Baseline Contract is approved.")
+        elif baseline_contract["status"] == "approved":
+            add_check(
+                checks,
+                "baseline_contract_approval_unconfirmed",
+                False,
+                "error",
+                "Baseline Contract has Status: approved but needs both Human approved: yes in Markdown and PROJECT_STATE approval metadata (approved_at, approved_by, approval_source).",
+            )
+        else:
+            add_check(
+                checks,
+                "baseline_contract_draft",
+                True,
+                "warn",
+                f"Baseline Contract exists but status is {baseline_contract['status']!r}; human approval is needed before relying on baseline exclusions or required baseline choices.",
+            )
 
     if stage in {"wf11", "wf12"}:
         for key, label in [("project_contract", "Project Contract"), ("claim_boundary", "Claim Boundary")]:

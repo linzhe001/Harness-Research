@@ -62,6 +62,7 @@ evidence headers, and refreshes `.evidence/index.json`; it does not prove
 semantic support automatically.
 Use `python tooling/evidence/check_docchain_gates.py --workspace-root .` before
 declaring current contract/fact/protocol docs ready.
+Report the compile, validation, and docchain-gate commands in a gate ledger.
 
 ## Output Rules
 
@@ -79,3 +80,5 @@ declaring current contract/fact/protocol docs ready.
 
 Do not replace this with generic documentation writing. The evidence chain,
 source manifest, and audit file are required outputs for compiled current docs.
+If any required evidence command is not run, report `NOT_RUN` and keep the
+document in draft/review status.

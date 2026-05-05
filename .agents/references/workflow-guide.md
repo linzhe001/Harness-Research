@@ -41,6 +41,40 @@ These canonical state files should all live at the repository root, not inside `
 |------|-----------|------|
 | `.auto_iterate/` | auto-iterate controller | Controller-owned runtime state (e.g. `state.json`, phase logs). The controller only **reads** `iteration_log.json` and `PROJECT_STATE.json`; it never writes them. |
 
+### 1.2.1 Gate Evidence Model
+
+Workflow restrictions are layered:
+
+```text
+skill instructions
+  -> Python gates / tests
+  -> controller preflight and postconditions
+  -> Codex sandbox, approval policy, execpolicy rules, hooks when configured
+  -> explicit human approval records
+```
+
+Instructions are not proof that a gate ran. When a workflow action performs a
+stage transition, writes current docs, changes stable code or interfaces, edits
+canonical state, or prepares WF10/WF11/WF12 readiness, the final report must
+include a gate ledger:
+
+```text
+Gate ledger
+- command: <exact command or "not run">
+- result: PASS | FAIL | NOT_RUN
+- reason: <why this gate was required or why it could not run>
+- artifacts: <state/doc/evidence paths created or updated>
+```
+
+Do not describe a gate as machine-verified unless the command, controller
+preflight, controller postcondition, CI job, or approval tool actually ran. If
+it did not run, report `NOT_RUN` with the reason. Codex runtime guards can
+block or remind around tool use, but Harness readiness still depends on
+`tooling/evidence/*.py`, controller checks, and explicit human approval records.
+High-risk Codex skills may also define a machine-readable read/action/boundary
+contract in `.agents/skill-contracts/contracts.json`; hooks and CI should treat
+that file as the source of truth for required read sets and forbidden actions.
+
 ### 1.3 Dynamic Context Model
 
 Harness core stays domain-neutral. It does not predefine field-specific
@@ -148,12 +182,14 @@ the exact approve/revise/reject action.
 
 If some baselines are intentionally skipped, they must be marked as `partial` and the reason must be documented in the report.
 WF5 also creates the first runnable environment and synchronizes the `## Environment` section of `CLAUDE.md` together with the baseline summary.
-When `docs/10_contract/Evaluation_Contract.md` exists, WF5 reads it first. If
-the contract is missing, WF5 may derive a draft evaluation contract from
-baseline evidence and `PROJECT_STATE.json.evaluation_protocol`.
+When `docs/10_contract/Baseline_Contract.md` or
+`docs/10_contract/Evaluation_Contract.md` exists, WF5 reads it first. If a
+contract is missing, WF5 may derive a draft baseline or evaluation contract
+from baseline evidence and `PROJECT_STATE.json.evaluation_protocol`.
 WF5 is the first hard contract approval point: dynamic-context projects should
 run protocol drift, context contract gates, docchain gates, and a review packet
-before unattended WF10 or final experiments rely on the evaluation protocol.
+before unattended WF10 or final experiments rely on the baseline set or
+evaluation protocol.
 
 ### WF6-WF8: Architecture → Planning → Coding
 
@@ -182,7 +218,7 @@ interfaces, or high-cost implementation direction. It writes
 | WF2 | Idea debate may refresh protocol assumptions; drafts remain unapproved. |
 | WF3 | Refined idea records task framing, metric needs, baselines to test, and open questions; use `$protocol-compiler` when evidence changed. |
 | WF4 | Dataset and execution facts should be compiled or audited as fact docs when dynamic context is enabled. |
-| WF5 | Baseline and Evaluation Contract are drafted or approved; run protocol drift, context gates, docchain gates, and `$review-packet` for approval. |
+| WF5 | Baseline Contract and Evaluation Contract are drafted or approved; run protocol drift, context gates, docchain gates, and `$review-packet` for approval. |
 | WF6/WF7 | Architecture and plan must read the Project/Baseline/Evaluation/Claim contracts when they exist; changing scope requires contract review instead of silent edits. |
 | WF8/WF9 | Run contract gating before implementation and validation; do not rewrite contracts unless scope changes. |
 | WF10 | Manual iteration reads `iteration_log.json`; unattended auto-iteration requires approved or explicitly accepted Evaluation Contract plus protocol-drift and dynamic-context gates. |
@@ -200,6 +236,17 @@ interfaces, or high-cost implementation direction. It writes
 | **Gate** | PASS → WF10, REVIEW → continue or fix after user confirmation, FAIL → repair with `$code-debug` |
 
 This ensures that code correctness and infrastructure issues are caught before the iteration stage.
+
+Use `$code-review` as the reusable review-only gate outside the full WF9
+validation flow:
+- light mode for targeted codebase understanding
+- medium mode after code changes before handoff
+- heavy mode when generated docs, evidence chains, release claims, or stage
+  gates depend on the reviewed code
+
+Medium and heavy `$code-review` reports must include git metadata, changed line
+ranges, independent reviewer statuses, reconciled findings, and a Gate ledger.
+Fixes discovered by `$code-review` route through `$code-debug`.
 
 **WF9 → WF10 bridge**: after validate-run PASS, the orchestrator auto-triggers `$auto-iterate-goal` to verify that the iteration goal is well-defined and ready before WF10 can start.
 For dynamic-protocol projects, this bridge must also check the Evaluation
@@ -808,6 +855,7 @@ $orchestrator decision      # Record a key decision
 
 $baseline-repro all         # Reproduce all baselines
 $validate-run               # WF9 training pipeline validation
+$code-review medium         # Review current diff with git metadata and line refs
 
 $iterate plan "hypothesis"  # Plan a new iteration (includes repeated-lesson check)
 $iterate code "description" # Implement changes (mandatory git commit)

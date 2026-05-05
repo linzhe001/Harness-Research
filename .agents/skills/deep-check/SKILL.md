@@ -24,6 +24,7 @@ Read these first:
 - `../../../docs/Baseline_Report.md` if it exists
 - `../../../docs/10_contract/Project_Contract.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../docs/10_contract/Claim_Boundary.md` if it exists
 - `../../../docs/35_protocol/Research_Protocol.md` if it exists
 
@@ -48,6 +49,7 @@ Use this skill after WF6 `$refine-arch` and before WF7 `$build-plan` when the ar
 - Keep the `context_summary`.
 - Include evidence sources, failure-case search results, theoretical analysis, performance estimation, risk matrix, reviewer trace status, and recommendation.
 - Do not create or approve contracts by default. Contract drafting and approval are governed by the WF5 contract gate and explicit human review.
+- Report a Gate ledger for reviewer passes, protocol drift checks, contract-conflict handling, and the sanity-check log write. Mark skipped reviewer or gate steps `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

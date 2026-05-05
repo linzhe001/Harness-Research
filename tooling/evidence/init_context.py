@@ -120,6 +120,7 @@ def update_project_state(workspace_root: Path, *, dry_run: bool) -> list[dict[st
     contract_files = {
         "project_contract": "docs/10_contract/Project_Contract.md",
         "evaluation_contract": "docs/10_contract/Evaluation_Contract.md",
+        "baseline_contract": "docs/10_contract/Baseline_Contract.md",
         "claim_boundary": "docs/10_contract/Claim_Boundary.md",
     }
     for key, relative in contract_files.items():

@@ -46,6 +46,7 @@ Use this skill when the user wants training or evaluation results interpreted an
    - `ABORT`
 8. If invoked from `$iterate`, do not take over stage-transition ownership.
 9. Include evidence sources and keep unverifiable result interpretations under open questions.
+10. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, or `iteration_log.json` are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
 ## Codex Adaptation
 

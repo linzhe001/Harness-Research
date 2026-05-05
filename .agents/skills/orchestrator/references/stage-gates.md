@@ -75,6 +75,7 @@ WF2 is mandatory for both `dynamic_context` and `standard` projects. Only
   - populated `baseline_metrics` in `PROJECT_STATE.json`
   - evaluation protocol or tracked metric names recorded for later WF10 comparison
   - dynamic mode: `docs/10_contract/Evaluation_Contract.md` exists; if missing, WF5 drafts it from baseline/evaluation evidence and routes it to human approval
+  - dynamic mode: `docs/10_contract/Baseline_Contract.md` exists or is drafted from baseline evidence; required/skipped/reference baselines need human-readable review before later stages depend on them
   - dynamic mode: protocol drift check for WF5 should not report due low-confidence assumptions or blocking evidence questions
 - `refine_arch` (WF6 architecture-design)
   - `docs/Technical_Spec.md`
@@ -108,7 +109,7 @@ WF2 is mandatory for both `dynamic_context` and `standard` projects. Only
   - If auto-iterate is active, `.auto_iterate/state.json` may be read for loop status (read-only; orchestrator must not write to `.auto_iterate/`)
 - `final_exp`
   - `docs/Final_Experiment_Matrix.md`
-  - dynamic mode: read `docs/10_contract/Project_Contract.md`, `docs/10_contract/Evaluation_Contract.md`, and `docs/10_contract/Claim_Boundary.md`
+  - dynamic mode: read `docs/10_contract/Project_Contract.md`, `docs/10_contract/Evaluation_Contract.md`, `docs/10_contract/Baseline_Contract.md`, and `docs/10_contract/Claim_Boundary.md`
   - dynamic mode: protocol drift check for WF11 should pass before designing final experiments
 - `release`
   - `submission/`

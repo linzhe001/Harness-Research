@@ -52,6 +52,12 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
 
+## Global Rule: Code Review
+- Use `/code-review` for review-only checks of code, git diffs, and code-backed docs.
+- Use light mode for targeted understanding, medium mode after code changes, and heavy mode when docs, evidence chains, release claims, or stage gates depend on the code.
+- Medium/heavy review reports must include git branch, `HEAD`, base ref or working-tree scope, changed files, changed line ranges, reviewer statuses, reconciled findings, and a Gate ledger.
+- Do not edit subject code, current docs, canonical state, or `.evidence/**` during `/code-review`; route fixes through `/code-debug`.
+
 ## Global Rule: Documentation Style
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
 - For contract, fact, protocol, or release docs, also read `.claude/shared/evidence-chain-rule.md`.

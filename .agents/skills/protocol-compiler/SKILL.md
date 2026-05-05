@@ -62,6 +62,8 @@ only compile project-local protocol candidates from current evidence tables.
 6. For applied protocol docs, use `$doc-compiler` to create
    evidence_chain/source_manifest/doc_audit if the docs will become current
    decision material.
+7. Report a gate ledger for protocol compilation, application, drift check, and
+   docchain compilation when one was required.
 
 ## Output Rules
 
@@ -73,3 +75,5 @@ only compile project-local protocol candidates from current evidence tables.
   or Protocol Assumptions; do not promote them into contracts.
 - Never mark a Project Contract, Evaluation Contract, or Claim Boundary as
   approved from protocol compilation alone.
+- A protocol draft is not machine-verified unless the compile/drift/docchain
+  commands and results are reported.

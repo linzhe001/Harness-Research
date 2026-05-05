@@ -43,6 +43,7 @@ Use this skill for WF4 when the user wants dataset analysis, subset design, and 
 - Include evidence sources and separate verified dataset facts from inferred dataset properties.
 - Dataset path synchronization into `CLAUDE.md` is required WF4 output, not an optional downstream refresh.
 - `AGENTS.md` synchronization means consistency of the stable pointer to `CLAUDE.md`; do not duplicate volatile dataset paths into `AGENTS.md` unless the user explicitly changes the project policy.
+- Report a Gate ledger when dataset stats, configs, pipeline files, `CLAUDE.md`, `AGENTS.md`, or `PROJECT_STATE.json` are written. If docchain or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

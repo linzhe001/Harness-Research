@@ -48,6 +48,9 @@
 - Use `$iterate` for WF10 `plan -> code -> run -> eval`.
 - Use `$code-expert` only for first-pass implementation from the roadmap and project map.
 - Use `$code-debug` for post-WF8 code changes, bug fixes, or iteration-driven edits.
+- Use `$code-review` for review-only checks of code, diffs, and code-backed docs:
+  light during codebase understanding, medium after code changes, heavy when
+  docs, evidence chains, release claims, or gate packets depend on the code.
 - Use `$evaluate` for experiment analysis and per-iteration reports.
 - Use `$idea-debate` as WF2 after WF1 to skeptically compare directions before refinement.
 - Use `$refine-idea` as WF3 to turn survey and debate into a feasible, testable idea without architecture design.
@@ -68,6 +71,18 @@
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
 
+## Code Review Rules
+
+- For `$code-review`, follow `.agents/skills/code-review/SKILL.md` and
+  `.agents/skills/code-review/references/review-report.md`.
+- Code review is review-only. Do not edit subject code, current docs, canonical
+  state, or `.evidence/**`; route fixes through `$code-debug`.
+- Medium and heavy reviews must record git metadata, changed line ranges,
+  reviewer statuses, reconciled findings, and a Gate ledger.
+- Heavy reviews for docs, evidence chains, release claims, or stage gates must
+  attempt independent Codex and DeepSeek review, or record `NOT_RUN` with the
+  reason and compensating checks.
+
 ## Training Rules
 
 - Before running training after training-related code changes, create a semantic commit:
@@ -81,6 +96,8 @@
 
 - Never auto-advance a workflow stage without explicit user confirmation.
 - Use `.agents/references/workflow-guide.md` for the full stage flow and detailed skill behavior.
+- For every stage transition, current-doc write, stable-code change, canonical-state edit, or WF10/WF11/WF12 readiness check, follow the gate ledger format in `.agents/references/workflow-guide.md` and report command, result, reason, and updated artifacts.
+- High-risk skills may have machine-readable contracts in `.agents/skill-contracts/contracts.json`; satisfy the required read set before write actions and follow required/forbidden actions.
 - Use `.agents/references/contract-gating-rule.md` before implementation, validation, iteration, auto-iteration, and release.
 - Use `$protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
 - When writing docs, follow `.agents/references/documentation-evidence-rule.md`: re-read source artifacts and list evidence rather than relying on memory.

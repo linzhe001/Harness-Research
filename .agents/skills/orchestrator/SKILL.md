@@ -87,7 +87,7 @@ Interpret natural-language requests as one of these canonical intents:
    - WF7 `$build-plan` requires `docs/Technical_Spec.md`; if planning exposes a new architecture decision, route back to WF6 or `$deep-check`.
    - WF8 to WF9 requires `$validate-run`.
    - WF9 PASS hook: after `$validate-run` passes, orchestrator should auto-trigger a `$auto-iterate-goal` check so that an iteration goal is set before WF10 begins.
-   - In dynamic-context projects, WF10 auto-iteration requires an approved Evaluation Contract or explicit operator acceptance of a draft.
+   - In dynamic-context projects, WF10 auto-iteration requires an approved Evaluation Contract or explicit operator acceptance of a draft. Baseline Contract gaps must be surfaced when the goal depends on required, skipped, or reference-only baselines.
    - Prefer `python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet` as the all-in-one dynamic gate when shell access is available.
    - Prefer `python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto` for this check when shell access is available.
    - Also run `python tooling/evidence/check_protocol_drift.py --workspace-root . --stage wf10` or `$protocol-drift-check` before unattended WF10; unresolved drift requires review or explicit operator acceptance.
@@ -100,6 +100,9 @@ Interpret natural-language requests as one of these canonical intents:
      - `PIVOT` → rollback to WF2 idea debate/refine-idea
      - `ABORT` → terminate project
 4. Never auto-advance without explicit user confirmation in the current conversation.
+5. Before reporting a transition as ready or complete, include the gate ledger
+   described in the workflow guide. If a required gate could not run, mark it
+   `NOT_RUN` and do not call the transition machine-verified.
 
 ### `rollback`
 
@@ -119,3 +122,5 @@ Interpret natural-language requests as one of these canonical intents:
 ## Execution Rule
 
 Use the local references above as the workflow contract. Do not depend on `.claude` at runtime.
+Instructions alone are not proof of compliance; report the actual gate commands
+and outcomes for workflow transitions.

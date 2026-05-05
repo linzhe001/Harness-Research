@@ -56,6 +56,7 @@ Interpret natural-language requests as one of:
 6. Update the current stage line.
 7. Use `./references/claude-maintenance.md` for section-safe updates.
 8. Render data-backed section bodies according to `./references/claude-maintenance.md` before writing them into `CLAUDE.md`.
+9. Report a Gate ledger when `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, dynamic-context directories, or `PROJECT_STATE.json` are written. If context init or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
 ### `deps-changed`
 

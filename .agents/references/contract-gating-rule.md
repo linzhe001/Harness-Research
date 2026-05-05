@@ -65,6 +65,26 @@ Valid `--contract` values are `project_contract`, `evaluation_contract`,
 `baseline_contract`, and `claim_boundary`. After the command, re-run
 `python tooling/evidence/check_dynamic_context.py --workspace-root . --stage <stage> --review-packet`.
 
+## Gate Ledger
+
+Contract and readiness work must report the actual gate evidence used for the
+decision. Use this short format for contract promotion, current contract/fact
+doc updates, WF10/WF11/WF12 readiness, and release claims:
+
+```text
+Gate ledger
+- command: <exact command or "not run">
+- result: PASS | FAIL | NOT_RUN
+- reason: <why this gate was required or why it could not run>
+- artifacts: <contract/doc/state/evidence paths created or updated>
+```
+
+Do not treat a skill instruction, review packet, Codex sandbox approval,
+execpolicy rule, or hook reminder as proof that a Harness gate passed. A
+contract/readiness claim is machine-verified only when the relevant command,
+controller check, CI job, or approval tool actually ran; otherwise report
+`NOT_RUN`.
+
 ## Gates
 
 - WF4-WF9 may proceed with draft contracts when the operator accepts the risk.

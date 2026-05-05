@@ -167,7 +167,7 @@ Before advancing, verify the following conditions:
 - `baseline_metrics` must be non-empty
 - Each baseline's `status` in project_map.json must be `verified` or `partial` (cannot be `untested`)
 - If the user intentionally skips certain baselines, they must be explicitly marked as `partial` with an explanation in the report
-- WF5 is the first hard approval point for baseline/evaluation contracts in dynamic-context projects. Before unattended WF10, the Evaluation Contract must be approved or explicitly accepted as a draft.
+- WF5 is the first hard approval point for baseline/evaluation contracts in dynamic-context projects. Before unattended WF10, the Evaluation Contract must be approved or explicitly accepted as a draft, and the Baseline Contract must be reviewed when baseline inclusions, skips, or reference-only choices affect later claims.
 
 **WF2/WF3/WF4/WF6 special validation**:
 - New projects must pass WF2 `/idea-debate` and WF3 `/refine-idea` before data preparation, baseline reproduction, or architecture design. Skipping WF2 is a hard failure for new projects.
@@ -180,9 +180,12 @@ Before advancing, verify the following conditions:
 - Call `/validate-run` to verify: 100-step training passes, eval passes, checkpoint can be saved, wandb can connect
 - Entry to WF10 is only allowed after validate_run passes
 - WF9 PASS hook: after `/validate-run` passes, orchestrator should auto-trigger `/auto-iterate-goal` check so that an iteration goal is set before WF10 begins
-- Dynamic-context projects must have an approved Evaluation Contract, or an explicit operator decision accepting a draft contract, before unattended WF10 auto-iteration.
+- Dynamic-context projects must have an approved Evaluation Contract, or an explicit operator decision accepting a draft contract, before unattended WF10 auto-iteration. Baseline Contract gaps must be surfaced when the goal depends on required, skipped, or reference-only baselines.
 - Prefer `python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet` as the all-in-one dynamic gate when shell access is available.
 - Dynamic-context projects should also run `/protocol-drift-check` or `python tooling/evidence/check_protocol_drift.py --workspace-root . --stage wf10`; unresolved protocol drift requires review or explicit operator acceptance.
+- Before reporting a transition as ready or complete, include the gate ledger
+  described in the workflow guide. If a required gate could not run, mark it
+  `NOT_RUN` and do not call the transition machine-verified.
 
 If validation passes:
 - Update current_stage to the next stage

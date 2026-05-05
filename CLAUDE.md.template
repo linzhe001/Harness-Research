@@ -60,6 +60,12 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
 
+## Global Rule: Code Review
+- Use `/code-review` for review-only checks of code, git diffs, and code-backed docs.
+- Use light mode for targeted understanding, medium mode after code changes, and heavy mode when docs, evidence chains, release claims, or stage gates depend on the code.
+- Medium/heavy review reports must include git branch, `HEAD`, base ref or working-tree scope, changed files, changed line ranges, reviewer statuses, reconciled findings, and a Gate ledger.
+- Do not edit subject code, current docs, canonical state, or `.evidence/**` during `/code-review`; route fixes through `/code-debug`.
+
 ## Challenge Quick Ref
 <!-- Fill in competition details -->
 - Competition: {{COMPETITION_URL}}
@@ -87,6 +93,11 @@ Current stage: WF1 (not started)
 - Also read `.claude/shared/documentation-style.md`.
 - Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
 - Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
+
+## Gate Evidence
+- Follow the gate ledger format in `.claude/Workflow_Guide.md` when work performs a stage transition, writes current docs, changes stable code, edits canonical state, or prepares WF10/WF11/WF12 readiness.
+- Do not treat skill instructions as proof of compliance. Report the actual gate command, result, reason, and artifacts, or state `NOT_RUN` when the gate could not execute.
+- Codex approval policy, sandboxing, execpolicy `.rules`, and Codex hooks are runtime guardrails only; Harness gates and human approvals still have to be recorded in project files.
 
 ## Custom
 ### Codex MCP

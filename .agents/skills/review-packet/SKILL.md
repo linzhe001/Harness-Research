@@ -63,6 +63,8 @@ context gate without reading every source document:
 
    Then re-run `check_dynamic_context.py --stage <stage> --review-packet` and
    report the new gate result.
+7. Include a gate ledger for the dynamic-context check, packet build, and
+   approval command when one was run.
 
 ## Output Rules
 
@@ -70,3 +72,4 @@ context gate without reading every source document:
 - Approval requires explicit human approval in the current conversation.
 - If the packet reports blockers, propose the smallest next fix: evidence,
   protocol review, docchain compilation, or contract revision.
+- Do not treat packet generation alone as approval or readiness.

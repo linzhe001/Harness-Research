@@ -22,6 +22,7 @@ Read these first:
 - `../../../CLAUDE.md`
 - `../../../docs/10_contract/Project_Contract.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../docs/10_contract/Claim_Boundary.md` if it exists
 
 ## When To Use
@@ -47,6 +48,8 @@ Interpret natural-language requests as one of the canonical intents:
 ### `submit`
 
 - Only run the full train-package-validate chain if the user explicitly asks for it.
+- Before any final release claim, run or report the `check_dynamic_context.py
+  --stage wf12 --review-packet` gate and list the result in the gate ledger.
 
 ## Codex Adaptation
 
@@ -59,3 +62,5 @@ Interpret natural-language requests as one of the canonical intents:
 ## Execution Rule
 
 Follow the local release prompt and language policy for validation and packaging behavior.
+Release readiness must cite the dynamic-context/docchain gate result or report
+`NOT_RUN`; packaging alone is not claim approval.

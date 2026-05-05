@@ -52,6 +52,7 @@ should not skip from WF1 directly to architecture design.
 - Include `Evidence Sources` and separate verified facts from inferences.
 - Protocol updates are drafts only; do not mark them as approved contracts.
 - Keep the final recommendation explicit: `SELECT`, `PILOT_FIRST`, `MERGE`, `PIVOT`, or `ABANDON`.
+- Report a Gate ledger when the debate report, protocol drafts, reviewer traces, or canonical state are written. If protocol compilation, drift checks, reviewer passes, or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule

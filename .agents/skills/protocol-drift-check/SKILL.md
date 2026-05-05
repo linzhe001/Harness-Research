@@ -53,6 +53,7 @@ note, not a forced migration.
    `Protocol_Changelog.md` before promoting protocol content into contracts.
 5. For updated current docs, use `$doc-compiler` and rerun
    `check_docchain_gates.py`.
+6. Report a gate ledger for the drift check and any docchain gate rerun.
 
 ## Output Rules
 
@@ -62,3 +63,5 @@ note, not a forced migration.
 - If evidence is contradictory or insufficient, keep it in Open Questions.
 - Report whether the project is safe to continue, safe only with an explicit
   operator exception, or blocked pending protocol review.
+- Do not summarize protocol readiness without listing the actual drift command
+  outcome or `NOT_RUN`.

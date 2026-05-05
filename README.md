@@ -93,6 +93,37 @@ cross-file consistency when those files exist.
 `migrate_legacy_docs.py` is a default dry-run helper for moving old
 `docs/legacy/**` files into the canonical `docs/90_legacy/<date>/` archive.
 
+## Gate Evidence Model
+
+Harness has several kinds of restrictions, and they are not equally strong:
+
+```text
+skill/reference instruction
+  -> Python gate or test
+  -> auto-iterate controller preflight/postcondition
+  -> Codex runtime guard (sandbox, approval, execpolicy, hooks)
+  -> explicit human approval record
+```
+
+The rule of thumb is simple: a skill instruction says what should happen; a
+gate result or approval record is the auditable evidence that it happened. The
+gate ledger format lives in `.agents/references/workflow-guide.md` and
+`.claude/Workflow_Guide.md`; contract and readiness gates are detailed in
+`.agents/references/contract-gating-rule.md` and
+`.claude/shared/contract-gating-rule.md`.
+
+High-risk Codex workflow skills also have machine-readable contracts in
+`.agents/skill-contracts/contracts.json`. The optional Codex hooks in
+`tooling/codex_hooks/` use those contracts to remind or block around missing
+read sets, sensitive writes, and missing Gate ledgers.
+Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` after
+editing contracts or hook scripts.
+Install workspace-local Codex hooks with
+`python tooling/codex_hooks/install_hooks.py --workspace-root .` and inspect the
+effective config with `python tooling/codex_hooks/hook_status.py --workspace-root .`.
+This keeps `.codex/` thin: only `.codex/config.toml` and `.codex/hooks.json`
+are installed, while hook logic remains in `tooling/codex_hooks/`.
+
 Set `PROJECT_STATE.json.workflow_mode` explicitly for new projects:
 `dynamic_context` for numbered context docs, `standard` for new projects without
 numbered context docs, and `compatibility` only for older imported projects that
@@ -205,6 +236,6 @@ Then start the controller with `--accounts tooling/auto_iterate/config/accounts.
 ## For AI Agents
 
 - **At project setup**: read [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) for bootstrap instructions, framework contents, file ownership, and dual-repo layout.
-- **At framework update**: read [Harness_Update_Guide.md](Harness_Update_Guide.md) for pull/push workflows, conflict recovery, and post-pull template sync.
+- **At framework update**: read local-only `Harness_Update_Guide.md` if present for pull/push workflows, conflict recovery, and post-pull template sync. This file is intentionally ignored and must not be added to git.
 
 Some code is based on [ralph](https://github.com/snarktank/ralph) and [cc-connect](https://github.com/chenhg5/cc-connect).

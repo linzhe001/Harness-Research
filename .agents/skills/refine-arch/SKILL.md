@@ -50,6 +50,7 @@ Do not use this skill as WF2. Early idea selection belongs to `$idea-debate` and
 - Include evidence sources and separate verified facts from inferences.
 - Keep protocol content project-local and evidence-backed; do not introduce pre-baked research-track rules.
 - Do not write the implementation roadmap or `project_map.json`; those belong to WF7 `$build-plan`.
+- Report a Gate ledger when the technical spec, protocol drafts, contract conflict notes, or canonical state are written. If protocol drift or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

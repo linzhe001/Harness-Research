@@ -63,6 +63,8 @@ context gate without reading every source document:
 
    Then re-run `check_dynamic_context.py --stage <stage> --review-packet` and
    report the new gate result.
+7. Include a gate ledger for the dynamic-context check, packet build, and
+   approval command when one was run.
 
 ## Output Rules
 

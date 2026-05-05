@@ -50,6 +50,7 @@ Use this skill for WF1 when the user wants to know whether a research idea is wo
 - Include evidence sources and separate verified facts from inferences.
 - Treat `docs/30_evidence/**` as evidence tables only; do not turn findings into approved field rules.
 - Use the canonical decision vocabulary: `PROCEED`, `PIVOT`, or `ABANDON`.
+- Report a Gate ledger when evidence tables, protocol drafts, the feasibility report, or canonical state are written. If protocol compilation or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 - Route new projects to WF2 `$idea-debate` before WF3 refine-idea, even when one direction appears strongest. If only one idea exists, WF2 should compare conservative, balanced, and aggressive variants.
 

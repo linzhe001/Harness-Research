@@ -48,6 +48,12 @@ Any skill must sync-update `project_map.json` after creating, deleting, or
 renaming stable files, or changing stable interfaces.
 See `.agents/references/project-map-rule.md` for detailed rules.
 
+## Global Rule: Code Review
+- Use `$code-review` for review-only checks of code, git diffs, and code-backed docs.
+- Use light mode for targeted understanding, medium mode after code changes, and heavy mode when docs, evidence chains, release claims, or stage gates depend on the code.
+- Medium/heavy review reports must include git branch, `HEAD`, base ref or working-tree scope, changed files, changed line ranges, reviewer statuses, reconciled findings, and a Gate ledger.
+- Do not edit subject code, current docs, canonical state, or `.evidence/**` during `$code-review`; route fixes through `$code-debug`.
+
 ## Workflow
 WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline) → WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
 WF10 iteration loop: $iterate plan → $iterate code → $iterate run → $iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF11 | PIVOT→WF2 idea-debate/refine-idea | ABORT→stop)

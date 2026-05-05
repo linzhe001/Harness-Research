@@ -62,6 +62,8 @@ only compile project-local protocol candidates from current evidence tables.
 6. For applied protocol docs, use `/doc-compiler` to create
    evidence_chain/source_manifest/doc_audit if the docs will become current
    decision material.
+7. Report a gate ledger for protocol compilation, application, drift check, and
+   docchain compilation when one was required.
 
 ## Output Rules
 

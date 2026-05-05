@@ -6,6 +6,14 @@ Evidence chain: N/A
 Evidence audit: N/A
 Audit result: N/A
 
+## Decision Needed
+
+- Reviewer:
+- Decision: approve / approve with edits / reject
+- Approval source:
+- Draft accepted for current run: no
+- Revisit trigger:
+
 ## Current Answer
 
 State what the project is actually trying to do.

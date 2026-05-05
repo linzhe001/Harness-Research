@@ -19,6 +19,7 @@ Read these first:
 - `../../../PROJECT_STATE.json`
 - `../../../docs/10_contract/Project_Contract.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../docs/10_contract/Claim_Boundary.md` if it exists
 
 ## When To Use
@@ -41,6 +42,7 @@ Use this skill for WF11 when the user wants the final validation matrix after th
 - Preserve the original emphasis on ablation isolation, reviewer expectations, and compute budgeting.
 - Keep the canonical output path and state updates.
 - Include evidence sources for selected iterations, component definitions, metrics, and compute estimates.
+- Report a Gate ledger for dynamic-context readiness, protocol drift, experiment-matrix writes, and workflow-state checks. Mark skipped checks `NOT_RUN` with the reason.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Execution Rule

@@ -9,6 +9,7 @@ description: Codex wrapper for WF7 implementation planning. Use after WF6 archit
 
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
+- `../../../.agents/references/contract-gating-rule.md`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
@@ -22,6 +23,7 @@ Read these first:
 - `../../../docs/Dataset_Stats.md` if it exists
 - `../../../docs/Baseline_Report.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Baseline_Contract.md` if it exists
 
 ## When To Use
 
@@ -31,7 +33,7 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 
 ## Required Work
 
-1. Read the technical spec, refined idea, dataset stats, baseline report, and evaluation contract or protocol.
+1. Read the technical spec, refined idea, dataset stats, baseline report, and baseline/evaluation contracts or protocol.
 2. Convert the approved architecture into a stable file tree that separates research code from baselines.
 3. Write `project_map.json` using the canonical schema and stable/volatile policy.
 4. Write `docs/Implementation_Roadmap.md` using the canonical template.
@@ -46,6 +48,9 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
    - validation checkpoints
    - `git_snapshot.py` expectations
 6. Update `PROJECT_STATE.json` with roadmap and project-map artifacts.
+7. Run `python tooling/evidence/check_workflow_state.py --workspace-root .`
+   when `PROJECT_STATE.json` or `project_map.json` changed, and report the gate
+   ledger.
 
 ## Output Rules
 
@@ -65,3 +70,5 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 ## Execution Rule
 
 Use the local prompt, roadmap template, schema, project-map rule, and language policy as the source of truth for WF7.
+Do not mark WF7 complete without reporting the project-map and workflow-state
+gate results, or `NOT_RUN` if the checks could not execute.

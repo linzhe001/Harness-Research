@@ -18,6 +18,11 @@ Use this spec when writing or refactoring project code, especially under:
 - `tests/`
 - durable configs and supporting utilities
 
+`Scope` means these file families should follow this style guide. Individual
+sections can still narrow their own target. For example, the fail-fast runtime
+rules below apply to executable project code, while the test assertion policy
+applies to `tests/**`.
+
 ## Pre-Edit Checklist
 
 Before editing code:
@@ -176,6 +181,21 @@ Training scripts should generally include:
 - Do not silently substitute an empty string for missing semantic data. Required values such as dataset names, metric names, contract statuses, run IDs, evidence references, paths, or claim boundaries must raise an explicit error when absent. Optional values may fall back only with an explicit warning that names the field, source, and fallback behavior.
 - Do not add `assert` statements in runtime code. For conditions that must be checked, use explicit validation and raise `ValueError`, `TypeError`, `RuntimeError`, or the narrowest appropriate exception with actionable context.
 - Let unexpected errors propagate so the failing command, stack trace, and root cause remain visible during development, training, and evaluation.
+
+## Test Assertion Policy
+
+- `tests/**` may and should use pytest `assert` statements for expected values,
+  shapes, paths, status flags, and structured output comparisons.
+- Test assertions should be specific enough to explain the expected behavior.
+  Prefer checking exact values, keys, exceptions, and state transitions over
+  broad truthiness checks.
+- For expected error paths, use `pytest.raises(...)` and assert on the exception
+  message when the message is part of the contract.
+- Do not use pytest `assert` as a shortcut inside runtime helpers, fixtures that
+  are imported by production code, or scripts outside `tests/**`. Runtime
+  validation still needs explicit exceptions.
+- Do not make tests tolerant with broad `try`/`except`, swallowed failures, or
+  fallback defaults. Tests should fail loudly when the contract is broken.
 
 ## Enforcement Guidance
 

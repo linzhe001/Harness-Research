@@ -74,9 +74,12 @@ def test_review_packet_summarizes_dynamic_blockers(tmp_path: Path) -> None:
     assert summary["ready_for_human_approval"] is False
     assert summary["blocking_count"] > 0
     assert "U009" in packet_text
+    assert "baseline_contract" in packet_text
+    assert "docs/10_contract/Baseline_Contract.md" in packet_text
     assert "Human Action" in packet_text
     assert packet_json["stage"] == "wf10"
     assert packet_json["ready_for_human_approval"] is False
+    assert any(row[0] == "baseline_contract" for row in packet_json["contract_rows"])
 
 
 def test_review_packet_dry_run_does_not_write(tmp_path: Path) -> None:

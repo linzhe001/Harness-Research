@@ -6,6 +6,14 @@ Evidence chain: N/A
 Evidence audit: N/A
 Audit result: N/A
 
+## Decision Needed
+
+- Reviewer:
+- Decision: approve / approve with edits / reject
+- Approval source:
+- Draft accepted for current run: no
+- Expiration or revisit trigger:
+
 ## Current Answer
 
 State what counts as improvement and what must not be claimed yet.

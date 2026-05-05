@@ -36,6 +36,9 @@ Use this skill for all post-WF8 code changes:
 8. Validate changed Python files with `py_compile` and `ruff`.
 9. Sync `project_map.json` when stable files were added, removed, renamed, or when stable interfaces changed.
 10. Create the required semantic commit before handing the code back to training.
+11. If `project_map.json` changed, run
+    `python tooling/evidence/check_workflow_state.py --workspace-root .` and
+    report the gate ledger.
 
 ## Codex Adaptation
 
@@ -47,3 +50,5 @@ Use this skill for all post-WF8 code changes:
 ## Execution Rule
 
 Follow the local debugging contract and language policy instead of converting this skill into a general-purpose refactor tool.
+Do not hide skipped validation or skipped project-map checks; report them as
+`NOT_RUN` with the reason.

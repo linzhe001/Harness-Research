@@ -28,6 +28,7 @@ TRUE_VALUES = {"yes", "true", "approved", "y", "1"}
 CONTRACT_PATHS = {
     "project_contract": "docs/10_contract/Project_Contract.md",
     "evaluation_contract": "docs/10_contract/Evaluation_Contract.md",
+    "baseline_contract": "docs/10_contract/Baseline_Contract.md",
     "claim_boundary": "docs/10_contract/Claim_Boundary.md",
 }
 WORKFLOW_IDS = {

@@ -41,7 +41,8 @@ Quick preflight checklist:
 
 Framework-wide docs:
 
-- [Harness_Update_Guide.md](./Harness_Update_Guide.md) for day-2 harness pull/push and rebuild workflow
+- `Harness_Update_Guide.md` may exist as a local-only day-2 pull/push and
+  rebuild note. It is intentionally ignored and must not be added to git.
 
 Remote-control docs:
 
@@ -653,8 +654,9 @@ Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `medi
 
 ## Daily Dual-Repo Management
 
-For the recommended day-2 update flow, conflict handling, and post-pull checks,
-see [Harness_Update_Guide.md](Harness_Update_Guide.md).
+For day-2 update flow, conflict handling, and post-pull checks, use the local
+`Harness_Update_Guide.md` note when present. It is intentionally ignored and
+must not be added to git.
 
 If remote control was already used before a project rename or config rewrite,
 existing channel bindings may still live under the old project key in
@@ -727,6 +729,18 @@ Practical notes from a successful bring-up:
 - for current Codex CLI versions, the harness runtime should invoke
   `codex exec --full-auto ...`; the older `--approval-mode full-auto` form is
   not accepted by newer CLIs
+- Codex has runtime guardrails such as sandbox mode, approval policy,
+  execpolicy `.rules`, and hooks when the installed CLI supports/configures
+  them. Treat those as outer guards only: they can block or remind around tool
+  use, but Harness readiness still depends on `tooling/evidence/*.py`, the
+  controller preflight, and explicit human approval records.
+- Optional Harness Codex hooks live in `tooling/codex_hooks/`. Prefer
+  workspace-local installation:
+  `python tooling/codex_hooks/install_hooks.py --workspace-root .`. That writes
+  only `.codex/config.toml` and `.codex/hooks.json`; hook logic stays in
+  `tooling/codex_hooks/`. Check the effective state with
+  `python tooling/codex_hooks/hook_status.py --workspace-root .`. Harness hook
+  state is written to `.harness_hooks/` and should never be committed.
 - `--dry-run` validates controller plumbing but does not satisfy the plan-stage
   postcondition that a new iteration entry exists; `plan did not create a new
   iteration entry` is expected in a dry-run smoke test

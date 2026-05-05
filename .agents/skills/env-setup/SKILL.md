@@ -39,6 +39,7 @@ Interpret natural-language requests as one of:
 4. Preserve `### Dataset Paths` inside that section unless dataset addresses are intentionally being refreshed from project state.
 5. Preserve the rest of `CLAUDE.md` exactly.
 6. Follow `../init-project/references/claude-maintenance.md` for section-safe final writes.
+7. Report a Gate ledger when dependency files, setup commands, or the `CLAUDE.md` environment section change. If `py_compile` or `ruff` checks are not relevant or cannot run, mark them `NOT_RUN` with the reason.
 
 ## Codex Adaptation
 

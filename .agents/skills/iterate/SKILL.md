@@ -25,6 +25,7 @@ Read these first:
 - `../../../PROJECT_STATE.json`
 - `../../../CLAUDE.md`
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
@@ -109,6 +110,10 @@ Interpret natural-language requests as one of these canonical intents:
    - completion state
 7. Produce or refresh the per-iteration report and, when useful, `docs/50_memory/Lessons.md`.
 8. Append to `MEMORY.md` only for accepted lessons that satisfy `lesson-quality-rule.md`.
+9. When `iteration_log.json`, lesson files, or accepted memory changed, report a
+   gate ledger. Run `check_workflow_state.py` near WF10 handoff points; for
+   routine in-loop updates, explicitly state whether the workflow-state gate was
+   run or deferred.
 
 ### `ablate`, `status`, `log`
 
@@ -125,3 +130,5 @@ Interpret natural-language requests as one of these canonical intents:
 
 Follow the local iteration logic and schema rather than replacing it with a generic experiment log loop.
 `./references/iteration-constraints.md` is mandatory behavior, not optional guidance.
+Instructional decisions are not gate results. Report the actual evaluation,
+state, and readiness checks that were run.
