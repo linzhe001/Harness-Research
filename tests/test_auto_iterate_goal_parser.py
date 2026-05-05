@@ -23,7 +23,6 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.accounts import (
     EXTERNAL_CURRENT_ACCOUNT_ID,
-    AccountConfigError,
     AccountRegistry,
 )
 from auto_iterate.goal import (
@@ -384,36 +383,47 @@ class TestPolicyConfig:
 # ===================================================================
 
 class TestAccountRegistry:
-    def test_load_defaults_to_external_current(self) -> None:
-        reg = AccountRegistry.load(None)
+    def test_external_current_defaults_to_user_codex_home(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.delenv("CODEX_HOME", raising=False)
+
+        reg = AccountRegistry.external_current()
+
         assert reg.is_external_current_mode()
         assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
         assert reg.select_account({})["codex_home"].endswith(".codex")
 
-    def test_template_loads_external_current_mode(self) -> None:
-        path = (
-            REPO_ROOT
-            / "tooling"
-            / "auto_iterate"
-            / "config"
-            / "templates"
-            / "auto_iterate_accounts.example.yaml"
-        )
-        try:
-            reg = AccountRegistry.load(path)
-        except ImportError:
-            pytest.skip("PyYAML not installed")
-            raise
+    def test_external_current_uses_codex_home_env(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        codex_home = tmp_path / "codex-home"
+        monkeypatch.setenv("CODEX_HOME", str(codex_home))
+
+        reg = AccountRegistry.external_current()
+
         assert reg.is_external_current_mode()
         assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
+        assert reg.select_account({})["codex_home"] == str(codex_home)
 
-    def test_get_codex_home(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+    def test_get_codex_home(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        codex_home = tmp_path / "codex-home"
+        monkeypatch.setenv("CODEX_HOME", str(codex_home))
+        reg = AccountRegistry.external_current()
+
         home = reg.get_codex_home(EXTERNAL_CURRENT_ACCOUNT_ID)
-        assert home.endswith(".codex")
+
+        assert home == str(codex_home)
 
     def test_record_usage(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg = AccountRegistry.external_current()
         reg.record_usage(EXTERNAL_CURRENT_ACCOUNT_ID, calls=5)
         sd = reg.to_state_dict()
         assert sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]["used_calls"] == 5
@@ -421,7 +431,7 @@ class TestAccountRegistry:
         assert sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]["last_used_at"] is not None
 
     def test_to_state_dict(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg = AccountRegistry.external_current()
         sd = reg.to_state_dict()
         assert sd["mode"] == "external_current"
         assert "selected_account_id" in sd
@@ -432,19 +442,15 @@ class TestAccountRegistry:
         reg = AccountRegistry()
         assert reg.select_account()["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
 
-    def test_load_missing_file(self) -> None:
-        with pytest.raises(AccountConfigError, match="not found"):
-            AccountRegistry.load("/nonexistent/accounts.yaml")
-
     def test_external_current_ignores_controller_state_selection(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg = AccountRegistry.external_current()
         selected = reg.select_account({
             "accounts": {"selected_account_id": "stale"},
         })
         assert selected["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
 
     def test_external_current_retry_stays_ready(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg = AccountRegistry.external_current()
         reg.record_usage(EXTERNAL_CURRENT_ACCOUNT_ID)
         reg.record_external_retry(EXTERNAL_CURRENT_ACCOUNT_ID, "quota_or_rate_limit")
 
@@ -458,7 +464,7 @@ class TestAccountRegistry:
         assert account["last_external_retry_at"] is not None
 
     def test_restore_runtime_from_state(self) -> None:
-        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg = AccountRegistry.external_current()
         reg.restore_runtime({
             "selected_account_id": EXTERNAL_CURRENT_ACCOUNT_ID,
             "by_account": {
@@ -479,32 +485,3 @@ class TestAccountRegistry:
         account = sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]
         assert account["used_calls"] == 10
         assert account["last_retry_reason"] == "auth_failure"
-
-    def test_legacy_accounts_yaml_is_rejected(self, tmp_path: Path) -> None:
-        accounts_path = tmp_path / "accounts.yaml"
-        accounts_path.write_text(textwrap.dedent("""\
-        accounts:
-          - id: old_pool
-            codex_home: /tmp/old
-        """), encoding="utf-8")
-
-        with pytest.raises(AccountConfigError, match="Legacy"):
-            AccountRegistry.load(accounts_path)
-
-    def test_codex_home_override_loads(self, tmp_path: Path) -> None:
-        accounts_path = tmp_path / "accounts.yaml"
-        accounts_path.write_text(textwrap.dedent("""\
-        mode: external_current
-        id: current_windows_auth
-        codex_home: ~/.codex
-        """), encoding="utf-8")
-
-        try:
-            reg = AccountRegistry.load(accounts_path)
-        except ImportError:
-            pytest.skip("PyYAML not installed")
-            raise
-
-        selected = reg.select_account()
-        assert selected["id"] == "current_windows_auth"
-        assert selected["codex_home"].endswith(".codex")

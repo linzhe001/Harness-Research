@@ -127,15 +127,15 @@ framework assets.
 
 ### Local operator inputs
 
-These files are convenient to keep under the harness tree, but they are
-machine-local inputs rather than framework templates:
+This file is convenient to keep under the harness tree, but it is a
+machine-local input rather than a framework template:
 
 - `tooling/auto_iterate/config/controller.local.yaml`
-- `tooling/auto_iterate/config/accounts.local.yaml`
 
-Teams can either keep these files uncommitted or version shared defaults. This
-repository chooses to version the two auto-iterate defaults above and annotate
-the machine-specific fields inline.
+Teams can either keep this file uncommitted or version shared defaults. This
+repository versions the controller default above and annotates machine-specific
+fields inline. Codex auth is not configured through Harness YAML; it comes from
+`CODEX_HOME`, or `~/.codex` when `CODEX_HOME` is unset.
 
 ### Runtime-only files (never commit)
 
@@ -414,28 +414,27 @@ and should appear only after the first auto-iterate `start`.
 ## 6. Bootstrap auto-iterate project files
 
 The harness repo owns the controller code and reusable templates. The project
-should create one research goal file plus local controller/account YAML. Codex
-account switching is external: Windows Cockpit owns the active auth file, and
-WSL should expose that file through `~/.codex/auth.json`.
+should create one research goal file plus local controller YAML. Codex account
+switching is external: Windows Cockpit owns the active auth file, and WSL should
+expose that file through `~/.codex/auth.json` or the active `CODEX_HOME`.
 
 ```bash
 [ ! -f docs/auto_iterate_goal.md ] && cp tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
 [ ! -f tooling/auto_iterate/config/controller.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
-[ ! -f tooling/auto_iterate/config/accounts.local.yaml ] && cp tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
 
 Keep this boundary:
 
 - edit `docs/auto_iterate_goal.md` in the research repo
-- edit `tooling/auto_iterate/config/*.local.yaml` as local operator inputs for
-  this workspace
-- keep `accounts.local.yaml` in `mode: external_current`; controller-owned
-  account pools are no longer supported
+- edit `tooling/auto_iterate/config/controller.local.yaml` as the local
+  controller input for this workspace
+- keep Codex auth outside Harness config; controller-owned account switching is
+  no longer supported
 - do not edit templates under `tooling/auto_iterate/config/templates/`
 - do not create `.auto_iterate/` by hand
 - do not commit `.auto_iterate/`
 - if your project wants shared defaults, it is acceptable to version
-  `controller.local.yaml` and `accounts.local.yaml`
+  `controller.local.yaml`
 
 ## 7. Fill in project details
 
@@ -550,13 +549,9 @@ Practical notes from a successful bring-up:
 - interrupted bring-up can leave `.auto_iterate/state.json` stuck in `running`;
   normalize or clean runtime state before the next real launch
 
-Recommended local account config:
-
-```yaml
-mode: external_current
-id: external_current
-codex_home: ~/.codex
-```
+Auth source: set `CODEX_HOME` when you need a non-default Codex home; otherwise
+the controller uses `~/.codex`. The active `auth.json` should be managed by
+Cockpit outside Harness.
 
 ### Tracking a live auto-iterate run
 
@@ -627,7 +622,6 @@ git check-ignore -v .claude/ .agents/ tooling/ README.md AI_AGENT_SETUP.md Harne
 # Auto-iterate project inputs should exist before the first start.
 test -f docs/auto_iterate_goal.md
 test -f tooling/auto_iterate/config/controller.local.yaml
-test -f tooling/auto_iterate/config/accounts.local.yaml
 test -f ~/.codex/auth.json
 test -d docs/iterations
 ```
@@ -637,7 +631,8 @@ Expected outcome:
 - `hgit status` is clean or only shows intentional framework edits
 - `git status` is clean or only shows research files
 - `tooling/auto_iterate/**` stays harness-managed
-- `tooling/auto_iterate/config/*.local.yaml` exist as local operator inputs
-- `accounts.local.yaml` uses `mode: external_current`, and WSL
-  `~/.codex/auth.json` points at the Cockpit-managed Windows auth file
+- `tooling/auto_iterate/config/controller.local.yaml` exists as the local
+  controller input
+- WSL `~/.codex/auth.json`, or the active `CODEX_HOME/auth.json`, points at the
+  Cockpit-managed Windows auth file
 - `.auto_iterate/**` remains runtime-only and uncommitted

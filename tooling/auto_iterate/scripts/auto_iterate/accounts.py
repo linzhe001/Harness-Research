@@ -1,4 +1,4 @@
-"""External current-auth configuration for Codex auto-iterate.
+"""External current-auth source for Codex auto-iterate.
 
 Auto-iterate no longer maintains its own Codex account pool. It always launches
 Codex with one logical account, backed by the current ``CODEX_HOME``. External
@@ -13,38 +13,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-try:
-    import yaml  # type: ignore[import-untyped]
-except ImportError:
-    yaml = None  # type: ignore[assignment]
-
-
-class AccountConfigError(ValueError):
-    """The external auth configuration is invalid."""
-
-
 EXTERNAL_CURRENT_ACCOUNT_ID = "external_current"
 EXTERNAL_CURRENT_MODE = "external_current"
-_EXTERNAL_MODE_ALIASES = {
-    EXTERNAL_CURRENT_MODE,
-    "current_auth",
-    "external_current_auth",
-}
 
 
 class AccountRegistry:
     """Single external current-auth source used by controller phases."""
 
-    def __init__(
-        self,
-        *,
-        codex_home: Any = None,
-        account_id: Any = None,
-    ) -> None:
+    def __init__(self) -> None:
         self.mode = EXTERNAL_CURRENT_MODE
-        self.account_id = str(account_id or EXTERNAL_CURRENT_ACCOUNT_ID)
-        raw_codex_home = _default_codex_home() if codex_home is None else codex_home
-        self.codex_home = _normalize_codex_home(raw_codex_home)
+        self.account_id = EXTERNAL_CURRENT_ACCOUNT_ID
+        self.codex_home = _normalize_codex_home(_default_codex_home())
         self._runtime: dict[str, Any] = {
             "used_calls": 0,
             "last_used_at": None,
@@ -54,61 +33,9 @@ class AccountRegistry:
         }
 
     @classmethod
-    def load(cls, accounts_path: str | Path | None = None) -> "AccountRegistry":
-        """Load optional external current-auth YAML.
-
-        ``accounts:`` lists from the removed controller-owned account pool are
-        rejected instead of silently ignored.
-        """
-        if accounts_path is None:
-            return cls.external_current()
-
-        path = Path(accounts_path)
-        if not path.exists():
-            raise AccountConfigError(f"External auth config not found: {path}")
-
-        if yaml is None:
-            raise ImportError(
-                "PyYAML is required to load account YAML files. "
-                "Install with: pip install pyyaml"
-            )
-
-        with path.open(encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
-
-        if raw is None:
-            return cls.external_current()
-        if not isinstance(raw, dict):
-            raise AccountConfigError(
-                "External auth config must be a YAML mapping with mode/codex_home"
-            )
-        if "accounts" in raw:
-            raise AccountConfigError(
-                "Legacy auto-iterate account pools are no longer supported. "
-                "Remove the accounts: list and use mode: external_current."
-            )
-
-        mode = str(raw.get("mode") or raw.get("account_mode") or EXTERNAL_CURRENT_MODE)
-        mode = mode.strip().lower()
-        if mode not in _EXTERNAL_MODE_ALIASES:
-            raise AccountConfigError(
-                f"Unsupported auth mode {mode!r}; expected external_current"
-            )
-
-        return cls.external_current(
-            codex_home=raw.get("codex_home"),
-            account_id=raw.get("id"),
-        )
-
-    @classmethod
-    def external_current(
-        cls,
-        *,
-        codex_home: Any = None,
-        account_id: Any = None,
-    ) -> "AccountRegistry":
-        """Build the only supported auth registry."""
-        return cls(codex_home=codex_home, account_id=account_id)
+    def external_current(cls) -> "AccountRegistry":
+        """Build the only supported auth registry from the current environment."""
+        return cls()
 
     def select_account(self, state: dict[str, Any] | None = None) -> dict[str, Any]:
         """Return the external current-auth account entry."""
@@ -199,7 +126,7 @@ class AccountRegistry:
 
     def _ensure_current_account(self, account_id: str) -> None:
         if account_id != self.account_id:
-            raise AccountConfigError(
+            raise ValueError(
                 f"Unknown auth account {account_id!r}; expected {self.account_id!r}"
             )
 
@@ -218,6 +145,6 @@ def _default_codex_home() -> Path:
 def _normalize_codex_home(raw: Any) -> str:
     text = str(raw).strip()
     if not text:
-        raise AccountConfigError("codex_home must not be empty")
+        raise ValueError("CODEX_HOME resolved to an empty path")
     expanded = os.path.expandvars(os.path.expanduser(text))
     return str(Path(expanded))

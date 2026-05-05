@@ -9,19 +9,15 @@ controller for a specific workspace.
   - the live local controller policy
   - create it from the template when bootstrapping a workspace
   - this repo also versions a shared default copy for convenience
-- `accounts.local.yaml`
-  - the live local Codex auth mode
-  - defaults to `mode: external_current`
-  - expects WSL `~/.codex/auth.json` to point at the Windows Cockpit-managed
-    auth file
 - `templates/`
   - reusable examples and presets
   - do not treat templates as the active local config
 
-By default these `*.local.yaml` files are local operator inputs. This repository
-explicitly versions `controller.local.yaml` and `accounts.local.yaml` as shared
-starting points, but the values still need to match the current machine and the
-current workspace.
+By default `controller.local.yaml` is a local operator input. This repository
+explicitly versions it as a shared starting point, but the values still need to
+match the current machine and the current workspace. Codex auth is not
+configured through Harness YAML; it comes from `CODEX_HOME`, or `~/.codex` when
+`CODEX_HOME` is unset.
 
 ## Bootstrap Scope
 
@@ -35,7 +31,6 @@ Only the **target workspace** should own:
 
 - `docs/auto_iterate_goal.md`
 - `tooling/auto_iterate/config/controller.local.yaml`
-- `tooling/auto_iterate/config/accounts.local.yaml`
 - runtime state under `.auto_iterate/`
 
 Do not point the controller at a framework source clone or a baseline repo by
@@ -43,21 +38,13 @@ mistake.
 
 ## External Current Auth
 
-The supported default is external current-auth mode:
+Windows Cockpit owns quota monitoring and account switching. The controller does
+not maintain its own account pool. It starts a fresh `codex exec` process for
+each phase; after quota/auth failures it retries the current phase so the new
+process rereads `auth.json`.
 
-```yaml
-mode: external_current
-id: external_current
-codex_home: ~/.codex
-```
-
-Windows Cockpit owns quota monitoring and account switching. The controller
-does not maintain its own account pool. It starts a fresh
-`codex exec` process for each phase; after quota/auth failures it retries the
-current phase so the new process rereads `auth.json`.
-
-Legacy `accounts:` lists are rejected. Use only `mode`, `id`, and `codex_home`
-in `accounts.local.yaml`.
+The auth path is resolved from `CODEX_HOME`; when that variable is unset, the
+controller uses `~/.codex`.
 
 ## Preflight Checklist
 
@@ -68,16 +55,9 @@ Before the first real `start`, verify all of these:
 - `CLAUDE.md` and `AGENTS.md` exist for the current workspace
 - ideally `PROJECT_STATE.json`, `iteration_log.json`, and `project_map.json`
   also exist before the first unattended run
-- `accounts.local.yaml` uses `mode: external_current`
-- WSL `~/.codex/auth.json` points at the Windows Cockpit-managed auth file
+- WSL `~/.codex/auth.json`, or the active `CODEX_HOME/auth.json`, points at the
+  Windows Cockpit-managed auth file
 - the machine that will run `codex exec` has outbound network access
-
-Recommended account verification:
-
-```bash
-PYTHONPATH=tooling/auto_iterate/scripts python3 -c \
-  "from auto_iterate.accounts import AccountRegistry; r=AccountRegistry.load('tooling/auto_iterate/config/accounts.local.yaml'); print(r.to_state_dict()['mode'], r.select_account({})['codex_home'])"
-```
 
 Recommended controller verification:
 
@@ -93,7 +73,7 @@ It can verify that:
 
 - the controller CLI starts
 - config parsing works
-- account resolution works
+- `CODEX_HOME` / `~/.codex` account resolution works
 - the runtime can reach the stage launcher
 
 It does **not** prove that a full plan round completed successfully.

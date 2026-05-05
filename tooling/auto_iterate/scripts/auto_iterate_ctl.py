@@ -36,14 +36,6 @@ def main(argv: list[str] | None = None) -> int:
     p_start = sub.add_parser("start", help="Start a new auto-iterate loop")
     p_start.add_argument("--goal", required=True, help="Path to goal markdown file")
     p_start.add_argument("--config", default=None, help="Controller config YAML")
-    p_start.add_argument(
-        "--accounts",
-        default=None,
-        help=(
-            "Optional external current-auth YAML with mode/codex_home; "
-            "defaults to CODEX_HOME or ~/.codex"
-        ),
-    )
     p_start.add_argument("--tool", default="codex", choices=["codex"])
     p_start.add_argument(
         "--dry-run",
@@ -75,14 +67,6 @@ def main(argv: list[str] | None = None) -> int:
     # -- resume -------------------------------------------------------------
     p_resume = sub.add_parser("resume", help="Resume an interrupted loop")
     p_resume.add_argument("--config", default=None)
-    p_resume.add_argument(
-        "--accounts",
-        default=None,
-        help=(
-            "Optional external current-auth YAML with mode/codex_home; "
-            "defaults to CODEX_HOME or ~/.codex"
-        ),
-    )
 
     # -- tail ---------------------------------------------------------------
     p_tail = sub.add_parser("tail", help="Show recent events")
@@ -109,7 +93,6 @@ def main(argv: list[str] | None = None) -> int:
         return ctl.start_loop(
             goal_path=args.goal,
             config_path=args.config,
-            accounts_path=args.accounts,
             tool=args.tool,
             cli_overrides=cli_overrides or None,
             skip_dynamic_preflight=args.skip_dynamic_preflight,
@@ -135,10 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_OK
 
     elif args.command == "resume":
-        return ctl.resume_loop(
-            config_path=args.config,
-            accounts_path=args.accounts,
-        )
+        return ctl.resume_loop(config_path=args.config)
 
     elif args.command == "tail":
         events = ctl.tail_events(lines=args.lines, jsonl=args.jsonl)

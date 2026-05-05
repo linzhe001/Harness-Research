@@ -221,9 +221,9 @@ Cockpit-managed Windows auth file. The controller starts a fresh `codex exec`
 process for each phase and, after quota/auth failures, retries the current
 phase so the new process reads the updated auth file.
 
-The controller-owned per-account pool has been removed. `accounts.local.yaml`
-may only select `mode: external_current` and optionally override `codex_home`;
-an `accounts:` list is rejected.
+The controller-owned per-account pool and account override path have been
+removed. The controller always resolves auth from `CODEX_HOME`, or `~/.codex`
+when `CODEX_HOME` is unset.
 
 ## For AI Agents
 

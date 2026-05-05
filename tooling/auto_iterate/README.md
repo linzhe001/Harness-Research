@@ -5,8 +5,8 @@ collide with a research project's own top-level `scripts/`, `config/`, and
 `docs/` folders.
 
 - `scripts/` contains the controller CLI, runtime adapter, and Python package.
-- `config/` holds reusable templates plus the repo's shared local YAML defaults
-  such as `controller.local.yaml` and `accounts.local.yaml`.
+- `config/` holds reusable templates plus the repo's shared local YAML default
+  such as `controller.local.yaml`.
 - `docs/` contains operator-facing static docs, templates, and the v7 plan/spec set.
 - Codex auth defaults to external current-auth mode: Windows Cockpit switches
   accounts, while the controller starts fresh `codex exec` processes against
@@ -24,6 +24,6 @@ that tooling exists in the workspace. The result is recorded in
 `--skip-dynamic-preflight` only for legacy or manually gated runs.
 
 Before starting or resuming long WF10 runs, make sure WSL
-`~/.codex/auth.json` points at the Windows Cockpit-managed auth file. Then
-launch with the default external current-auth config; `--accounts` is optional
-and only accepts `mode: external_current` plus an optional `codex_home`.
+`~/.codex/auth.json` points at the Windows Cockpit-managed auth file, or set
+`CODEX_HOME` to the Codex home whose `auth.json` Cockpit manages. The controller
+uses only that active Codex home for auth.

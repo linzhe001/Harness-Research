@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .accounts import AccountConfigError, AccountRegistry
+from .accounts import AccountRegistry
 from .events import EventLogger, iso_now
 from .goal import (
     GoalManager,
@@ -127,7 +127,6 @@ class LoopController:
         goal_path: str,
         *,
         config_path: str | None = None,
-        accounts_path: str | None = None,
         tool: str = "codex",
         cli_overrides: dict[str, Any] | None = None,
         skip_dynamic_preflight: bool = False,
@@ -150,11 +149,8 @@ class LoopController:
             pc.merge_with_cli(cli_overrides)
         self.policy = pc.freeze()
 
-        # 3. Load external auth config.
-        try:
-            self.accounts = AccountRegistry.load(accounts_path)
-        except AccountConfigError:
-            return EXIT_INVALID_ARGS
+        # 3. Resolve external current auth from CODEX_HOME or ~/.codex.
+        self.accounts = AccountRegistry.external_current()
 
         # 4. Check lock conflict.
         stale_threshold = self.policy.get("heartbeat", {}).get("stale_threshold_sec", 120)
@@ -295,7 +291,6 @@ class LoopController:
         self,
         *,
         config_path: str | None = None,
-        accounts_path: str | None = None,
     ) -> int:
         """Resume from a previously interrupted loop. Returns exit code."""
         # Load existing state.
@@ -316,11 +311,8 @@ class LoopController:
         self.state["_policy"] = self.policy
         self._ensure_policy_fields_in_state()
 
-        # Load external auth config.
-        try:
-            self.accounts = AccountRegistry.load(accounts_path)
-        except AccountConfigError:
-            return EXIT_INVALID_ARGS
+        # Resolve external current auth from CODEX_HOME or ~/.codex.
+        self.accounts = AccountRegistry.external_current()
         self.accounts.restore_runtime(self.state.get("accounts"))
         self.state["accounts"] = self.accounts.to_state_dict()
 
