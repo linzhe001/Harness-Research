@@ -36,6 +36,7 @@ DEFAULT_POLICY: dict[str, Any] = {
     "terminate_grace_sec": 30,
     "retry_policy": {
         "max_phase_attempts": 2,
+        "max_external_auth_attempts": 6,
     },
     "budget": {
         "gpu_count": 1,

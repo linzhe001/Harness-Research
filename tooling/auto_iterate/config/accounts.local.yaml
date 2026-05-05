@@ -1,14 +1,11 @@
 # Auto-Iterate Account Registry
-# This checked-in file is an intentionally empty shared default.
+# This checked-in file uses external current-auth mode by default.
 #
-# Generate a live machine-local registry from Cockpit-managed Codex accounts
-# before unattended WF10 runs:
-#
-#   tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-#     --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-#
-# The generated file will contain machine-specific CODEX_HOME projection paths
-# under ~/.cache/auto_iterate/codex/. Review those local paths before sharing
-# changes back to the harness repo.
+# Windows Cockpit owns Codex account switching. In WSL, keep
+# ~/.codex/auth.json linked to the Cockpit-managed Windows auth file. The
+# controller only starts fresh `codex exec` processes and retries the current
+# phase after quota/auth failures.
 
-accounts: []
+mode: external_current
+id: external_current
+codex_home: ~/.codex

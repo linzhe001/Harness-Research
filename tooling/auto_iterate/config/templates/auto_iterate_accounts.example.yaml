@@ -1,30 +1,11 @@
 # Auto-Iterate Account Registry
-# Generate the live local file from Cockpit-managed Codex accounts instead of
-# manually creating ~/.codex-acc* homes:
+# External current-auth mode.
 #
-#   tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-#     --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-#
-# The generated credential projections are written outside the repo under
-# ~/.cache/auto_iterate/codex/ by default. Do not commit those directories.
+# Windows Cockpit owns Codex account switching. In WSL, keep
+# ~/.codex/auth.json linked to the Cockpit-managed Windows auth file. The
+# controller only starts fresh `codex exec` processes and retries the current
+# phase after quota/auth failures.
 
-accounts:
-  - id: codex_acc1
-    codex_home: /home/user/.cache/auto_iterate/codex/codex_acc1
-    enabled: true
-    priority: 100          # Higher = preferred
-    cooldown_sec: 1800     # 30 min cooldown after quota/rate-limit
-    tags: [cockpit, team]
-
-  - id: codex_acc2
-    codex_home: /home/user/.cache/auto_iterate/codex/codex_acc2
-    enabled: true
-    priority: 90
-    cooldown_sec: 1800
-    tags: [cockpit, plus]
-
-# --- Optional fields (not used by V1 core logic) ---
-#   max_calls_hint: 1000   # Informational; not enforced by controller
-#   notes: "Projected from Cockpit account store"
-#   provider: openai
-#   base_url: https://api.openai.com/v1
+mode: external_current
+id: external_current
+codex_home: ~/.codex

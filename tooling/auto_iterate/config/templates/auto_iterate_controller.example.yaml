@@ -17,8 +17,11 @@ terminate_grace_sec: 30
 retry_policy:
   # Max attempts per phase_key before pausing with manual_action_required.
   max_phase_attempts: 2
+  # External current-auth mode relies on Windows Cockpit to switch auth.json,
+  # then retries the same phase by starting a fresh codex exec process.
+  max_external_auth_attempts: 6
   # Optional: cap retries per account within the same phase. Useful when
-  # transient network failures should get one more try before switching.
+  # using the legacy per-account pool.
   max_attempts_per_account: 2
 
 # --- Budget ---

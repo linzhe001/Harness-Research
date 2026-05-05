@@ -210,19 +210,15 @@ In practice: use **Claude Code** for interactive research sessions, use **Codex*
 
 ## Codex Accounts
 
-WF10 auto-iterate uses Cockpit-managed Codex accounts as the credential source.
-The controller still isolates phases by setting one `CODEX_HOME` per account,
-but those homes are generated projections under `~/.cache/auto_iterate/codex/`,
-not hand-created `.codex-acc*` login directories.
+WF10 auto-iterate now defaults to external current-auth mode. Windows Cockpit
+owns Codex account switching; in WSL, `~/.codex/auth.json` should point at the
+Cockpit-managed Windows auth file. The controller starts a fresh `codex exec`
+process for each phase and, after quota/auth failures, retries the current
+phase so the new process reads the updated auth file.
 
-Before long unattended runs, refresh the local account registry:
-
-```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-```
-
-Then start the controller with `--accounts tooling/auto_iterate/config/accounts.local.yaml`.
+The old per-account controller pool is still parsed for legacy workspaces, but
+new runs should use `mode: external_current` in
+`tooling/auto_iterate/config/accounts.local.yaml` or omit `--accounts`.
 
 ## For AI Agents
 

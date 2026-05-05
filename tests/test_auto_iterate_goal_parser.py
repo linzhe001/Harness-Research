@@ -12,9 +12,9 @@ Tests cover:
 
 from __future__ import annotations
 
+import json
 import sys
 import textwrap
-import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -23,7 +23,11 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
-from auto_iterate.accounts import AccountRegistry, NoAccountAvailableError
+from auto_iterate.accounts import (
+    EXTERNAL_CURRENT_ACCOUNT_ID,
+    AccountRegistry,
+    NoAccountAvailableError,
+)
 from auto_iterate.goal import (
     GoalManager,
     GoalParseError,
@@ -33,7 +37,7 @@ from auto_iterate.goal import (
 )
 from auto_iterate.policy import PolicyConfig
 from auto_iterate.state import load_json
-from project_cockpit_codex_accounts import project_accounts, _write_accounts_yaml
+from project_cockpit_codex_accounts import _write_accounts_yaml, project_accounts
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
 
@@ -328,6 +332,7 @@ class TestPolicyConfig:
         frozen = pc.freeze()
         assert frozen["timeouts"]["plan"] == 1800
         assert frozen["retry_policy"]["max_phase_attempts"] == 2
+        assert frozen["retry_policy"]["max_external_auth_attempts"] == 6
         assert frozen["heartbeat"]["stale_threshold_sec"] == 120
 
     def test_merge_with_goal(self) -> None:
@@ -467,8 +472,31 @@ class TestCockpitCodexProjection:
 # ===================================================================
 
 class TestAccountRegistry:
-    def _make_registry(self) -> AccountRegistry:
-        """Build a registry from the example YAML."""
+    def _make_pool_registry(self) -> AccountRegistry:
+        """Build a legacy per-account pool registry."""
+        reg = AccountRegistry()
+        for aid, priority in (("codex_acc1", 100), ("codex_acc2", 90)):
+            reg.accounts.append({
+                "id": aid,
+                "codex_home": f"/tmp/{aid}",
+                "enabled": True,
+                "priority": priority,
+                "cooldown_sec": 1800,
+            })
+            reg._runtime[aid] = {
+                "cooldown_until": None,
+                "status": "ready",
+                "used_calls": 0,
+            }
+        return reg
+
+    def test_load(self) -> None:
+        reg = AccountRegistry.load(None)
+        assert reg.is_external_current_mode()
+        assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
+        assert reg.select_account({})["codex_home"].endswith(".codex")
+
+    def test_template_loads_external_current_mode(self) -> None:
         path = (
             REPO_ROOT
             / "tooling"
@@ -478,31 +506,28 @@ class TestAccountRegistry:
             / "auto_iterate_accounts.example.yaml"
         )
         try:
-            return AccountRegistry.load(path)
+            reg = AccountRegistry.load(path)
         except ImportError:
             pytest.skip("PyYAML not installed")
-            raise  # unreachable, keeps type checker happy
-
-    def test_load(self) -> None:
-        reg = self._make_registry()
-        assert len(reg.accounts) >= 2
-        assert "codex_acc1" in reg.get_ids()
+            raise
+        assert reg.is_external_current_mode()
+        assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
 
     def test_select_prefers_current(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         state = {"accounts": {"selected_account_id": "codex_acc1"}}
         selected = reg.select_account(state)
         assert selected["id"] == "codex_acc1"
 
     def test_select_fallback_on_cooldown(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.mark_cooldown("codex_acc1", "quota", cooldown_sec=3600)
         state = {"accounts": {"selected_account_id": "codex_acc1"}}
         selected = reg.select_account(state)
         assert selected["id"] == "codex_acc2"
 
     def test_select_fallback_when_current_hits_phase_retry_cap(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         state = {
             "accounts": {"selected_account_id": "codex_acc1"},
             "retry_policy": {"max_attempts_per_account": 2},
@@ -512,7 +537,7 @@ class TestAccountRegistry:
         assert selected["id"] == "codex_acc2"
 
     def test_select_raises_when_all_accounts_hit_phase_retry_cap(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         state = {
             "retry_policy": {"max_attempts_per_account": 1},
             "phase_account_attempts": {
@@ -524,21 +549,21 @@ class TestAccountRegistry:
             reg.select_account(state)
 
     def test_select_raises_when_all_unavailable(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         for aid in reg.get_ids():
             reg.mark_cooldown(aid, "quota", cooldown_sec=3600)
         with pytest.raises(NoAccountAvailableError):
             reg.select_account()
 
     def test_auth_failure_excludes(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
         assert not reg.is_ready("codex_acc1")
         selected = reg.select_account()
         assert selected["id"] == "codex_acc2"
 
     def test_auth_failure_auto_recovers_after_cooldown(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
         reg._runtime["codex_acc1"]["cooldown_until"] = (
             datetime.now(timezone.utc) - timedelta(seconds=1)
@@ -550,7 +575,7 @@ class TestAccountRegistry:
         assert sd["by_account"]["codex_acc1"]["cooldown_until"] is None
 
     def test_restore_runtime_clears_stale_auth_failure_without_cooldown(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.restore_runtime({
             "selected_account_id": "codex_acc2",
             "by_account": {
@@ -574,7 +599,7 @@ class TestAccountRegistry:
         assert sd["by_account"]["codex_acc1"]["status"] == "ready"
 
     def test_to_state_dict_reselects_when_current_account_is_blocked(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.record_usage("codex_acc1")
         reg.mark_cooldown("codex_acc1", "quota", cooldown_sec=3600)
 
@@ -582,12 +607,12 @@ class TestAccountRegistry:
         assert sd["selected_account_id"] == "codex_acc2"
 
     def test_get_codex_home(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         home = reg.get_codex_home("codex_acc1")
         assert "codex" in home.lower() or "acc1" in home.lower()
 
     def test_record_usage(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.record_usage("codex_acc1", calls=5)
         sd = reg.to_state_dict()
         assert sd["by_account"]["codex_acc1"]["used_calls"] == 5
@@ -595,7 +620,7 @@ class TestAccountRegistry:
         assert sd["by_account"]["codex_acc1"]["last_used_at"] is not None
 
     def test_to_state_dict(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         sd = reg.to_state_dict()
         assert "selected_account_id" in sd
         assert "by_account" in sd
@@ -608,10 +633,33 @@ class TestAccountRegistry:
 
     def test_load_missing_file(self) -> None:
         reg = AccountRegistry.load("/nonexistent/accounts.yaml")
-        assert len(reg.accounts) == 0
+        assert reg.is_external_current_mode()
+        assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
+
+    def test_external_current_ignores_per_account_retry_cap(self) -> None:
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        selected = reg.select_account({
+            "retry_policy": {"max_attempts_per_account": 1},
+            "phase_account_attempts": {EXTERNAL_CURRENT_ACCOUNT_ID: 99},
+        })
+        assert selected["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
+
+    def test_external_current_quota_failure_stays_ready(self) -> None:
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg.record_usage(EXTERNAL_CURRENT_ACCOUNT_ID)
+        reg.mark_cooldown(EXTERNAL_CURRENT_ACCOUNT_ID, "quota_or_rate_limit")
+
+        assert reg.is_ready(EXTERNAL_CURRENT_ACCOUNT_ID)
+        sd = reg.to_state_dict()
+        account = sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]
+        assert sd["mode"] == "external_current"
+        assert sd["selected_account_id"] == EXTERNAL_CURRENT_ACCOUNT_ID
+        assert account["cooldown_until"] is None
+        assert account["status"] == "ready"
+        assert account["last_external_retry_at"] is not None
 
     def test_restore_runtime_from_state(self) -> None:
-        reg = self._make_registry()
+        reg = self._make_pool_registry()
         reg.restore_runtime({
             "selected_account_id": "codex_acc2",
             "by_account": {

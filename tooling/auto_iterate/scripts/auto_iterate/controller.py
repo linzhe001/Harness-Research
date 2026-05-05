@@ -585,23 +585,41 @@ class LoopController:
         if exit_class == "quota_or_rate_limit":
             self.accounts.mark_cooldown(account_id, "quota_or_rate_limit")
             self.state["accounts"] = self.accounts.to_state_dict()
-            self.events.emit(
-                "ACCOUNT_SWITCHED", loop_id, "running",
-                payload={"reason": "quota_or_rate_limit", "old_account": account_id},
-            )
+            if self.accounts.uses_external_switching(account_id):
+                self.events.emit(
+                    "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                    payload={
+                        "reason": "quota_or_rate_limit",
+                        "account_id": account_id,
+                    },
+                )
+            else:
+                self.events.emit(
+                    "ACCOUNT_SWITCHED", loop_id, "running",
+                    payload={"reason": "quota_or_rate_limit", "old_account": account_id},
+                )
             return self._handle_phase_failure(phase_key, round_idx)
 
         if exit_class == "auth_failure":
             cooldown_until = self.accounts.mark_auth_failure(account_id)
             self.state["accounts"] = self.accounts.to_state_dict()
-            self.events.emit(
-                "ACCOUNT_AUTH_FAILURE", loop_id, "running",
-                payload={
-                    "account_id": account_id,
-                    "cooldown_until": cooldown_until,
-                    "next_account": self.state["accounts"].get("selected_account_id"),
-                },
-            )
+            if self.accounts.uses_external_switching(account_id):
+                self.events.emit(
+                    "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                    payload={
+                        "reason": "auth_failure",
+                        "account_id": account_id,
+                    },
+                )
+            else:
+                self.events.emit(
+                    "ACCOUNT_AUTH_FAILURE", loop_id, "running",
+                    payload={
+                        "account_id": account_id,
+                        "cooldown_until": cooldown_until,
+                        "next_account": self.state["accounts"].get("selected_account_id"),
+                    },
+                )
             return self._handle_phase_failure(phase_key, round_idx)
 
         # Validate postcondition.
@@ -1163,6 +1181,14 @@ class LoopController:
         except (TypeError, ValueError):
             max_attempts = 2
         max_attempts = max(1, max_attempts)
+
+        if self.accounts.is_external_current_mode():
+            raw_external_attempts = retry_policy.get("max_external_auth_attempts", 6)
+            try:
+                external_attempts = int(raw_external_attempts)
+            except (TypeError, ValueError):
+                external_attempts = 6
+            max_attempts = max(max_attempts, external_attempts)
 
         raw_per_account = retry_policy.get("max_attempts_per_account")
         try:

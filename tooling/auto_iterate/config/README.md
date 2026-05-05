@@ -10,10 +10,10 @@ controller for a specific workspace.
   - create it from the template when bootstrapping a workspace
   - this repo also versions a shared default copy for convenience
 - `accounts.local.yaml`
-  - the live local Codex account pool
-  - generate it from Cockpit-managed Codex accounts with
-    `tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py`
-  - do not hand-create `.codex-acc*` homes
+  - the live local Codex auth mode
+  - defaults to `mode: external_current`
+  - expects WSL `~/.codex/auth.json` to point at the Windows Cockpit-managed
+    auth file
 - `templates/`
   - reusable examples and presets
   - do not treat templates as the active local config
@@ -41,24 +41,20 @@ Only the **target workspace** should own:
 Do not point the controller at a framework source clone or a baseline repo by
 mistake.
 
-## Account Projection
+## External Current Auth
 
-Refresh the local Codex account projections before long unattended runs, after
-adding/removing Cockpit accounts, or after reauthenticating in Cockpit:
+The supported default is external current-auth mode:
 
-```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
+```yaml
+mode: external_current
+id: external_current
+codex_home: ~/.codex
 ```
 
-The script reads Cockpit's `codex_accounts.json` store, writes one per-account
-`CODEX_HOME` under `~/.cache/auto_iterate/codex/`, and writes the YAML registry
-consumed by the controller. The generated credential directories contain
-secrets and must stay outside Git.
-
-Do not point multiple controller accounts at a shared Cockpit current
-`~/.codex/auth.json`; that only follows the currently selected account and does
-not provide real controller account switching.
+Windows Cockpit owns quota monitoring and account switching. The controller
+does not maintain its own account pool for new runs. It starts a fresh
+`codex exec` process for each phase; after quota/auth failures it retries the
+current phase so the new process rereads `auth.json`.
 
 ## Preflight Checklist
 
@@ -69,17 +65,15 @@ Before the first real `start`, verify all of these:
 - `CLAUDE.md` and `AGENTS.md` exist for the current workspace
 - ideally `PROJECT_STATE.json`, `iteration_log.json`, and `project_map.json`
   also exist before the first unattended run
-- `accounts.local.yaml` points at generated `~/.cache/auto_iterate/codex/*`
-  homes, not manual `.codex-acc*` directories
+- `accounts.local.yaml` uses `mode: external_current`
+- WSL `~/.codex/auth.json` points at the Windows Cockpit-managed auth file
 - the machine that will run `codex exec` has outbound network access
 
 Recommended account verification:
 
 ```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
 PYTHONPATH=tooling/auto_iterate/scripts python3 -c \
-  "from auto_iterate.accounts import AccountRegistry; r=AccountRegistry.load('tooling/auto_iterate/config/accounts.local.yaml'); print(len(r.accounts), r.select_account({})['id'])"
+  "from auto_iterate.accounts import AccountRegistry; r=AccountRegistry.load('tooling/auto_iterate/config/accounts.local.yaml'); print(r.to_state_dict()['mode'], r.select_account({})['codex_home'])"
 ```
 
 Recommended controller verification:
@@ -111,7 +105,8 @@ is expected during a dry-run smoke test.
 ## Recommended First-Run Flow
 
 1. Validate the current workspace and goal file.
-2. Refresh Cockpit account projections.
+2. Confirm Cockpit is running and WSL `~/.codex/auth.json` points at its active
+   Windows auth file.
 3. Run `tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json`.
 4. If needed, run one short `--dry-run` only to check controller plumbing.
 5. Launch the first real run only after the workspace contract is stable.
@@ -121,24 +116,16 @@ is expected during a dry-run smoke test.
 Example real start:
 
 ```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
   --goal docs/auto_iterate_goal.md \
-  --config tooling/auto_iterate/config/controller.local.yaml \
-  --accounts tooling/auto_iterate/config/accounts.local.yaml
+  --config tooling/auto_iterate/config/controller.local.yaml
 ```
 
 Example resume:
 
 ```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume \
-  --config tooling/auto_iterate/config/controller.local.yaml \
-  --accounts tooling/auto_iterate/config/accounts.local.yaml
+  --config tooling/auto_iterate/config/controller.local.yaml
 ```
 
 ## Common Bring-Up Failures

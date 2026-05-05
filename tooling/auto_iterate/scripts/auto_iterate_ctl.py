@@ -15,8 +15,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from auto_iterate.controller import (
-    EXIT_FATAL,
-    EXIT_GOAL_VALIDATION,
     EXIT_INVALID_ARGS,
     EXIT_OK,
     LoopController,
@@ -38,9 +36,17 @@ def main(argv: list[str] | None = None) -> int:
     p_start = sub.add_parser("start", help="Start a new auto-iterate loop")
     p_start.add_argument("--goal", required=True, help="Path to goal markdown file")
     p_start.add_argument("--config", default=None, help="Controller config YAML")
-    p_start.add_argument("--accounts", default=None, help="Accounts registry YAML")
+    p_start.add_argument(
+        "--accounts",
+        default=None,
+        help="Optional auth registry YAML; defaults to external current auth",
+    )
     p_start.add_argument("--tool", default="codex", choices=["codex"])
-    p_start.add_argument("--dry-run", action="store_true", help="Skip real Codex invocation")
+    p_start.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip real Codex invocation",
+    )
     p_start.add_argument("--max-rounds", type=int, default=None)
     p_start.add_argument(
         "--skip-dynamic-preflight",
@@ -66,7 +72,11 @@ def main(argv: list[str] | None = None) -> int:
     # -- resume -------------------------------------------------------------
     p_resume = sub.add_parser("resume", help="Resume an interrupted loop")
     p_resume.add_argument("--config", default=None)
-    p_resume.add_argument("--accounts", default=None)
+    p_resume.add_argument(
+        "--accounts",
+        default=None,
+        help="Optional auth registry YAML; defaults to external current auth",
+    )
 
     # -- tail ---------------------------------------------------------------
     p_tail = sub.add_parser("tail", help="Show recent events")

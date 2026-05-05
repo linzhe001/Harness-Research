@@ -1,24 +1,19 @@
-"""Account registry for per-process Codex home selection.
+"""Account registry for Codex auth selection.
 
-Accounts are defined in a project-supplied YAML registry such as
-``tooling/auto_iterate/config/accounts.local.yaml``. In normal operation that
-registry is generated from Cockpit-managed Codex accounts by
-``project_cockpit_codex_accounts.py``. The controller picks an account before
-each phase launch and sets ``CODEX_HOME`` in the subprocess environment — it
-never modifies the global ``~/.codex/auth.json`` and does not use hand-created
-``~/.codex-acc*`` homes.
+The default mode is ``external_current``: the controller points each Codex
+subprocess at the current ``CODEX_HOME`` (normally ``~/.codex``) and expects an
+external tool such as Windows Cockpit to update ``auth.json`` when quota is
+low. In that mode quota/auth failures trigger a fresh Codex process for the
+same phase instead of disabling the logical account.
 
-Selection follows the frozen rules in ``02_controller_runtime_plan.md`` §8:
-
-1. Prefer the currently selected account if it is still ``ready``.
-2. Otherwise pick an enabled account that is not on cooldown and not
-   currently blocked by a transient ``auth_failure``, preferring fewer
-   ``used_calls`` and higher ``priority``.
-3. If no account is available, halt with ``waiting_for_account``.
+Legacy per-account registries are still accepted for older workspaces. When a
+YAML file contains an ``accounts`` list, the controller picks an account before
+each phase launch and sets ``CODEX_HOME`` in the subprocess environment.
 """
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -34,12 +29,20 @@ class NoAccountAvailableError(Exception):
 
 
 _DEFAULT_AUTH_FAILURE_COOLDOWN_SEC = 300
+EXTERNAL_CURRENT_ACCOUNT_ID = "external_current"
+EXTERNAL_CURRENT_MODE = "external_current"
+_EXTERNAL_MODE_ALIASES = {
+    EXTERNAL_CURRENT_MODE,
+    "current_auth",
+    "external_current_auth",
+}
 
 
 class AccountRegistry:
-    """Manages the account pool defined in an accounts YAML file."""
+    """Manages the active Codex auth source."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, mode: str = "configured_pool") -> None:
+        self.mode = mode
         self.accounts: list[dict[str, Any]] = []
         # Runtime state: tracks cooldowns and transient status.
         self._runtime: dict[str, dict[str, Any]] = {}
@@ -47,15 +50,13 @@ class AccountRegistry:
 
     @classmethod
     def load(cls, accounts_path: str | Path | None = None) -> "AccountRegistry":
-        """Load accounts from a YAML file.  Returns an empty registry if
-        the path is ``None`` or does not exist."""
-        reg = cls()
+        """Load accounts from YAML, or default to external current auth."""
         if accounts_path is None:
-            return reg
+            return cls.external_current()
 
         path = Path(accounts_path)
         if not path.exists():
-            return reg
+            return cls.external_current()
 
         if yaml is None:
             raise ImportError(
@@ -66,15 +67,63 @@ class AccountRegistry:
         with open(path) as f:
             raw = yaml.safe_load(f)
 
-        if isinstance(raw, dict) and "accounts" in raw:
-            for entry in raw["accounts"]:
-                if isinstance(entry, dict) and entry.get("enabled", True):
-                    reg.accounts.append(entry)
-                    reg._runtime[entry["id"]] = {
-                        "cooldown_until": None,
-                        "status": "ready",
-                        "used_calls": 0,
-                    }
+        if not isinstance(raw, dict):
+            return cls.external_current()
+
+        mode = str(raw.get("mode") or raw.get("account_mode") or "").strip().lower()
+        if mode in _EXTERNAL_MODE_ALIASES:
+            return cls.external_current(
+                codex_home=raw.get("codex_home"),
+                account_id=raw.get("id"),
+            )
+
+        entries = raw.get("accounts")
+        if not entries:
+            return cls.external_current(
+                codex_home=raw.get("codex_home"),
+                account_id=raw.get("id"),
+            )
+
+        reg = cls(mode="configured_pool")
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("enabled", True):
+                normalized = dict(entry)
+                if "codex_home" in normalized:
+                    normalized["codex_home"] = _normalize_codex_home(
+                        normalized["codex_home"]
+                    )
+                reg.accounts.append(normalized)
+                reg._runtime[normalized["id"]] = {
+                    "cooldown_until": None,
+                    "status": "ready",
+                    "used_calls": 0,
+                }
+        return reg
+
+    @classmethod
+    def external_current(
+        cls,
+        *,
+        codex_home: Any = None,
+        account_id: Any = None,
+    ) -> "AccountRegistry":
+        """Build a registry backed by the current externally managed auth."""
+        reg = cls(mode=EXTERNAL_CURRENT_MODE)
+        aid = str(account_id or EXTERNAL_CURRENT_ACCOUNT_ID)
+        reg.accounts.append({
+            "id": aid,
+            "codex_home": _normalize_codex_home(codex_home or _default_codex_home()),
+            "enabled": True,
+            "priority": 100,
+            "external_switching": True,
+            "tags": ["external", "current-auth"],
+        })
+        reg._runtime[aid] = {
+            "cooldown_until": None,
+            "status": "ready",
+            "used_calls": 0,
+        }
+        reg._selected_account_id = aid
         return reg
 
     # ------------------------------------------------------------------
@@ -95,6 +144,8 @@ class AccountRegistry:
         def eligible(account_id: str) -> bool:
             if not self.is_ready(account_id):
                 return False
+            if self.uses_external_switching(account_id):
+                return True
             if phase_retry_cap is None:
                 return True
             return phase_account_attempts.get(account_id, 0) < phase_retry_cap
@@ -167,6 +218,14 @@ class AccountRegistry:
     ) -> None:
         """Put an account on cooldown."""
         rt = self._runtime.setdefault(account_id, {})
+        if self.uses_external_switching(account_id):
+            rt["cooldown_until"] = None
+            rt["last_cooldown_reason"] = reason
+            rt["last_external_retry_at"] = _utcnow_iso()
+            rt["status"] = "ready"
+            self._selected_account_id = account_id
+            return
+
         if cooldown_sec is None:
             # Use the account's own cooldown_sec, or default 1800.
             entry = self._get_or_none(account_id)
@@ -190,6 +249,13 @@ class AccountRegistry:
         rt = self._runtime.setdefault(account_id, {})
         rt["status"] = "auth_failure"
         rt["last_auth_failure_at"] = _utcnow_iso()
+        if self.uses_external_switching(account_id):
+            rt["cooldown_until"] = None
+            rt["last_external_retry_at"] = rt["last_auth_failure_at"]
+            rt["status"] = "ready"
+            self._selected_account_id = account_id
+            return None
+
         if cooldown_sec is None:
             entry = self._get_or_none(account_id)
             if entry is not None:
@@ -227,6 +293,15 @@ class AccountRegistry:
         """Return all account IDs."""
         return [a["id"] for a in self.accounts]
 
+    def is_external_current_mode(self) -> bool:
+        """Return True when auth switching is owned by an external tool."""
+        return self.mode == EXTERNAL_CURRENT_MODE
+
+    def uses_external_switching(self, account_id: str) -> bool:
+        """Return True if the account follows externally updated auth."""
+        entry = self._get_or_none(account_id)
+        return bool(entry and entry.get("external_switching"))
+
     def to_state_dict(self) -> dict[str, Any]:
         """Build the ``accounts`` sub-structure for ``state.json``."""
         by_account: dict[str, Any] = {}
@@ -240,6 +315,8 @@ class AccountRegistry:
                 "last_used_at": rt.get("last_used_at"),
                 "cooldown_until": rt.get("cooldown_until"),
                 "status": rt.get("status", "ready"),
+                "last_cooldown_reason": rt.get("last_cooldown_reason"),
+                "last_external_retry_at": rt.get("last_external_retry_at"),
             }
 
         if selected is not None and not self.is_ready(selected):
@@ -255,6 +332,7 @@ class AccountRegistry:
                 selected = ready[0]["id"]
 
         return {
+            "mode": self.mode,
             "selected_account_id": selected,
             "by_account": by_account,
         }
@@ -314,6 +392,21 @@ class AccountRegistry:
 
 def _utcnow_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _default_codex_home() -> Path:
+    raw = os.environ.get("CODEX_HOME")
+    if raw and raw.strip():
+        return Path(raw.strip())
+    return Path.home() / ".codex"
+
+
+def _normalize_codex_home(raw: Any) -> str:
+    text = str(raw).strip()
+    if not text:
+        raise ValueError("codex_home must not be empty")
+    expanded = os.path.expandvars(os.path.expanduser(text))
+    return str(Path(expanded))
 
 
 def _phase_retry_cap(state: dict[str, Any] | None) -> int | None:
