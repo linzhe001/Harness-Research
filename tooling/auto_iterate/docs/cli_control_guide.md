@@ -99,7 +99,7 @@ If `start` or `resume` returns exit code `102` (lock conflict):
 3. If the PID is dead and heartbeat is stale, `resume` will auto-clear it
 4. If the PID is alive on another host, the lock is legitimately held
 
-## 8. Recovering from Auth or Account Pauses
+## 8. Recovering from Auth Pauses
 
 External current-auth mode should usually retry quota/auth failures by starting
 a fresh Codex process for the same phase. If the controller still pauses:
@@ -131,7 +131,7 @@ Runtime logs are stored at:
 | 104 | Runtime invocation failed |
 | 105 | Manual action required |
 | 106 | Budget exhausted |
-| 107 | Waiting for account |
+| 107 | Reserved; legacy waiting-for-account is no longer emitted |
 | 108 | Resumable interruption / operator pause |
 | 109 | Fatal controller error |
 

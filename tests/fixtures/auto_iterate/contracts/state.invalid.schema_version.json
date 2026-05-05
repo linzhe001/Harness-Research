@@ -44,13 +44,15 @@
     "tracking_method": "runtime_invocation_count"
   },
   "accounts": {
-    "selected_account_id": "codex_acc1",
+    "mode": "external_current",
+    "selected_account_id": "external_current",
     "by_account": {
-      "codex_acc1": {
+      "external_current": {
         "used_calls": 0,
         "last_used_at": null,
-        "cooldown_until": null,
-        "status": "ready"
+        "status": "ready",
+        "last_retry_reason": null,
+        "last_external_retry_at": null
       }
     }
   },

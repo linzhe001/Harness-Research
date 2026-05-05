@@ -17,8 +17,6 @@ retry_policy:
   # External current-auth mode relies on Windows Cockpit to switch auth.json,
   # then retries the same phase by starting a fresh codex exec process.
   max_external_auth_attempts: 6
-  # Legacy account-pool mode only.
-  max_attempts_per_account: 2
 
 budget:
   gpu_count: 1  # Change if a run uses more than one GPU on this machine.

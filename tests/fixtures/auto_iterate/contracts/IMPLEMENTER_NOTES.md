@@ -80,7 +80,7 @@ then `os.replace()` (POSIX atomic rename on same filesystem).
 - `llm_budget_exhausted`
 - `manual_stop`
 - `operator_pause`
-- `waiting_for_account`
+- legacy `waiting_for_account` is no longer emitted
 - `workflow_continue` — maps from decision `CONTINUE`
 - `workflow_pivot` — maps from decision `PIVOT`
 - `workflow_abort` — maps from decision `ABORT`
@@ -139,7 +139,7 @@ by the runtime adapter.
 | 104 | Runtime invocation failed |
 | 105 | Manual action required |
 | 106 | Budget exhausted |
-| 107 | Waiting for account |
+| 107 | Reserved; legacy waiting-for-account is no longer emitted |
 | 108 | Resumable interruption or operator pause |
 | 109 | Fatal controller error |
 

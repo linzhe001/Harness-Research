@@ -39,7 +39,10 @@ def main(argv: list[str] | None = None) -> int:
     p_start.add_argument(
         "--accounts",
         default=None,
-        help="Optional auth registry YAML; defaults to external current auth",
+        help=(
+            "Optional external current-auth YAML with mode/codex_home; "
+            "defaults to CODEX_HOME or ~/.codex"
+        ),
     )
     p_start.add_argument("--tool", default="codex", choices=["codex"])
     p_start.add_argument(
@@ -75,7 +78,10 @@ def main(argv: list[str] | None = None) -> int:
     p_resume.add_argument(
         "--accounts",
         default=None,
-        help="Optional auth registry YAML; defaults to external current auth",
+        help=(
+            "Optional external current-auth YAML with mode/codex_home; "
+            "defaults to CODEX_HOME or ~/.codex"
+        ),
     )
 
     # -- tail ---------------------------------------------------------------

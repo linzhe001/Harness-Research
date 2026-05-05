@@ -55,19 +55,15 @@
     "tracking_method": "runtime_invocation_count"
   },
   "accounts": {
-    "selected_account_id": "codex_acc1",
+    "mode": "external_current",
+    "selected_account_id": "external_current",
     "by_account": {
-      "codex_acc1": {
-        "used_calls": 18,
+      "external_current": {
+        "used_calls": 24,
         "last_used_at": "2026-03-22T18:00:00Z",
-        "cooldown_until": null,
-        "status": "ready"
-      },
-      "codex_acc2": {
-        "used_calls": 6,
-        "last_used_at": "2026-03-22T16:30:00Z",
-        "cooldown_until": null,
-        "status": "ready"
+        "status": "ready",
+        "last_retry_reason": null,
+        "last_external_retry_at": null
       }
     }
   },

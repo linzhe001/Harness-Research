@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .accounts import AccountRegistry, NoAccountAvailableError
+from .accounts import AccountConfigError, AccountRegistry
 from .events import EventLogger, iso_now
 from .goal import (
     GoalManager,
@@ -52,7 +52,7 @@ EXIT_GOAL_VALIDATION = 103
 EXIT_RUNTIME_FAILED = 104
 EXIT_MANUAL_ACTION = 105
 EXIT_BUDGET_EXHAUSTED = 106
-EXIT_WAITING_ACCOUNT = 107
+EXIT_WAITING_ACCOUNT = 107  # Reserved; legacy waiting-for-account no longer emitted.
 EXIT_RESUMABLE = 108
 EXIT_FATAL = 109
 
@@ -115,7 +115,7 @@ class LoopController:
         self.policy: dict[str, Any] = {}
         self.lock_mgr: LockManager | None = None
         self.heartbeat: HeartbeatWorker | None = None
-        self.accounts: AccountRegistry = AccountRegistry()
+        self.accounts: AccountRegistry = AccountRegistry.external_current()
         self.validator = PostconditionValidator(self.workspace_root)
 
     # ==================================================================
@@ -150,8 +150,11 @@ class LoopController:
             pc.merge_with_cli(cli_overrides)
         self.policy = pc.freeze()
 
-        # 3. Load accounts.
-        self.accounts = AccountRegistry.load(accounts_path)
+        # 3. Load external auth config.
+        try:
+            self.accounts = AccountRegistry.load(accounts_path)
+        except AccountConfigError:
+            return EXIT_INVALID_ARGS
 
         # 4. Check lock conflict.
         stale_threshold = self.policy.get("heartbeat", {}).get("stale_threshold_sec", 120)
@@ -186,7 +189,6 @@ class LoopController:
             "current_phase_key": "plan",
             "current_iteration_id": None,
             "phase_attempt": 1,
-            "phase_account_attempts": {},
             "goal": {
                 "source_path": goal_path,
                 "activated_at": iso_now(),
@@ -313,10 +315,12 @@ class LoopController:
         self.policy = self._policy_from_state(pc.freeze())
         self.state["_policy"] = self.policy
         self._ensure_policy_fields_in_state()
-        self._ensure_phase_retry_fields_in_state()
 
-        # Load accounts.
-        self.accounts = AccountRegistry.load(accounts_path)
+        # Load external auth config.
+        try:
+            self.accounts = AccountRegistry.load(accounts_path)
+        except AccountConfigError:
+            return EXIT_INVALID_ARGS
         self.accounts.restore_runtime(self.state.get("accounts"))
         self.state["accounts"] = self.accounts.to_state_dict()
 
@@ -482,7 +486,6 @@ class LoopController:
         loop_id = self.state["loop_id"]
         iteration_id = self.state.get("current_iteration_id")
         self.state["phase_attempt"] = int(self.state.get("phase_attempt", 1)) + 1
-        self._ensure_phase_retry_fields_in_state()
         if phase_key == "plan":
             binding = self.state.get("plan_binding")
             if not isinstance(binding, dict) or "existing_ids" not in binding:
@@ -503,24 +506,12 @@ class LoopController:
             existing_ids = self.state.get("plan_binding", {}).get("existing_ids", [])
             pre_ids = set(existing_ids)
 
-        # Select account.
-        try:
-            account = self.accounts.select_account(self.state)
-            account_id = account["id"]
-            codex_home = account.get("codex_home", "")
-            self.state["accounts"]["selected_account_id"] = account_id
-            self._record_phase_account_attempt(account_id)
-            self._persist_state()
-        except NoAccountAvailableError:
-            self.state["status"] = "paused"
-            self.state["halt_reason"] = "waiting_for_account"
-            self._persist_state()
-            self.events.emit(
-                "MANUAL_ACTION_REQUIRED", loop_id, "paused",
-                round_index=round_idx,
-                payload={"reason": "no_account_available"},
-            )
-            return None
+        # Select external current auth.
+        account = self.accounts.select_account(self.state)
+        account_id = account["id"]
+        codex_home = account.get("codex_home", "")
+        self.state["accounts"]["selected_account_id"] = account_id
+        self._persist_state()
 
         # Build brief and run.
         timeout = self.state.get("timeouts", {}).get(
@@ -583,44 +574,36 @@ class LoopController:
             return self._handle_phase_failure(phase_key, round_idx)
 
         if exit_class == "quota_or_rate_limit":
-            self.accounts.mark_cooldown(account_id, "quota_or_rate_limit")
+            self.accounts.record_external_retry(account_id, "quota_or_rate_limit")
             self.state["accounts"] = self.accounts.to_state_dict()
-            if self.accounts.uses_external_switching(account_id):
-                self.events.emit(
-                    "EXTERNAL_AUTH_RETRY", loop_id, "running",
-                    payload={
-                        "reason": "quota_or_rate_limit",
-                        "account_id": account_id,
-                    },
-                )
-            else:
-                self.events.emit(
-                    "ACCOUNT_SWITCHED", loop_id, "running",
-                    payload={"reason": "quota_or_rate_limit", "old_account": account_id},
-                )
-            return self._handle_phase_failure(phase_key, round_idx)
+            self.events.emit(
+                "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                payload={
+                    "reason": "quota_or_rate_limit",
+                    "account_id": account_id,
+                },
+            )
+            return self._handle_phase_failure(
+                phase_key,
+                round_idx,
+                external_auth_retry=True,
+            )
 
         if exit_class == "auth_failure":
-            cooldown_until = self.accounts.mark_auth_failure(account_id)
+            self.accounts.record_external_retry(account_id, "auth_failure")
             self.state["accounts"] = self.accounts.to_state_dict()
-            if self.accounts.uses_external_switching(account_id):
-                self.events.emit(
-                    "EXTERNAL_AUTH_RETRY", loop_id, "running",
-                    payload={
-                        "reason": "auth_failure",
-                        "account_id": account_id,
-                    },
-                )
-            else:
-                self.events.emit(
-                    "ACCOUNT_AUTH_FAILURE", loop_id, "running",
-                    payload={
-                        "account_id": account_id,
-                        "cooldown_until": cooldown_until,
-                        "next_account": self.state["accounts"].get("selected_account_id"),
-                    },
-                )
-            return self._handle_phase_failure(phase_key, round_idx)
+            self.events.emit(
+                "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                payload={
+                    "reason": "auth_failure",
+                    "account_id": account_id,
+                },
+            )
+            return self._handle_phase_failure(
+                phase_key,
+                round_idx,
+                external_auth_retry=True,
+            )
 
         # Validate postcondition.
         validation = self.validator.validate(
@@ -825,10 +808,16 @@ class LoopController:
         return False
 
     def _handle_phase_failure(
-        self, phase_key: str, round_idx: int,
+        self,
+        phase_key: str,
+        round_idx: int,
+        *,
+        external_auth_retry: bool = False,
     ) -> dict[str, Any] | None:
         """Handle a phase failure: retry or pause."""
-        max_attempts = self._phase_retry_ceiling()
+        max_attempts = self._phase_retry_ceiling(
+            external_auth_retry=external_auth_retry
+        )
         attempt = self.state.get("phase_attempt", 1)
 
         if attempt > max_attempts:
@@ -1068,28 +1057,8 @@ class LoopController:
             elif isinstance(self.state.get(key), dict) and isinstance(fallback_value, dict):
                 self.state[key] = _merge_with_fallback(self.state[key], fallback_value)
 
-    def _ensure_phase_retry_fields_in_state(self) -> None:
-        phase_account_attempts = self.state.get("phase_account_attempts")
-        if not isinstance(phase_account_attempts, dict):
-            self.state["phase_account_attempts"] = {}
-            return
-
-        normalized: dict[str, int] = {}
-        for account_id, count in phase_account_attempts.items():
-            try:
-                normalized[str(account_id)] = max(0, int(count))
-            except (TypeError, ValueError):
-                continue
-        self.state["phase_account_attempts"] = normalized
-
-    def _record_phase_account_attempt(self, account_id: str) -> None:
-        self._ensure_phase_retry_fields_in_state()
-        attempts = self.state["phase_account_attempts"]
-        attempts[account_id] = int(attempts.get(account_id, 0)) + 1
-
     def _reset_phase_retry_state(self) -> None:
         self.state["phase_attempt"] = 1
-        self.state["phase_account_attempts"] = {}
 
     def _run_phase_full_access(self) -> bool:
         runtime = self.state.get("runtime", self.policy.get("runtime", {}))
@@ -1170,7 +1139,7 @@ class LoopController:
         )
         return bool(result.get("ok"))
 
-    def _phase_retry_ceiling(self) -> int:
+    def _phase_retry_ceiling(self, *, external_auth_retry: bool = False) -> int:
         retry_policy = self.state.get("retry_policy", self.policy.get("retry_policy", {}))
         if not isinstance(retry_policy, dict):
             retry_policy = {}
@@ -1182,24 +1151,15 @@ class LoopController:
             max_attempts = 2
         max_attempts = max(1, max_attempts)
 
-        if self.accounts.is_external_current_mode():
-            raw_external_attempts = retry_policy.get("max_external_auth_attempts", 6)
-            try:
-                external_attempts = int(raw_external_attempts)
-            except (TypeError, ValueError):
-                external_attempts = 6
-            max_attempts = max(max_attempts, external_attempts)
+        if not external_auth_retry:
+            return max_attempts
 
-        raw_per_account = retry_policy.get("max_attempts_per_account")
+        raw_external_attempts = retry_policy.get("max_external_auth_attempts", 6)
         try:
-            max_attempts_per_account = int(raw_per_account)
+            external_attempts = int(raw_external_attempts)
         except (TypeError, ValueError):
-            max_attempts_per_account = 0
-
-        if max_attempts_per_account > 1:
-            account_count = len(self.accounts.get_ids())
-            if account_count > 0:
-                max_attempts = max(max_attempts, account_count * max_attempts_per_account)
+            external_attempts = 6
+        max_attempts = max(max_attempts, external_attempts)
 
         return max_attempts
 
@@ -1277,7 +1237,6 @@ class LoopController:
             "gpu_budget_exhausted": EXIT_BUDGET_EXHAUSTED,
             "llm_budget_exhausted": EXIT_BUDGET_EXHAUSTED,
             "manual_action_required": EXIT_MANUAL_ACTION,
-            "waiting_for_account": EXIT_WAITING_ACCOUNT,
             "operator_pause": EXIT_RESUMABLE,
             "fatal_controller_error": EXIT_FATAL,
         }

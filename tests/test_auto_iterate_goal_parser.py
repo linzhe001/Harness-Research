@@ -5,17 +5,15 @@ Tests cover:
 - Metric identity change detection
 - Staged goal activation
 - Policy config loading and merge precedence
-- Account selection, cooldown, and auth failure recovery
+- External current-auth account state
 """
 
 # ruff: noqa: E402,E501
 
 from __future__ import annotations
 
-import json
 import sys
 import textwrap
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -25,8 +23,8 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.accounts import (
     EXTERNAL_CURRENT_ACCOUNT_ID,
+    AccountConfigError,
     AccountRegistry,
-    NoAccountAvailableError,
 )
 from auto_iterate.goal import (
     GoalManager,
@@ -37,7 +35,6 @@ from auto_iterate.goal import (
 )
 from auto_iterate.policy import PolicyConfig
 from auto_iterate.state import load_json
-from project_cockpit_codex_accounts import _write_accounts_yaml, project_accounts
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
 
@@ -383,114 +380,11 @@ class TestPolicyConfig:
 
 
 # ===================================================================
-# Cockpit account projection
-# ===================================================================
-
-def _write_json(path: Path, payload: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload), encoding="utf-8")
-
-
-class TestCockpitCodexProjection:
-    def test_projects_oauth_accounts_into_codex_homes(self, tmp_path: Path) -> None:
-        cockpit_dir = tmp_path / "cockpit"
-        account_id = "codex_acc1"
-        _write_json(
-            cockpit_dir / "codex_accounts.json",
-            {
-                "version": 1,
-                "current_account_id": account_id,
-                "accounts": [
-                    {
-                        "id": account_id,
-                        "email": "person@example.com",
-                        "plan_type": "team",
-                    }
-                ],
-            },
-        )
-        _write_json(
-            cockpit_dir / "codex_accounts" / f"{account_id}.json",
-            {
-                "id": account_id,
-                "email": "person@example.com",
-                "plan_type": "team",
-                "auth_mode": "oauth",
-                "account_id": "acct_123",
-                "token_generation": 3,
-                "tokens": {
-                    "id_token": "id-token",
-                    "access_token": "access-token",
-                    "refresh_token": "refresh-token",
-                },
-            },
-        )
-        config_template = tmp_path / "config.toml"
-        config_template.write_text('model = "gpt-5.5"\n', encoding="utf-8")
-
-        output_dir = tmp_path / "codex_homes"
-        projected = project_accounts(cockpit_dir, output_dir, config_template)
-
-        assert projected == [
-            {
-                "id": account_id,
-                "codex_home": str(output_dir / account_id),
-                "email": "p***@example.com",
-                "plan_type": "team",
-            }
-        ]
-        auth = json.loads((output_dir / account_id / "auth.json").read_text())
-        assert auth["OPENAI_API_KEY"] is None
-        assert auth["tokens"]["account_id"] == "acct_123"
-        assert auth["tokens"]["refresh_token"] == "refresh-token"
-        assert (output_dir / account_id / "config.toml").read_text() == 'model = "gpt-5.5"\n'
-        marker = json.loads((output_dir / account_id / ".cockpit_codex_auth.json").read_text())
-        assert marker["account_id"] == account_id
-        assert marker["writer"] == "auto_iterate_cockpit_projection"
-
-    def test_writes_accounts_yaml(self, tmp_path: Path) -> None:
-        yaml_path = tmp_path / "accounts.local.yaml"
-        _write_accounts_yaml(
-            yaml_path,
-            [
-                {
-                    "id": "codex_acc1",
-                    "codex_home": "/tmp/codex_acc1",
-                    "email": "p***@example.com",
-                    "plan_type": "team",
-                }
-            ],
-        )
-
-        content = yaml_path.read_text(encoding="utf-8")
-        assert "codex_home: /tmp/codex_acc1" in content
-        assert "tags: [cockpit, team]" in content
-
-
-# ===================================================================
 # AccountRegistry
 # ===================================================================
 
 class TestAccountRegistry:
-    def _make_pool_registry(self) -> AccountRegistry:
-        """Build a legacy per-account pool registry."""
-        reg = AccountRegistry()
-        for aid, priority in (("codex_acc1", 100), ("codex_acc2", 90)):
-            reg.accounts.append({
-                "id": aid,
-                "codex_home": f"/tmp/{aid}",
-                "enabled": True,
-                "priority": priority,
-                "cooldown_sec": 1800,
-            })
-            reg._runtime[aid] = {
-                "cooldown_until": None,
-                "status": "ready",
-                "used_calls": 0,
-            }
-        return reg
-
-    def test_load(self) -> None:
+    def test_load_defaults_to_external_current(self) -> None:
         reg = AccountRegistry.load(None)
         assert reg.is_external_current_mode()
         assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
@@ -513,130 +407,36 @@ class TestAccountRegistry:
         assert reg.is_external_current_mode()
         assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
 
-    def test_select_prefers_current(self) -> None:
-        reg = self._make_pool_registry()
-        state = {"accounts": {"selected_account_id": "codex_acc1"}}
-        selected = reg.select_account(state)
-        assert selected["id"] == "codex_acc1"
-
-    def test_select_fallback_on_cooldown(self) -> None:
-        reg = self._make_pool_registry()
-        reg.mark_cooldown("codex_acc1", "quota", cooldown_sec=3600)
-        state = {"accounts": {"selected_account_id": "codex_acc1"}}
-        selected = reg.select_account(state)
-        assert selected["id"] == "codex_acc2"
-
-    def test_select_fallback_when_current_hits_phase_retry_cap(self) -> None:
-        reg = self._make_pool_registry()
-        state = {
-            "accounts": {"selected_account_id": "codex_acc1"},
-            "retry_policy": {"max_attempts_per_account": 2},
-            "phase_account_attempts": {"codex_acc1": 2},
-        }
-        selected = reg.select_account(state)
-        assert selected["id"] == "codex_acc2"
-
-    def test_select_raises_when_all_accounts_hit_phase_retry_cap(self) -> None:
-        reg = self._make_pool_registry()
-        state = {
-            "retry_policy": {"max_attempts_per_account": 1},
-            "phase_account_attempts": {
-                "codex_acc1": 1,
-                "codex_acc2": 1,
-            },
-        }
-        with pytest.raises(NoAccountAvailableError):
-            reg.select_account(state)
-
-    def test_select_raises_when_all_unavailable(self) -> None:
-        reg = self._make_pool_registry()
-        for aid in reg.get_ids():
-            reg.mark_cooldown(aid, "quota", cooldown_sec=3600)
-        with pytest.raises(NoAccountAvailableError):
-            reg.select_account()
-
-    def test_auth_failure_excludes(self) -> None:
-        reg = self._make_pool_registry()
-        reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
-        assert not reg.is_ready("codex_acc1")
-        selected = reg.select_account()
-        assert selected["id"] == "codex_acc2"
-
-    def test_auth_failure_auto_recovers_after_cooldown(self) -> None:
-        reg = self._make_pool_registry()
-        reg.mark_auth_failure("codex_acc1", cooldown_sec=3600)
-        reg._runtime["codex_acc1"]["cooldown_until"] = (
-            datetime.now(timezone.utc) - timedelta(seconds=1)
-        ).isoformat()
-
-        assert reg.is_ready("codex_acc1")
-        sd = reg.to_state_dict()
-        assert sd["by_account"]["codex_acc1"]["status"] == "ready"
-        assert sd["by_account"]["codex_acc1"]["cooldown_until"] is None
-
-    def test_restore_runtime_clears_stale_auth_failure_without_cooldown(self) -> None:
-        reg = self._make_pool_registry()
-        reg.restore_runtime({
-            "selected_account_id": "codex_acc2",
-            "by_account": {
-                "codex_acc1": {
-                    "used_calls": 3,
-                    "last_used_at": "2026-03-23T00:00:00Z",
-                    "cooldown_until": None,
-                    "status": "auth_failure",
-                },
-                "codex_acc2": {
-                    "used_calls": 1,
-                    "last_used_at": "2026-03-23T00:00:01Z",
-                    "cooldown_until": None,
-                    "status": "ready",
-                },
-            },
-        })
-
-        assert reg.is_ready("codex_acc1")
-        sd = reg.to_state_dict()
-        assert sd["by_account"]["codex_acc1"]["status"] == "ready"
-
-    def test_to_state_dict_reselects_when_current_account_is_blocked(self) -> None:
-        reg = self._make_pool_registry()
-        reg.record_usage("codex_acc1")
-        reg.mark_cooldown("codex_acc1", "quota", cooldown_sec=3600)
-
-        sd = reg.to_state_dict()
-        assert sd["selected_account_id"] == "codex_acc2"
-
     def test_get_codex_home(self) -> None:
-        reg = self._make_pool_registry()
-        home = reg.get_codex_home("codex_acc1")
-        assert "codex" in home.lower() or "acc1" in home.lower()
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        home = reg.get_codex_home(EXTERNAL_CURRENT_ACCOUNT_ID)
+        assert home.endswith(".codex")
 
     def test_record_usage(self) -> None:
-        reg = self._make_pool_registry()
-        reg.record_usage("codex_acc1", calls=5)
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
+        reg.record_usage(EXTERNAL_CURRENT_ACCOUNT_ID, calls=5)
         sd = reg.to_state_dict()
-        assert sd["by_account"]["codex_acc1"]["used_calls"] == 5
-        assert sd["selected_account_id"] == "codex_acc1"
-        assert sd["by_account"]["codex_acc1"]["last_used_at"] is not None
+        assert sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]["used_calls"] == 5
+        assert sd["selected_account_id"] == EXTERNAL_CURRENT_ACCOUNT_ID
+        assert sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]["last_used_at"] is not None
 
     def test_to_state_dict(self) -> None:
-        reg = self._make_pool_registry()
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
         sd = reg.to_state_dict()
+        assert sd["mode"] == "external_current"
         assert "selected_account_id" in sd
         assert "by_account" in sd
-        assert "codex_acc1" in sd["by_account"]
+        assert EXTERNAL_CURRENT_ACCOUNT_ID in sd["by_account"]
 
-    def test_empty_registry_raises(self) -> None:
+    def test_init_uses_external_current(self) -> None:
         reg = AccountRegistry()
-        with pytest.raises(NoAccountAvailableError):
-            reg.select_account()
+        assert reg.select_account()["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
 
     def test_load_missing_file(self) -> None:
-        reg = AccountRegistry.load("/nonexistent/accounts.yaml")
-        assert reg.is_external_current_mode()
-        assert reg.get_ids() == [EXTERNAL_CURRENT_ACCOUNT_ID]
+        with pytest.raises(AccountConfigError, match="not found"):
+            AccountRegistry.load("/nonexistent/accounts.yaml")
 
-    def test_external_current_ignores_per_account_retry_cap(self) -> None:
+    def test_external_current_ignores_legacy_retry_state(self) -> None:
         reg = AccountRegistry.external_current(codex_home="~/.codex")
         selected = reg.select_account({
             "retry_policy": {"max_attempts_per_account": 1},
@@ -644,42 +444,68 @@ class TestAccountRegistry:
         })
         assert selected["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
 
-    def test_external_current_quota_failure_stays_ready(self) -> None:
+    def test_external_current_retry_stays_ready(self) -> None:
         reg = AccountRegistry.external_current(codex_home="~/.codex")
         reg.record_usage(EXTERNAL_CURRENT_ACCOUNT_ID)
-        reg.mark_cooldown(EXTERNAL_CURRENT_ACCOUNT_ID, "quota_or_rate_limit")
+        reg.record_external_retry(EXTERNAL_CURRENT_ACCOUNT_ID, "quota_or_rate_limit")
 
         assert reg.is_ready(EXTERNAL_CURRENT_ACCOUNT_ID)
         sd = reg.to_state_dict()
         account = sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]
         assert sd["mode"] == "external_current"
         assert sd["selected_account_id"] == EXTERNAL_CURRENT_ACCOUNT_ID
-        assert account["cooldown_until"] is None
         assert account["status"] == "ready"
+        assert account["last_retry_reason"] == "quota_or_rate_limit"
         assert account["last_external_retry_at"] is not None
 
     def test_restore_runtime_from_state(self) -> None:
-        reg = self._make_pool_registry()
+        reg = AccountRegistry.external_current(codex_home="~/.codex")
         reg.restore_runtime({
-            "selected_account_id": "codex_acc2",
+            "selected_account_id": EXTERNAL_CURRENT_ACCOUNT_ID,
             "by_account": {
-                "codex_acc1": {
+                EXTERNAL_CURRENT_ACCOUNT_ID: {
                     "used_calls": 10,
                     "last_used_at": "2026-03-23T00:00:00Z",
-                    "cooldown_until": "2999-01-01T00:00:00+00:00",
+                    "last_retry_reason": "auth_failure",
+                    "last_external_retry_at": "2026-03-23T00:00:02Z",
                     "status": "ready",
-                },
-                "codex_acc2": {
-                    "used_calls": 1,
-                    "last_used_at": "2026-03-23T00:00:01Z",
-                    "cooldown_until": None,
-                    "status": "ready",
-                },
+                }
             },
         })
 
-        selected = reg.select_account({"accounts": {"selected_account_id": "codex_acc2"}})
-        assert selected["id"] == "codex_acc2"
+        selected = reg.select_account({"accounts": {"selected_account_id": "ignored"}})
+        assert selected["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
         sd = reg.to_state_dict()
-        assert sd["selected_account_id"] == "codex_acc2"
-        assert sd["by_account"]["codex_acc1"]["used_calls"] == 10
+        assert sd["selected_account_id"] == EXTERNAL_CURRENT_ACCOUNT_ID
+        account = sd["by_account"][EXTERNAL_CURRENT_ACCOUNT_ID]
+        assert account["used_calls"] == 10
+        assert account["last_retry_reason"] == "auth_failure"
+
+    def test_legacy_accounts_yaml_is_rejected(self, tmp_path: Path) -> None:
+        accounts_path = tmp_path / "accounts.yaml"
+        accounts_path.write_text(textwrap.dedent("""\
+        accounts:
+          - id: old_pool
+            codex_home: /tmp/old
+        """), encoding="utf-8")
+
+        with pytest.raises(AccountConfigError, match="Legacy"):
+            AccountRegistry.load(accounts_path)
+
+    def test_codex_home_override_loads(self, tmp_path: Path) -> None:
+        accounts_path = tmp_path / "accounts.yaml"
+        accounts_path.write_text(textwrap.dedent("""\
+        mode: external_current
+        id: current_windows_auth
+        codex_home: ~/.codex
+        """), encoding="utf-8")
+
+        try:
+            reg = AccountRegistry.load(accounts_path)
+        except ImportError:
+            pytest.skip("PyYAML not installed")
+            raise
+
+        selected = reg.select_account()
+        assert selected["id"] == "current_windows_auth"
+        assert selected["codex_home"].endswith(".codex")

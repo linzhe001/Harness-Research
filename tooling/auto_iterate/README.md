@@ -25,4 +25,5 @@ that tooling exists in the workspace. The result is recorded in
 
 Before starting or resuming long WF10 runs, make sure WSL
 `~/.codex/auth.json` points at the Windows Cockpit-managed auth file. Then
-launch with the default external current-auth config; `--accounts` is optional.
+launch with the default external current-auth config; `--accounts` is optional
+and only accepts `mode: external_current` plus an optional `codex_home`.

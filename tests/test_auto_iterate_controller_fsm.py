@@ -10,6 +10,8 @@ Tests cover:
 - status --json output
 """
 
+# ruff: noqa: E402,E501
+
 from __future__ import annotations
 
 import json
@@ -32,11 +34,10 @@ from auto_iterate.controller import (
     EXIT_OK,
     EXIT_RESUMABLE,
     LoopController,
-    _DECISION_HALT,
 )
-from auto_iterate.lock import LockConflictError
-from auto_iterate.state import load_json, atomic_write_json
 from auto_iterate.events import EventLogger
+from auto_iterate.lock import LockConflictError
+from auto_iterate.state import atomic_write_json, load_json
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate"
 CONTRACTS = FIXTURES / "contracts"
@@ -257,6 +258,7 @@ class TestOperatorSignals:
         state = load_json(project / ".auto_iterate" / "state.json")
         assert state["status"] == "stopped"
         assert state["halt_reason"] == "manual_stop"
+        assert code == EXIT_OK
         # Signal file should be consumed.
         assert not (project / ".auto_iterate_stop").exists()
 
@@ -288,6 +290,7 @@ class TestBudgetExhaustion:
         )
         state = load_json(project / ".auto_iterate" / "state.json")
         assert state["halt_reason"] == "max_rounds_reached"
+        assert code == EXIT_OK
 
     def test_llm_budget_exhausted(self, tmp_path: Path) -> None:
         project = _setup_project(tmp_path)
@@ -299,6 +302,7 @@ class TestBudgetExhaustion:
         )
         state = load_json(project / ".auto_iterate" / "state.json")
         assert state["halt_reason"] == "llm_budget_exhausted"
+        assert code == EXIT_BUDGET_EXHAUSTED
 
 
 # ===================================================================
@@ -525,6 +529,35 @@ class TestRetryCeiling:
         assert ctl.state["status"] == "paused"
         assert ctl.state["halt_reason"] == "manual_action_required"
 
+    def test_external_auth_failure_uses_external_retry_ceiling(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.policy = {
+            "retry_policy": {
+                "max_phase_attempts": 2,
+                "max_external_auth_attempts": 6,
+            }
+        }
+        ctl.state = {
+            "loop_id": "loop1",
+            "status": "running",
+            "phase_attempt": 3,
+            "halt_reason": None,
+        }
+
+        result = ctl._handle_phase_failure(
+            "code",
+            1,
+            external_auth_retry=True,
+        )
+        assert result is not None
+        assert ctl.state["status"] == "running"
+        assert ctl.state["halt_reason"] is None
+
 
 class TestScreeningTransitions:
     def test_screening_failed_skips_full_run_and_moves_to_eval(self, tmp_path: Path) -> None:
@@ -538,7 +571,6 @@ class TestScreeningTransitions:
             "current_phase_key": "run_screening",
             "current_iteration_id": "iter1",
             "phase_attempt": 3,
-            "phase_account_attempts": {"codex": 2},
         }
 
         handled = ctl._advance_after_success("run_screening", {"classification": "failed"})
@@ -551,7 +583,6 @@ class TestScreeningTransitions:
         assert handled is True
         assert ctl.state["current_phase_key"] == "eval"
         assert ctl.state["phase_attempt"] == 1
-        assert ctl.state["phase_account_attempts"] == {}
         assert events[-1]["event"] == "SCREENING_FAILED"
         assert events[-1]["payload"]["next_phase"] == "eval"
 

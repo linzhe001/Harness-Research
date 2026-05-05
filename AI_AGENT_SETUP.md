@@ -428,8 +428,8 @@ Keep this boundary:
 - edit `docs/auto_iterate_goal.md` in the research repo
 - edit `tooling/auto_iterate/config/*.local.yaml` as local operator inputs for
   this workspace
-- keep `accounts.local.yaml` in `mode: external_current` unless you are
-  intentionally testing the legacy controller account pool
+- keep `accounts.local.yaml` in `mode: external_current`; controller-owned
+  account pools are no longer supported
 - do not edit templates under `tooling/auto_iterate/config/templates/`
 - do not create `.auto_iterate/` by hand
 - do not commit `.auto_iterate/`
@@ -517,7 +517,7 @@ Practical notes from a successful bring-up:
   account, and WSL `~/.codex/auth.json` should be a symlink or direct bridge to
   the Cockpit-managed Windows auth file
 - do not create hand-managed `.codex-acc*` directories or generated
-  `~/.cache/auto_iterate/codex/*` controller account homes for new runs
+  `~/.cache/auto_iterate/codex/*` controller account homes
 - if auth keeps failing, reauthenticate or fix switching in Cockpit, then run
   `auto_iterate_ctl.sh resume`; the controller will start a fresh Codex process
   for the current phase

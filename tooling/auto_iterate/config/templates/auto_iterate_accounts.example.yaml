@@ -1,4 +1,4 @@
-# Auto-Iterate Account Registry
+# Auto-Iterate Codex Auth Config
 # External current-auth mode.
 #
 # Windows Cockpit owns Codex account switching. In WSL, keep

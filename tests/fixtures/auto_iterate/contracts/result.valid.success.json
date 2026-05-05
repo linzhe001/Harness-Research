@@ -3,7 +3,7 @@
   "phase_family": "eval",
   "phase_key": "eval",
   "run_type": null,
-  "account_id": "codex_acc1",
+  "account_id": "external_current",
   "started_at": "2026-03-22T18:00:00Z",
   "finished_at": "2026-03-22T18:12:35Z",
   "duration_sec": 755,

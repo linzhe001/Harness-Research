@@ -52,9 +52,12 @@ codex_home: ~/.codex
 ```
 
 Windows Cockpit owns quota monitoring and account switching. The controller
-does not maintain its own account pool for new runs. It starts a fresh
+does not maintain its own account pool. It starts a fresh
 `codex exec` process for each phase; after quota/auth failures it retries the
 current phase so the new process rereads `auth.json`.
+
+Legacy `accounts:` lists are rejected. Use only `mode`, `id`, and `codex_home`
+in `accounts.local.yaml`.
 
 ## Preflight Checklist
 

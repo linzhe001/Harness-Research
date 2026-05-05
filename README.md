@@ -216,9 +216,9 @@ Cockpit-managed Windows auth file. The controller starts a fresh `codex exec`
 process for each phase and, after quota/auth failures, retries the current
 phase so the new process reads the updated auth file.
 
-The old per-account controller pool is still parsed for legacy workspaces, but
-new runs should use `mode: external_current` in
-`tooling/auto_iterate/config/accounts.local.yaml` or omit `--accounts`.
+The controller-owned per-account pool has been removed. `accounts.local.yaml`
+may only select `mode: external_current` and optionally override `codex_home`;
+an `accounts:` list is rejected.
 
 ## For AI Agents
 
