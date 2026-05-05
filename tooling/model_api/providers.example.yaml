@@ -1,0 +1,26 @@
+# External model providers for review tooling.
+#
+# API keys are read from environment variables. Do not put secrets in this file.
+
+providers:
+  deepseek:
+    # Official DeepSeek API is OpenAI-compatible.
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    model_env: DEEPSEEK_MODEL
+    model: deepseek-v4-pro
+    endpoint_path: /chat/completions
+    timeout_sec: 120
+    extra_body:
+      thinking:
+        type: enabled
+      reasoning_effort: high
+
+  openai_compatible:
+    # Generic OpenAI-compatible endpoint.
+    # Set OPENAI_BASE_URL and OPENAI_MODEL for the concrete provider.
+    base_url_env: OPENAI_BASE_URL
+    api_key_env: OPENAI_API_KEY
+    model_env: OPENAI_MODEL
+    endpoint_path: /chat/completions
+    timeout_sec: 120

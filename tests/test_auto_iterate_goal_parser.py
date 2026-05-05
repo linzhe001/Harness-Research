@@ -436,11 +436,10 @@ class TestAccountRegistry:
         with pytest.raises(AccountConfigError, match="not found"):
             AccountRegistry.load("/nonexistent/accounts.yaml")
 
-    def test_external_current_ignores_legacy_retry_state(self) -> None:
+    def test_external_current_ignores_controller_state_selection(self) -> None:
         reg = AccountRegistry.external_current(codex_home="~/.codex")
         selected = reg.select_account({
-            "retry_policy": {"max_attempts_per_account": 1},
-            "phase_account_attempts": {EXTERNAL_CURRENT_ACCOUNT_ID: 99},
+            "accounts": {"selected_account_id": "stale"},
         })
         assert selected["id"] == EXTERNAL_CURRENT_ACCOUNT_ID
 

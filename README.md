@@ -62,6 +62,11 @@ python tooling/evidence/check_workflow_state.py --workspace-root .
 python tooling/evidence/migrate_legacy_docs.py --workspace-root .
 ```
 
+Reviewer cross-checks can use OpenAI-compatible external model APIs through
+`tooling/model_api/external_chat.py`. DeepSeek is available as a built-in
+provider when `DEEPSEEK_API_KEY` is set; other providers can be added through
+`tooling/model_api/providers.example.yaml`.
+
 `init_context.py` never overwrites existing docs unless `--overwrite` is passed.
 `compile_protocol.py` compiles evidence tables into a reviewable draft packet
 under `.evidence/protocol_compiler/`; use `--apply --overwrite` only after

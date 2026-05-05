@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional DeepSeek cross-check, and a reconciled report.
+description: Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report.
 ---
 
 # Code Review
@@ -36,12 +36,12 @@ this skill is active.
   Inline findings are acceptable, but every concrete bug claim still needs a
   file and line reference.
 - `medium`: post-change review. Collect git metadata, changed line ranges,
-  attempt Codex review, attempt DeepSeek review when available, reconcile
-  findings, and write a local review report.
+  attempt Codex review, attempt an external model review when configured,
+  reconcile findings, and write a local review report.
 - `heavy`: docs/evidence/gate review. Use independent Codex and DeepSeek review
-  attempts unless unavailable, save review traces, reconcile findings, and do
-  not treat generated docs or gate evidence as ready while unresolved critical
-  findings remain.
+  or equivalent external model review attempts unless unavailable, save review
+  traces, reconcile findings, and do not treat generated docs or gate evidence
+  as ready while unresolved critical findings remain.
 
 ## Required Work
 
@@ -61,9 +61,12 @@ this skill is active.
 6. Attempt Codex review through the current environment's exposed Codex review
    surface, such as a built-in review command, MCP tool, or configured reviewer
    command. Record `codex_review_or_NOT_RUN` when no such surface is available.
-7. Attempt DeepSeek v4 Pro review when configured by the operator. Record
-   `deepseek_review_or_NOT_RUN`; do not invent a result when the model is not
-   available.
+7. Attempt an external model review when configured by the operator. Prefer
+   `tooling/model_api/external_chat.py --provider deepseek` for DeepSeek v4 Pro,
+   or use another OpenAI-compatible provider from
+   `tooling/model_api/providers.example.yaml`. Record
+   `external_model_review_or_NOT_RUN`; do not invent a result when the model is
+   not available.
 8. Verify reviewer findings against the checked-out files and diff. A model
    finding is not a project fact until it is line-referenced and checked.
 9. Reconcile reviewer results into one findings table:
@@ -97,7 +100,8 @@ For medium/heavy mode, include:
 - review report path
 - git `HEAD` and base ref or working-tree scope
 - changed files and line ranges reviewed
-- Codex and DeepSeek statuses
+- Codex and external model reviewer statuses
+- external model provider/model when used
 - reconciled critical/warning/info counts
 - unresolved findings
 - Gate ledger

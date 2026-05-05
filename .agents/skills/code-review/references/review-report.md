@@ -10,9 +10,9 @@ For medium and heavy reviews, write a local trace directory:
   codex_review.request.json
   codex_review.response.md
   codex_review.meta.json
-  deepseek_review.request.json
-  deepseek_review.response.md
-  deepseek_review.meta.json
+  external_model_review.request.json
+  external_model_review.response.md
+  external_model_review.meta.json
   review_report.md
 ```
 
@@ -110,13 +110,13 @@ reference. If a reviewer gives a broad concern without a line reference, mark it
 | Reviewer | Model | Status | Trace | Notes |
 |---|---|---|---|---|
 | codex |  | used/NOT_RUN |  |  |
-| deepseek | deepseek-v4-pro | used/NOT_RUN |  |  |
+| external_model | provider/model | used/NOT_RUN |  |  |
 
 ## Findings
 
 | ID | Severity | Confidence | Source | Status | Location | Summary | Evidence | Recommendation |
 |---|---|---|---|---|---|---|---|---|
-| CR-001 | critical/warning/info | high/medium/low | codex/deepseek/self | accepted/rejected_with_reason/needs_human/not_reproducible | path:line |  |  |  |
+| CR-001 | critical/warning/info | high/medium/low | codex/external_model/self | accepted/rejected_with_reason/needs_human/not_reproducible | path:line |  |  |  |
 
 ## Reconciliation
 
@@ -138,7 +138,7 @@ reference. If a reviewer gives a broad concern without a line reference, mark it
 | git_metadata_snapshot |  |  |  |  |
 | changed_line_map |  |  |  |  |
 | codex_review_or_NOT_RUN |  |  |  |  |
-| deepseek_review_or_NOT_RUN |  |  |  |  |
+| external_model_review_or_NOT_RUN |  |  |  |  |
 | reconcile_review_findings |  |  |  |  |
 | write_review_report_or_NOT_RUN |  |  |  |  |
 ```
@@ -149,6 +149,6 @@ reference. If a reviewer gives a broad concern without a line reference, mark it
 - `REVIEW`: unresolved warning or `needs_human` item remains.
 - `FAIL`: at least one accepted critical finding remains.
 
-Heavy review cannot return `PASS` while Codex or DeepSeek is unavailable unless
-the report explains why the missing reviewer was `NOT_RUN` and what compensating
-local checks were performed.
+Heavy review cannot return `PASS` while Codex or the configured external model
+reviewer is unavailable unless the report explains why the missing reviewer was
+`NOT_RUN` and what compensating local checks were performed.

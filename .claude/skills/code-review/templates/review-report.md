@@ -27,13 +27,13 @@
 | Reviewer | Model | Status | Trace | Notes |
 |---|---|---|---|---|
 | codex |  | used/NOT_RUN |  |  |
-| deepseek | deepseek-v4-pro | used/NOT_RUN |  |  |
+| external_model | provider/model | used/NOT_RUN |  |  |
 
 ## Findings
 
 | ID | Severity | Confidence | Source | Status | Location | Summary | Evidence | Recommendation |
 |---|---|---|---|---|---|---|---|---|
-| CR-001 | critical/warning/info | high/medium/low | codex/deepseek/self | accepted/rejected_with_reason/needs_human/not_reproducible | path:line |  |  |  |
+| CR-001 | critical/warning/info | high/medium/low | codex/external_model/self | accepted/rejected_with_reason/needs_human/not_reproducible | path:line |  |  |  |
 
 ## Gate Ledger
 
@@ -42,6 +42,6 @@
 | git_metadata_snapshot |  |  |  |  |
 | changed_line_map |  |  |  |  |
 | codex_review_or_NOT_RUN |  |  |  |  |
-| deepseek_review_or_NOT_RUN |  |  |  |  |
+| external_model_review_or_NOT_RUN |  |  |  |  |
 | reconcile_review_findings |  |  |  |  |
 | write_review_report_or_NOT_RUN |  |  |  |  |

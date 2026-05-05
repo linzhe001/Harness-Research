@@ -65,6 +65,7 @@ Framework-wide docs:
 | `tooling/auto_iterate/scripts/auto_iterate/` | Controller package (state, lock, events, goal, postcondition, recovery) |
 | `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
 | `tooling/auto_iterate/docs/` | Goal template and controller CLI guide |
+| `tooling/model_api/` | OpenAI-compatible external model API helpers for reviewer cross-checks |
 | `media/` | Harness-level branding and documentation assets used by root docs |
 | `tests/` | Controller test suite and fixtures |
 
@@ -595,6 +596,7 @@ What each artifact answers:
 | `.agents/references/**` | harness (`hgit`) | Shared constraints |
 | `*.template` | harness (`hgit`) | Project templates |
 | `tooling/auto_iterate/**` | harness (`hgit`) | Controller, runtime adapter, docs, examples |
+| `tooling/model_api/**` | harness (`hgit`) | External model reviewer API helpers |
 | `README.md` | harness (`hgit`) | Harness overview and links |
 | `.gitignore` | harness (`hgit`) | Harness-side ignore rules for research files |
 | `.git/info/exclude` | research-local (`git`) | Research-side ignore rules for harness files |
