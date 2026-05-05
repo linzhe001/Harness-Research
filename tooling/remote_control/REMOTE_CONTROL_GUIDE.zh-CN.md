@@ -13,7 +13,7 @@
 - 框架初始化：
   - [AI_AGENT_SETUP.md](../../AI_AGENT_SETUP.md)
 - Harness 更新 / 重编流程：
-  - [Harness_Update_Guide.md](../../Harness_Update_Guide.md)
+  - 本地 `Harness_Update_Guide.md`（如果存在；该文件 intentionally ignored，不加入 git）
 
 ## 适用范围
 
@@ -40,7 +40,7 @@
 
 如果你已经接好，只是在维护：
 
-1. [Harness_Update_Guide.md](../../Harness_Update_Guide.md)
+1. 本地 `Harness_Update_Guide.md`（如果存在；不要加入 git）
 2. 本文的“1. 本地构建与配置”
 3. 本文的“3. 共享会话模型”
 
