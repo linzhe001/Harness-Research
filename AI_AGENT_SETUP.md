@@ -33,7 +33,7 @@ Quick preflight checklist:
 
 - `pwd` is the intended live workspace root
 - this directory is the one that should own `.git`, `CLAUDE.md`, `AGENTS.md`,
-  `docs/auto_iterate_goal.md`, and runtime folders such as `.cc-connect/`
+  `docs/auto_iterate_goal.md`, and runtime folders such as `.auto_iterate/`
 - any baseline repo stays as a sibling reference directory, not the live root
 - any copied framework source directory is treated as bootstrap input only
 
@@ -43,10 +43,6 @@ Framework-wide docs:
 
 - `Harness_Update_Guide.md` may exist as a local-only day-2 pull/push and
   rebuild note. It is intentionally ignored and must not be added to git.
-
-Remote-control docs:
-
-- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md) as the canonical operator guide
 
 ## Framework Contents
 
@@ -68,11 +64,7 @@ Remote-control docs:
 | `tooling/auto_iterate/scripts/` | V7 auto-iterate controller, runtime adapter, CLI |
 | `tooling/auto_iterate/scripts/auto_iterate/` | Controller package (state, lock, events, goal, postcondition, recovery) |
 | `tooling/auto_iterate/config/templates/` | Controller and account configuration examples |
-| `tooling/auto_iterate/docs/` | Goal template, remote control guide |
-| `tooling/remote_control/scripts/` | Harness remote wrapper and patched `cc-connect` build helper |
-| `tooling/remote_control/cc_connect_src/` | Bundled patched `cc-connect` source tree for local builds |
-| `tooling/remote_control/config/templates/` | Remote control / Feishu / Codex config templates |
-| `tooling/remote_control/` docs | Local build, Feishu setup, and remote control usage notes |
+| `tooling/auto_iterate/docs/` | Goal template and controller CLI guide |
 | `media/` | Harness-level branding and documentation assets used by root docs |
 | `tests/` | Controller test suite and fixtures |
 
@@ -99,7 +91,6 @@ Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE**
 - `.agents/**`
 - `*.template`
 - `tooling/auto_iterate/**`
-- `tooling/remote_control/**`
 - `media/**`
 - root `README.md`
 - root `.gitignore`
@@ -140,21 +131,10 @@ machine-local inputs rather than framework templates:
 
 - `tooling/auto_iterate/config/controller.local.yaml`
 - `tooling/auto_iterate/config/accounts.local.yaml`
-- `tooling/remote_control/config/cc_connect.local.toml`
-- `tooling/remote_control/config/remote_control.local.yaml`
 
 Teams can either keep these files uncommitted or version shared defaults. This
 repository chooses to version the two auto-iterate defaults above and annotate
-the machine-specific fields inline. Remote control `.local` files should remain
-local-only because they commonly contain Feishu credentials, operator IDs, or
-machine-specific `CODEX_HOME` paths.
-
-### Local toolchains and built binaries (never commit)
-
-- `tooling/remote_control/vendor/go/**`
-- `tooling/remote_control/vendor/bin/cc-connect*`
-
-These are local build artifacts. Commit source, templates, and docs instead.
+the machine-specific fields inline.
 
 ### Runtime-only files (never commit)
 
@@ -191,10 +171,7 @@ In other words:
 - yes: extra subdirectory `.gitignore` files inside research-owned paths
 - no: two competing root `.gitignore` files at the same project root
 
-That split matters now that the harness repo also ships:
-
-- `tooling/auto_iterate/**`
-- `tooling/remote_control/**`
+That split matters now that the harness repo also ships `tooling/auto_iterate/**`.
 
 Practical note from real bootstrap: because the root `.gitignore` sits at the
 shared project root, both git histories read it. If normal `git status` stops
@@ -435,8 +412,8 @@ and should appear only after the first auto-iterate `start`.
 
 ## 6. Bootstrap auto-iterate project files
 
-The harness repo owns the controller code, remote-control wrapper, and reusable
-templates. The project should create one research goal file plus a local
+The harness repo owns the controller code and reusable templates. The project
+should create one research goal file plus a local
 controller YAML. The Codex account YAML is generated from Cockpit-managed
 accounts; do not create manual `.codex-acc*` homes.
 
@@ -460,178 +437,6 @@ Keep this boundary:
 - do not commit `.auto_iterate/`
 - if your project wants shared defaults, it is acceptable to version
   `controller.local.yaml` and `accounts.local.yaml`
-
-## 6b. Optional: bootstrap remote control local files
-
-If the project will use Feishu / remote-control features, create local-only
-config files from templates:
-
-```bash
-[ ! -f tooling/remote_control/config/remote_control.local.yaml ] && cp tooling/remote_control/config/templates/remote_control.example.yaml tooling/remote_control/config/remote_control.local.yaml
-[ ! -f tooling/remote_control/config/cc_connect.local.toml ] && cp tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml
-```
-
-Important distinction:
-
-- `tooling/remote_control/config/templates/` is the template source directory
-- `tooling/remote_control/config/cc_connect.local.toml` is the live
-  `cc-connect` runtime config
-- `tooling/remote_control/config/remote_control.local.yaml` is the lightweight
-  wrapper config for `harness_remote.py`
-
-On a fresh framework clone, `tooling/remote_control/config/` may contain only
-`README.md` and `templates/`. That is normal. The two `.local` files appear
-only after workspace bootstrap.
-
-When filling `cc_connect.local.toml` for a same-worktree project, derive the
-workspace values from the current repository root instead of editing random
-absolute paths by hand:
-
-```bash
-CURRENT_WORKSPACE="$(pwd)"
-WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
-WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
-```
-
-Choose one of these layouts:
-
-### Single-workspace: default to the current repository
-
-Use this when the bot should always operate on the current repository and you do
-not want to bind each chat channel manually.
-
-- omit `[[projects]].mode`
-- omit `[[projects]].base_dir`
-- set `projects.agent.options.work_dir = "$CURRENT_WORKSPACE"`
-- set custom command `work_dir = "$CURRENT_WORKSPACE"` for `/ai` and `/home`
-- if practical, keep `[[projects]].name` aligned with `"$WORKSPACE_NAME"`
-
-This is the simplest setup for one local repo and avoids the "No workspace
-found for this channel" prompt during direct chat.
-
-### Multi-workspace: one bot can switch between many repos
-
-Use this when one bot instance should serve multiple workspaces under the same
-parent directory.
-
-- `[[projects]].mode = "multi-workspace"`
-- `[[projects]].base_dir = "$WORKSPACE_PARENT"`
-- `[[commands]]` entries such as `/ai` and `/home` may still use `work_dir = "$CURRENT_WORKSPACE"`
-- if practical, keep `[[projects]].name` aligned with `"$WORKSPACE_NAME"` so bindings are easier to reason about
-
-Important distinction in `multi-workspace` mode:
-
-- `base_dir` is the parent directory that contains candidate workspaces
-- `work_dir` on custom commands is the concrete workspace root for that command
-- do not set `projects.agent.options.work_dir`; workspace routing comes from channel binding plus `base_dir`
-
-After first boot in a chat channel, bind that channel to the current workspace:
-
-```bash
-/workspace bind <workspace-name>
-```
-
-For example, if `CURRENT_WORKSPACE=/path/to/PCLR_compare`, run:
-
-```bash
-/workspace bind PCLR_compare
-```
-
-Without that binding, direct natural-language chat to the agent may answer with
-"No workspace found for this channel" even if `/ai` and `/home` already work,
-because those custom commands can have their own fixed `work_dir`.
-
-The patched `cc-connect` source is already bundled in this repository under:
-
-- `tooling/remote_control/cc_connect_src/`
-
-Setup and local builds use only the contents of this repository.
-
-Keep this boundary:
-
-- edit `tooling/remote_control/config/*.local.*` only for your own machine
-- do not commit Feishu credentials, operator IDs, or `CODEX_HOME` values
-- do not commit generated Codex credential projection directories such as
-  `~/.cache/auto_iterate/codex/`
-- do not commit `tooling/remote_control/vendor/go/`
-- do not commit built binaries under `tooling/remote_control/vendor/bin/`
-- do not use `git add -f` to force-add ignored local config or local binaries
-
-Field roles to verify in `cc_connect.local.toml`:
-
-- `app_id` / `app_secret`: Feishu app credentials
-- `allow_from`: the allowed Feishu user `open_id` list for normal access
-- `admin_from`: the Feishu user `open_id` list allowed to run privileged
-  commands
-
-If you do not yet know the real operator `open_id`, it is safer to leave
-`admin_from` empty temporarily than to guess a value and lock yourself out.
-
-You can verify that the main local files are ignored before continuing:
-
-```bash
-git check-ignore -v tooling/remote_control/config/cc_connect.local.toml
-git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
-git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
-```
-
-If you need a local patched `cc-connect`, build it with:
-
-```bash
-tooling/remote_control/scripts/build_patched_cc_connect.sh
-```
-
-If `go` is not available on `PATH`, unpack Go 1.25 under
-`tooling/remote_control/vendor/go/` and rerun the build. The build helper
-prefers `tooling/remote_control/vendor/go/bin/go` automatically.
-
-Then start it with:
-
-```bash
-tooling/remote_control/bin/cc-connect \
-  -config tooling/remote_control/config/cc_connect.local.toml
-```
-
-If you want repo-managed local shortcuts for shared Codex sessions, install them with:
-
-```bash
-tooling/remote_control/scripts/install_user_commands.sh --shell-init
-```
-
-This installs `codex_all` and `cw` into `~/.local/bin/` and adds the minimal
-PATH snippet needed for new shells.
-
-The installer only writes shell init when your existing `~/.bashrc` / `~/.profile`
-does not already contain related command or PATH setup.
-
-If `tooling/remote_control/config/cc_connect.local.toml` already exists on your
-machine, edit it in place instead of overwriting it. The workspace migration
-checklist lives in
-`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md` section `1.4`.
-
-For the full repo-local flow, including build, install, `source ~/.bashrc`,
-verification, and startup order, see
-`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md` section `1.8`.
-
-If you change `cc_connect.local.toml`, restart `cc-connect` so the live process
-reloads the new project name, ACL, and workspace settings.
-
-Minimal remote-control verification:
-
-```bash
-tooling/remote_control/bin/cc-connect -version
-tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
-tooling/remote_control/bin/cw list
-tooling/remote_control/bin/codex_all help
-```
-
-`cc-connect -version` only proves that some binary starts. The shared-session
-stack required by `cw` and `codex_all` is only validated once `share list`,
-`cw list`, and `codex_all help` all succeed.
-
-See:
-
-- `tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md`
 
 ## 7. Fill in project details
 
@@ -657,11 +462,6 @@ Do not add harness-owned paths such as `.claude/`, `.agents/`, `tooling/`, `medi
 For day-2 update flow, conflict handling, and post-pull checks, use the local
 `Harness_Update_Guide.md` note when present. It is intentionally ignored and
 must not be added to git.
-
-If remote control was already used before a project rename or config rewrite,
-existing channel bindings may still live under the old project key in
-`~/.cc-connect/workspace_bindings.json`. Rebind the channel after restart if the
-bot still resolves to an old workspace or says no workspace is bound.
 
 ### Research changes
 

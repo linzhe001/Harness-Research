@@ -151,8 +151,8 @@ Recommended order:
 3. initialize or reuse the normal research `.git`
 4. create `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, and `docs/auto_iterate_goal.md`
 5. optionally create `OPERATOR_CONTEXT.md`, numbered docs directories, and `.evidence/`
-6. create remote-control and auto-iterate local configs in the workspace
-7. verify `cc-connect`, `cw`, `codex_all`, and `auto_iterate_ctl.sh`
+6. create auto-iterate local configs in the workspace
+7. verify `auto_iterate_ctl.sh` and the focused Harness checks
 
 For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
 
@@ -160,15 +160,6 @@ For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
 
 - A sibling repo such as `MARS/` can be a baseline, but it should not be turned
   into the live harness workspace unless that is the intended project root.
-- `Harness-Research/tooling/remote_control/config/` may only contain
-  `README.md` and `templates/` in a fresh framework clone. The live files
-  `cc_connect.local.toml` and `remote_control.local.yaml` are created later in
-  the target workspace.
-- A successful `tooling/remote_control/bin/cc-connect -version` is not enough
-  to prove the shared-session stack works. Also verify:
-  - `tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml`
-  - `tooling/remote_control/bin/cw list`
-  - `tooling/remote_control/bin/codex_all help`
 - In dual-repo mode, the shared root `.gitignore` is read by both git histories.
   If normal `git status` stops showing research files such as `CLAUDE.md`,
   `AGENTS.md`, `docs/`, or `src/`, move those research-side hide rules into
@@ -238,4 +229,4 @@ Then start the controller with `--accounts tooling/auto_iterate/config/accounts.
 - **At project setup**: read [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) for bootstrap instructions, framework contents, file ownership, and dual-repo layout.
 - **At framework update**: read local-only `Harness_Update_Guide.md` if present for pull/push workflows, conflict recovery, and post-pull template sync. This file is intentionally ignored and must not be added to git.
 
-Some code is based on [ralph](https://github.com/snarktank/ralph) and [cc-connect](https://github.com/chenhg5/cc-connect).
+Some code is based on [ralph](https://github.com/snarktank/ralph).

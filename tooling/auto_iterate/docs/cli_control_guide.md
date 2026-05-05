@@ -1,6 +1,7 @@
-# Auto-Iterate Remote Control Guide
+# Auto-Iterate CLI Control Guide
 
-This guide explains how to operate the auto-iterate controller locally and how remote wrappers (e.g., cc-connect) can consume its CLI.
+This guide explains how to operate the auto-iterate controller locally and how
+external wrappers can consume its CLI.
 
 ## 1. Starting a Loop
 
@@ -140,7 +141,7 @@ Runtime logs are stored at:
 | 108 | Resumable interruption / operator pause |
 | 109 | Fatal controller error |
 
-## 11. cc-connect Mapping
+## 11. External Wrapper Mapping
 
 | Remote Action | Local Command |
 |---------------|---------------|
@@ -152,7 +153,7 @@ Runtime logs are stored at:
 | View events | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50` |
 | Update goal | `tooling/auto_iterate/scripts/auto_iterate_ctl.sh override --goal <path>` |
 
-cc-connect or any remote wrapper should:
+Any external wrapper should:
 - Call these commands via SSH or management API
 - Parse `--json` / `--jsonl` output, never prose
 - Use exit codes for status classification
