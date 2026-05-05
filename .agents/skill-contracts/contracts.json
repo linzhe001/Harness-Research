@@ -1,0 +1,609 @@
+{
+  "schema_version": "0.1",
+  "contracts": [
+    {
+      "skill": "orchestrator",
+      "triggers": ["$orchestrator", "/orchestrator", "orchestrator", "stage transition", "advance stage", "rollback", "workflow status"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/orchestrator/SKILL.md",
+          ".agents/skills/orchestrator/references/stage-gates.md",
+          ".agents/skills/orchestrator/references/project-state-schema.json"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json", "project_map.json"],
+        "project_optional": ["docs/10_contract/Project_Contract.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md"]
+      },
+      "required_actions": ["explicit_user_approval_for_transition", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["stage_transition_without_user_approval", "direct_edit_auto_iterate", "direct_edit_evidence"],
+      "gate_ledger_required_when": ["stage_transition", "canonical_state_edit", "WF10_readiness", "WF11_readiness", "WF12_readiness"],
+      "sensitive_paths": ["PROJECT_STATE.json", "iteration_log.json", "project_map.json"]
+    },
+    {
+      "skill": "doc-compiler",
+      "triggers": ["$doc-compiler", "/doc-compiler", "doc-compiler", "compile doc", "docchain"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [".agents/skills/doc-compiler/SKILL.md"],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/10_contract/Project_Contract.md", "docs/20_facts/Project_Facts.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["compile_doc_or_NOT_RUN", "check_docchain_gates_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["manual_edit_evidence_chain", "current_doc_without_docchain"],
+      "gate_ledger_required_when": ["current_doc_write", "contract_doc_write", "protocol_doc_write"],
+      "sensitive_paths": ["docs/10_contract/", "docs/20_facts/", "docs/35_protocol/", ".evidence/"]
+    },
+    {
+      "skill": "review-packet",
+      "triggers": ["$review-packet", "/review-packet", "review packet", "approve contract", "human approval"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/lesson-quality-rule.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [".agents/skills/review-packet/SKILL.md"],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/10_contract/Project_Contract.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md"]
+      },
+      "required_actions": ["check_dynamic_context_or_NOT_RUN", "build_review_packet_or_NOT_RUN", "approval_tool_only_after_explicit_human_approval", "gate_ledger"],
+      "forbidden_actions": ["approve_without_explicit_human_approval", "packet_as_approval"],
+      "gate_ledger_required_when": ["contract_approval", "review_packet_build", "WF10_readiness", "WF11_readiness", "WF12_readiness"],
+      "sensitive_paths": ["docs/10_contract/", "PROJECT_STATE.json", ".evidence/review_packets/"]
+    },
+    {
+      "skill": "protocol-compiler",
+      "triggers": ["$protocol-compiler", "/protocol-compiler", "protocol compiler", "compile protocol"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [".agents/skills/protocol-compiler/SKILL.md"],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/30_evidence/Evidence_Index.md", "docs/30_evidence/Open_Questions.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["compile_protocol_or_NOT_RUN", "protocol_review_or_NOT_RUN", "docchain_gate_when_current_docs_change", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "manual_edit_evidence_chain"],
+      "gate_ledger_required_when": ["protocol_apply", "protocol_doc_write", "contract_readiness"],
+      "sensitive_paths": ["docs/35_protocol/", ".evidence/protocol_compiler/"]
+    },
+    {
+      "skill": "protocol-drift-check",
+      "triggers": ["$protocol-drift-check", "/protocol-drift-check", "protocol drift", "drift check"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [".agents/skills/protocol-drift-check/SKILL.md"],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/30_evidence/Open_Questions.md", "docs/35_protocol/Research_Protocol.md", "docs/35_protocol/Protocol_Changelog.md"]
+      },
+      "required_actions": ["check_protocol_drift_or_NOT_RUN", "docchain_gate_when_current_docs_change", "gate_ledger"],
+      "forbidden_actions": ["ignore_unresolved_protocol_drift", "protocol_as_approved_contract"],
+      "gate_ledger_required_when": ["protocol_readiness", "WF10_readiness", "WF11_readiness", "WF12_readiness"],
+      "sensitive_paths": ["docs/35_protocol/", "docs/10_contract/"]
+    },
+    {
+      "skill": "survey-idea",
+      "triggers": ["$survey-idea", "/survey-idea", "survey-idea", "idea survey", "WF1"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/research-invariants.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/survey-idea/SKILL.md",
+          ".agents/skills/survey-idea/references/feasibility-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/30_evidence/Evidence_Index.md", "docs/30_evidence/Open_Questions.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["compile_protocol_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "direct_edit_evidence"],
+      "gate_ledger_required_when": ["evidence_table_write", "feasibility_report_write", "canonical_state_edit"],
+      "sensitive_paths": ["docs/Feasibility_Report.md", "docs/30_evidence/", "docs/35_protocol/", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "idea-debate",
+      "triggers": ["$idea-debate", "/idea-debate", "idea-debate", "idea debate", "WF2"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/research-invariants.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/reviewer-independence.md",
+          ".agents/references/review-tracing.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/idea-debate/SKILL.md",
+          ".agents/skills/idea-debate/references/idea-debate-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/Feasibility_Report.md", "docs/30_evidence/Evidence_Index.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["compile_protocol_or_NOT_RUN", "check_protocol_drift_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "direct_edit_evidence"],
+      "gate_ledger_required_when": ["idea_debate_report_write", "protocol_doc_write", "canonical_state_edit"],
+      "sensitive_paths": ["docs/Idea_Debate.md", "docs/35_protocol/", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "refine-idea",
+      "triggers": ["$refine-idea", "/refine-idea", "refine-idea", "refine idea", "WF3"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/research-invariants.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/refine-idea/SKILL.md",
+          ".agents/skills/refine-idea/references/refined-idea.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["OPERATOR_CONTEXT.md", "docs/Feasibility_Report.md", "docs/Idea_Debate.md", "docs/30_evidence/Evidence_Index.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["compile_protocol_or_NOT_RUN", "check_protocol_drift_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "architecture_decision_in_build_plan"],
+      "gate_ledger_required_when": ["refined_idea_write", "protocol_assumption_write", "canonical_state_edit"],
+      "sensitive_paths": ["docs/Refined_Idea.md", "docs/35_protocol/", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "data-prep",
+      "triggers": ["$data-prep", "/data-prep", "data-prep", "dataset prep", "WF4"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/data-prep/SKILL.md",
+          ".agents/skills/data-prep/references/dataset-stats.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "CLAUDE.md"],
+        "project_optional": ["docs/Refined_Idea.md", "docs/20_facts/Execution_Contract.md", "docs/30_evidence/Dataset_Table.md"]
+      },
+      "required_actions": ["compile_doc_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["direct_edit_evidence", "direct_edit_auto_iterate"],
+      "gate_ledger_required_when": ["dataset_stats_write", "dataset_config_write", "canonical_state_edit", "CLAUDE_dataset_sync"],
+      "sensitive_paths": ["docs/Dataset_Stats.md", "docs/20_facts/", "PROJECT_STATE.json", "CLAUDE.md", "AGENTS.md", "configs/", "src/"]
+    },
+    {
+      "skill": "baseline-repro",
+      "triggers": ["$baseline-repro", "/baseline-repro", "baseline-repro", "baseline repro", "WF5"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/pre-training-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/baseline-repro/SKILL.md",
+          ".agents/skills/baseline-repro/references/baseline-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "CLAUDE.md"],
+        "project_optional": ["project_map.json", "docs/Refined_Idea.md", "docs/Dataset_Stats.md", "docs/30_evidence/Baseline_Table.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["check_protocol_drift_or_NOT_RUN", "check_dynamic_context_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "semantic_commit_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["training_without_semantic_commit", "approve_without_explicit_human_approval", "protocol_as_approved_contract"],
+      "gate_ledger_required_when": ["baseline_report_write", "baseline_contract_readiness", "evaluation_contract_readiness", "canonical_state_edit", "stable_code_change"],
+      "sensitive_paths": ["docs/Baseline_Report.md", "docs/10_contract/", "PROJECT_STATE.json", "project_map.json", "CLAUDE.md", "baselines/", "configs/", "scripts/", "src/"]
+    },
+    {
+      "skill": "refine-arch",
+      "triggers": ["$refine-arch", "/refine-arch", "refine-arch", "refine arch", "architecture design", "WF6"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/research-invariants.md",
+          ".agents/references/code-style.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/refine-arch/SKILL.md",
+          ".agents/skills/refine-arch/references/technical-spec.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/Refined_Idea.md", "docs/Dataset_Stats.md", "docs/Baseline_Report.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md", "docs/30_evidence/Evidence_Index.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["check_protocol_drift_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "project_map_stale"],
+      "gate_ledger_required_when": ["technical_spec_write", "contract_conflict", "canonical_state_edit"],
+      "sensitive_paths": ["docs/Technical_Spec.md", "docs/35_protocol/", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "deep-check",
+      "triggers": ["$deep-check", "/deep-check", "deep-check", "deep check", "sanity check", "design review"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/research-invariants.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/reviewer-independence.md",
+          ".agents/references/review-tracing.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/deep-check/SKILL.md",
+          ".agents/skills/deep-check/references/sanity-check.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json"],
+        "project_optional": ["docs/Technical_Spec.md", "docs/10_contract/Project_Contract.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md", "docs/35_protocol/Research_Protocol.md"]
+      },
+      "required_actions": ["codex_review_or_NOT_RUN", "deepseek_review_or_NOT_RUN", "check_protocol_drift_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["protocol_as_approved_contract", "approve_without_explicit_human_approval"],
+      "gate_ledger_required_when": ["sanity_check_write", "review_trace_write", "contract_conflict"],
+      "sensitive_paths": ["docs/Sanity_Check_Log.md", "docs/35_protocol/", "docs/10_contract/"]
+    },
+    {
+      "skill": "evaluate",
+      "triggers": ["$evaluate", "/evaluate", "evaluate", "eval results", "iteration eval"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/lesson-quality-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/reviewer-independence.md",
+          ".agents/references/review-tracing.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/evaluate/SKILL.md",
+          ".agents/skills/evaluate/references/stage-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json"],
+        "project_optional": ["docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/50_memory/Lessons.md", "MEMORY.md"]
+      },
+      "required_actions": ["decision_vocabulary", "lesson_quality_check_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["stage_transition_from_iterate", "auto_observation_direct_to_MEMORY", "protocol_as_approved_contract"],
+      "gate_ledger_required_when": ["stage_report_write", "iteration_report_write", "lesson_promotion", "iteration_log_write"],
+      "sensitive_paths": ["iteration_log.json", "docs/iterations/", "docs/40_iterations/", "docs/50_memory/", "MEMORY.md", "docs/Stage_Report.md"]
+    },
+    {
+      "skill": "init-project",
+      "triggers": ["$init-project", "/init-project", "init-project", "init project", "update CLAUDE", "CLAUDE update"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/init-project/SKILL.md",
+          ".agents/skills/init-project/references/claude-md-template.md",
+          ".agents/skills/init-project/references/claude-maintenance.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "CLAUDE.md"],
+        "project_optional": ["OPERATOR_CONTEXT.md", "docs/Feasibility_Report.md", "docs/Dataset_Stats.md", "docs/Baseline_Report.md", "project_map.json"]
+      },
+      "required_actions": ["context_gate_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["direct_edit_evidence", "direct_edit_auto_iterate"],
+      "gate_ledger_required_when": ["dynamic_context_init", "CLAUDE_write", "operator_context_write", "canonical_state_edit"],
+      "sensitive_paths": ["CLAUDE.md", "AGENTS.md", "OPERATOR_CONTEXT.md", "PROJECT_STATE.json", "docs/", ".evidence/"]
+    },
+    {
+      "skill": "env-setup",
+      "triggers": ["$env-setup", "/env-setup", "env-setup", "environment refresh", "deps changed", "dependency refresh"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/deps-update-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md"
+        ],
+        "skill": [
+          ".agents/skills/env-setup/SKILL.md",
+          ".agents/skills/env-setup/references/environment-refresh.md",
+          ".agents/skills/init-project/references/claude-maintenance.md"
+        ],
+        "project_when_present": ["AGENTS.md", "CLAUDE.md"],
+        "project_optional": ["PROJECT_STATE.json", "requirements.txt", "requirements-dev.txt", "environment.yml", "environment.yaml", "pyproject.toml"]
+      },
+      "required_actions": ["py_compile_or_NOT_RUN", "ruff_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["training_without_semantic_commit", "direct_edit_auto_iterate"],
+      "gate_ledger_required_when": ["dependency_file_change", "environment_section_write", "setup_command_run"],
+      "sensitive_paths": ["CLAUDE.md", "requirements.txt", "requirements-dev.txt", "environment.yml", "environment.yaml", "pyproject.toml", "scripts/", "configs/"]
+    },
+    {
+      "skill": "build-plan",
+      "triggers": ["$build-plan", "/build-plan", "build plan", "implementation roadmap", "WF7"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/project-map-rule.md"
+        ],
+        "skill": [
+          ".agents/skills/build-plan/SKILL.md",
+          ".agents/skills/build-plan/references/implementation-roadmap.md",
+          ".agents/skills/build-plan/references/project-map-schema.json"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "project_map.json"],
+        "project_optional": ["docs/Technical_Spec.md", "docs/Baseline_Report.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md"]
+      },
+      "required_actions": ["write_implementation_roadmap", "update_project_map", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["architecture_decision_in_build_plan", "project_map_stale"],
+      "gate_ledger_required_when": ["project_map_write", "canonical_state_edit"],
+      "sensitive_paths": ["project_map.json", "PROJECT_STATE.json", "docs/Implementation_Roadmap.md"]
+    },
+    {
+      "skill": "code-expert",
+      "triggers": ["$code-expert", "/code-expert", "code-expert", "implement", "WF8"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/code-style.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/language-policy.md",
+          ".agents/references/project-map-rule.md",
+          ".agents/references/pre-training-rule.md"
+        ],
+        "skill": [
+          ".agents/skills/code-expert/SKILL.md",
+          ".agents/skills/code-expert/references/generation-order.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "project_map.json", "CLAUDE.md"],
+        "project_optional": ["docs/Implementation_Roadmap.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md"]
+      },
+      "required_actions": ["read_project_map_before_stable_code", "py_compile_or_NOT_RUN", "ruff_or_NOT_RUN", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["stable_code_without_project_map_read", "project_map_stale", "training_without_semantic_commit"],
+      "gate_ledger_required_when": ["stable_code_change", "project_map_write", "canonical_state_edit"],
+      "sensitive_paths": ["src/", "scripts/", "configs/", "project_map.json", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "code-debug",
+      "triggers": ["$code-debug", "/code-debug", "code-debug", "debug", "fix"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/code-style.md",
+          ".agents/references/language-policy.md",
+          ".agents/references/project-map-rule.md",
+          ".agents/references/pre-training-rule.md"
+        ],
+        "skill": [
+          ".agents/skills/code-debug/SKILL.md",
+          ".agents/skills/code-debug/references/debug-modes.md"
+        ],
+        "project_when_present": ["AGENTS.md", "project_map.json", "CLAUDE.md"],
+        "project_optional": ["docs/Validate_Run_Report.md", "iteration_log.json"]
+      },
+      "required_actions": ["read_project_map_before_stable_code", "py_compile_or_NOT_RUN", "ruff_or_NOT_RUN", "semantic_commit_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["stable_code_without_project_map_read", "project_map_stale", "training_without_semantic_commit"],
+      "gate_ledger_required_when": ["stable_code_change", "project_map_write"],
+      "sensitive_paths": ["src/", "scripts/", "configs/", "project_map.json"]
+    },
+    {
+      "skill": "code-review",
+      "triggers": [
+        "$code-review",
+        "/code-review",
+        "code-review",
+        "code review",
+        "review code",
+        "codex review",
+        "deepseek review",
+        "cross review",
+        "代码审查",
+        "代码 review",
+        "代码检查",
+        "交叉验证"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/code-style.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/language-policy.md",
+          ".agents/references/project-map-rule.md",
+          ".agents/references/review-tracing.md",
+          ".agents/references/reviewer-independence.md"
+        ],
+        "skill": [
+          ".agents/skills/code-review/SKILL.md",
+          ".agents/skills/code-review/references/review-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "CLAUDE.md", "project_map.json"],
+        "project_optional": [
+          "docs/Implementation_Roadmap.md",
+          "docs/Validate_Run_Report.md",
+          "iteration_log.json",
+          ".agents/state/current_iteration.json"
+        ]
+      },
+      "required_actions": [
+        "collect_review_scope",
+        "git_metadata_snapshot",
+        "changed_line_map",
+        "codex_review_or_NOT_RUN",
+        "deepseek_review_or_NOT_RUN",
+        "reconcile_review_findings",
+        "write_review_report_or_NOT_RUN",
+        "gate_ledger"
+      ],
+      "forbidden_actions": [
+        "modify_subject_files_during_code_review",
+        "review_without_line_references",
+        "unverified_model_finding_as_fact",
+        "heavy_review_without_trace"
+      ],
+      "gate_ledger_required_when": [
+        "post_code_change_review",
+        "code_review_report_write",
+        "docs_or_evidence_chain_review",
+        "heavy_review"
+      ],
+      "sensitive_paths": [
+        ".agents/state/review_traces/code-review/",
+        "docs/",
+        "src/",
+        "scripts/",
+        "configs/",
+        "tests/"
+      ]
+    },
+    {
+      "skill": "validate-run",
+      "triggers": ["$validate-run", "/validate-run", "validate-run", "smoke test", "WF9"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/reviewer-independence.md",
+          ".agents/references/review-tracing.md"
+        ],
+        "skill": [
+          ".agents/skills/validate-run/SKILL.md",
+          ".agents/skills/validate-run/references/review-checklist.md",
+          ".agents/skills/validate-run/references/validate-run-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "project_map.json", "CLAUDE.md"],
+        "project_optional": ["docs/Technical_Spec.md", "docs/Baseline_Report.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md"]
+      },
+      "required_actions": ["semantic_review", "smoke_test_or_NOT_RUN", "write_validate_report", "workflow_state_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["WF9_PASS_without_semantic_review", "WF9_PASS_without_smoke_evidence"],
+      "gate_ledger_required_when": ["WF10_readiness", "validate_report_write"],
+      "sensitive_paths": ["docs/Validate_Run_Report.md", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "iterate",
+      "triggers": ["$iterate", "/iterate", "iterate", "NEXT_ROUND", "DEBUG", "CONTINUE", "PIVOT", "ABORT", "WF10"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/lesson-quality-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/reviewer-independence.md",
+          ".agents/references/review-tracing.md"
+        ],
+        "skill": [
+          ".agents/skills/iterate/SKILL.md",
+          ".agents/skills/iterate/references/iteration-log-schema.json",
+          ".agents/skills/iterate/references/iteration-context.md",
+          ".agents/skills/iterate/references/iteration-constraints.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json"],
+        "project_optional": ["docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/50_memory/Lessons.md", "MEMORY.md"]
+      },
+      "required_actions": ["iteration_log_update", "decision_vocabulary", "lesson_quality_check_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["auto_observation_direct_to_MEMORY", "manual_edit_auto_iterate", "stage_transition_from_iterate"],
+      "gate_ledger_required_when": ["iteration_log_write", "lesson_promotion", "WF11_handoff"],
+      "sensitive_paths": ["iteration_log.json", "docs/40_iterations/", "docs/50_memory/", "MEMORY.md"]
+    },
+    {
+      "skill": "auto-iterate-goal",
+      "triggers": ["$auto-iterate-goal", "/auto-iterate-goal", "auto iterate goal", "auto-iterate goal", "WF10 auto"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/lesson-quality-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-iterate-goal/SKILL.md",
+          ".agents/skills/evaluate/references/stage-report.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json"],
+        "project_optional": ["docs/auto_iterate_goal.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/Validate_Run_Report.md"]
+      },
+      "required_actions": ["goal_validate_or_init", "context_gate_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["start_auto_iterate_without_goal_validation", "manual_edit_auto_iterate"],
+      "gate_ledger_required_when": ["WF10_auto_readiness", "goal_write"],
+      "sensitive_paths": ["docs/auto_iterate_goal.md", ".auto_iterate/"]
+    },
+    {
+      "skill": "final-exp",
+      "triggers": ["$final-exp", "/final-exp", "final experiment", "WF11"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/final-exp/SKILL.md",
+          ".agents/skills/final-exp/references/experiment-matrix.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json"],
+        "project_optional": ["docs/10_contract/Project_Contract.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md"]
+      },
+      "required_actions": ["respect_evaluation_contract", "respect_claim_boundary", "check_dynamic_context_or_NOT_RUN", "gate_ledger"],
+      "forbidden_actions": ["final_exp_outside_claim_boundary", "WF11_without_approved_contracts"],
+      "gate_ledger_required_when": ["WF11_readiness", "final_experiment_matrix_write"],
+      "sensitive_paths": ["docs/Final_Experiment_Matrix.md", "PROJECT_STATE.json"]
+    },
+    {
+      "skill": "release",
+      "triggers": ["$release", "/release", "release", "submit", "package", "WF12"],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/workflow-guide.md",
+          ".agents/references/context-layering-policy.md",
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/documentation-evidence-rule.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/release/SKILL.md",
+          ".agents/skills/release/references/release-checklist.md",
+          ".agents/skills/release/references/release-manifest.md"
+        ],
+        "project_when_present": ["AGENTS.md", "PROJECT_STATE.json", "iteration_log.json", "CLAUDE.md"],
+        "project_optional": ["docs/10_contract/Project_Contract.md", "docs/10_contract/Evaluation_Contract.md", "docs/10_contract/Baseline_Contract.md", "docs/10_contract/Claim_Boundary.md"]
+      },
+      "required_actions": ["check_dynamic_context_wf12_or_NOT_RUN", "release_manifest_validation", "claim_boundary_check", "gate_ledger"],
+      "forbidden_actions": ["release_claim_outside_claim_boundary", "submit_without_explicit_user_request", "overwrite_package_without_confirmation"],
+      "gate_ledger_required_when": ["WF12_readiness", "release_claim", "submission_package_write"],
+      "sensitive_paths": ["submission/", "docs/", "PROJECT_STATE.json"]
+    }
+  ]
+}

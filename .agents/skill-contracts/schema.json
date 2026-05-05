@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness skill contract",
+  "type": "object",
+  "required": ["schema_version", "contracts"],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "skill",
+          "triggers",
+          "required_read_set",
+          "required_actions",
+          "forbidden_actions",
+          "gate_ledger_required_when"
+        ],
+        "properties": {
+          "skill": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "triggers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "required_read_set": {
+            "type": "object",
+            "required": ["harness", "skill", "project_when_present", "project_optional"],
+            "properties": {
+              "harness": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "skill": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "project_when_present": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "project_optional": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+          "required_actions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "forbidden_actions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "gate_ledger_required_when": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "sensitive_paths": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

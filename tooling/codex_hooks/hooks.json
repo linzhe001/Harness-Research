@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tooling/codex_hooks/user_prompt_submit.py\"",
+            "timeout": 10,
+            "statusMessage": "Loading Harness skill contract"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|shell|local_shell|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tooling/codex_hooks/pre_tool_use_policy.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking Harness boundaries"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|shell|local_shell|apply_patch|Edit|Write|Read|View|Open",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tooling/codex_hooks/post_tool_use_markers.py\"",
+            "timeout": 10,
+            "statusMessage": "Recording Harness read/write markers"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tooling/codex_hooks/require_gate_ledger.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking Harness gate ledger"
+          }
+        ]
+      }
+    ]
+  }
+}

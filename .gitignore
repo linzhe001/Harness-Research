@@ -25,9 +25,12 @@
 /.evidence/protocol_compiler/
 /.evidence/review_packets/
 /Reference_tool_repo/
+/Harness_Update_Guide.md
+/跨项目共享上下文解析.txt
 /tests/*
 !/tests/test_dynamic_context_contracts.py
 !/tests/test_dynamic_context_suite.py
+!/tests/test_codex_hooks_contracts.py
 !/tests/test_evidence_docchain.py
 !/tests/test_evidence_docchain_gates.py
 !/tests/test_evidence_context_tools.py
@@ -60,6 +63,7 @@
 /.npm-cache/
 /.cc-connect/
 /.codex
+/.harness_hooks/
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Line-referenced code review with git metadata and cross-checks"
+  default_prompt: "Use $code-review to review the current git diff and write a reconciled report."
+
+policy:
+  allow_implicit_invocation: false
