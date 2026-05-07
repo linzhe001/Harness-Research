@@ -90,6 +90,8 @@ Current-project dynamic context files are research-owned:
 - `OPERATOR_CONTEXT.md` stores operator preferences, not project facts. It is
   written only from explicit operator input during init or an explicit preference
   update; later stages read it but must not infer or rewrite preferences.
+- `docs/20_facts/**` stores current fact-layer summaries compiled from project
+  artifacts, logs, configs, metrics, or evidence chains.
 - `docs/30_evidence/**` stores evidence tables and open questions.
 - `docs/35_protocol/**` stores evidence-derived protocol drafts.
 - `docs/10_contract/**` stores human-approved project, evaluation, baseline,
@@ -330,13 +332,13 @@ $iterate ablate {base_iter} --components "name1:override1,name2:override2"
 ```
 
 Components are passed through `--components` as `name:override` pairs.
-For each component, generate a `{base_iter}_no_{component}` sub-iteration, run eval automatically after training, and classify by delta:
+For each component, generate a `{base_iter}_no_{component}` sub-iteration, run eval automatically after training, and classify by the active Evaluation Contract thresholds. If the contract does not define ablation thresholds, use the default PSNR-style delta thresholds below:
 
 | Delta Range | Category |
 |-----------|------|
 | < -1.0 dB | `significant` — core component |
 | < -0.3 dB | `moderate` — contributes meaningfully |
-| >= -0.3 dB | `minimal` — can be simplified |
+| >= -0.3 dB and <= 0 dB | `minimal` — can be simplified |
 | > 0 dB | `negative` — removal works better |
 
 Supports resume-after-interruption: completed sub-iterations are skipped automatically.
@@ -771,10 +773,11 @@ After each stage is completed, orchestrator automatically triggers `$init-projec
                 │ Output comparison table           │
                 │ Component | Metric | Delta | Class│
                 │ ───────────────────────────────── │
-                │ < -1.0 dB → significant (core)   │
-                │ < -0.3 dB → moderate (useful)    │
-                │ >= -0.3  → minimal (simplifiable)│
-                │ > 0 dB   → negative (better off) │
+                │ contract thresholds preferred     │
+                │ fallback: < -1.0 dB → significant│
+                │ fallback: < -0.3 dB → moderate   │
+                │ fallback: >= -0.3 dB → minimal   │
+                │ fallback: > 0 dB → negative      │
                 └───────────────────────────────────┘
 ```
 

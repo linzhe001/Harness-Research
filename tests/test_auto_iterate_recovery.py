@@ -13,21 +13,19 @@ import sys
 import time
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
-from auto_iterate.recovery import (
+from auto_iterate.lock import LockManager  # noqa: E402
+from auto_iterate.postcondition import PostconditionValidator  # noqa: E402
+from auto_iterate.recovery import (  # noqa: E402
     ADOPT,
     FAIL,
     RERUN,
     RecoveryEngine,
     recovery_action,
 )
-from auto_iterate.postcondition import PostconditionValidator
-from auto_iterate.state import atomic_write_json, load_json
-from auto_iterate.lock import LockManager
+from auto_iterate.state import atomic_write_json  # noqa: E402
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate"
 
@@ -182,20 +180,40 @@ class TestRecoveryEngine:
         validator = PostconditionValidator(tmp_path)
         return RecoveryEngine(validator)
 
+    def _planned_iteration(self, iteration_id: str, hypothesis: str) -> dict:
+        return {
+            "id": iteration_id,
+            "date": "2026-04-28",
+            "status": "planned",
+            "hypothesis": hypothesis,
+            "changes_summary": "try a focused workflow fix",
+            "config_diff": {},
+            "screening": {"recommended": True},
+            "codex_review": {"status": "used"},
+        }
+
     def test_recover_plan_adopt(self, tmp_path: Path) -> None:
-        engine = self._make_engine(tmp_path, [
-            {"id": "iter1", "status": "planned", "hypothesis": "test"},
-        ])
-        state = {"current_phase_key": "plan", "current_iteration_id": None, "phase_attempt": 1}
+        engine = self._make_engine(
+            tmp_path,
+            [self._planned_iteration("iter1", "test")],
+        )
+        state = {
+            "current_phase_key": "plan",
+            "current_iteration_id": None,
+            "phase_attempt": 1,
+        }
         result = engine.recover(state)
         assert result["action"] == ADOPT
         assert result["adopted_iteration_id"] == "iter1"
 
     def test_recover_plan_uses_bound_iteration_id(self, tmp_path: Path) -> None:
-        engine = self._make_engine(tmp_path, [
-            {"id": "iter_old", "status": "planned", "hypothesis": "old"},
-            {"id": "iter_new", "status": "planned", "hypothesis": "new"},
-        ])
+        engine = self._make_engine(
+            tmp_path,
+            [
+                self._planned_iteration("iter_old", "old"),
+                self._planned_iteration("iter_new", "new"),
+            ],
+        )
         state = {
             "current_phase_key": "plan",
             "current_iteration_id": None,
@@ -210,7 +228,11 @@ class TestRecoveryEngine:
         engine = self._make_engine(tmp_path, [
             {"id": "iter1", "status": "coding"},
         ])
-        state = {"current_phase_key": "code", "current_iteration_id": "iter1", "phase_attempt": 1}
+        state = {
+            "current_phase_key": "code",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 1,
+        }
         result = engine.recover(state)
         assert result["action"] == RERUN
 
@@ -218,7 +240,11 @@ class TestRecoveryEngine:
         engine = self._make_engine(tmp_path, [
             {"id": "iter1", "status": "coding"},
         ])
-        state = {"current_phase_key": "code", "current_iteration_id": "iter1", "phase_attempt": 3}
+        state = {
+            "current_phase_key": "code",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 3,
+        }
         result = engine.recover(state, max_phase_attempts=2)
         assert result["action"] == FAIL
 

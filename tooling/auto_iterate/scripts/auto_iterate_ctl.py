@@ -27,7 +27,8 @@ def main(argv: list[str] | None = None) -> int:
         description="Auto-iterate V7 controller CLI",
     )
     parser.add_argument(
-        "--workspace-root", default=".",
+        "--workspace-root",
+        default=".",
         help="Project workspace root (default: current directory)",
     )
     sub = parser.add_subparsers(dest="command")
@@ -49,9 +50,19 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip the WF10 dynamic-context gate suite before starting",
     )
     p_start.add_argument(
+        "--skip-dynamic-preflight-reason",
+        default=None,
+        help="Required audit reason when --skip-dynamic-preflight is used",
+    )
+    p_start.add_argument(
         "--allow-draft-contract",
         action="store_true",
         help="Allow a draft Evaluation Contract during dynamic-context preflight",
+    )
+    p_start.add_argument(
+        "--allow-review-required",
+        action="store_true",
+        help="Allow a protocol review gap during dynamic-context preflight",
     )
 
     # -- status -------------------------------------------------------------
@@ -67,6 +78,26 @@ def main(argv: list[str] | None = None) -> int:
     # -- resume -------------------------------------------------------------
     p_resume = sub.add_parser("resume", help="Resume an interrupted loop")
     p_resume.add_argument("--config", default=None)
+    p_resume.add_argument(
+        "--skip-dynamic-preflight",
+        action="store_true",
+        help="Skip the WF10 dynamic-context gate suite before resuming",
+    )
+    p_resume.add_argument(
+        "--skip-dynamic-preflight-reason",
+        default=None,
+        help="Required audit reason when --skip-dynamic-preflight is used",
+    )
+    p_resume.add_argument(
+        "--allow-draft-contract",
+        action="store_true",
+        help="Allow a draft Evaluation Contract during dynamic-context preflight",
+    )
+    p_resume.add_argument(
+        "--allow-review-required",
+        action="store_true",
+        help="Allow a protocol review gap during dynamic-context preflight",
+    )
 
     # -- tail ---------------------------------------------------------------
     p_tail = sub.add_parser("tail", help="Show recent events")
@@ -96,7 +127,9 @@ def main(argv: list[str] | None = None) -> int:
             tool=args.tool,
             cli_overrides=cli_overrides or None,
             skip_dynamic_preflight=args.skip_dynamic_preflight,
+            skip_dynamic_preflight_reason=args.skip_dynamic_preflight_reason,
             allow_draft_contract=args.allow_draft_contract,
+            allow_review_required=args.allow_review_required,
         )
 
     elif args.command == "status":
@@ -118,7 +151,13 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_OK
 
     elif args.command == "resume":
-        return ctl.resume_loop(config_path=args.config)
+        return ctl.resume_loop(
+            config_path=args.config,
+            skip_dynamic_preflight=args.skip_dynamic_preflight,
+            skip_dynamic_preflight_reason=args.skip_dynamic_preflight_reason,
+            allow_draft_contract=args.allow_draft_contract,
+            allow_review_required=args.allow_review_required,
+        )
 
     elif args.command == "tail":
         events = ctl.tail_events(lines=args.lines, jsonl=args.jsonl)

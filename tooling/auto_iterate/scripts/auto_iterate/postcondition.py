@@ -13,8 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .state import load_json, StateLoadError
-
+from .state import StateLoadError, load_json
 
 # ---------------------------------------------------------------------------
 # Result dataclass (plain dict for simplicity)
@@ -58,7 +57,10 @@ def bind_iteration_id(
     if len(new_ids) == 0:
         return None, "plan did not create a new iteration entry"
     if len(new_ids) > 1:
-        return None, f"plan created {len(new_ids)} entries (ambiguous): {sorted(new_ids)}"
+        return (
+            None,
+            f"plan created {len(new_ids)} entries (ambiguous): {sorted(new_ids)}",
+        )
     return new_ids.pop(), None
 
 
@@ -75,6 +77,157 @@ def _get_iteration(iterations: list[dict], iteration_id: str) -> dict | None:
 
 def _get_ids(iterations: list[dict]) -> set[str]:
     return {it["id"] for it in iterations if "id" in it}
+
+
+def _run_manifest_error(iteration: dict) -> str | None:
+    run_manifest = iteration.get("run_manifest")
+    if not isinstance(run_manifest, dict) or not run_manifest:
+        return "run_manifest is required"
+    if (
+        not isinstance(run_manifest.get("command"), str)
+        or not run_manifest.get("command", "").strip()
+    ):
+        return "run_manifest.command is required"
+    if (
+        not isinstance(run_manifest.get("exp_dir"), str)
+        or not run_manifest.get("exp_dir", "").strip()
+    ):
+        return "run_manifest.exp_dir is required"
+    return None
+
+
+def _tracked_metric_names(protocol: Any) -> set[str]:
+    if not isinstance(protocol, dict):
+        return set()
+    metrics = protocol.get("tracked_metrics")
+    if not isinstance(metrics, list):
+        return set()
+    names: set[str] = set()
+    for item in metrics:
+        if isinstance(item, dict) and isinstance(item.get("name"), str):
+            names.add(item["name"])
+        elif isinstance(item, str):
+            names.add(item)
+    return names
+
+
+def _primary_metric_name(protocol: Any) -> str | None:
+    if not isinstance(protocol, dict):
+        return None
+    metric = protocol.get("primary_metric")
+    if isinstance(metric, str) and metric.strip():
+        return metric.strip()
+    if isinstance(metric, dict):
+        name = metric.get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    return None
+
+
+def _metrics_protocol_error(
+    metrics: dict[str, Any],
+    *,
+    tracked: set[str],
+    primary_metric: str | None,
+) -> str | None:
+    if tracked:
+        unknown = sorted(set(metrics) - tracked)
+        if unknown:
+            return (
+                "metrics contain keys outside the tracked metric protocol: "
+                f"{', '.join(unknown)}"
+            )
+    if primary_metric and primary_metric not in metrics:
+        return f"metrics must include primary metric {primary_metric!r}"
+    if primary_metric:
+        value = metrics[primary_metric]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return f"primary metric {primary_metric!r} must be numeric"
+    return None
+
+
+def _screening_metrics_error(iteration: dict, tracked: set[str]) -> str | None:
+    screening = iteration.get("screening")
+    if not isinstance(screening, dict):
+        return "screening is required"
+    status = screening.get("status")
+    if status not in ("passed", "failed"):
+        return None
+    metrics = screening.get("metrics")
+    if not isinstance(metrics, dict) or not metrics:
+        return "screening.metrics are required when screening.status is passed|failed"
+    if tracked:
+        unknown = sorted(set(metrics) - tracked)
+        if unknown:
+            return (
+                "screening.metrics contain keys outside the tracked metric "
+                f"protocol: {', '.join(unknown)}"
+            )
+    return None
+
+
+def _valid_codex_review(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, dict):
+        status = value.get("status")
+        if isinstance(status, str) and status.strip():
+            return True
+        approved = value.get("approved")
+        rounds = value.get("rounds")
+        feedback = value.get("feedback")
+        return (
+            isinstance(approved, bool)
+            or isinstance(rounds, int)
+            or (isinstance(feedback, str) and bool(feedback.strip()))
+        )
+    return False
+
+
+def iteration_metrics(iteration: dict[str, Any]) -> dict[str, Any]:
+    top_level = iteration.get("metrics")
+    if isinstance(top_level, dict) and top_level:
+        return top_level
+    full_run = iteration.get("full_run")
+    if isinstance(full_run, dict):
+        nested = full_run.get("metrics")
+        if isinstance(nested, dict):
+            return nested
+    return {}
+
+
+def iteration_metrics_conflict(iteration: dict[str, Any]) -> bool:
+    top_level = iteration.get("metrics")
+    full_run = iteration.get("full_run")
+    if not isinstance(top_level, dict) or not top_level:
+        return False
+    if not isinstance(full_run, dict):
+        return False
+    nested = full_run.get("metrics")
+    return isinstance(nested, dict) and bool(nested) and top_level != nested
+
+
+def iteration_report_paths(root: Path, iteration_id: str) -> list[Path]:
+    """Return supported per-iteration report locations."""
+    return [
+        root / "docs" / "iterations" / f"{iteration_id}.md",
+        root / "docs" / "40_iterations" / f"{iteration_id}.md",
+    ]
+
+
+def existing_iteration_report_path(root: Path, iteration_id: str) -> Path | None:
+    for path in iteration_report_paths(root, iteration_id):
+        if path.exists():
+            return path
+    return None
+
+
+def iteration_report_error(root: Path, iteration_id: str) -> str:
+    candidates = ", ".join(
+        path.relative_to(root).as_posix()
+        for path in iteration_report_paths(root, iteration_id)
+    )
+    return f"Per-iteration report is required at one of: {candidates}"
 
 
 class PostconditionValidator:
@@ -100,6 +253,7 @@ class PostconditionValidator:
         current_iteration_id: str | None,
         *,
         pre_ids: set[str] | None = None,
+        primary_metric_name: str | None = None,
     ) -> dict[str, Any]:
         """Run the postcondition check for *phase_key*.
 
@@ -112,17 +266,36 @@ class PostconditionValidator:
         """
         log = self.load_iteration_log()
         iterations = log.get("iterations", [])
+        tracked = _tracked_metric_names(log.get("evaluation_protocol"))
+        primary_metric = (
+            primary_metric_name
+            or _primary_metric_name(log.get("evaluation_protocol"))
+        )
 
         if phase_key == "plan":
             return self._validate_plan(iterations, pre_ids or set())
         elif phase_key == "code":
             return self._validate_code(iterations, current_iteration_id)
         elif phase_key == "run_screening":
-            return self._validate_run_screening(iterations, current_iteration_id)
+            return self._validate_run_screening(
+                iterations,
+                current_iteration_id,
+                tracked,
+            )
         elif phase_key == "run_full":
-            return self._validate_run_full(iterations, current_iteration_id)
+            return self._validate_run_full(
+                iterations,
+                current_iteration_id,
+                tracked,
+                primary_metric,
+            )
         elif phase_key == "eval":
-            return self._validate_eval(iterations, current_iteration_id)
+            return self._validate_eval(
+                iterations,
+                current_iteration_id,
+                tracked,
+                primary_metric,
+            )
         else:
             return _fail(phase_key, "unknown_phase", current_iteration_id,
                          {"error": f"Unknown phase_key: {phase_key}"})
@@ -144,8 +317,12 @@ class PostconditionValidator:
                          {"error": "New iteration not found after binding"})
 
         if it.get("status") != "planned":
-            return _fail("plan", "postcondition_failed", iter_id,
-                         {"error": f"Expected status=planned, got {it.get('status')!r}"})
+            return _fail(
+                "plan",
+                "postcondition_failed",
+                iter_id,
+                {"error": f"Expected status=planned, got {it.get('status')!r}"},
+            )
 
         # Check required plan fields
         missing = []
@@ -158,10 +335,12 @@ class PostconditionValidator:
         if "config_diff" not in it or not isinstance(it.get("config_diff"), dict):
             missing.append("config_diff")
         screening = it.get("screening")
-        if not isinstance(screening, dict) or not isinstance(screening.get("recommended"), bool):
+        if not isinstance(screening, dict) or not isinstance(
+            screening.get("recommended"),
+            bool,
+        ):
             missing.append("screening.recommended")
-        codex_review = it.get("codex_review")
-        if codex_review in (None, ""):
+        if not _valid_codex_review(it.get("codex_review")):
             missing.append("codex_review")
         if missing:
             return _fail("plan", "postcondition_failed", iter_id,
@@ -184,8 +363,12 @@ class PostconditionValidator:
                          {"error": f"Iteration {iteration_id} not found"})
 
         if it.get("status") != "training":
-            return _fail("code", "postcondition_failed", iteration_id,
-                         {"error": f"Expected status=training, got {it.get('status')!r}"})
+            return _fail(
+                "code",
+                "postcondition_failed",
+                iteration_id,
+                {"error": f"Expected status=training, got {it.get('status')!r}"},
+            )
 
         if not it.get("git_commit"):
             return _fail("code", "postcondition_failed", iteration_id,
@@ -199,7 +382,10 @@ class PostconditionValidator:
     # -- run_screening ------------------------------------------------------
 
     def _validate_run_screening(
-        self, iterations: list[dict], iteration_id: str | None,
+        self,
+        iterations: list[dict],
+        iteration_id: str | None,
+        tracked_metrics: set[str],
     ) -> dict[str, Any]:
         if iteration_id is None:
             return _fail("run_screening", "postcondition_failed", None,
@@ -213,8 +399,25 @@ class PostconditionValidator:
         screening = it.get("screening", {})
         status = screening.get("status")
         if status not in ("passed", "failed", "skipped"):
+            return _fail(
+                "run_screening",
+                "postcondition_failed",
+                iteration_id,
+                {
+                    "error": (
+                        f"screening.status={status!r}, "
+                        "expected passed|failed|skipped"
+                    )
+                },
+            )
+        manifest_error = None if status == "skipped" else _run_manifest_error(it)
+        if manifest_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
-                         {"error": f"screening.status={status!r}, expected passed|failed|skipped"})
+                         {"error": manifest_error})
+        metrics_error = _screening_metrics_error(it, tracked_metrics)
+        if metrics_error:
+            return _fail("run_screening", "postcondition_failed", iteration_id,
+                         {"error": metrics_error})
 
         return _ok("run_screening", status, iteration_id,
                     {"screening_status": status})
@@ -222,7 +425,11 @@ class PostconditionValidator:
     # -- run_full -----------------------------------------------------------
 
     def _validate_run_full(
-        self, iterations: list[dict], iteration_id: str | None,
+        self,
+        iterations: list[dict],
+        iteration_id: str | None,
+        tracked_metrics: set[str],
+        primary_metric: str | None,
     ) -> dict[str, Any]:
         if iteration_id is None:
             return _fail("run_full", "postcondition_failed", None,
@@ -236,13 +443,43 @@ class PostconditionValidator:
         full_run = it.get("full_run", {})
         status = full_run.get("status")
         if status not in ("completed", "recoverable_failed", "failed"):
-            return _fail("run_full", "postcondition_failed", iteration_id,
-                         {"error": f"full_run.status={status!r}, expected completed|recoverable_failed|failed"})
+            return _fail(
+                "run_full",
+                "postcondition_failed",
+                iteration_id,
+                {
+                    "error": (
+                        f"full_run.status={status!r}, "
+                        "expected completed|recoverable_failed|failed"
+                    )
+                },
+            )
         if status == "completed":
             metrics = full_run.get("metrics", {})
             if not isinstance(metrics, dict) or not metrics:
+                return _fail(
+                    "run_full",
+                    "postcondition_failed",
+                    iteration_id,
+                    {
+                        "error": (
+                            "full_run.metrics are required when "
+                            "full_run.status=completed"
+                        )
+                    },
+                )
+            metrics_error = _metrics_protocol_error(
+                metrics,
+                tracked=tracked_metrics,
+                primary_metric=primary_metric,
+            )
+            if metrics_error:
                 return _fail("run_full", "postcondition_failed", iteration_id,
-                             {"error": "full_run.metrics are required when full_run.status=completed"})
+                             {"error": metrics_error})
+            manifest_error = _run_manifest_error(it)
+            if manifest_error:
+                return _fail("run_full", "postcondition_failed", iteration_id,
+                             {"error": manifest_error})
         if status in ("recoverable_failed", "failed"):
             run_manifest = it.get("run_manifest", {}) or {}
             if not full_run.get("error") and not run_manifest.get("error"):
@@ -255,7 +492,11 @@ class PostconditionValidator:
     # -- eval ---------------------------------------------------------------
 
     def _validate_eval(
-        self, iterations: list[dict], iteration_id: str | None,
+        self,
+        iterations: list[dict],
+        iteration_id: str | None,
+        tracked_metrics: set[str],
+        primary_metric: str | None,
     ) -> dict[str, Any]:
         if iteration_id is None:
             return _fail("eval", "postcondition_failed", None,
@@ -267,28 +508,68 @@ class PostconditionValidator:
                          {"error": f"Iteration {iteration_id} not found"})
 
         if it.get("status") != "completed":
-            return _fail("eval", "postcondition_failed", iteration_id,
-                         {"error": f"Expected status=completed, got {it.get('status')!r}"})
+            return _fail(
+                "eval",
+                "postcondition_failed",
+                iteration_id,
+                {"error": f"Expected status=completed, got {it.get('status')!r}"},
+            )
 
         decision = it.get("decision")
         valid_decisions = {"NEXT_ROUND", "DEBUG", "CONTINUE", "PIVOT", "ABORT"}
         if decision not in valid_decisions:
-            return _fail("eval", "postcondition_failed", iteration_id,
-                         {"error": f"decision={decision!r}, expected one of {valid_decisions}"})
+            return _fail(
+                "eval",
+                "postcondition_failed",
+                iteration_id,
+                {"error": f"decision={decision!r}, expected one of {valid_decisions}"},
+            )
 
         lessons = it.get("lessons", [])
         if not lessons:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": "At least 1 lesson is required"})
 
-        metrics = it.get("metrics", it.get("full_run", {}).get("metrics", {}))
+        if iteration_metrics_conflict(it):
+            return _fail(
+                "eval",
+                "postcondition_failed",
+                iteration_id,
+                {
+                    "error": (
+                        "iteration.metrics and full_run.metrics both exist "
+                        "with different values"
+                    )
+                },
+            )
+
+        metrics = iteration_metrics(it)
         if not isinstance(metrics, dict) or not metrics:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": "Finalized metrics are required"})
-        report_path = self.root / "docs" / "iterations" / f"{iteration_id}.md"
-        if not report_path.exists():
+        metrics_error = _metrics_protocol_error(
+            metrics,
+            tracked=tracked_metrics,
+            primary_metric=primary_metric,
+        )
+        if metrics_error:
             return _fail("eval", "postcondition_failed", iteration_id,
-                         {"error": f"Per-iteration report is required: {report_path.relative_to(self.root)}"})
+                         {"error": metrics_error})
+        git_commit = it.get("git_commit")
+        if not isinstance(git_commit, str) or not git_commit.strip():
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": "git_commit is required"})
+        manifest_error = _run_manifest_error(it)
+        if manifest_error:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": manifest_error})
+        if existing_iteration_report_path(self.root, iteration_id) is None:
+            return _fail(
+                "eval",
+                "postcondition_failed",
+                iteration_id,
+                {"error": iteration_report_error(self.root, iteration_id)},
+            )
 
         return _ok("eval", "completed", iteration_id,
                     {"decision": decision})

@@ -48,11 +48,11 @@ Framework-wide docs:
 
 | Path | Purpose |
 |------|---------|
-| `.claude/skills/` | Claude Code skill definitions (21 skills) |
+| `.claude/skills/` | Claude Code skill definitions (24 skills) |
 | `.claude/rules/` | Auto-triggered rules (pre-training, project-map, deps-update) |
 | `.claude/shared/` | Shared references (code style, language policy, documentation rules) |
 | `.claude/Workflow_Guide.md` | Full workflow documentation for Claude Code |
-| `.agents/skills/` | Codex agent skill definitions (22 skills) |
+| `.agents/skills/` | Codex agent skill definitions (24 skills) |
 | `.agents/references/` | Shared behavior constraints for Codex |
 | `CLAUDE.md.template` | Project CLAUDE.md template with `{{placeholders}}` |
 | `AGENTS.md.template` | Project AGENTS.md template with `{{placeholders}}` |
@@ -340,8 +340,9 @@ opts into the dynamic context layout.
 
 Before unattended WF10 auto-iteration in a dynamic-context project, check the
 contract gate. The auto-iterate controller also runs the all-in-one WF10
-dynamic-context preflight before launching unless `--skip-dynamic-preflight` is
-used:
+dynamic-context preflight before launching or resuming. Skipping it requires
+`--skip-dynamic-preflight --skip-dynamic-preflight-reason "<reason>"` and should
+only be used for legacy or manually gated runs:
 
 ```bash
 python tooling/evidence/compile_protocol.py --workspace-root .
@@ -374,7 +375,11 @@ Use `--allow-draft` only when the operator explicitly accepts running the
 current auto-iteration with a draft Evaluation Contract. The controller exposes
 the equivalent start option as `--allow-draft-contract`. Use
 `--allow-review-required` only when the operator explicitly accepts running with
-a protocol review gap.
+a protocol review gap. `start` and `resume` both run the WF10 dynamic-context
+preflight. Use `--skip-dynamic-preflight --skip-dynamic-preflight-reason
+"<reason>"` only for legacy or manually gated runs; the controller records the
+reason in `.auto_iterate/state.json`, `.auto_iterate/dynamic_context_preflight.json`,
+and events.
 
 To compile an auditable docchain for a current document:
 

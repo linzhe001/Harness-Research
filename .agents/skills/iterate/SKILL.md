@@ -92,7 +92,10 @@ Interpret natural-language requests as one of these canonical intents:
 2. Build the training command from `CLAUDE.md` entry scripts and the config.
 3. Resolve the tracked metrics from the baseline or evaluation protocol established in WF5 instead of hard-coding PSNR/SSIM-style keys.
 4. Record run metadata in `run_manifest`.
-5. Preserve the canonical error handling and manual-mode fallback behavior.
+5. When this is a screening/proxy run that returns `passed` or `failed`, record
+   `screening.metrics` from the tracked metric set and keep the screening
+   command/exp_dir in `run_manifest`.
+6. Preserve the canonical error handling and manual-mode fallback behavior.
 
 ### `eval`
 

@@ -99,7 +99,8 @@
             "description": "Screening run result (same iteration as full_run)",
             "properties": {
               "recommended": { "type": "boolean", "description": "Whether plan recommended screening" },
-              "status": { "type": "string", "enum": ["passed", "failed", "skipped"], "description": "Terminal screening status" }
+              "status": { "type": "string", "enum": ["passed", "failed", "skipped"], "description": "Terminal screening status" },
+              "metrics": { "type": "object", "description": "Protocol-defined tracked metrics from the screening run", "additionalProperties": { "type": ["number", "string", "null"] } }
             }
           },
           "full_run": {

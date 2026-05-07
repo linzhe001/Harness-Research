@@ -327,13 +327,13 @@ Quickly determine component contributions, generating a comparison table:
 ```
 
 Components are passed via `--components` as `name:override` pairs.
-For each component, generates a `{base_iter}_no_{component}` sub-iteration, auto-evaluates after training, and classifies by delta:
+For each component, generates a `{base_iter}_no_{component}` sub-iteration, auto-evaluates after training, and classifies by the active Evaluation Contract thresholds. If the contract does not define ablation thresholds, use the default PSNR-style delta thresholds below:
 
 | Delta Range | Classification |
 |-------------|----------------|
 | < -1.0 dB | `significant` — core component |
 | < -0.3 dB | `moderate` — contributes |
-| >= -0.3 dB | `minimal` — can be simplified |
+| >= -0.3 dB and <= 0 dB | `minimal` — can be simplified |
 | > 0 dB | `negative` — better without it |
 
 Supports resumption: already completed sub-iterations are automatically skipped.
@@ -783,10 +783,11 @@ After each stage completes, the orchestrator auto-triggers `/init-project update
                 │ Output comparison table             │
                 │ Component | Metric | Delta | Class  │
                 │ ─────────────────────────────────  │
-                │ < -1.0 dB → significant (core)     │
-                │ < -0.3 dB → moderate (contributes) │
-                │ >= -0.3  → minimal (simplifiable)  │
-                │ > 0 dB   → negative (better w/o)   │
+                │ contract thresholds preferred       │
+                │ fallback: < -1.0 dB → significant  │
+                │ fallback: < -0.3 dB → moderate     │
+                │ fallback: >= -0.3 dB → minimal     │
+                │ fallback: > 0 dB → negative        │
                 └───────────────────────────────────┘
 ```
 

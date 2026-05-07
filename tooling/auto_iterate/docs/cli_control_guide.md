@@ -15,6 +15,9 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
 Optional flags:
 - `--dry-run` — walk the state machine without invoking real Codex
 - `--max-rounds N` — override the goal's `budget.max_rounds`
+- `--allow-draft-contract` — allow a draft Evaluation Contract only after explicit operator acceptance
+- `--allow-review-required` — allow a protocol review gap only after explicit operator acceptance
+- `--skip-dynamic-preflight --skip-dynamic-preflight-reason "<reason>"` — skip the WF10 dynamic-context gate suite for legacy or manually gated runs and record the reason in controller state/events
 
 ## 2. Checking Status
 
@@ -60,6 +63,10 @@ Both commands create a signal file (`.auto_iterate_pause` or `.auto_iterate_stop
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume \
   --config tooling/auto_iterate/config/controller.local.yaml
 ```
+
+`resume` reruns the WF10 dynamic-context preflight before continuing. Use the
+same explicit override flags as `start` only when the operator accepts that
+run-specific risk.
 
 Resume handles:
 - Stale lock detection and cleanup (emits `STALE_LOCK_CLEARED`)

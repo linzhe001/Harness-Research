@@ -26,6 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.lock import LockManager
 from auto_iterate.postcondition import PostconditionValidator, bind_iteration_id
+from auto_iterate.recovery import ADOPT, RERUN, RecoveryEngine
 from auto_iterate.runtime import (
     BriefValidationError,
     HeartbeatWorker,
@@ -416,6 +417,68 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "hypothesis" in str(result["payload"])
 
+    def test_plan_rejects_non_string_codex_review(self, tmp_path: Path) -> None:
+        pre_ids = set()
+        v = self._make_project(tmp_path, [
+            {
+                "id": "iter1",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test hypothesis",
+                "changes_summary": "try a small loss change",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": False,
+            },
+        ])
+
+        result = v.validate("plan", None, pre_ids=pre_ids)
+
+        assert result["ok"] is False
+        assert "codex_review" in str(result["payload"])
+
+    def test_plan_accepts_structured_codex_review_status(self, tmp_path: Path) -> None:
+        pre_ids = set()
+        v = self._make_project(tmp_path, [
+            {
+                "id": "iter1",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test hypothesis",
+                "changes_summary": "try a small loss change",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": {"status": "used"},
+            },
+        ])
+
+        result = v.validate("plan", None, pre_ids=pre_ids)
+
+        assert result["ok"] is True
+
+    def test_plan_accepts_schema_codex_review_object(self, tmp_path: Path) -> None:
+        pre_ids = set()
+        v = self._make_project(tmp_path, [
+            {
+                "id": "iter1",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test hypothesis",
+                "changes_summary": "try a small loss change",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": {
+                    "approved": True,
+                    "rounds": 1,
+                    "feedback": "No blocking issues.",
+                },
+            },
+        ])
+
+        result = v.validate("plan", None, pre_ids=pre_ids)
+
+        assert result["ok"] is True
+
     # -- code ---------------------------------------------------------------
 
     def test_code_success(self, tmp_path: Path) -> None:
@@ -448,7 +511,15 @@ class TestPostconditionValidator:
     def test_run_screening_passed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
-             "screening": {"recommended": True, "status": "passed"}},
+             "screening": {
+                 "recommended": True,
+                 "status": "passed",
+                 "metrics": {"PSNR": 30.1},
+             },
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3_screen.yaml",
+                 "exp_dir": "experiments/iter3_screen",
+             }},
         ])
         result = v.validate("run_screening", "iter3")
         assert result["ok"] is True
@@ -457,11 +528,79 @@ class TestPostconditionValidator:
     def test_run_screening_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
-             "screening": {"recommended": True, "status": "failed"}},
+             "screening": {
+                 "recommended": True,
+                 "status": "failed",
+                 "metrics": {"PSNR": 25.4},
+             },
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3_screen.yaml",
+                 "exp_dir": "experiments/iter3_screen",
+             }},
         ])
         result = v.validate("run_screening", "iter3")
         assert result["ok"] is True
         assert result["payload"]["screening_status"] == "failed"
+
+    def test_run_screening_failed_requires_metrics(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "screening": {"recommended": True, "status": "failed"},
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3_screen.yaml",
+                 "exp_dir": "experiments/iter3_screen",
+             }},
+        ])
+        result = v.validate("run_screening", "iter3")
+        assert result["ok"] is False
+        assert "screening.metrics" in result["payload"]["error"]
+
+    def test_run_screening_rejects_untracked_metric(self, tmp_path: Path) -> None:
+        atomic_write_json(
+            tmp_path / "iteration_log.json",
+            {
+                "evaluation_protocol": {
+                    "tracked_metrics": [{"name": "PSNR"}],
+                },
+                "iterations": [
+                    {
+                        "id": "iter3",
+                        "status": "training",
+                        "screening": {
+                            "recommended": True,
+                            "status": "passed",
+                            "metrics": {"NOT_TRACKED": 1.0},
+                        },
+                        "run_manifest": {
+                            "command": (
+                                "python train.py --config "
+                                "configs/iter3_screen.yaml"
+                            ),
+                            "exp_dir": "experiments/iter3_screen",
+                        },
+                    }
+                ],
+            },
+        )
+        v = PostconditionValidator(tmp_path)
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is False
+        assert "NOT_TRACKED" in result["payload"]["error"]
+
+    def test_run_screening_failed_requires_run_manifest(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "screening": {
+                 "recommended": True,
+                 "status": "failed",
+                 "metrics": {"PSNR": 25.4},
+             }},
+        ])
+        result = v.validate("run_screening", "iter3")
+        assert result["ok"] is False
+        assert "run_manifest" in result["payload"]["error"]
 
     def test_run_screening_missing(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -476,7 +615,11 @@ class TestPostconditionValidator:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
              "full_run": {"status": "completed", "resume_mode": "from_scratch",
-                          "metrics": {"PSNR": 31.2}}},
+                          "metrics": {"PSNR": 31.2}},
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
         ])
         result = v.validate("run_full", "iter3")
         assert result["ok"] is True
@@ -500,6 +643,15 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "metrics" in result["payload"]["error"]
 
+    def test_run_full_completed_requires_run_manifest(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}}},
+        ])
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is False
+        assert "run_manifest" in result["payload"]["error"]
+
     def test_run_full_no_full_run(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training"},
@@ -514,9 +666,40 @@ class TestPostconditionValidator:
             {"id": "iter3", "status": "completed",
              "decision": "NEXT_ROUND",
              "lessons": ["Learned something"],
-             "metrics": {"PSNR": 31.5}},
+             "metrics": {"PSNR": 31.5},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
         ])
         result = v.validate("eval", "iter3")
+        assert result["ok"] is True
+        assert result["payload"]["decision"] == "NEXT_ROUND"
+
+    def test_eval_accepts_dynamic_context_iteration_report(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "completed",
+              "decision": "NEXT_ROUND",
+              "lessons": ["Learned something"],
+              "metrics": {"PSNR": 31.5},
+              "git_commit": "abc123",
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3",
+              }}],
+            create_reports=False,
+        )
+        report = tmp_path / "docs" / "40_iterations" / "iter3.md"
+        report.parent.mkdir(parents=True)
+        report.write_text("# iter3\n", encoding="utf-8")
+
+        result = v.validate("eval", "iter3")
+
         assert result["ok"] is True
         assert result["payload"]["decision"] == "NEXT_ROUND"
 
@@ -525,11 +708,83 @@ class TestPostconditionValidator:
             {"id": "iter3", "status": "completed",
              "decision": "CONTINUE",
              "lessons": ["Ready for WF9"],
-             "metrics": {"PSNR": 32.1}},
+             "metrics": {"PSNR": 32.1},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
         ])
         result = v.validate("eval", "iter3")
         assert result["ok"] is True
         assert result["payload"]["decision"] == "CONTINUE"
+
+    def test_eval_screening_failed_iteration_success(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "DEBUG",
+             "lessons": ["Screening failed below threshold."],
+             "screening": {
+                 "recommended": True,
+                 "status": "failed",
+                 "metrics": {"PSNR": 25.4},
+             },
+             "metrics": {"PSNR": 25.4},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3_screen.yaml",
+                 "exp_dir": "experiments/iter3_screen",
+             }},
+        ])
+        result = v.validate("eval", "iter3")
+        assert result["ok"] is True
+        assert result["payload"]["decision"] == "DEBUG"
+
+    def test_eval_requires_git_commit(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND",
+             "lessons": ["Learned something"],
+             "metrics": {"PSNR": 31.5},
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+        result = v.validate("eval", "iter3")
+        assert result["ok"] is False
+        assert "git_commit" in result["payload"]["error"]
+
+    def test_eval_requires_run_manifest(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND",
+             "lessons": ["Learned something"],
+             "metrics": {"PSNR": 31.5},
+             "git_commit": "abc123"},
+        ])
+        result = v.validate("eval", "iter3")
+        assert result["ok"] is False
+        assert "run_manifest" in result["payload"]["error"]
+
+    def test_eval_rejects_conflicting_metric_locations(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND",
+             "lessons": ["Learned something"],
+             "metrics": {"PSNR": 31.5},
+             "full_run": {"metrics": {"PSNR": 30.0}},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+
+        result = v.validate("eval", "iter3")
+
+        assert result["ok"] is False
+        assert "full_run.metrics" in result["payload"]["error"]
 
     def test_eval_no_decision(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -565,12 +820,77 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "metrics" in result["payload"]["error"].lower()
 
+    def test_eval_requires_primary_metric_when_bound(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND", "lessons": ["x"],
+             "metrics": {"loss": 0.4},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+
+        result = v.validate("eval", "iter3", primary_metric_name="accuracy")
+
+        assert result["ok"] is False
+        assert "primary metric" in result["payload"]["error"]
+        assert "accuracy" in result["payload"]["error"]
+
+    def test_eval_rejects_non_numeric_primary_metric(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND", "lessons": ["x"],
+             "metrics": {"accuracy": "0.8"},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+
+        result = v.validate("eval", "iter3", primary_metric_name="accuracy")
+
+        assert result["ok"] is False
+        assert "must be numeric" in result["payload"]["error"]
+
+    def test_run_full_requires_primary_metric_when_bound(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "full_run": {"status": "completed", "metrics": {"loss": 0.4}},
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+
+        result = v.validate("run_full", "iter3", primary_metric_name="accuracy")
+
+        assert result["ok"] is False
+        assert "primary metric" in result["payload"]["error"]
+        assert "accuracy" in result["payload"]["error"]
+
     def test_eval_report_required(self, tmp_path: Path) -> None:
         v = self._make_project(
             tmp_path,
             [{"id": "iter3", "status": "completed",
               "decision": "NEXT_ROUND", "lessons": ["x"],
-              "metrics": {"PSNR": 31.5}}],
+              "metrics": {"PSNR": 31.5},
+              "git_commit": "abc123",
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3",
+              }}],
             create_reports=False,
         )
         result = v.validate("eval", "iter3")
@@ -597,6 +917,184 @@ class TestPostconditionValidator:
         v = self._make_project(tmp_path, [])
         result = v.validate("bogus", "iter1")
         assert result["ok"] is False
+
+
+# ===================================================================
+# RecoveryEngine adoption validation
+# ===================================================================
+
+class TestRecoveryEngine:
+    def _make_engine(
+        self,
+        tmp_path: Path,
+        iterations: list[dict],
+        *,
+        create_reports: bool = True,
+        primary_metric_name: str | None = None,
+    ) -> RecoveryEngine:
+        atomic_write_json(
+            tmp_path / "iteration_log.json",
+            {"project": "test", "iterations": iterations},
+        )
+        if create_reports:
+            report_dir = tmp_path / "docs" / "iterations"
+            report_dir.mkdir(parents=True, exist_ok=True)
+            for iteration in iterations:
+                if iteration.get("status") == "completed":
+                    (report_dir / f"{iteration['id']}.md").write_text(
+                        f"# {iteration['id']}\n",
+                        encoding="utf-8",
+                    )
+        return RecoveryEngine(
+            PostconditionValidator(tmp_path),
+            primary_metric_name=primary_metric_name,
+        )
+
+    def test_recovery_revalidates_code_adoption(self, tmp_path: Path) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "training",
+                    "git_commit": "abc123",
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "code",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 1,
+            }
+        )
+
+        assert result["action"] == RERUN
+        assert "git_message" in str(result["postcondition"]["payload"])
+
+    def test_recovery_revalidates_screening_adoption(self, tmp_path: Path) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "training",
+                    "screening": {"recommended": True, "status": "failed"},
+                    "run_manifest": {
+                        "command": "python train.py --config configs/iter3.yaml",
+                        "exp_dir": "experiments/iter3",
+                    },
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "run_screening",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 1,
+            }
+        )
+
+        assert result["action"] == RERUN
+        assert "screening.metrics" in str(result["postcondition"]["payload"])
+
+    def test_recovery_revalidates_eval_adoption(self, tmp_path: Path) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "completed",
+                    "decision": "NEXT_ROUND",
+                    "lessons": ["Learned something"],
+                    "metrics": {"PSNR": 31.5},
+                    "git_commit": "abc123",
+                    "run_manifest": {
+                        "command": "python train.py --config configs/iter3.yaml",
+                        "exp_dir": "experiments/iter3",
+                    },
+                }
+            ],
+            create_reports=False,
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "eval",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 1,
+            }
+        )
+
+        assert result["action"] == RERUN
+        assert "Per-iteration report" in str(result["postcondition"]["payload"])
+
+    def test_recovery_adopts_when_postcondition_passes(self, tmp_path: Path) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "completed",
+                    "decision": "NEXT_ROUND",
+                    "lessons": ["Learned something"],
+                    "metrics": {"PSNR": 31.5},
+                    "git_commit": "abc123",
+                    "run_manifest": {
+                        "command": "python train.py --config configs/iter3.yaml",
+                        "exp_dir": "experiments/iter3",
+                    },
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "eval",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 1,
+            }
+        )
+
+        assert result["action"] == ADOPT
+        assert result["postcondition"]["ok"] is True
+
+    def test_recovery_adoption_enforces_controller_primary_metric(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "completed",
+                    "decision": "NEXT_ROUND",
+                    "lessons": ["Learned something"],
+                    "metrics": {"loss": 0.4},
+                    "git_commit": "abc123",
+                    "run_manifest": {
+                        "command": "python train.py --config configs/iter3.yaml",
+                        "exp_dir": "experiments/iter3",
+                    },
+                }
+            ],
+            primary_metric_name="accuracy",
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "eval",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 1,
+            }
+        )
+
+        assert result["action"] == RERUN
+        assert "primary metric" in str(result["postcondition"]["payload"])
+        assert "accuracy" in str(result["postcondition"]["payload"])
 
 
 # ===================================================================

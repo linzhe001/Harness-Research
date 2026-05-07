@@ -11,8 +11,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from .postcondition import PostconditionValidator, _get_iteration, bind_iteration_id
-
+from .postcondition import (
+    PostconditionValidator,
+    _get_iteration,
+    bind_iteration_id,
+    iteration_metrics,
+    iteration_metrics_conflict,
+)
 
 # ---------------------------------------------------------------------------
 # Recovery actions
@@ -69,7 +74,11 @@ def _recover_plan(
             return RERUN, err
 
         candidate = _get_iteration(iterations, adopted_id)
-        if candidate and candidate.get("status") == "planned" and candidate.get("hypothesis"):
+        if (
+            candidate
+            and candidate.get("status") == "planned"
+            and candidate.get("hypothesis")
+        ):
             return ADOPT, f"adopting bound planned iteration {adopted_id}"
         return RERUN, f"bound iteration {adopted_id!r} missing planned postcondition"
 
@@ -165,13 +174,14 @@ def _recover_eval(
     if it is None:
         return FAIL, f"iteration {iteration_id} not found"
 
-    metrics = it.get("metrics", it.get("full_run", {}).get("metrics", {}))
+    metrics = iteration_metrics(it)
     if (
         it.get("status") == "completed"
         and it.get("decision")
         and it.get("lessons")
         and isinstance(metrics, dict)
         and metrics
+        and not iteration_metrics_conflict(it)
     ):
         return ADOPT, "iteration already completed with decision and lessons"
     return RERUN, "eval incomplete"
@@ -185,8 +195,52 @@ class RecoveryEngine:
     """Orchestrates recovery by combining state inspection with repository
     postcondition checks."""
 
-    def __init__(self, validator: PostconditionValidator) -> None:
+    def __init__(
+        self,
+        validator: PostconditionValidator,
+        *,
+        primary_metric_name: str | None = None,
+    ) -> None:
         self.validator = validator
+        self.primary_metric_name = primary_metric_name
+
+    def _validate_adoption(
+        self,
+        *,
+        phase_key: str,
+        result: dict[str, Any],
+        iterations: list[dict[str, Any]],
+        existing_ids: set[str] | None,
+    ) -> dict[str, Any]:
+        if phase_key == "plan":
+            pre_ids = existing_ids
+            if pre_ids is None:
+                adopted_id = result.get("adopted_iteration_id")
+                if not isinstance(adopted_id, str) or not adopted_id:
+                    return {
+                        "ok": False,
+                        "payload": {
+                            "error": (
+                                "could not identify adopted iteration for plan "
+                                "postcondition validation"
+                            )
+                        },
+                    }
+                current_ids = {it["id"] for it in iterations if "id" in it}
+                pre_ids = current_ids - {adopted_id}
+            return self.validator.validate("plan", None, pre_ids=pre_ids)
+        return self.validator.validate(
+            phase_key,
+            result.get("iteration_id"),
+            primary_metric_name=self.primary_metric_name,
+        )
+
+    @staticmethod
+    def _adoption_failure_reason(
+        phase_key: str, validation: dict[str, Any]
+    ) -> str:
+        payload = validation.get("payload")
+        return f"adopted {phase_key} state failed postcondition: {payload}"
 
     def recover(
         self,
@@ -206,7 +260,9 @@ class RecoveryEngine:
         phase_attempt = state.get("phase_attempt", 1)
         plan_binding = state.get("plan_binding", {})
         existing_ids_raw = plan_binding.get("existing_ids")
-        existing_ids = set(existing_ids_raw) if isinstance(existing_ids_raw, list) else None
+        existing_ids = (
+            set(existing_ids_raw) if isinstance(existing_ids_raw, list) else None
+        )
 
         log = self.validator.load_iteration_log()
         iterations = log.get("iterations", [])
@@ -238,5 +294,21 @@ class RecoveryEngine:
                 planned = [it for it in iterations if it.get("status") == "planned"]
                 if planned:
                     result["adopted_iteration_id"] = planned[0]["id"]
+
+        if action == ADOPT:
+            validation = self._validate_adoption(
+                phase_key=phase_key,
+                result=result,
+                iterations=iterations,
+                existing_ids=existing_ids,
+            )
+            result["postcondition"] = validation
+            if not validation.get("ok"):
+                result["action"] = RERUN
+                result["reason"] = self._adoption_failure_reason(
+                    phase_key, validation
+                )
+            elif phase_key == "plan" and validation.get("iteration_id"):
+                result["adopted_iteration_id"] = validation["iteration_id"]
 
         return result

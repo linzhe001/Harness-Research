@@ -63,6 +63,9 @@ These are mandatory behavior rules for `$iterate`.
   - `error`
 - Must persist final evaluation metrics only for the tracked metric set defined by WF5.
 - Must keep training-only traces in a separate structure such as `training_trace` instead of hard-coding project-specific metric keys.
+- When the run is a screening/proxy run and `screening.status` is `passed` or
+  `failed`, must record `screening.metrics` from the same tracked metric set and
+  keep the screening command/exp_dir in `run_manifest`.
 - Must end with one of:
   - `status=running` when metrics were collected and eval can proceed
   - `status=training` when the run failed and needs rerun or manual intervention
@@ -85,8 +88,10 @@ These are mandatory behavior rules for `$iterate`.
   - `lesson_candidates` when promotion-worthy findings are identified
   - `lesson_promotion_status` when a lesson is accepted or rejected
   - `status=completed` when evaluation is complete
-- Must produce or refresh the per-iteration report under `docs/iterations/` when the workflow uses those reports.
-- Should produce or refresh `docs/40_iterations/<iter-id>.md` and `docs/40_iterations/latest.md` when the dynamic context layout is enabled.
+- Must produce or refresh a per-iteration report at `docs/iterations/<iter-id>.md`
+  for legacy/report-directory workflows or at `docs/40_iterations/<iter-id>.md`
+  for dynamic-context workflows.
+- Should produce or refresh `docs/40_iterations/latest.md` when the dynamic context layout is enabled.
 - Should append or refresh candidate lessons in `docs/50_memory/Lessons.md`.
 - Must append to `MEMORY.md` only for accepted lessons that satisfy the lesson quality rule; raw observations and auto-run findings must not enter `MEMORY.md` directly.
 - Must output the recommended next-step command that matches the decision:

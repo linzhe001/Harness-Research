@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,7 +32,7 @@ from .goal import (
 )
 from .lock import LockConflictError, LockManager
 from .policy import DEFAULT_POLICY, PolicyConfig
-from .postcondition import PostconditionValidator
+from .postcondition import PostconditionValidator, iteration_metrics
 from .recovery import ADOPT, FAIL, RecoveryEngine
 from .runtime import (
     BriefValidationError,
@@ -55,6 +56,13 @@ EXIT_BUDGET_EXHAUSTED = 106
 EXIT_WAITING_ACCOUNT = 107  # Reserved; legacy waiting-for-account no longer emitted.
 EXIT_RESUMABLE = 108
 EXIT_FATAL = 109
+
+
+def _numeric_metric_value(value: Any, metric_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"primary metric {metric_name!r} must be numeric")
+    return float(value)
+
 
 # ---------------------------------------------------------------------------
 # Decision → halt_reason mapping
@@ -90,9 +98,17 @@ def _merge_with_fallback(
     return result
 
 
+def _clean_reason(reason: str | None) -> str | None:
+    if reason is None:
+        return None
+    cleaned = reason.strip()
+    return cleaned or None
+
+
 # ---------------------------------------------------------------------------
 # LoopController
 # ---------------------------------------------------------------------------
+
 
 class LoopController:
     """Main auto-iterate controller state machine."""
@@ -130,9 +146,14 @@ class LoopController:
         tool: str = "codex",
         cli_overrides: dict[str, Any] | None = None,
         skip_dynamic_preflight: bool = False,
+        skip_dynamic_preflight_reason: str | None = None,
         allow_draft_contract: bool = False,
+        allow_review_required: bool = False,
     ) -> int:
         """Initialize and run a new auto-iterate loop. Returns exit code."""
+        if skip_dynamic_preflight and not _clean_reason(skip_dynamic_preflight_reason):
+            return EXIT_INVALID_ARGS
+
         # 1. Parse and validate goal.
         try:
             parsed_goal = parse_goal(goal_path)
@@ -153,7 +174,9 @@ class LoopController:
         self.accounts = AccountRegistry.external_current()
 
         # 4. Check lock conflict.
-        stale_threshold = self.policy.get("heartbeat", {}).get("stale_threshold_sec", 120)
+        stale_threshold = self.policy.get("heartbeat", {}).get(
+            "stale_threshold_sec", 120
+        )
         self.lock_mgr = LockManager(
             self.auto_dir / "lock.json",
             stale_threshold_sec=stale_threshold,
@@ -173,8 +196,9 @@ class LoopController:
         budget = self.policy.get("budget", {})
         llm_budget = self.policy.get("llm_budget", {})
         patience = self.policy.get("patience", {})
-        screening_policy = parsed_goal.get("screening_policy",
-                                           self.policy.get("screening_policy", {}))
+        screening_policy = parsed_goal.get(
+            "screening_policy", self.policy.get("screening_policy", {})
+        )
 
         self.state = {
             "schema_version": 1,
@@ -240,21 +264,17 @@ class LoopController:
 
             # 7. Run dynamic-context gates before launching autonomous WF10.
             self.store.ensure_dirs()
-            if not skip_dynamic_preflight:
+            if skip_dynamic_preflight:
+                self._record_dynamic_preflight_skip(
+                    reason=_clean_reason(skip_dynamic_preflight_reason),
+                )
+            else:
                 preflight_ok = self._run_dynamic_context_preflight(
                     allow_draft=allow_draft_contract,
+                    allow_review_required=allow_review_required,
                 )
                 if not preflight_ok:
-                    self.state["status"] = "paused"
-                    self.state["halt_reason"] = "manual_action_required"
-                    self.state["last_failure"] = "dynamic_context_preflight_failed"
-                    self._persist_state()
-                    self.events.emit(
-                        "MANUAL_ACTION_REQUIRED",
-                        loop_id,
-                        "paused",
-                        payload={"reason": "dynamic_context_preflight_failed"},
-                    )
+                    self._pause_for_dynamic_preflight_failure(loop_id)
                     return EXIT_MANUAL_ACTION
 
             # 8. Persist initial runtime state.
@@ -268,7 +288,9 @@ class LoopController:
 
             # 10. Emit event.
             self.events.emit(
-                "LOOP_STARTED", loop_id, "running",
+                "LOOP_STARTED",
+                loop_id,
+                "running",
                 payload={"tool": tool, "goal_source": goal_path},
             )
 
@@ -291,8 +313,15 @@ class LoopController:
         self,
         *,
         config_path: str | None = None,
+        skip_dynamic_preflight: bool = False,
+        skip_dynamic_preflight_reason: str | None = None,
+        allow_draft_contract: bool = False,
+        allow_review_required: bool = False,
     ) -> int:
         """Resume from a previously interrupted loop. Returns exit code."""
+        if skip_dynamic_preflight and not _clean_reason(skip_dynamic_preflight_reason):
+            return EXIT_INVALID_ARGS
+
         # Load existing state.
         try:
             self.state = self.store.load_state()
@@ -332,12 +361,17 @@ class LoopController:
             cleared = self.lock_mgr.clear_stale()
             if cleared:
                 self.events.emit(
-                    "STALE_LOCK_CLEARED", self.state["loop_id"], "running",
+                    "STALE_LOCK_CLEARED",
+                    self.state["loop_id"],
+                    "running",
                     payload={"cleared_pid": cleared.get("pid")},
                 )
 
         # Recovery.
-        recovery = RecoveryEngine(self.validator)
+        recovery = RecoveryEngine(
+            self.validator,
+            primary_metric_name=self._objective_primary_metric_name(),
+        )
         max_attempts = self._phase_retry_ceiling()
         plan = recovery.recover(self.state, max_phase_attempts=max_attempts)
 
@@ -347,12 +381,12 @@ class LoopController:
             self._persist_state()
             return EXIT_MANUAL_ACTION
 
-        if plan["action"] == ADOPT:
-            # Adopt the existing state — advance to next phase.
+        adopt_after_preflight = plan["action"] == ADOPT
+        if adopt_after_preflight:
+            # Adopt the existing state; advance only after preflight passes.
             if plan["phase_key"] == "plan" and plan.get("adopted_iteration_id"):
                 self.state["current_iteration_id"] = plan["adopted_iteration_id"]
                 self.state.pop("plan_binding", None)
-            self._advance_phase()
 
         # Re-acquire lock.
         self.state["status"] = "running"
@@ -362,6 +396,23 @@ class LoopController:
         try:
             self.lock_mgr.acquire(loop_id, tool, str(self.workspace_root))
             acquired = True
+
+            if skip_dynamic_preflight:
+                self._record_dynamic_preflight_skip(
+                    reason=_clean_reason(skip_dynamic_preflight_reason),
+                )
+                self._persist_state()
+            else:
+                preflight_ok = self._run_dynamic_context_preflight(
+                    allow_draft=allow_draft_contract,
+                    allow_review_required=allow_review_required,
+                )
+                if not preflight_ok:
+                    self._pause_for_dynamic_preflight_failure(loop_id)
+                    return EXIT_MANUAL_ACTION
+
+            if adopt_after_preflight:
+                self._advance_phase()
 
             # Start heartbeat.
             hb_interval = self.state.get("heartbeat", {}).get(
@@ -409,7 +460,9 @@ class LoopController:
                 halt = self._check_stop_conditions()
                 if halt:
                     self.events.emit(
-                        "LOOP_STOPPED", self.state["loop_id"], "stopped",
+                        "LOOP_STOPPED",
+                        self.state["loop_id"],
+                        "stopped",
                         round_index=round_idx,
                         payload={"halt_reason": self.state["halt_reason"]},
                     )
@@ -421,7 +474,9 @@ class LoopController:
                     self.state["halt_reason"] = self._budget_halt_reason()
                     self._persist_state()
                     self.events.emit(
-                        "LOOP_STOPPED", self.state["loop_id"], "stopped",
+                        "LOOP_STOPPED",
+                        self.state["loop_id"],
+                        "stopped",
                         round_index=round_idx,
                         payload={"halt_reason": self.state["halt_reason"]},
                     )
@@ -431,14 +486,18 @@ class LoopController:
                 self.state["current_round_index"] += 1
                 round_idx = self.state["current_round_index"]
                 self.events.emit(
-                    "ROUND_STARTED", self.state["loop_id"], "running",
+                    "ROUND_STARTED",
+                    self.state["loop_id"],
+                    "running",
                     round_index=round_idx,
                 )
 
             # -- Screening bypass -----------------------------------------
             if phase_key == "run_screening" and self._should_bypass_screening():
                 self.events.emit(
-                    "SCREENING_BYPASSED", self.state["loop_id"], "running",
+                    "SCREENING_BYPASSED",
+                    self.state["loop_id"],
+                    "running",
                     round_index=round_idx,
                     payload={"reason": "screening disabled or not recommended"},
                 )
@@ -460,7 +519,9 @@ class LoopController:
                 self.state["last_failure"] = "heartbeat worker died"
                 self._persist_state()
                 self.events.emit(
-                    "LOOP_FAILED", self.state["loop_id"], "failed",
+                    "LOOP_FAILED",
+                    self.state["loop_id"],
+                    "failed",
                     payload={"reason": "heartbeat_worker_death"},
                 )
                 return EXIT_FATAL
@@ -487,8 +548,11 @@ class LoopController:
         self._persist_state()
 
         self.events.emit(
-            "PHASE_STARTED", loop_id, "running",
-            round_index=round_idx, phase_key=phase_key,
+            "PHASE_STARTED",
+            loop_id,
+            "running",
+            round_index=round_idx,
+            phase_key=phase_key,
         )
 
         # Snapshot pre-IDs for plan phase from durable state so resume can bind
@@ -510,7 +574,9 @@ class LoopController:
             phase_key,
             self.policy.get("timeouts", {}).get(phase_key, 1800),
         )
-        grace = self.state.get("terminate_grace_sec", self.policy.get("terminate_grace_sec", 30))
+        grace = self.state.get(
+            "terminate_grace_sec", self.policy.get("terminate_grace_sec", 30)
+        )
 
         supervisor = PhaseSupervisor(
             workspace_root=self.workspace_root,
@@ -520,7 +586,8 @@ class LoopController:
         try:
             recent_lessons, failed_hypotheses = self._plan_context()
             brief = build_brief(
-                self.state, phase_key,
+                self.state,
+                phase_key,
                 recovery_mode=self.state.get("_recovery_mode", "normal"),
                 recent_lessons=recent_lessons,
                 failed_hypotheses=failed_hypotheses,
@@ -545,23 +612,31 @@ class LoopController:
             self.state["last_failure"] = str(e)
             self._persist_state()
             self.events.emit(
-                "PHASE_FAILED", loop_id, "running",
-                round_index=round_idx, phase_key=phase_key,
+                "PHASE_FAILED",
+                loop_id,
+                "running",
+                round_index=round_idx,
+                phase_key=phase_key,
                 payload={"error": str(e)},
             )
             return self._handle_phase_failure(phase_key, round_idx)
 
         # Record LLM usage.
         self.accounts.record_usage(account_id, calls=1)
-        self.state["llm_budget"]["used_calls"] = self.state["llm_budget"].get("used_calls", 0) + 1
+        self.state["llm_budget"]["used_calls"] = (
+            self.state["llm_budget"].get("used_calls", 0) + 1
+        )
         self.state["accounts"] = self.accounts.to_state_dict()
 
         # Handle runtime failure.
         exit_class = runtime_result.get("runtime_exit_class", "internal_error")
         if runtime_result.get("timed_out"):
             self.events.emit(
-                "PHASE_TIMEOUT", loop_id, "running",
-                round_index=round_idx, phase_key=phase_key,
+                "PHASE_TIMEOUT",
+                loop_id,
+                "running",
+                round_index=round_idx,
+                phase_key=phase_key,
             )
             return self._handle_phase_failure(phase_key, round_idx)
 
@@ -569,7 +644,9 @@ class LoopController:
             self.accounts.record_external_retry(account_id, "quota_or_rate_limit")
             self.state["accounts"] = self.accounts.to_state_dict()
             self.events.emit(
-                "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                "EXTERNAL_AUTH_RETRY",
+                loop_id,
+                "running",
                 payload={
                     "reason": "quota_or_rate_limit",
                     "account_id": account_id,
@@ -585,7 +662,9 @@ class LoopController:
             self.accounts.record_external_retry(account_id, "auth_failure")
             self.state["accounts"] = self.accounts.to_state_dict()
             self.events.emit(
-                "EXTERNAL_AUTH_RETRY", loop_id, "running",
+                "EXTERNAL_AUTH_RETRY",
+                loop_id,
+                "running",
                 payload={
                     "reason": "auth_failure",
                     "account_id": account_id,
@@ -599,22 +678,31 @@ class LoopController:
 
         # Validate postcondition.
         validation = self.validator.validate(
-            phase_key, iteration_id, pre_ids=pre_ids,
+            phase_key,
+            iteration_id,
+            pre_ids=pre_ids,
+            primary_metric_name=self._objective_primary_metric_name(),
         )
 
         if not validation["ok"]:
             self.state["last_failure"] = str(validation.get("payload", {}))
             self.events.emit(
-                "PHASE_FAILED", loop_id, "running",
-                round_index=round_idx, phase_key=phase_key,
+                "PHASE_FAILED",
+                loop_id,
+                "running",
+                round_index=round_idx,
+                phase_key=phase_key,
                 payload=validation.get("payload"),
             )
             return self._handle_phase_failure(phase_key, round_idx)
 
         # Phase succeeded.
         self.events.emit(
-            "PHASE_COMPLETED", loop_id, "running",
-            round_index=round_idx, phase_key=phase_key,
+            "PHASE_COMPLETED",
+            loop_id,
+            "running",
+            round_index=round_idx,
+            phase_key=phase_key,
             payload={"classification": validation.get("classification")},
         )
 
@@ -654,7 +742,9 @@ class LoopController:
     # ==================================================================
 
     def _apply_decision(
-        self, decision: str | None, round_idx: int,
+        self,
+        decision: str | None,
+        round_idx: int,
         validation: dict[str, Any],
     ) -> dict[str, Any]:
         loop_id = self.state["loop_id"]
@@ -665,7 +755,9 @@ class LoopController:
             self.state["budget"]["completed_rounds"] += 1
 
             self.events.emit(
-                "ROUND_COMPLETED", loop_id, "running",
+                "ROUND_COMPLETED",
+                loop_id,
+                "running",
                 round_index=round_idx,
             )
             self._rotate_events_if_needed(round_idx)
@@ -684,12 +776,16 @@ class LoopController:
             self.state["budget"]["completed_rounds"] += 1
 
             self.events.emit(
-                "ROUND_COMPLETED", loop_id, "stopped",
+                "ROUND_COMPLETED",
+                loop_id,
+                "stopped",
                 round_index=round_idx,
             )
             self._rotate_events_if_needed(round_idx)
             self.events.emit(
-                "LOOP_STOPPED", loop_id, "stopped",
+                "LOOP_STOPPED",
+                loop_id,
+                "stopped",
                 payload={"halt_reason": halt_reason, "decision": decision},
             )
             self._persist_state()
@@ -711,14 +807,19 @@ class LoopController:
         except ValueError:
             pass
 
-    def _advance_after_success(self, phase_key: str, validation: dict[str, Any]) -> bool:
+    def _advance_after_success(
+        self, phase_key: str, validation: dict[str, Any]
+    ) -> bool:
         """Apply phase-specific success transitions.
 
         Screening failure is a valid screening outcome, but it must not spend a
         full training run. The next phase is eval, where the iteration records
         the failed hypothesis and decision.
         """
-        if phase_key == "run_screening" and validation.get("classification") == "failed":
+        if (
+            phase_key == "run_screening"
+            and validation.get("classification") == "failed"
+        ):
             self.events.emit(
                 "SCREENING_FAILED",
                 self.state["loop_id"],
@@ -779,7 +880,10 @@ class LoopController:
                 failed_hypotheses.append(hypothesis)
                 seen_failed.add(hypothesis)
 
-            if len(recent_lessons) >= lessons_limit and len(failed_hypotheses) >= failed_limit:
+            if (
+                len(recent_lessons) >= lessons_limit
+                and len(failed_hypotheses) >= failed_limit
+            ):
                 break
 
         return recent_lessons, failed_hypotheses
@@ -817,7 +921,9 @@ class LoopController:
             self.state["halt_reason"] = "manual_action_required"
             self._persist_state()
             self.events.emit(
-                "MANUAL_ACTION_REQUIRED", self.state["loop_id"], "paused",
+                "MANUAL_ACTION_REQUIRED",
+                self.state["loop_id"],
+                "paused",
                 round_index=round_idx,
                 payload={"phase_key": phase_key, "attempts": attempt},
             )
@@ -839,7 +945,9 @@ class LoopController:
             self.state["halt_reason"] = "manual_stop"
             self._persist_state()
             self.events.emit(
-                "LOOP_STOPPED", self.state["loop_id"], "stopped",
+                "LOOP_STOPPED",
+                self.state["loop_id"],
+                "stopped",
                 payload={"halt_reason": "manual_stop"},
             )
             return "stopped"
@@ -850,7 +958,9 @@ class LoopController:
             self.state["halt_reason"] = "operator_pause"
             self._persist_state()
             self.events.emit(
-                "LOOP_PAUSED", self.state["loop_id"], "paused",
+                "LOOP_PAUSED",
+                self.state["loop_id"],
+                "paused",
                 payload={"halt_reason": "operator_pause"},
             )
             return "paused"
@@ -870,7 +980,9 @@ class LoopController:
                 self._persist_state()
             except Exception:
                 self.events.emit(
-                    "GOAL_ACTIVATION_FAILED", self.state["loop_id"], "paused",
+                    "GOAL_ACTIVATION_FAILED",
+                    self.state["loop_id"],
+                    "paused",
                     payload={"errors": ["activated goal could not be re-parsed"]},
                 )
                 self.state["status"] = "paused"
@@ -878,12 +990,16 @@ class LoopController:
                 self._persist_state()
                 return False
             self.events.emit(
-                "GOAL_ACTIVATED", self.state["loop_id"], "running",
+                "GOAL_ACTIVATED",
+                self.state["loop_id"],
+                "running",
             )
             return True
         else:
             self.events.emit(
-                "GOAL_ACTIVATION_FAILED", self.state["loop_id"], "paused",
+                "GOAL_ACTIVATION_FAILED",
+                self.state["loop_id"],
+                "paused",
                 payload={"errors": errors},
             )
             self.state["status"] = "paused"
@@ -949,7 +1065,10 @@ class LoopController:
 
     def _budget_halt_reason(self) -> str:
         llm = self.state.get("llm_budget", {})
-        if llm.get("max_calls", 0) > 0 and llm.get("used_calls", 0) + 5 > llm["max_calls"]:
+        if (
+            llm.get("max_calls", 0) > 0
+            and llm.get("used_calls", 0) + 5 > llm["max_calls"]
+        ):
             return "llm_budget_exhausted"
         return "gpu_budget_exhausted"
 
@@ -984,20 +1103,35 @@ class LoopController:
         log = self.validator.load_iteration_log()
         for it in log.get("iterations", []):
             if it.get("id") == iter_id:
-                metrics = it.get("metrics", it.get("full_run", {}).get("metrics", {}))
-                pm_name = self.state.get("objective", {}).get("primary_metric", {}).get("name")
+                metrics = iteration_metrics(it)
+                pm_name = (
+                    self.state.get("objective", {})
+                    .get("primary_metric", {})
+                    .get("name")
+                )
                 if pm_name and pm_name in metrics:
-                    new_val = metrics[pm_name]
+                    new_val = _numeric_metric_value(metrics[pm_name], pm_name)
                     old_val = self.state["best"].get("primary_metric")
-                    direction = self.state.get("objective", {}).get("primary_metric", {}).get("direction", "maximize")
-                    delta = self.state.get("patience", {}).get("min_primary_delta", 0)
+                    old_num = (
+                        _numeric_metric_value(old_val, pm_name)
+                        if old_val is not None
+                        else None
+                    )
+                    direction = (
+                        self.state.get("objective", {})
+                        .get("primary_metric", {})
+                        .get("direction", "maximize")
+                    )
+                    delta = float(
+                        self.state.get("patience", {}).get("min_primary_delta", 0)
+                    )
 
                     improved = False
-                    if old_val is None:
+                    if old_num is None:
                         improved = True
-                    elif direction == "maximize" and new_val > old_val + delta:
+                    elif direction == "maximize" and new_val > old_num + delta:
                         improved = True
-                    elif direction == "minimize" and new_val < old_val - delta:
+                    elif direction == "minimize" and new_val < old_num - delta:
                         improved = True
 
                     if improved:
@@ -1009,7 +1143,9 @@ class LoopController:
                         }
                         self.state["patience"]["consecutive_no_improve"] = 0
                         self.events.emit(
-                            "NEW_BEST", self.state["loop_id"], "running",
+                            "NEW_BEST",
+                            self.state["loop_id"],
+                            "running",
                             round_index=round_idx,
                             payload={
                                 "iteration_id": iter_id,
@@ -1022,6 +1158,16 @@ class LoopController:
                             self.state["patience"].get("consecutive_no_improve", 0) + 1
                         )
                 break
+
+    def _objective_primary_metric_name(self) -> str | None:
+        value = (
+            self.state.get("objective", {})
+            .get("primary_metric", {})
+            .get("name")
+        )
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return None
 
     def _persist_state(self) -> None:
         """Write state to disk (strip internal keys)."""
@@ -1046,7 +1192,9 @@ class LoopController:
             fallback_value = self.policy.get(key, DEFAULT_POLICY.get(key))
             if key not in self.state:
                 self.state[key] = copy.deepcopy(fallback_value)
-            elif isinstance(self.state.get(key), dict) and isinstance(fallback_value, dict):
+            elif isinstance(self.state.get(key), dict) and isinstance(
+                fallback_value, dict
+            ):
                 self.state[key] = _merge_with_fallback(self.state[key], fallback_value)
 
     def _reset_phase_retry_state(self) -> None:
@@ -1078,35 +1226,54 @@ class LoopController:
                 payload={"archive": archive, "rotate_bytes": rotate_bytes},
             )
 
-    def _run_dynamic_context_preflight(self, *, allow_draft: bool = False) -> bool:
+    def _run_dynamic_context_preflight(
+        self,
+        *,
+        allow_draft: bool = False,
+        allow_review_required: bool = False,
+    ) -> bool:
         """Run the dynamic-context gate suite before autonomous WF10 starts."""
         preflight_path = self.auto_dir / "dynamic_context_preflight.json"
-        checker_path = self.workspace_root / "tooling" / "evidence" / "check_dynamic_context.py"
+        checker_path = (
+            self.workspace_root / "tooling" / "evidence" / "check_dynamic_context.py"
+        )
         if not checker_path.exists():
+            dynamic_markers = self._dynamic_context_markers_present()
+            ok = not dynamic_markers
+            summary = {
+                "ok": ok,
+                "applicability": (
+                    "legacy_or_standard_tooling_missing"
+                    if ok
+                    else "dynamic_context_tooling_missing"
+                ),
+                "stage": "wf10",
+                "checked_at": iso_now(),
+            }
             atomic_write_json(
                 preflight_path,
-                {
-                    "ok": True,
-                    "applicability": "not_applicable_tooling_missing",
-                    "stage": "wf10",
-                },
+                summary,
             )
-            return True
+            self.state["dynamic_preflight"] = summary
+            return ok
 
         spec = importlib.util.spec_from_file_location(
             "harness_auto_iterate_check_dynamic_context",
             checker_path,
         )
         if spec is None or spec.loader is None:
+            summary = {
+                "ok": False,
+                "applicability": "dynamic_context",
+                "stage": "wf10",
+                "checked_at": iso_now(),
+                "error": "cannot_load_check_dynamic_context",
+            }
             atomic_write_json(
                 preflight_path,
-                {
-                    "ok": False,
-                    "applicability": "dynamic_context",
-                    "stage": "wf10",
-                    "error": "cannot_load_check_dynamic_context",
-                },
+                summary,
             )
+            self.state["dynamic_preflight"] = summary
             return False
 
         module = importlib.util.module_from_spec(spec)
@@ -1115,24 +1282,81 @@ class LoopController:
             self.workspace_root,
             stage="wf10",
             allow_draft=allow_draft,
+            allow_review_required=allow_review_required,
             write_review_packet=True,
         )
+        summary = {
+            "ok": bool(result.get("ok")),
+            "applicability": "dynamic_context",
+            "stage": result.get("stage", "wf10"),
+            "checked_at": iso_now(),
+            "allow_draft_contract": allow_draft,
+            "allow_review_required": allow_review_required,
+            "summary": result.get("summary", {}),
+            "error_count": result.get("error_count", 0),
+            "warning_count": result.get("warning_count", 0),
+            "review_packet": result.get("review_packet"),
+        }
         atomic_write_json(
             preflight_path,
-            {
-                "ok": bool(result.get("ok")),
-                "applicability": "dynamic_context",
-                "stage": result.get("stage", "wf10"),
-                "summary": result.get("summary", {}),
-                "error_count": result.get("error_count", 0),
-                "warning_count": result.get("warning_count", 0),
-                "review_packet": result.get("review_packet"),
-            },
+            summary,
         )
+        self.state["dynamic_preflight"] = summary
         return bool(result.get("ok"))
 
+    def _record_dynamic_preflight_skip(self, *, reason: str | None) -> None:
+        summary = {
+            "ok": True,
+            "applicability": "skipped_by_operator",
+            "stage": "wf10",
+            "checked_at": iso_now(),
+            "reason": reason,
+        }
+        self.state["dynamic_preflight"] = summary
+        atomic_write_json(self.auto_dir / "dynamic_context_preflight.json", summary)
+        self.events.emit(
+            "DYNAMIC_PREFLIGHT_SKIPPED",
+            self.state.get("loop_id", ""),
+            self.state.get("status", "running"),
+            payload={"reason": reason},
+        )
+
+    def _pause_for_dynamic_preflight_failure(self, loop_id: str) -> None:
+        self.state["status"] = "paused"
+        self.state["halt_reason"] = "manual_action_required"
+        self.state["last_failure"] = "dynamic_context_preflight_failed"
+        self._persist_state()
+        self.events.emit(
+            "MANUAL_ACTION_REQUIRED",
+            loop_id,
+            "paused",
+            payload={"reason": "dynamic_context_preflight_failed"},
+        )
+
+    def _dynamic_context_markers_present(self) -> bool:
+        state_path = self.workspace_root / "PROJECT_STATE.json"
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            state = {}
+
+        if state.get("context_model_version") == "dynamic-protocol-v1":
+            return True
+        if state.get("workflow_mode") == "dynamic_context":
+            return True
+
+        dynamic_dirs = (
+            "docs/10_contract",
+            "docs/20_facts",
+            "docs/30_evidence",
+            "docs/35_protocol",
+        )
+        return any((self.workspace_root / path).exists() for path in dynamic_dirs)
+
     def _phase_retry_ceiling(self, *, external_auth_retry: bool = False) -> int:
-        retry_policy = self.state.get("retry_policy", self.policy.get("retry_policy", {}))
+        retry_policy = self.state.get(
+            "retry_policy", self.policy.get("retry_policy", {})
+        )
         if not isinstance(retry_policy, dict):
             retry_policy = {}
 
@@ -1156,7 +1380,9 @@ class LoopController:
         return max_attempts
 
     def _apply_goal_fields(self, parsed_goal: dict[str, Any]) -> None:
-        self.state["objective"] = parsed_goal.get("objective", self.state.get("objective", {}))
+        self.state["objective"] = parsed_goal.get(
+            "objective", self.state.get("objective", {})
+        )
         self.state["initial_hypotheses"] = parsed_goal.get("initial_hypotheses", [])
         self.state["forbidden_directions"] = parsed_goal.get("forbidden_directions", [])
 
@@ -1176,7 +1402,9 @@ class LoopController:
         budget = parsed_goal.get("budget", {})
         if budget:
             current_budget = self.state.get("budget", {})
-            current_budget["max_rounds"] = budget.get("max_rounds", current_budget.get("max_rounds"))
+            current_budget["max_rounds"] = budget.get(
+                "max_rounds", current_budget.get("max_rounds")
+            )
             current_budget["max_gpu_hours"] = budget.get(
                 "max_gpu_hours",
                 current_budget.get("max_gpu_hours"),
@@ -1243,7 +1471,11 @@ class LoopController:
         try:
             state = self.store.load_state()
         except StateLoadError:
-            return {"error": "No active loop"} if as_json else "No active auto-iterate loop."
+            return (
+                {"error": "No active loop"}
+                if as_json
+                else "No active auto-iterate loop."
+            )
 
         if as_json:
             return {
@@ -1254,8 +1486,18 @@ class LoopController:
                 "current_round_index": state.get("current_round_index"),
                 "current_phase_key": state.get("current_phase_key"),
                 "current_iteration_id": state.get("current_iteration_id"),
-                "accounts": {"selected_account_id": state.get("accounts", {}).get("selected_account_id")},
-                "objective": {"primary_metric": {"name": state.get("objective", {}).get("primary_metric", {}).get("name")}},
+                "accounts": {
+                    "selected_account_id": state.get("accounts", {}).get(
+                        "selected_account_id"
+                    )
+                },
+                "objective": {
+                    "primary_metric": {
+                        "name": state.get("objective", {})
+                        .get("primary_metric", {})
+                        .get("name")
+                    }
+                },
                 "best": {"primary_metric": state.get("best", {}).get("primary_metric")},
                 "budget": {
                     "completed_rounds": state.get("budget", {}).get("completed_rounds"),
@@ -1309,7 +1551,8 @@ class LoopController:
 
         self.goal_mgr.stage_next(goal_path)
         self.events.emit(
-            "GOAL_STAGED", self.state.get("loop_id", ""),
+            "GOAL_STAGED",
+            self.state.get("loop_id", ""),
             self.state.get("status", "unknown"),
             payload={"source": goal_path},
         )

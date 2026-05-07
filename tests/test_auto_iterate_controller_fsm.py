@@ -55,6 +55,7 @@ def _setup_project(tmp_path: Path, fixture: str = "project_minimal") -> Path:
 # Decision transitions
 # ===================================================================
 
+
 class TestDecisionTransitions:
     """Test that eval decisions produce the correct state transitions.
 
@@ -63,7 +64,9 @@ class TestDecisionTransitions:
     """
 
     def _make_controller_at_eval(
-        self, tmp_path: Path, decision: str,
+        self,
+        tmp_path: Path,
+        decision: str,
     ) -> LoopController:
         """Create a controller with state positioned at eval completion."""
         project = _setup_project(tmp_path)
@@ -80,14 +83,39 @@ class TestDecisionTransitions:
             "current_iteration_id": "iter3",
             "phase_attempt": 1,
             "goal": {"source_path": "goal.md", "activated_at": "2026-01-01T00:00:00Z"},
-            "objective": {"primary_metric": {"name": "PSNR", "direction": "maximize", "target": 32.0}},
+            "objective": {
+                "primary_metric": {
+                    "name": "PSNR",
+                    "direction": "maximize",
+                    "target": 32.0,
+                }
+            },
             "initial_hypotheses": [],
             "forbidden_directions": [],
-            "best": {"iteration_id": "iter2", "round_index": 2, "primary_metric": 30.0, "updated_at": None},
-            "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
-            "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
-                        "max_gpu_hours": 100, "used_gpu_hours": 5, "tracking_method": "wall_time_hours_x_gpu_count"},
-            "llm_budget": {"max_calls": 200, "used_calls": 20, "tracking_method": "runtime_invocation_count"},
+            "best": {
+                "iteration_id": "iter2",
+                "round_index": 2,
+                "primary_metric": 30.0,
+                "updated_at": None,
+            },
+            "patience": {
+                "max_no_improve_rounds": 5,
+                "min_primary_delta": 0.1,
+                "consecutive_no_improve": 0,
+            },
+            "budget": {
+                "max_rounds": 20,
+                "completed_rounds": 2,
+                "gpu_count": 1,
+                "max_gpu_hours": 100,
+                "used_gpu_hours": 5,
+                "tracking_method": "wall_time_hours_x_gpu_count",
+            },
+            "llm_budget": {
+                "max_calls": 200,
+                "used_calls": 20,
+                "tracking_method": "runtime_invocation_count",
+            },
             "accounts": {"selected_account_id": None, "by_account": {}},
             "last_decision": None,
             "halt_reason": None,
@@ -96,14 +124,22 @@ class TestDecisionTransitions:
         }
 
         # Write iteration_log with metrics for best-tracking.
-        atomic_write_json(project / "iteration_log.json", {
-            "project": "test",
-            "iterations": [
-                {"id": "iter3", "status": "completed", "decision": decision,
-                 "lessons": ["x"], "metrics": {"PSNR": 30.5},
-                 "hypothesis": "test"},
-            ],
-        })
+        atomic_write_json(
+            project / "iteration_log.json",
+            {
+                "project": "test",
+                "iterations": [
+                    {
+                        "id": "iter3",
+                        "status": "completed",
+                        "decision": decision,
+                        "lessons": ["x"],
+                        "metrics": {"PSNR": 30.5},
+                        "hypothesis": "test",
+                    },
+                ],
+            },
+        )
         return ctl
 
     def test_next_round_keeps_running(self, tmp_path: Path) -> None:
@@ -127,7 +163,9 @@ class TestDecisionTransitions:
 
     def test_continue_stops_with_workflow_continue(self, tmp_path: Path) -> None:
         ctl = self._make_controller_at_eval(tmp_path, "CONTINUE")
-        ctl._apply_decision("CONTINUE", 3, {"ok": True, "payload": {"decision": "CONTINUE"}})
+        ctl._apply_decision(
+            "CONTINUE", 3, {"ok": True, "payload": {"decision": "CONTINUE"}}
+        )
 
         assert ctl.state["status"] == "stopped"
         assert ctl.state["halt_reason"] == "workflow_continue"
@@ -150,7 +188,9 @@ class TestDecisionTransitions:
         ctl = self._make_controller_at_eval(tmp_path, "NEXT_ROUND")
         ctl.state["event_log"] = {"rotate_bytes": 1}
 
-        ctl._apply_decision("NEXT_ROUND", 3, {"ok": True, "payload": {"decision": "NEXT_ROUND"}})
+        ctl._apply_decision(
+            "NEXT_ROUND", 3, {"ok": True, "payload": {"decision": "NEXT_ROUND"}}
+        )
 
         archives = list(ctl.auto_dir.glob("events.*.jsonl"))
         active_events = [
@@ -171,10 +211,17 @@ class TestDynamicPreflight:
     ) -> None:
         project = _setup_project(tmp_path)
 
-        def fail_preflight(self, *, allow_draft: bool = False):
+        def fail_preflight(
+            self,
+            *,
+            allow_draft: bool = False,
+            allow_review_required: bool = False,
+        ):
             return False
 
-        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", fail_preflight)
+        monkeypatch.setattr(
+            LoopController, "_run_dynamic_context_preflight", fail_preflight
+        )
 
         ctl = LoopController(project, dry_run=True)
         code = ctl.start_loop(
@@ -185,7 +232,9 @@ class TestDynamicPreflight:
         state = load_json(project / ".auto_iterate" / "state.json")
         events = [
             json.loads(line)
-            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
             if line.strip()
         ]
         assert code == EXIT_MANUAL_ACTION
@@ -203,33 +252,35 @@ class TestDynamicPreflight:
         project = _setup_project(tmp_path)
         calls = []
 
-        def pass_preflight(self, *, allow_draft: bool = False):
-            calls.append(allow_draft)
+        def pass_preflight(
+            self,
+            *,
+            allow_draft: bool = False,
+            allow_review_required: bool = False,
+        ):
+            calls.append((allow_draft, allow_review_required))
             return True
 
-        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", pass_preflight)
+        monkeypatch.setattr(
+            LoopController, "_run_dynamic_context_preflight", pass_preflight
+        )
 
         ctl = LoopController(project, dry_run=True)
         code = ctl.start_loop(
             goal_path=str(CONTRACTS / "goal.valid.md"),
             cli_overrides={"budget": {"max_rounds": 0}},
             allow_draft_contract=True,
+            allow_review_required=True,
         )
 
         assert code == EXIT_OK
-        assert calls == [True]
+        assert calls == [(True, True)]
 
-    def test_start_loop_can_skip_dynamic_preflight(
+    def test_start_loop_requires_reason_to_skip_dynamic_preflight(
         self,
         tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         project = _setup_project(tmp_path)
-
-        def unexpected_preflight(self, *, allow_draft: bool = False):
-            raise AssertionError("preflight should be skipped")
-
-        monkeypatch.setattr(LoopController, "_run_dynamic_context_preflight", unexpected_preflight)
 
         ctl = LoopController(project, dry_run=True)
         code = ctl.start_loop(
@@ -238,12 +289,166 @@ class TestDynamicPreflight:
             skip_dynamic_preflight=True,
         )
 
+        assert code == EXIT_INVALID_ARGS
+
+    def test_start_loop_can_skip_dynamic_preflight_with_audit_reason(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+
+        def unexpected_preflight(
+            self,
+            *,
+            allow_draft: bool = False,
+            allow_review_required: bool = False,
+        ):
+            raise AssertionError("preflight should be skipped")
+
+        monkeypatch.setattr(
+            LoopController, "_run_dynamic_context_preflight", unexpected_preflight
+        )
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(
+            goal_path=str(CONTRACTS / "goal.valid.md"),
+            cli_overrides={"budget": {"max_rounds": 0}},
+            skip_dynamic_preflight=True,
+            skip_dynamic_preflight_reason="legacy fixture without dynamic docs",
+        )
+
+        state = load_json(project / ".auto_iterate" / "state.json")
+        preflight = load_json(
+            project / ".auto_iterate" / "dynamic_context_preflight.json"
+        )
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
+            if line.strip()
+        ]
         assert code == EXIT_OK
+        assert state["dynamic_preflight"]["applicability"] == "skipped_by_operator"
+        assert (
+            state["dynamic_preflight"]["reason"]
+            == "legacy fixture without dynamic docs"
+        )
+        assert preflight["applicability"] == "skipped_by_operator"
+        assert any(event["event"] == "DYNAMIC_PREFLIGHT_SKIPPED" for event in events)
+
+    def test_resume_loop_reruns_dynamic_preflight(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        state = load_json(CONTRACTS / "state.valid.json")
+        state["status"] = "paused"
+        state["current_phase_key"] = "plan"
+        state["current_iteration_id"] = None
+        state["phase_attempt"] = 1
+        state["budget"]["max_rounds"] = 0
+        atomic_write_json(auto_dir / "state.json", state)
+        calls = []
+
+        def pass_preflight(
+            self,
+            *,
+            allow_draft: bool = False,
+            allow_review_required: bool = False,
+        ):
+            calls.append((allow_draft, allow_review_required))
+            return True
+
+        monkeypatch.setattr(
+            LoopController, "_run_dynamic_context_preflight", pass_preflight
+        )
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.resume_loop(allow_draft_contract=True, allow_review_required=True)
+
+        assert code == EXIT_OK
+        assert calls == [(True, True)]
+
+    def test_resume_loop_pauses_when_dynamic_preflight_fails(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        state = load_json(CONTRACTS / "state.valid.json")
+        state["status"] = "paused"
+        state["current_phase_key"] = "plan"
+        state["current_iteration_id"] = None
+        state["phase_attempt"] = 1
+        atomic_write_json(auto_dir / "state.json", state)
+
+        def fail_preflight(
+            self,
+            *,
+            allow_draft: bool = False,
+            allow_review_required: bool = False,
+        ):
+            return False
+
+        monkeypatch.setattr(
+            LoopController, "_run_dynamic_context_preflight", fail_preflight
+        )
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.resume_loop()
+
+        updated = load_json(auto_dir / "state.json")
+        events = [
+            json.loads(line)
+            for line in (auto_dir / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert code == EXIT_MANUAL_ACTION
+        assert updated["status"] == "paused"
+        assert updated["halt_reason"] == "manual_action_required"
+        assert updated["last_failure"] == "dynamic_context_preflight_failed"
+        assert updated["current_phase_key"] == "plan"
+        assert events[-1]["event"] == "MANUAL_ACTION_REQUIRED"
+        assert events[-1]["payload"]["reason"] == "dynamic_context_preflight_failed"
+
+    def test_missing_dynamic_tooling_fails_when_dynamic_markers_exist(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        state = load_json(project / "PROJECT_STATE.json")
+        state["workflow_mode"] = "dynamic_context"
+        atomic_write_json(project / "PROJECT_STATE.json", state)
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.start_loop(
+            goal_path=str(CONTRACTS / "goal.valid.md"),
+            cli_overrides={"budget": {"max_rounds": 0}},
+        )
+
+        preflight = load_json(
+            project / ".auto_iterate" / "dynamic_context_preflight.json"
+        )
+        updated = load_json(project / ".auto_iterate" / "state.json")
+        assert code == EXIT_MANUAL_ACTION
+        assert preflight["applicability"] == "dynamic_context_tooling_missing"
+        assert (
+            updated["dynamic_preflight"]["applicability"]
+            == "dynamic_context_tooling_missing"
+        )
 
 
 # ===================================================================
 # Operator signals
 # ===================================================================
+
 
 class TestOperatorSignals:
     def test_stop_signal(self, tmp_path: Path) -> None:
@@ -280,6 +485,7 @@ class TestOperatorSignals:
 # Budget exhaustion
 # ===================================================================
 
+
 class TestBudgetExhaustion:
     def test_max_rounds_reached(self, tmp_path: Path) -> None:
         project = _setup_project(tmp_path)
@@ -309,6 +515,7 @@ class TestBudgetExhaustion:
 # Stop conditions
 # ===================================================================
 
+
 class TestStopConditions:
     def _make_plan_boundary_controller(
         self,
@@ -331,14 +538,39 @@ class TestStopConditions:
             "current_iteration_id": None,
             "phase_attempt": 1,
             "goal": {"source_path": "goal.md", "activated_at": "2026-01-01T00:00:00Z"},
-            "objective": {"primary_metric": {"name": "PSNR", "direction": direction, "target": target}},
+            "objective": {
+                "primary_metric": {
+                    "name": "PSNR",
+                    "direction": direction,
+                    "target": target,
+                }
+            },
             "initial_hypotheses": [],
             "forbidden_directions": [],
-            "best": {"iteration_id": "iter2", "round_index": 2, "primary_metric": best, "updated_at": None},
-            "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 0},
-            "budget": {"max_rounds": 20, "completed_rounds": 2, "gpu_count": 1,
-                        "max_gpu_hours": 100.0, "used_gpu_hours": 1.0, "tracking_method": "wall_time_hours_x_gpu_count"},
-            "llm_budget": {"max_calls": 200, "used_calls": 10, "tracking_method": "runtime_invocation_count"},
+            "best": {
+                "iteration_id": "iter2",
+                "round_index": 2,
+                "primary_metric": best,
+                "updated_at": None,
+            },
+            "patience": {
+                "max_no_improve_rounds": 5,
+                "min_primary_delta": 0.1,
+                "consecutive_no_improve": 0,
+            },
+            "budget": {
+                "max_rounds": 20,
+                "completed_rounds": 2,
+                "gpu_count": 1,
+                "max_gpu_hours": 100.0,
+                "used_gpu_hours": 1.0,
+                "tracking_method": "wall_time_hours_x_gpu_count",
+            },
+            "llm_budget": {
+                "max_calls": 200,
+                "used_calls": 10,
+                "tracking_method": "runtime_invocation_count",
+            },
             "accounts": {"selected_account_id": None, "by_account": {}},
             "last_decision": "NEXT_ROUND",
             "halt_reason": None,
@@ -347,8 +579,12 @@ class TestStopConditions:
         }
         return ctl
 
-    def test_target_met_stops_next_round_for_maximize_metric(self, tmp_path: Path) -> None:
-        ctl = self._make_plan_boundary_controller(tmp_path, direction="maximize", target=32.0, best=32.1)
+    def test_target_met_stops_next_round_for_maximize_metric(
+        self, tmp_path: Path
+    ) -> None:
+        ctl = self._make_plan_boundary_controller(
+            tmp_path, direction="maximize", target=32.0, best=32.1
+        )
 
         reason = ctl._check_stop_conditions()
 
@@ -356,8 +592,12 @@ class TestStopConditions:
         assert ctl.state["status"] == "stopped"
         assert ctl.state["halt_reason"] == "target_met"
 
-    def test_target_met_stops_next_round_for_minimize_metric(self, tmp_path: Path) -> None:
-        ctl = self._make_plan_boundary_controller(tmp_path, direction="minimize", target=0.08, best=0.07)
+    def test_target_met_stops_next_round_for_minimize_metric(
+        self, tmp_path: Path
+    ) -> None:
+        ctl = self._make_plan_boundary_controller(
+            tmp_path, direction="minimize", target=0.08, best=0.07
+        )
 
         reason = ctl._check_stop_conditions()
 
@@ -366,7 +606,9 @@ class TestStopConditions:
         assert ctl.state["halt_reason"] == "target_met"
 
     def test_round_boundary_stop_emits_loop_stopped_event(self, tmp_path: Path) -> None:
-        ctl = self._make_plan_boundary_controller(tmp_path, direction="maximize", target=32.0, best=32.1)
+        ctl = self._make_plan_boundary_controller(
+            tmp_path, direction="maximize", target=32.0, best=32.1
+        )
 
         code = ctl.run_main_loop()
 
@@ -385,6 +627,7 @@ class TestStopConditions:
 # ===================================================================
 # Goal validation
 # ===================================================================
+
 
 class TestGoalValidation:
     def test_invalid_goal_path(self, tmp_path: Path) -> None:
@@ -413,7 +656,9 @@ class TestGoalValidation:
         state = load_json(project / ".auto_iterate" / "state.json")
         events = [
             json.loads(line)
-            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
             if line.strip()
         ]
         assert code == EXIT_MANUAL_ACTION
@@ -424,7 +669,9 @@ class TestGoalValidation:
         assert not any(e["event"] == "ROUND_STARTED" for e in events)
         assert not any(e["event"] == "PHASE_STARTED" for e in events)
 
-    def test_goal_activation_updates_all_goal_derived_fields(self, tmp_path: Path) -> None:
+    def test_goal_activation_updates_all_goal_derived_fields(
+        self, tmp_path: Path
+    ) -> None:
         project = _setup_project(tmp_path)
         ctl = LoopController(project, dry_run=True)
         ctl.store.ensure_dirs()
@@ -432,7 +679,8 @@ class TestGoalValidation:
         active_goal = tmp_path / "active_goal.md"
         active_goal.write_text((CONTRACTS / "goal.valid.md").read_text())
         staged_goal = tmp_path / "staged_goal.md"
-        staged_goal.write_text(textwrap.dedent("""\
+        staged_goal.write_text(
+            textwrap.dedent("""\
         # Auto-Iterate Goal
 
         ## Objective
@@ -463,21 +711,44 @@ class TestGoalValidation:
 
         ## Forbidden Directions
         - Do not replace the metric protocol.
-        """))
+        """)
+        )
 
         ctl.goal_mgr.snapshot_to(active_goal)
         ctl.goal_mgr.stage_next(staged_goal)
         ctl.state = {
             "loop_id": "loop1",
             "status": "running",
-            "goal": {"source_path": str(active_goal), "activated_at": "2026-01-01T00:00:00Z"},
-            "objective": {"primary_metric": {"name": "PSNR", "direction": "maximize", "target": 32.0}},
+            "goal": {
+                "source_path": str(active_goal),
+                "activated_at": "2026-01-01T00:00:00Z",
+            },
+            "objective": {
+                "primary_metric": {
+                    "name": "PSNR",
+                    "direction": "maximize",
+                    "target": 32.0,
+                }
+            },
             "initial_hypotheses": [],
             "forbidden_directions": [],
-            "patience": {"max_no_improve_rounds": 5, "min_primary_delta": 0.1, "consecutive_no_improve": 1},
-            "budget": {"max_rounds": 20, "completed_rounds": 3, "gpu_count": 1,
-                       "max_gpu_hours": 100.0, "used_gpu_hours": 4.0},
-            "screening_policy": {"enabled": True, "threshold_pct": 90, "default_steps": 5000},
+            "patience": {
+                "max_no_improve_rounds": 5,
+                "min_primary_delta": 0.1,
+                "consecutive_no_improve": 1,
+            },
+            "budget": {
+                "max_rounds": 20,
+                "completed_rounds": 3,
+                "gpu_count": 1,
+                "max_gpu_hours": 100.0,
+                "used_gpu_hours": 4.0,
+            },
+            "screening_policy": {
+                "enabled": True,
+                "threshold_pct": 90,
+                "default_steps": 5000,
+            },
         }
 
         assert ctl._activate_pending_goal() is True
@@ -491,7 +762,9 @@ class TestGoalValidation:
         assert ctl.state["screening_policy"]["enabled"] is False
         assert ctl.state["screening_policy"]["default_steps"] == 1234
         assert ctl.state["initial_hypotheses"] == ["Try a lighter decoder."]
-        assert ctl.state["forbidden_directions"] == ["Do not replace the metric protocol."]
+        assert ctl.state["forbidden_directions"] == [
+            "Do not replace the metric protocol."
+        ]
 
 
 class TestRetryCeiling:
@@ -560,7 +833,9 @@ class TestRetryCeiling:
 
 
 class TestScreeningTransitions:
-    def test_screening_failed_skips_full_run_and_moves_to_eval(self, tmp_path: Path) -> None:
+    def test_screening_failed_skips_full_run_and_moves_to_eval(
+        self, tmp_path: Path
+    ) -> None:
         project = _setup_project(tmp_path)
         ctl = LoopController(project, dry_run=True)
         ctl.store.ensure_dirs()
@@ -573,11 +848,15 @@ class TestScreeningTransitions:
             "phase_attempt": 3,
         }
 
-        handled = ctl._advance_after_success("run_screening", {"classification": "failed"})
+        handled = ctl._advance_after_success(
+            "run_screening", {"classification": "failed"}
+        )
 
         events = [
             json.loads(line)
-            for line in (project / ".auto_iterate" / "events.jsonl").read_text().splitlines()
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
             if line.strip()
         ]
         assert handled is True
@@ -599,7 +878,9 @@ class TestScreeningTransitions:
             "phase_attempt": 1,
         }
 
-        handled = ctl._advance_after_success("run_screening", {"classification": "passed"})
+        handled = ctl._advance_after_success(
+            "run_screening", {"classification": "passed"}
+        )
 
         assert handled is False
         assert ctl.state["current_phase_key"] == "run_screening"
@@ -608,6 +889,7 @@ class TestScreeningTransitions:
 # ===================================================================
 # Status and tail
 # ===================================================================
+
 
 class TestStatusAndTail:
     def test_status_json(self, tmp_path: Path) -> None:
@@ -624,11 +906,20 @@ class TestStatusAndTail:
         assert result["loop_id"] == state_data["loop_id"]
         assert result["status"] == state_data["status"]
         required_keys = {
-            "schema_version", "loop_id", "status", "halt_reason",
-            "current_round_index", "current_phase_key",
-            "current_iteration_id", "accounts", "objective",
-            "best", "budget", "llm_budget",
-            "last_decision", "last_failure",
+            "schema_version",
+            "loop_id",
+            "status",
+            "halt_reason",
+            "current_round_index",
+            "current_phase_key",
+            "current_iteration_id",
+            "accounts",
+            "objective",
+            "best",
+            "budget",
+            "llm_budget",
+            "last_decision",
+            "last_failure",
         }
         assert required_keys.issubset(result.keys())
 
@@ -654,31 +945,44 @@ class TestStatusAndTail:
 # CLI
 # ===================================================================
 
+
 class TestCLI:
     def test_cli_start_dry_run(self, tmp_path: Path) -> None:
         """Verify CLI entry point works."""
         from auto_iterate_ctl import main
+
         project = _setup_project(tmp_path)
-        code = main([
-            "--workspace-root", str(project),
-            "start",
-            "--goal", str(CONTRACTS / "goal.valid.md"),
-            "--dry-run",
-            "--max-rounds", "0",
-        ])
+        code = main(
+            [
+                "--workspace-root",
+                str(project),
+                "start",
+                "--goal",
+                str(CONTRACTS / "goal.valid.md"),
+                "--dry-run",
+                "--max-rounds",
+                "0",
+            ]
+        )
         # Should exit cleanly (max_rounds=0 → immediate stop).
         assert code == EXIT_OK
 
     def test_cli_status_no_loop(self, tmp_path: Path) -> None:
         from auto_iterate_ctl import main
-        code = main([
-            "--workspace-root", str(tmp_path),
-            "status", "--json",
-        ])
+
+        code = main(
+            [
+                "--workspace-root",
+                str(tmp_path),
+                "status",
+                "--json",
+            ]
+        )
         assert code == EXIT_OK
 
     def test_cli_no_command(self) -> None:
         from auto_iterate_ctl import main
+
         code = main([])
         assert code == EXIT_INVALID_ARGS
 
@@ -695,7 +999,9 @@ class TestLockRaceHandling:
         def raise_conflict(*args, **kwargs):
             raise LockConflictError("raced with another controller")
 
-        monkeypatch.setattr("auto_iterate.controller.LockManager.acquire", raise_conflict)
+        monkeypatch.setattr(
+            "auto_iterate.controller.LockManager.acquire", raise_conflict
+        )
 
         ctl = LoopController(project, dry_run=True)
         code = ctl.start_loop(goal_path=str(CONTRACTS / "goal.valid.md"))
@@ -722,7 +1028,9 @@ class TestLockRaceHandling:
         def raise_conflict(*args, **kwargs):
             raise LockConflictError("raced with another controller")
 
-        monkeypatch.setattr("auto_iterate.controller.LockManager.acquire", raise_conflict)
+        monkeypatch.setattr(
+            "auto_iterate.controller.LockManager.acquire", raise_conflict
+        )
 
         ctl = LoopController(project, dry_run=True)
         code = ctl.resume_loop()

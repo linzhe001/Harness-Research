@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import platform
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,12 @@ class LockConflictError(Exception):
 class LockManager:
     """Manage `.auto_iterate/lock.json`."""
 
-    def __init__(self, lock_path: str | Path, *, stale_threshold_sec: int = 120) -> None:
+    def __init__(
+        self,
+        lock_path: str | Path,
+        *,
+        stale_threshold_sec: int = 120,
+    ) -> None:
         self.lock_path = Path(lock_path)
         self.stale_threshold_sec = stale_threshold_sec
 
@@ -80,7 +85,7 @@ class LockManager:
     def update_heartbeat(self) -> None:
         """Refresh ``heartbeat_at`` in the existing lock (atomic write)."""
         data = load_json(self.lock_path)
-        data["heartbeat_at"] = _utcnow_iso()
+        data["heartbeat_at"] = _next_heartbeat_iso(data.get("heartbeat_at"))
         atomic_write_json(self.lock_path, data)
 
     # ------------------------------------------------------------------
@@ -161,7 +166,22 @@ class LockManager:
 # ------------------------------------------------------------------
 
 def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return _format_utc(datetime.now(timezone.utc))
+
+
+def _next_heartbeat_iso(previous: Any) -> str:
+    now = datetime.now(timezone.utc)
+    try:
+        previous_dt = datetime.fromisoformat(str(previous).replace("Z", "+00:00"))
+    except ValueError:
+        previous_dt = None
+    if previous_dt is not None and now <= previous_dt:
+        now = previous_dt + timedelta(microseconds=1)
+    return _format_utc(now)
+
+
+def _format_utc(value: datetime) -> str:
+    return value.isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def _pid_alive(pid: int) -> bool:

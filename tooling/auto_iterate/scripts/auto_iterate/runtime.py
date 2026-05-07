@@ -243,6 +243,9 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- Update screening.status to passed|failed|skipped.\n"
+        "- When screening.status is passed or failed, record screening.metrics.\n"
+        "- When screening.status is passed or failed, record "
+        "run_manifest.command and run_manifest.exp_dir for the screening run.\n"
         "- Screening threshold: {threshold_pct}% of baseline.\n"
     ),
     "run_full": (
@@ -255,6 +258,7 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- Update full_run.status to completed|recoverable_failed|failed.\n"
         "- Record metrics in full_run.metrics.\n"
+        "- Record run_manifest.command and run_manifest.exp_dir for the full run.\n"
     ),
     "eval": (
         "You are in auto_mode. Execute `$iterate eval` for iteration {iteration_id}.\n"
@@ -273,6 +277,9 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "  - PIVOT: fundamental approach change needed.\n"
         "  - ABORT: terminate this research direction.\n"
         "- Record at least 1 lesson.\n"
+        "- Preserve git_commit and run_manifest before completion.\n"
+        "- If screening.status=failed and no full_run exists, finalize metrics "
+        "from screening.metrics and explain the failed-screen decision.\n"
         "- Set iteration status to completed.\n"
     ),
 }

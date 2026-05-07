@@ -240,13 +240,10 @@ diff tooling/remote_control/config/templates/cc_connect.local.example.toml tooli
 ```
 
 When templates add new sections or fields, merge them manually into the
-project goal file or local controller YAML. For Codex accounts, do not recreate
-manual `.codex-acc*` homes; refresh the Cockpit projection instead:
-
-```bash
-tooling/auto_iterate/scripts/project_cockpit_codex_accounts.py \
-  --accounts-yaml tooling/auto_iterate/config/accounts.local.yaml
-```
+project goal file or local controller YAML. For Codex auth, do not recreate
+manual account homes; keep `accounts.local.yaml` in `mode: external_current`
+and ensure WSL `~/.codex/auth.json` points at the Cockpit-managed Windows auth
+file.
 
 If your repo versions `controller.local.yaml` / `accounts.local.yaml` as shared
 defaults, update those tracked files in place while keeping generated credential

@@ -55,7 +55,10 @@ cross-validation. Record `codex_review: "used"|"unavailable"` (never null).
 
 **Screening protocol**: For experiments that don't introduce new architecture/loss,
 recommend a 5K-10K step proxy run before full training. Add `screening` field to
-iteration entry (`screening.recommended` as a structured boolean field).
+iteration entry (`screening.recommended` as a structured boolean field). When a
+screening run executes and returns `passed` or `failed`, record
+`screening.metrics` and the run command/exp_dir in `run_manifest` so a failed
+screen can be evaluated without inventing full-run evidence.
 
 ## Controller Coexistence
 
@@ -317,10 +320,11 @@ The component list is parsed from the `--components` argument (`name:override` p
    | w/o {component_b} | XX.XX  | -X.XX  | moderate    |
    | w/o {component_c} | XX.XX  | -X.XX  | minimal     |
    ```
-   - Delta < -1.0 dB → `significant`
-   - Delta < -0.3 dB → `moderate`
-   - Delta >= -0.3 dB → `minimal`
-   - Delta > 0 dB → `negative` (removal actually improves results)
+   - Use active Evaluation Contract ablation thresholds when defined.
+   - Default fallback: delta < -1.0 dB → `significant`
+   - Default fallback: delta < -0.3 dB → `moderate`
+   - Default fallback: -0.3 dB <= delta <= 0 dB → `minimal`
+   - Default fallback: delta > 0 dB → `negative` (removal improves results)
 5. **Update parent iteration's** `ablation_summary` field
 
 **Error handling**:

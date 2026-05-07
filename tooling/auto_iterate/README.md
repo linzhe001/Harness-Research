@@ -21,7 +21,12 @@ Per-project runtime state is still written to the project root under
 that tooling exists in the workspace. The result is recorded in
 `.auto_iterate/dynamic_context_preflight.json`; use
 `--allow-draft-contract` only after explicit operator acceptance, and
-`--skip-dynamic-preflight` only for legacy or manually gated runs.
+`--allow-review-required` only after explicit operator acceptance of a protocol
+review gap. `resume` reruns the same preflight before continuing. Use
+`--skip-dynamic-preflight --skip-dynamic-preflight-reason "<reason>"` only for
+legacy or manually gated runs; the reason is recorded in controller state and
+events. If dynamic-context markers are present but the gate tooling is missing,
+the controller pauses instead of silently treating the run as ready.
 
 Before starting or resuming long WF10 runs, make sure WSL
 `~/.codex/auth.json` points at the Windows Cockpit-managed auth file, or set
