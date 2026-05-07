@@ -61,10 +61,26 @@ this skill is active.
 6. Attempt Codex review through the current environment's exposed Codex review
    surface, such as a built-in review command, MCP tool, or configured reviewer
    command. Record `codex_review_or_NOT_RUN` when no such surface is available.
-7. Attempt an external model review when configured by the operator. Prefer
-   `tooling/model_api/external_chat.py --provider deepseek` for DeepSeek v4 Pro,
-   or use another OpenAI-compatible provider from
-   `tooling/model_api/providers.example.yaml`. Record
+7. Attempt an external model review when configured by the operator. Run
+   provider-backed review only through
+   `tooling/model_api/harness_external_review.py`; the wrapper and Codex hook
+   require an active `$code-review heavy` session before calling networked
+   reviewer scripts. Use `agentic` mode for high-rigor DeepSeek review or
+   `chat` mode for a single prompt/response review. For simple or targeted reviews,
+   generate the prompt with `tooling/model_api/build_review_prompt.py` in its
+   default `--scope changed` mode so DeepSeek receives only the review
+   instructions, task, git status, diff, changed tracked files, and
+   operator-selected `--context-file` entries. For high-rigor workflow reviews
+   where the operator wants DeepSeek to choose files itself, use
+   `tooling/model_api/harness_external_review.py agentic`; it gives DeepSeek a local read-only
+   tool loop with workflow hints, git inspection, file listing, text search,
+   file reads, diff, and git-show tools through `agentic_review.py`. For large diffs, split targeted review
+   packets with `--include-path` or `--exclude-path` by subsystem instead of
+   sending every changed file together. Do not send a full-repository bundle
+   unless the operator explicitly accepts that cost with `--scope full`.
+   DeepSeek cannot read omitted local files from a single non-agentic
+   chat-completions call; missing context must be reported as an open question,
+   not guessed. Record
    `external_model_review_or_NOT_RUN`; do not invent a result when the model is
    not available.
 8. Verify reviewer findings against the checked-out files and diff. A model
@@ -86,6 +102,8 @@ this skill is active.
   state from this skill.
 - Review output belongs in `.agents/state/review_traces/code-review/` unless the
   user explicitly asks for another artifact.
+- Local review trace writes are audit state, not human approval artifacts, and
+  do not require operator approval by themselves.
 - Do not manually write `.evidence/**`; use the evidence tooling or
   `$doc-compiler` when a current doc or evidence chain must change.
 - Do not report PASS/ready for heavy review when any accepted critical finding

@@ -531,8 +531,8 @@
       },
       "required_actions": ["iteration_log_update", "decision_vocabulary", "lesson_quality_check_or_NOT_RUN", "gate_ledger"],
       "forbidden_actions": ["auto_observation_direct_to_MEMORY", "manual_edit_auto_iterate", "stage_transition_from_iterate"],
-      "gate_ledger_required_when": ["iteration_log_write", "lesson_promotion", "WF11_handoff"],
-      "sensitive_paths": ["iteration_log.json", "docs/40_iterations/", "docs/50_memory/", "MEMORY.md"]
+      "gate_ledger_required_when": ["iteration_log_write", "iteration_report_write", "lesson_promotion", "WF11_handoff"],
+      "sensitive_paths": ["iteration_log.json", "docs/iterations/", "docs/40_iterations/", "docs/50_memory/", "MEMORY.md"]
     },
     {
       "skill": "auto-iterate-goal",

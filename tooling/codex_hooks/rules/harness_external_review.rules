@@ -1,0 +1,17 @@
+# Allow network escalation without prompting only for the Harness external
+# review wrapper. The wrapper and PreToolUse hook both require an active
+# `$code-review heavy` session before calling provider-backed review scripts.
+prefix_rule(
+    pattern = [["python", "python3"], "tooling/model_api/harness_external_review.py"],
+    decision = "allow",
+    justification = "Allow outbound network only through the Harness external review wrapper during `$code-review heavy`.",
+    match = [
+        "python tooling/model_api/harness_external_review.py agentic --provider deepseek --workspace-root . --task-file .agents/state/review_traces/code-review/task.md --output .agents/state/review_traces/code-review/deepseek.response.md",
+        "python3 tooling/model_api/harness_external_review.py chat --provider deepseek --prompt-file .agents/state/review_traces/code-review/prompt.md --output .agents/state/review_traces/code-review/deepseek.response.md",
+    ],
+    not_match = [
+        "python tooling/model_api/agentic_review.py --provider deepseek",
+        "python tooling/model_api/external_chat.py --provider deepseek",
+        "python -m tooling.model_api.harness_external_review agentic --provider deepseek",
+    ],
+)

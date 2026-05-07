@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -103,11 +104,24 @@ READ_COMMAND_RE = re.compile(
     r"\b(cat|sed|nl|rg|grep|head|tail|less|more|find|ls|git\s+diff|git\s+show|git\s+status)\b"
 )
 MUTATING_COMMAND_RE = re.compile(
-    r"(^|\s)(rm|mv|cp|touch|mkdir|chmod|chown|git\s+add|git\s+commit|git\s+rm|python\s+.*approve_contract\.py)\b|>|>>"
+    r"(^|\s)(rm|mv|cp|touch|mkdir|chmod|chown|git\s+add|git\s+commit|git\s+rm)\b|"
+    r"(^|\s)(?:\S*/)?(?:python|python\d+(?:\.\d+)*|py)\s+\S*approve_contract\.py\b"
 )
 MUTATING_TOOL_NAMES = {"apply_patch", "Edit", "Write", "Bash", "shell", "local_shell"}
 READ_TOOL_NAMES = {"Read", "View", "Open"}
 REVIEW_WRITE_ALLOWED_PATHS = [".agents/state/review_traces/code-review/"]
+TOOL_OWNED_WRITE_TOOL_PREFIXES = ("tooling/evidence/", "tooling/auto_iterate/")
+EXTERNAL_MODEL_REVIEW_SCRIPTS = {
+    "tooling/model_api/agentic_review.py",
+    "tooling/model_api/external_chat.py",
+}
+EXTERNAL_MODEL_REVIEW_WRAPPER = "tooling/model_api/harness_external_review.py"
+EXTERNAL_MODEL_REVIEW_OUTPUT_FLAGS = {
+    "--meta-json",
+    "--output",
+    "--request-json",
+    "--trace-json",
+}
 DAILY_CONTEXT_FILES = ("AGENTS.md", "CLAUDE.md")
 PATH_TOKEN_RE = re.compile(
     r"(?<![\w.-])(?:[A-Za-z0-9_.-]+[/\\])+[A-Za-z0-9_.@%+=:,~-]+|"
@@ -117,6 +131,14 @@ PATH_TOKEN_RE = re.compile(
 )
 EXPLICIT_TRIGGER_RE = re.compile(r"^[$/][A-Za-z0-9_-]+$")
 WORKFLOW_TRIGGER_RE = re.compile(r"^wf\d+[a-z-]*$", re.IGNORECASE)
+CONTINUATION_PROMPT_RE = re.compile(
+    r"^\s*(?:"
+    r"继续(?:吧|执行|处理|修复|审查|检查|review)?|"
+    r"接着(?:来|做|执行|处理|修复|审查|检查)?|"
+    r"continue|go on|resume|proceed|keep going"
+    r")\s*[。.!！?？]*\s*$",
+    re.IGNORECASE,
+)
 CODE_WRITE_RE = re.compile(
     r"\b(implement|create|add|write|generate|scaffold|fix|debug|modify|edit|change|update|"
     r"refactor|adjust|improve|remove|delete|patch)\b|"
@@ -134,9 +156,9 @@ CODE_MODIFY_RE = re.compile(
     re.IGNORECASE,
 )
 CODE_TARGET_RE = re.compile(
-    r"\b(src|scripts|tests|tooling|configs?|hook|hooks|skill detection|"
-    r"function|class|method|module|pytest|ruff|py_compile|python|"
-    r"typescript|javascript)\b|"
+    r"(?<![A-Za-z0-9_])(?:src|scripts|tests|tooling|configs?|hooks?|"
+    r"skill detection|workflow|skills?|function|class|method|module|pytest|"
+    r"ruff|py_compile|python|typescript|javascript)(?![A-Za-z0-9_])|"
     r"(代码|函数|类|模块|脚本|测试|钩子|修改代码|写代码)",
     re.IGNORECASE,
 )
@@ -146,8 +168,9 @@ CODE_SEARCH_RE = re.compile(
     re.IGNORECASE,
 )
 CODE_REVIEW_RE = re.compile(
-    r"\b(code[- ]?review|review\s+code|codex\s+review|deepseek\s+review|"
-    r"cross[- ]?review|review\s+diff|audit\s+diff)\b|"
+    r"(?<![A-Za-z0-9_])(?:code[- ]?review|review\s+code|codex\s+review|"
+    r"deepseek\s+review|cross[- ]?review|review\s+diff|audit\s+diff)"
+    r"(?![A-Za-z0-9_])|"
     r"(代码\s*review|代码审查|代码检查|交叉验证|交叉\s*review)",
     re.IGNORECASE,
 )
@@ -352,6 +375,12 @@ def detect_skill(root: Path, prompt: str) -> dict[str, Any] | None:
     return match["contract"] if match else None
 
 
+def is_continuation_prompt(prompt: str) -> bool:
+    if prompt.strip().strip("。.!！?？") == "CONTINUE":
+        return False
+    return bool(CONTINUATION_PROMPT_RE.match(prompt))
+
+
 def hook_event_name(event: dict[str, Any]) -> str | None:
     value = event.get("hook_event_name") or event.get("hookEventName")
     return str(value) if value is not None else None
@@ -504,6 +533,18 @@ def save_pending(root: Path, pending: dict[str, Any]) -> None:
     write_json(root / PENDING_PATH, pending)
 
 
+def clear_pending(root: Path) -> None:
+    save_pending(
+        root,
+        {
+            "requires_gate_ledger": False,
+            "reasons": [],
+            "changed_paths": [],
+            "gate_ledger_notice_emitted": False,
+        },
+    )
+
+
 def read_tracking_candidates(
     root: Path, contract: dict[str, Any] | None = None
 ) -> list[str]:
@@ -607,14 +648,154 @@ def active_contract(root: Path) -> dict[str, Any] | None:
 
 
 def looks_mutating_bash(command: str) -> bool:
-    return bool(MUTATING_COMMAND_RE.search(command))
+    return bool(MUTATING_COMMAND_RE.search(command)) or has_shell_redirection(command)
 
 
-def is_mutating_tool_event(event: dict[str, Any]) -> bool:
+def has_shell_redirection(command: str) -> bool:
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(command):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char == ">":
+            previous_char = command[index - 1] if index else ""
+            next_char = command[index + 1] if index + 1 < len(command) else ""
+            if previous_char == "=" or next_char == "=":
+                continue
+            return True
+    return False
+
+
+def is_tool_owned_write_tool_command(command: str, root: Path | None = None) -> bool:
+    if re.search(r"&&|\|\||;|\n|\|", command):
+        return False
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
+        tokens.pop(0)
+    if not tokens:
+        return False
+
+    executable = Path(tokens[0]).name
+    script_index = 1 if _is_python_executable(executable) else 0
+    if len(tokens) <= script_index:
+        return False
+    script = rel_path(tokens[script_index], root or repo_root()).lstrip("./")
+    return script.startswith(TOOL_OWNED_WRITE_TOOL_PREFIXES)
+
+
+def is_review_trace_bash_write(root: Path, command: str) -> bool:
+    if re.search(r"&&|\|\||;|\n|\|", command):
+        return False
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
+        tokens.pop(0)
+    if not tokens or Path(tokens[0]).name != "mkdir":
+        return False
+
+    targets: list[str] = []
+    for token in tokens[1:]:
+        if token == "--":
+            continue
+        if token.startswith("-"):
+            continue
+        targets.append(rel_path(token, root))
+    return bool(targets) and all(
+        path_matches_any(target, REVIEW_WRITE_ALLOWED_PATHS)
+        for target in targets
+    )
+
+
+def _is_python_executable(executable: str) -> bool:
+    return bool(re.fullmatch(r"python(?:\d+(?:\.\d+)*)?|py", executable))
+
+
+def python_script_from_command(root: Path, command: str) -> str | None:
+    if re.search(r"&&|\|\||;|\n|\|", command):
+        return None
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return None
+    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
+        tokens.pop(0)
+    if len(tokens) < 2:
+        return None
+    executable = Path(tokens[0]).name
+    if not _is_python_executable(executable):
+        return None
+    return rel_path(tokens[1], root).lstrip("./")
+
+
+def is_direct_external_review_command(root: Path, command: str) -> bool:
+    return python_script_from_command(root, command) in EXTERNAL_MODEL_REVIEW_SCRIPTS
+
+
+def is_external_review_wrapper_command(root: Path, command: str) -> bool:
+    return python_script_from_command(root, command) == EXTERNAL_MODEL_REVIEW_WRAPPER
+
+
+def external_review_output_paths(root: Path, command: str) -> list[str]:
+    if not is_external_review_wrapper_command(root, command):
+        return []
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return ["<invalid external review command>"]
+
+    paths: list[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token in EXTERNAL_MODEL_REVIEW_OUTPUT_FLAGS:
+            if index + 1 < len(tokens):
+                paths.append(rel_path(tokens[index + 1], root))
+            else:
+                paths.append(f"<missing value for {token}>")
+            index += 2
+            continue
+        for flag in EXTERNAL_MODEL_REVIEW_OUTPUT_FLAGS:
+            if token.startswith(f"{flag}="):
+                paths.append(rel_path(token.split("=", 1)[1], root))
+                break
+        index += 1
+    return paths
+
+
+def external_review_session_allowed(root: Path) -> bool:
+    session = load_session(root)
+    return (
+        session.get("active_skill") == "code-review"
+        and session.get("intent_class") == "code_review_heavy"
+    )
+
+
+def is_mutating_tool_event(event: dict[str, Any], root: Path | None = None) -> bool:
     name = normalize_tool_name(tool_name(event))
     command = tool_text(event)
+    workspace = root or repo_root()
     return name in {"apply_patch", "Edit", "Write"} or (
-        name == "Bash" and looks_mutating_bash(command)
+        name == "Bash"
+        and (
+            looks_mutating_bash(command)
+            or bool(external_review_output_paths(workspace, command))
+        )
     )
 
 
@@ -633,11 +814,17 @@ def mutating_event_paths(root: Path, event: dict[str, Any]) -> list[str]:
             value = payload.get(key)
             if isinstance(value, str):
                 paths.append(rel_path(value, root))
-    elif name == "Bash" and looks_mutating_bash(command):
-        if any(path in command for path in REVIEW_WRITE_ALLOWED_PATHS):
-            paths.extend(REVIEW_WRITE_ALLOWED_PATHS)
-        else:
-            paths.append("<bash mutation>")
+    elif name == "Bash":
+        wrapper_outputs = external_review_output_paths(root, command)
+        if wrapper_outputs:
+            paths.extend(wrapper_outputs)
+            if looks_mutating_bash(command):
+                paths.append("<bash mutation>")
+        elif looks_mutating_bash(command):
+            if is_review_trace_bash_write(root, command):
+                paths.extend(REVIEW_WRITE_ALLOWED_PATHS)
+            else:
+                paths.append("<bash mutation>")
     return paths
 
 
@@ -645,7 +832,7 @@ def mark_tool_activity(root: Path, event: dict[str, Any]) -> dict[str, Any]:
     session = load_session(root)
     if not is_harness_workspace(root):
         return session
-    if is_mutating_tool_event(event):
+    if is_mutating_tool_event(event, root):
         session["mutating_tool_seen"] = True
         session["last_mutating_tool"] = normalize_tool_name(tool_name(event))
         session["last_mutating_turn_id"] = event.get("turn_id")
@@ -654,9 +841,21 @@ def mark_tool_activity(root: Path, event: dict[str, Any]) -> dict[str, Any]:
 
 
 def changed_paths(root: Path) -> list[str]:
+    paths: list[str] = []
+    commands = [
+        ["git", "diff", "--name-only"],
+        ["git", "diff", "--cached", "--name-only"],
+        ["git", "ls-files", "--others", "--exclude-standard"],
+    ]
+    for command in commands:
+        paths.extend(_git_changed_paths(root, command))
+    return sorted(dict.fromkeys(paths))
+
+
+def _git_changed_paths(root: Path, command: list[str]) -> list[str]:
     try:
         result = subprocess.run(
-            ["git", "diff", "--name-only"],
+            command,
             cwd=root,
             text=True,
             stdout=subprocess.PIPE,
@@ -678,12 +877,33 @@ def path_matches_any(path: str, patterns: list[str]) -> bool:
     return False
 
 
+def is_local_code_review_trace_path(path: str) -> bool:
+    return path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS)
+
+
+def is_code_review_audit_write_event(
+    root: Path,
+    event: dict[str, Any],
+    contract: dict[str, Any] | None,
+) -> bool:
+    if not contract or contract.get("skill") != "code-review":
+        return False
+    if not is_mutating_tool_event(event, root):
+        return False
+    paths = mutating_event_paths(root, event)
+    return bool(paths) and all(is_local_code_review_trace_path(path) for path in paths)
+
+
 def mark_pending_for_changes(root: Path, event: dict[str, Any]) -> dict[str, Any]:
     pending = load_pending(root)
     if not is_harness_workspace(root):
         return pending
 
     contract = active_contract(root)
+    if is_code_review_audit_write_event(root, event, contract):
+        save_pending(root, pending)
+        return pending
+
     paths = changed_paths(root)
     if contract:
         sensitive = list(contract.get("sensitive_paths", []))
@@ -697,7 +917,11 @@ def mark_pending_for_changes(root: Path, event: dict[str, Any]) -> dict[str, Any
             "scripts/",
             "configs/",
         ]
-    touched = [p for p in paths if path_matches_any(p, sensitive)]
+    touched = [
+        p
+        for p in paths
+        if path_matches_any(p, sensitive) and not is_local_code_review_trace_path(p)
+    ]
     if touched:
         already_pending = bool(pending.get("requires_gate_ledger"))
         pending["requires_gate_ledger"] = True
@@ -720,6 +944,14 @@ def consume_gate_ledger_notice(root: Path, pending: dict[str, Any]) -> bool:
     return True
 
 
+def has_gate_ledger(message: str) -> bool:
+    if not re.search(r"\bgate ledger\b", message, flags=re.IGNORECASE):
+        return False
+    lowered = message.lower()
+    required = ("command", "result", "reason", "artifact")
+    return all(re.search(rf"\b{field}s?\b", lowered) for field in required)
+
+
 def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     if not is_harness_workspace(root):
         return None
@@ -728,6 +960,19 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     command = tool_text(event)
 
     if name == "Bash":
+        if is_direct_external_review_command(root, command):
+            return (
+                "Blocked by Harness policy: external model review must run "
+                "through `tooling/model_api/harness_external_review.py` so "
+                "network approval is scoped to `$code-review heavy`."
+            )
+        if is_external_review_wrapper_command(
+            root, command
+        ) and not external_review_session_allowed(root):
+            return (
+                "Blocked by Harness policy: the external review wrapper is "
+                "allowed only during an active `$code-review heavy` session."
+            )
         for pattern in IGNORE_GIT_ADD_PATTERNS:
             if re.search(r"\bgit\s+add\b", command) and pattern in command:
                 return (
@@ -737,10 +982,7 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
         if any(
             path in command for path in DIRECT_TOOL_OWNED_PATHS
         ) and looks_mutating_bash(command):
-            if (
-                "tooling/evidence/" not in command
-                and "tooling/auto_iterate/" not in command
-            ):
+            if not is_tool_owned_write_tool_command(command, root):
                 return (
                     "Blocked by Harness policy: .evidence/** and "
                     ".auto_iterate/** are tool/controller-owned paths."
@@ -749,7 +991,9 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     if name == "apply_patch":
         patch_text = command
         if any(
-            f"*** Update File: {p}" in patch_text or f"*** Add File: {p}" in patch_text
+            f"*** Update File: {p}" in patch_text
+            or f"*** Add File: {p}" in patch_text
+            or f"*** Delete File: {p}" in patch_text
             for p in DIRECT_TOOL_OWNED_PATHS
         ):
             return (
@@ -758,7 +1002,7 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
             )
 
     contract = active_contract(root)
-    is_mutating_tool = is_mutating_tool_event(event)
+    is_mutating_tool = is_mutating_tool_event(event, root)
     if contract and is_mutating_tool:
         missing = missing_reads(root, contract)
         if missing:
@@ -832,7 +1076,7 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
             }
     if pending.get("requires_gate_ledger"):
         message = str(event.get("last_assistant_message") or "")
-        if "Gate ledger" not in message and "NOT_RUN" not in message:
+        if not has_gate_ledger(message):
             changed = "\n".join(f"- {p}" for p in pending.get("changed_paths", [])[:12])
             return {
                 "decision": "block",
@@ -842,6 +1086,7 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
                     + changed
                 ),
             }
+        clear_pending(root)
     return None
 
 

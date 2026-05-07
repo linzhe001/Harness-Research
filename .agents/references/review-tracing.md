@@ -21,6 +21,10 @@ Use a local runtime directory under the shared `.agents/state/` tree:
 ```
 
 This directory is not canonical project state. It is local audit data and should not be committed.
+For `code-review`, pure writes under `.agents/state/review_traces/code-review/`
+are local audit writes and do not require human approval by themselves. Source,
+docs, tests, configs, canonical state, evidence, or other sensitive changes
+still require the normal workflow gate evidence and approval rules.
 
 ## Required Fields
 

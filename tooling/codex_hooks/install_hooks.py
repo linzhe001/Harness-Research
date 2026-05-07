@@ -14,6 +14,9 @@ RUNTIME_SCRIPTS = [
     "post_tool_use_markers.py",
     "require_gate_ledger.py",
 ]
+RULE_TEMPLATES = [
+    "harness_external_review.rules",
+]
 
 
 def codex_home() -> Path:
@@ -98,6 +101,23 @@ def _copy_runtime_scripts(root: Path, target_dir: Path) -> None:
         shutil.copyfile(source, target_dir / script)
 
 
+def _copy_rule_templates(root: Path, codex_dir: Path) -> None:
+    source_dir = root / "tooling" / "codex_hooks" / "rules"
+    target_dir = codex_dir / "rules"
+    for template in RULE_TEMPLATES:
+        source = source_dir / template
+        if not source.exists():
+            raise FileNotFoundError(f"missing rule template: {source}")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target_dir / template)
+
+
+def _remove_rule_templates(codex_dir: Path) -> None:
+    target_dir = codex_dir / "rules"
+    for template in RULE_TEMPLATES:
+        (target_dir / template).unlink(missing_ok=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Install Harness Codex hooks.")
     parser.add_argument("--workspace-root", default=".", help="Repository root.")
@@ -140,10 +160,15 @@ def main() -> int:
 
     config_path = codex_dir / "config.toml"
     _ensure_feature_flag(config_path)
+    if scope == "workspace":
+        _copy_rule_templates(root, codex_dir)
+    else:
+        _remove_rule_templates(codex_dir)
 
     print(f"installed Harness Codex hooks to {codex_dir} ({scope} scope)")
     if scope == "user":
         print(f"copied hook runtime scripts to {codex_dir / 'harness_hooks'}")
+        print("removed user-level Harness external review execpolicy rules")
     return 0
 
 

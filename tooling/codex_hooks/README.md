@@ -27,6 +27,7 @@ This creates:
 ```text
 .codex/config.toml
 .codex/hooks.json
+.codex/rules/harness_external_review.rules
 ```
 
 The actual hook logic stays in the versioned source directory:
@@ -50,6 +51,17 @@ The installer ensures hooks are enabled in `.codex/config.toml`:
 [features]
 codex_hooks = true
 ```
+
+It also installs a narrow project-local Codex execpolicy rule that allows
+network escalation without prompting only for:
+
+```bash
+python tooling/model_api/harness_external_review.py ...
+```
+
+The wrapper and PreToolUse hook still require an active `$code-review heavy`
+session before a provider-backed external review script can run. Restart Codex
+after changing hooks or rules.
 
 Check the effective installation:
 
@@ -91,6 +103,10 @@ Specifically:
   `harness_contracts.py`, `user_prompt_submit.py`,
   `pre_tool_use_policy.py`, `post_tool_use_markers.py`, and
   `require_gate_ledger.py`.
+- User-level installation does not install the external-review execpolicy
+  network allow rule. If a previous Harness install wrote
+  `~/.codex/rules/harness_external_review.rules`, the installer removes that
+  specific rule so the network exception remains workspace-local.
 
 If both user-level and workspace-local hooks exist, Codex loads both matching
 sources. To keep workspace-only behavior, do not keep an active
@@ -139,6 +155,12 @@ Skill detection is intentionally stricter than substring matching:
 - Code review prompts infer `code-review` when the user asks for review of code,
   diffs, changed files, or code-backed docs. The intent records a mode:
   `code_review_light`, `code_review_medium`, or `code_review_heavy`.
+- Short continuation prompts such as `继续`, `continue`, or `resume` keep the
+  previous active skill session only when both the previous and current hook
+  events have the same non-empty Codex `session_id`. This prevents follow-up
+  turns from clearing a still-active review or workflow contract without
+  allowing stale workspace-local sessions to cross a missing or different
+  session boundary.
 - Code-search and read-only prompts, such as asking where a file/function lives
   or asking for an explanation, do not trigger workflow Stop blocking.
 
@@ -153,6 +175,11 @@ part of the review evidence.
 When `code-review` is active, mutating tools are allowed only for local review
 artifacts under `.agents/state/review_traces/code-review/`; source fixes must be
 routed through `code-debug`.
+Pure local writes under `.agents/state/review_traces/code-review/` do not create
+a pending Gate ledger requirement or approval requirement, even when the
+working tree already has unrelated dirty source, docs, tests, config, or other
+sensitive paths. If the current tool event attempts to write those subject
+paths during `code-review`, the normal review-only boundary still blocks it.
 
 ## Runtime Files
 
@@ -162,7 +189,26 @@ Hooks write local state under `.harness_hooks/`:
 - `read_ledger.json` records tracked files observed during the current prompt turn.
 - `pending_actions.json` records whether a Gate ledger is required before final response and whether the one-time reminder has already been emitted.
 
+Continuation prompts preserve the previous `session.json` contract and
+`read_ledger.json` so a multi-turn review can continue without losing the
+active Harness context. Non-continuation prompts still start a fresh session and
+reset the read ledger.
+
 These files are runtime state and must not be committed.
+
+## External Review Network Guard
+
+For heavy code review, external model calls should use:
+
+```bash
+python tooling/model_api/harness_external_review.py agentic --provider deepseek ...
+```
+
+Direct calls to `tooling/model_api/agentic_review.py` or
+`tooling/model_api/external_chat.py` are blocked by the Harness PreToolUse hook
+in Harness workspaces. The wrapper checks `.harness_hooks/session.json` and
+continues only when the active skill is `code-review` and the intent is
+`code_review_heavy`.
 
 ## Contract Source
 
