@@ -51,7 +51,9 @@
 /.harness/
 /tooling/auto_iterate/config/*.local.yaml
 !/tooling/auto_iterate/config/controller.local.yaml
-!/tooling/auto_iterate/config/accounts.local.yaml
+/tooling/model_api/providers.local.yaml
+/oaicopilot-config-*.json
+/ref/
 /.npm-cache/
 /.codex
 /.harness_hooks/

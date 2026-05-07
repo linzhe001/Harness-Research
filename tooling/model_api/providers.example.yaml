@@ -1,6 +1,8 @@
 # External model providers for review tooling.
 #
-# API keys are read from environment variables. Do not put secrets in this file.
+# Do not put a real key in this tracked example. Copy this file to
+# tooling/model_api/providers.local.yaml and fill api_key there. The CLI reads
+# providers.local.yaml first, then this example file when --config is omitted.
 
 providers:
   deepseek:
@@ -14,7 +16,7 @@ providers:
     extra_body:
       thinking:
         type: enabled
-      reasoning_effort: high
+      reasoning_effort: max
 
   openai_compatible:
     # Generic OpenAI-compatible endpoint.
