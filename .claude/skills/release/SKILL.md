@@ -25,6 +25,10 @@ For documentation evidence and anti-hallucination behavior, see [../../shared/do
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
 For claim-bearing release docs, also follow [../../shared/evidence-chain-rule.md](../../shared/evidence-chain-rule.md).
+Dynamic-context release claims require approved Project Contract, Evaluation
+Contract, and Claim Boundary; legacy or standard projects must cite the fallback
+release/evaluation evidence source instead of treating missing contracts as
+approval.
 </context>
 
 <instructions>

@@ -28,11 +28,15 @@ Use this skill for WF11 when the user wants the final validation matrix after th
 
 ## Required Work
 
-1. Read the best iteration, available iteration reports, and any approved contracts.
+1. Read the best iteration, available iteration reports, and the contract set.
+   Dynamic-context projects require approved Project Contract, Evaluation
+   Contract, and Claim Boundary before WF11 work is treated as ready.
 2. Design canonical ablations that isolate major component contributions.
 3. Define hyperparameter search, robustness tests, and cross-dataset evaluation.
 4. Estimate compute budget and execution order.
-5. Ensure the matrix respects the Evaluation Contract and Claim Boundary when present.
+5. Ensure the matrix respects the Evaluation Contract and Claim Boundary. In
+   legacy or standard projects without dynamic contracts, report the fallback
+   evidence source instead of treating missing contracts as approval.
 6. Write `docs/Final_Experiment_Matrix.md` using the canonical template.
 7. Update `PROJECT_STATE.json` when appropriate.
 

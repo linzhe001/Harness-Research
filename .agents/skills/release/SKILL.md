@@ -43,7 +43,10 @@ Interpret natural-language requests as one of the canonical intents:
 
 - Collect the chosen outputs, build the submission layout, include a README, and validate the package.
 - Create `submission/manifest.json` according to `./references/release-manifest.md` before packaging.
-- Ensure package README and release claims respect `docs/10_contract/Claim_Boundary.md` when present.
+- Ensure package README and release claims respect `docs/10_contract/Claim_Boundary.md`.
+  Dynamic-context release claims require an approved Claim Boundary; legacy or
+  standard projects must cite the fallback release/evaluation evidence instead
+  of treating missing contracts as approval.
 
 ### `submit`
 

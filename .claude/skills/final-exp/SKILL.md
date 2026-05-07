@@ -24,7 +24,7 @@ For the output format, see [templates/experiment-matrix.md](templates/experiment
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
-For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md). Read Project Contract, Evaluation Contract, and Claim Boundary when present.
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md). Dynamic-context projects require approved Project Contract, Evaluation Contract, and Claim Boundary before WF11 work is treated as ready; legacy or standard projects must cite the fallback evidence source.
 </context>
 
 <instructions>
