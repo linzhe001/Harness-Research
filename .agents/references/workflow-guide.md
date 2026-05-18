@@ -21,6 +21,28 @@ The system uses Codex's three-layer configuration mechanism, organized by load f
 
 **Design philosophy**: AGENTS.md / CLAUDE.md stay minimal and contain only stable information that is needed every time; shared references are loaded on demand to avoid polluting context with irrelevant information; skills are invoked on demand to perform concrete work.
 
+### 1.1.1 Operator-Facing Primitive Model
+
+The operator-facing model should stay smaller than the implementation surface.
+Most Harness work can be explained as eight primitives:
+
+| Primitive | Human question | Main entrypoints | Boundary |
+|------|------|------|------|
+| `init` | Where is the workspace and what context exists? | `$orchestrator init`, `$init-project init`, `init_context.py` | Sets up structure and stable context; does not prove research facts. |
+| `evidence` | What do we actually know? | fact docs, evidence tables, `compile_doc.py` | Evidence must come from source artifacts, logs, metrics, or explicit records. |
+| `protocol` | What procedure should this project follow? | `$protocol-compiler`, `compile_protocol.py` | Drafts are evidence-derived until a human accepts the relevant contract. |
+| `contract` | What boundaries are approved? | `$review-packet`, `approve_contract.py`, dynamic gates | Human approval is explicit and auditable; hooks are not approval. |
+| `code` | What implementation changes are needed? | `$code-expert`, `$code-debug` | Code changes must respect contracts, plans, and project_map ownership. |
+| `validate` | Did the change or stage actually pass? | `$validate-run`, tests, context/docchain gates | Report `PASS`, `FAIL`, or `NOT_RUN`; do not imply unrun gates passed. |
+| `iterate` | What is the next experiment loop decision? | `$iterate`, auto-iterate controller | `iteration_log.json` is the experiment source of truth. |
+| `release` | Which claims are supported? | `$final-exp`, `$release`, docchain/context gates | Claims must stay inside approved boundaries and evidence support. |
+
+Tooling is layered so the workflow stays explainable:
+
+- **Always-on guardrails**: `AGENTS.md`, `CLAUDE.md`, skill contracts, and Codex hooks shape behavior and catch missing reads or forbidden writes.
+- **On-demand evidence tools**: `compile_protocol.py`, `compile_doc.py`, review packets, approval tools, and dynamic-context gates create auditable state when a stage needs it.
+- **Controller-owned runtime**: `.auto_iterate/**` and WF10 controller logs belong to the auto-iterate controller; operators should inspect them, not hand-edit them.
+
 ### 1.2 State Ownership
 
 Each state file has a designated ownership boundary to avoid divergence from
@@ -90,6 +112,9 @@ Current-project dynamic context files are research-owned:
 - `OPERATOR_CONTEXT.md` stores operator preferences, not project facts. It is
   written only from explicit operator input during init or an explicit preference
   update; later stages read it but must not infer or rewrite preferences.
+  `tooling/evidence/init_context.py` may create the dynamic-context directory
+  and template layout, and may update `PROJECT_STATE.json` when `--set-state`
+  is used, but it does not create or infer `OPERATOR_CONTEXT.md`.
 - `docs/20_facts/**` stores current fact-layer summaries compiled from project
   artifacts, logs, configs, metrics, or evidence chains.
 - `docs/30_evidence/**` stores evidence tables and open questions.
@@ -110,7 +135,8 @@ creating the numbered docs directories.
 ### 1.4 Workflow Overview
 
 ```text
-WF1 survey
+WF0 bootstrap/init
+  -> WF1 survey
   -> WF2 idea-debate            # mandatory for new projects
   -> WF3 refine-idea            # feasible idea, task framing, success criteria
   -> WF4 data-prep              # dataset facts and path synchronization
@@ -130,7 +156,15 @@ WF10 decisions:
   ABORT               -> terminate project
 ```
 
+WF0 is a setup layer, not a research claim stage. It chooses the target
+workspace, copies or refreshes compact guidance files, optionally records
+explicit operator preferences in `OPERATOR_CONTEXT.md`, optionally initializes
+dynamic-context directories with `init_context.py`, and checks that hooks and
+contracts are installed. WF0 does not approve protocols, evaluation contracts,
+or release claims.
+
 Utility skills (non-numbered stages):
+- `$init-project` — WF0/bootstrap helper for compact project guidance and explicit operator context updates
 - `$code-debug` — Code repair (invoked by `$iterate code` or used independently)
 - `$evaluate` — Result analysis (invoked by `$iterate eval` or used independently)
 - `$env-setup` — Maintenance utility; used to refresh the environment after dependency changes, not a prerequisite for the main workflow
@@ -143,7 +177,7 @@ Utility skills (non-numbered stages):
 
 Orchestrator does not perform the research work itself. It manages state transitions across the full workflow:
 
-- **`init`** — Initialize the project: create the directory structure, generate PROJECT_STATE.json, and call `$init-project init` to generate a minimal CLAUDE.md
+- **`init`** — Run WF0 setup: create the directory structure, generate PROJECT_STATE.json, call `$init-project init` to generate a minimal CLAUDE.md, and initialize dynamic context only when requested
 - **`status`** — View current progress: includes stage consistency checks; during WF10 it additionally reads iteration_log.json
 - **`next`** — Advance to the next stage: validate prerequisites (whether artifacts are complete and whether blockers exist), then invoke the corresponding skill
 - **`rollback`** — Roll back to a specified stage: preserve history and do not delete any artifacts
@@ -271,7 +305,7 @@ PIVOT/ABORT signal require protocol review before unattended iteration.
 | Subcommand | Purpose | Utility Invoked |
 |--------|------|---------------|
 | `plan [hypothesis]` | Record the hypothesis, check repeated lessons, design changes, optionally request a Codex review | — |
-| `code [description]` | Implement code changes, mandatory git commit | `$code-debug` |
+| `code [description]` | Implement code changes, mandatory sliced git commit | `$code-debug` |
 | `run [config_path]` | Execute training + run eval + collect metrics (automated) | — |
 | `eval [log_path]` | Evaluate results, compare with baseline + best, make a decision | `$evaluate` |
 | `ablate [iter_id] --components "..."` | Run within-iteration ablations to determine the contribution of each component | — |
@@ -287,7 +321,7 @@ $iterate plan "Upgrade the backbone from ResNet-50 to ResNet-101 to improve feat
 
 $iterate code "Upgrade backbone to ResNet-101"
   → Write persistent context (.agents/state/iterations/iter{N}/context.json)
-  → Invoke $code-debug to modify code + enforce a git commit
+  → Invoke $code-debug to modify code + enforce a sliced git commit
   → Remove the symlink (while keeping the persistent context)
   → status becomes "training"
 
@@ -399,7 +433,7 @@ When `requirements*.txt`, `environment*.yml`, or `pyproject.toml` changes, the `
 **Invocation**: `$code-debug [error_log_path or issue description]`
 
 **Operation modes** (determined by the context in `.agents/state/current_iteration.json`):
-- `planned_change`: invoked by `$iterate code`, implements the change according to the hypothesis, then creates a semantic commit
+- `planned_change`: invoked by `$iterate code`, implements the change according to the hypothesis, then creates a sliced semantic commit
 - `bugfix`: invoked independently to diagnose and fix a crash/error
 - `perf_tuning`: invoked independently for performance optimization
 
@@ -458,9 +492,14 @@ Use `.agents/references/documentation-style.md` for concise writing, ASCII flow 
 
 Three layers of safeguards ensure that every training run has complete version records:
 
-1. **Claude's semantic commit** (rule-constrained)
+1. **Claude's sliced semantic commit** (rule-constrained)
 2. **git_snapshot.py safety net** (in code)
 3. **wandb + checkpoint records** (in code)
+
+Before any agent-created `git commit`, read
+`.agents/references/sliced-commit-rule.md`, identify the current Commit Slice,
+stage only that slice, validate or record `NOT_RUN`, then commit one completed
+slice at a time.
 
 ### 5.4 Codex Cross-Validation
 
@@ -634,7 +673,8 @@ Evaluation reports are stored by iteration:
 ### 7.1 Workflow Stage Transitions (Managed by PROJECT_STATE.json)
 
 ```
-WF1 survey
+WF0 bootstrap/init
+  -> WF1 survey
   -> WF2 idea-debate
   -> WF3 refine-idea
   -> WF4 data-prep
@@ -652,7 +692,8 @@ code-debug. WF6 design review can block WF7 until the architecture issue is
 resolved or explicitly accepted.
 ```
 
-After each stage is completed, orchestrator automatically triggers `$init-project update` to refresh CLAUDE.md.
+After WF0, each completed research stage triggers `$init-project update` through
+orchestrator to refresh CLAUDE.md.
 
 ### 7.2 WF10 Internal Iteration State Machine (Managed by iteration_log.json)
 
@@ -672,7 +713,7 @@ After each stage is completed, orchestrator automatically triggers `$init-projec
                     │           coding              │  write persistent context
                     │  invoke $code-debug to edit   │  → .agents/state/iterations/iter{N}/
                     │  run py_compile + ruff check  │
-                    │  semantic git commit          │
+                    │  sliced semantic git commit   │
                     └───────────────┬───────────────┘
                                     │
                             commit successful?
@@ -840,7 +881,7 @@ Key rules: $iterate does not write stage transitions into PROJECT_STATE.json
 - After WF5 completes, the `## Environment` section of `CLAUDE.md` must no longer contain placeholders.
 - WF10 `run/eval` must use the baseline/evaluation protocol produced in WF5 to decide which metrics to record; training traces and final evaluation metrics must be stored separately.
 - After any WF10 subcommand completes, `iteration_log.json` is the authoritative experiment state. Any `PROJECT_STATE.json.current_stage.latest_iteration`, `iteration_count`, or `CLAUDE.md Current stage` summary must be synchronized by orchestrator/init-project by reading `iteration_log.json`, not by the auto-iterate controller.
-- An iteration missing a semantic commit, `run_manifest`, or `lessons` must not be marked as completed.
+- An iteration missing a sliced semantic commit, `run_manifest`, or `lessons` must not be marked as completed.
 - A dynamic-protocol project should not enter unattended auto-iteration without
   an approved or explicitly operator-accepted Evaluation Contract.
 
@@ -861,7 +902,7 @@ $validate-run               # WF9 training pipeline validation
 $code-review medium         # Review current diff with git metadata and line refs
 
 $iterate plan "hypothesis"  # Plan a new iteration (includes repeated-lesson check)
-$iterate code "description" # Implement changes (mandatory git commit)
+$iterate code "description" # Implement changes (mandatory sliced git commit)
 $iterate run config.yaml    # Execute training + collect metrics automatically
 $iterate eval path/to/exp   # Evaluate results + make a decision
 $iterate ablate {base_iter} --components "name:override,..."  # Ablation experiment

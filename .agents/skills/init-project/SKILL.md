@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Codex wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.
+description: WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.
 ---
 
 # Init Project
@@ -11,6 +11,7 @@ Read these first:
 - `./references/claude-md-template.md`
 - `./references/claude-maintenance.md`
 - `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -26,9 +27,15 @@ Interpret natural-language requests as one of:
 - `update`
 - `deps-changed`
 
+Treat WF0, bootstrap, and explicit operator-context setup requests as `init`
+unless the user is clearly asking only to refresh an existing section.
+
 ## Required Work
 
 ### `init`
+
+This is the WF0 setup path. It prepares compact guidance and optional stable
+operator context; it does not validate research evidence or approve contracts.
 
 1. Gather project name and, if already known, an environment name.
 2. If no runnable environment exists yet, create the minimal `CLAUDE.md` with an explicit placeholder that WF5 baseline-repro owns first environment creation.
@@ -69,6 +76,8 @@ Interpret natural-language requests as one of:
 - Preserve the staged fill-in behavior, line-budget discipline, and `## Custom` preservation rule.
 - Preserve the rule that environment creation belongs to WF5 baseline-repro unless the environment already exists.
 - Preserve the `## Language Policy` section and keep it aligned with `../../../.agents/references/language-policy.md`.
+- Preserve the `## Global Rule: Ubiquitous Language` section when refreshing
+  generated guidance.
 - Keep `AGENTS.md` as Codex-native always-on guidance, but maintain `CLAUDE.md` for compatibility exactly as the canonical prompt expects.
 
 ## Execution Rule

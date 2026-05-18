@@ -21,6 +21,7 @@ Summarize the current project state in one short paragraph.
 - `iteration_log.json` for experiment history.
 - `project_map.json` for stable architecture.
 - `CLAUDE.md` / `AGENTS.md` for stable agent-facing project context.
+- `docs/20_facts/Project_Glossary.md` for project-specific domain and code vocabulary.
 
 ## Open Questions
 

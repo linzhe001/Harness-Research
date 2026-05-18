@@ -27,6 +27,18 @@ operator context -> research evidence -> dynamic protocol -> approved contract
   -> evidence-compiled docs -> reproducible iteration -> promoted lessons
 ```
 
+For operators, the workflow should read as a small set of primitives:
+
+```text
+init -> evidence -> protocol -> contract -> code -> validate -> iterate -> release
+```
+
+The implementation has more files because each primitive has an audit boundary:
+`init` sets up workspace structure and stable preferences, `evidence` records
+what is known, `protocol` proposes a procedure, `contract` records human
+approval, `code` changes implementation, `validate` runs gates, `iterate`
+records experiment loops, and `release` limits claims to supported evidence.
+
 The framework owns the rules, templates, schemas, and skills that control this
 flow. The research project owns the actual context files:
 
@@ -38,6 +50,32 @@ flow. The research project owns the actual context files:
 - `.evidence/chains/**` for auditable evidence chains behind current docs
 - `.evidence/index.json` for the latest docchain pointer per compiled doc
 - `docs/50_memory/**` and `MEMORY.md` for promoted lessons and decisions
+
+Harness vocabulary is intentionally explicit. In prose, `Evidence` should not
+be used as a catch-all term:
+
+```text
+Conclusion Evidence -> traceable support for a claim, fact, idea, or protocol choice
+Gate Evidence       -> proof that a command, review, approval check, or gate ran and what it returned
+```
+
+Workflow terms live in `.agents/references/ubiquitous-language.md` and
+`.claude/shared/ubiquitous-language.md`. Target research workspaces should keep
+project-specific codebase vocabulary in `docs/20_facts/Project_Glossary.md`.
+
+For a low-load operator entry point, read `docs/Workflow_Operator_Handbook.md`.
+Generate contract-derived Stage Cards with:
+
+```bash
+python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output docs/Workflow_Stage_Cards.md
+```
+
+Tooling is intentionally layered:
+
+- always-on guardrails: `AGENTS.md`, `CLAUDE.md`, skill contracts, and hooks
+- on-demand evidence tools: protocol/doc compilers, review packets, approval
+  tools, and dynamic-context gates
+- controller-owned runtime: `.auto_iterate/**` and WF10 phase logs
 
 Older flat docs such as `docs/Feasibility_Report.md`,
 `docs/Technical_Spec.md`, and `docs/Baseline_Report.md` are compatibility
@@ -67,7 +105,8 @@ Reviewer cross-checks can use OpenAI-compatible external model APIs through
 provider when `DEEPSEEK_API_KEY` is set; other providers can be added through
 `tooling/model_api/providers.example.yaml`.
 
-`init_context.py` never overwrites existing docs unless `--overwrite` is passed.
+`init_context.py` never overwrites existing docs unless `--overwrite` is passed,
+and it does not create or infer `OPERATOR_CONTEXT.md`.
 `compile_protocol.py` compiles evidence tables into a reviewable draft packet
 under `.evidence/protocol_compiler/`; use `--apply --overwrite` only after
 review.
@@ -126,6 +165,8 @@ editing contracts or hook scripts.
 Install workspace-local Codex hooks with
 `python tooling/codex_hooks/install_hooks.py --workspace-root .` and inspect the
 effective config with `python tooling/codex_hooks/hook_status.py --workspace-root .`.
+Use `python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status`
+to confirm Codex `/hooks` trust review is complete.
 This keeps `.codex/` thin: only `.codex/config.toml` and `.codex/hooks.json`
 are installed, while hook logic remains in `tooling/codex_hooks/`.
 
@@ -134,7 +175,11 @@ Set `PROJECT_STATE.json.workflow_mode` explicitly for new projects:
 numbered context docs, and `compatibility` only for older imported projects that
 predate mandatory WF2/dynamic gates.
 
-## Practical Bootstrap Order
+## Practical Bootstrap Order (WF0)
+
+WF0 is the setup layer before research stages begin. It chooses the real target
+workspace, creates or refreshes compact guidance, optionally records explicit
+operator preferences, and prepares dynamic-context directories when requested.
 
 When you initialize a new project, identify the three roles first:
 
@@ -155,7 +200,7 @@ Recommended order:
 2. move the framework git history to `.harness`
 3. initialize or reuse the normal research `.git`
 4. create `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, and `docs/auto_iterate_goal.md`
-5. optionally create `OPERATOR_CONTEXT.md`, numbered docs directories, and `.evidence/`
+5. optionally create `OPERATOR_CONTEXT.md` from explicit stable preferences, plus numbered docs directories and `.evidence/`
 6. create auto-iterate local configs in the workspace
 7. verify `auto_iterate_ctl.sh` and the focused Harness checks
 
@@ -175,14 +220,14 @@ For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
 ## Workflow Overview
 
 ```
-WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline)
-→ WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
+WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline)
+-> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
 ```
 
 The core iteration loop (WF10) follows four stages per round:
 
 ```
-plan (hypothesis) → code (implement) → run (train + metrics) → eval (decision)
+plan (hypothesis) -> code (implement) -> run (train + metrics) -> eval (decision)
 ```
 
 Eval produces one of five decisions: **NEXT_ROUND**, **DEBUG**, **CONTINUE** (advance to WF11), **PIVOT** (roll back to WF2 idea debate/refinement), or **ABORT**.
@@ -203,7 +248,9 @@ Both agents share the same iteration schema (`iteration_log.json`), the same ski
 
 - `iteration_log.json` is the single experiment source of truth, owned exclusively by the iterate skill
 - `PROJECT_STATE.json` is owned by the orchestrator, read-only from iterate
-- All code changes go through `code-debug`, all analysis through `evaluate`
+- Ordinary implementation code changes go through `code-debug`; hook, skill,
+  contract, routing, and permission-policy changes go through
+  `harness-maintenance`; experiment analysis goes through `evaluate`
 - Identical iteration log schema, decision vocabulary, and context-passing protocol
 
 **Style trade-offs**:

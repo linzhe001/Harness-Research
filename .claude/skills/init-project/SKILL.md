@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Project CLAUDE.md phased generator. init mode generates a minimal version (Environment + Workflow), update mode incrementally fills in content (Idea, Structure, etc.) after key stages.
+description: WF0/bootstrap CLAUDE.md phased generator. init mode generates a minimal version (Environment + Workflow), update mode incrementally fills in content (Idea, Structure, etc.) after key stages.
 argument-hint: "[init|update]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 ---
@@ -33,6 +33,7 @@ If PROJECT_STATE.json exists, read it to determine current stage.
 If CLAUDE.md already exists, read it first.
 For the template format, see [templates/claude-md-template.md](templates/claude-md-template.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
@@ -41,6 +42,9 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
 ## init Mode ($ARGUMENTS is "init" or no arguments)
 
 Generate a minimal CLAUDE.md for the first time, containing only **information that can be determined at this point**.
+This is the WF0 setup path: it prepares compact guidance and optional stable
+operator context, but it does not validate research evidence or approve
+contracts.
 
 ### 1. Collect Information
 
@@ -93,8 +97,8 @@ Python, PyTorch, CUDA, GPU, dependency versions...
 - Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
 
 ## Workflow
-	WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline) → WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
-WF10 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF11 | PIVOT→WF2 idea-debate/refine-idea | ABORT→stop)
+	WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline) -> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
+WF10 iteration loop: /iterate plan -> /iterate code -> /iterate run -> /iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF11 | PIVOT->WF2 idea-debate/refine-idea | ABORT->stop)
 Current stage: WF1 not_started
 ```
 
@@ -184,6 +188,7 @@ Every update also:
 - Re-detects Environment (versions may have changed)
 - Updates the `Current stage` line
 - Preserves the `## Language Policy` section and keeps it aligned with [../../shared/language-policy.md](../../shared/language-policy.md)
+- Preserves the `## Global Rule: Ubiquitous Language` section when refreshing generated guidance
 - Preserves the `## Custom` section content (manually added by the user)
 - Does not overwrite already filled-in valid content
 

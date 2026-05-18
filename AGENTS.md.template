@@ -40,6 +40,7 @@
 ## Skills
 
 - Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.
+- Use `$init-project` for WF0 compact guidance setup, staged guidance refresh, and explicit operator-context updates.
 - Use `$doc-compiler` for contract, fact, protocol, or release docs that need evidence-chain JSON.
 - Use `$protocol-compiler` to compile `docs/30_evidence/**` into reviewable `docs/35_protocol/**` drafts without field profiles.
 - Use `$protocol-drift-check` before turning protocol drafts into contracts or before WF5/WF10/WF11/WF12 gates in dynamic-context projects.
@@ -47,7 +48,8 @@
 - After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
 - Use `$iterate` for WF10 `plan -> code -> run -> eval`.
 - Use `$code-expert` only for first-pass implementation from the roadmap and project map.
-- Use `$code-debug` for post-WF8 code changes, bug fixes, or iteration-driven edits.
+- Use `$code-debug` for post-WF8 implementation code changes, bug fixes, or iteration-driven edits under `src/`, `scripts/`, `configs/`, or `project_map.json`.
+- Use `$harness-maintenance` for Codex hooks, skill contracts, skill routing/triggers, permission policy, `.agents/.claude` skill alignment, and Harness guardrail tests or docs.
 - Use `$code-review` for review-only checks of code, diffs, and code-backed docs:
   light during codebase understanding, medium after code changes, heavy when
   docs, evidence chains, release claims, or gate packets depend on the code.
@@ -67,6 +69,8 @@
 
 - Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.agents/references/code-style.md` and apply its pre-edit checklist.
 - Read `.agents/references/project-map-rule.md` and `project_map.json` before any non-trivial stable-code change.
+- Use `.agents/references/ubiquitous-language.md` for workflow terms and maintain `docs/20_facts/Project_Glossary.md` for project-specific codebase vocabulary.
+- Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
 - Update `project_map.json` when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
@@ -76,7 +80,8 @@
 - For `$code-review`, follow `.agents/skills/code-review/SKILL.md` and
   `.agents/skills/code-review/references/review-report.md`.
 - Code review is review-only. Do not edit subject code, current docs, canonical
-  state, or `.evidence/**`; route fixes through `$code-debug`.
+  state, or `.evidence/**`; route ordinary code fixes through `$code-debug` and
+  guardrail fixes through `$harness-maintenance`.
 - Medium and heavy reviews must record git metadata, changed line ranges,
   reviewer statuses, reconciled findings, and a Gate ledger.
 - Heavy reviews for docs, evidence chains, release claims, or stage gates must

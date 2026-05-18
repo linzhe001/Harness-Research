@@ -52,11 +52,16 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
 
+## Global Rule: Ubiquitous Language
+- Use `.claude/shared/ubiquitous-language.md` for workflow terms.
+- WF6 `/refine-arch` generates `docs/20_facts/Project_Glossary.md`; WF7 `/build-plan` refines it for implementation.
+- Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
+
 ## Global Rule: Code Review
 - Use `/code-review` for review-only checks of code, git diffs, and code-backed docs.
 - Use light mode for targeted understanding, medium mode after code changes, and heavy mode when docs, evidence chains, release claims, or stage gates depend on the code.
 - Medium/heavy review reports must include git branch, `HEAD`, base ref or working-tree scope, changed files, changed line ranges, reviewer statuses, reconciled findings, and a Gate ledger.
-- Do not edit subject code, current docs, canonical state, or `.evidence/**` during `/code-review`; route fixes through `/code-debug`.
+- Do not edit subject code, current docs, canonical state, or `.evidence/**` during `/code-review`; route ordinary code fixes through `/code-debug` and guardrail fixes through `/harness-maintenance`.
 
 ## Global Rule: Documentation Style
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
@@ -68,8 +73,8 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
 
 ## Workflow
-WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline) → WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
-WF10 iteration loop: /iterate plan → /iterate code → /iterate run → /iterate eval → (NEXT_ROUND→repeat | DEBUG→debug round | CONTINUE→WF11 | PIVOT→WF2 idea-debate/refine-idea | ABORT→stop)
+WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline) -> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
+WF10 iteration loop: /iterate plan -> /iterate code -> /iterate run -> /iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF11 | PIVOT->WF2 idea-debate/refine-idea | ABORT->stop)
 Current stage: {current_stage or "not initialized"}
 
 ## Custom

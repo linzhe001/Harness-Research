@@ -72,14 +72,20 @@ Framework-wide docs:
 ## Workflow Stages
 
 ```
-WF1(survey) → WF2(idea-debate) → WF3(refine-idea) → WF4(data) → WF5(baseline)
-→ WF6(arch) → WF7(plan) → WF8(code) → WF9(validate) → WF10(iterate) → WF11(final-exp) → WF12(release)
+WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline)
+-> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
 ```
+
+WF0 is setup, not a research claim stage. It selects the target workspace,
+creates or refreshes `CLAUDE.md`/`AGENTS.md`, optionally records explicit stable
+operator preferences in `OPERATOR_CONTEXT.md`, initializes dynamic-context
+directories when requested, and verifies that the workflow guardrails are
+available.
 
 The core iteration loop (WF10) follows four phases per round:
 
 ```
-plan (hypothesis) → code (implement) → run (train + metrics) → eval (decision)
+plan (hypothesis) -> code (implement) -> run (train + metrics) -> eval (decision)
 ```
 
 Decision vocabulary: **NEXT_ROUND** (loop), **DEBUG** (fix + loop), **CONTINUE** (advance to WF11), **PIVOT** (roll back to WF2 idea debate/refinement), **ABORT** (terminate).
@@ -245,6 +251,10 @@ Only copy when the target file does not already exist:
 [ ! -f .claude/settings.local.json ] && cp settings.local.json.template .claude/settings.local.json
 ```
 
+`OPERATOR_CONTEXT.md` is not a place for project facts. Create or update it
+only when the operator supplies stable preferences, local constraints, or
+workflow preferences explicitly.
+
 ## 4. Create the research-side exclude file
 
 Append harness-managed paths to `.git/info/exclude`:
@@ -320,6 +330,10 @@ Optional dynamic-context bootstrap:
 ```bash
 python tooling/evidence/init_context.py --workspace-root . --set-state
 ```
+
+`init_context.py` creates numbered context templates, `.evidence/` schema
+material, and optional dynamic-context state fields. It does not create or infer
+`OPERATOR_CONTEXT.md`.
 
 Equivalent manual bootstrap:
 
@@ -448,6 +462,10 @@ Replace placeholders in `CLAUDE.md` and `AGENTS.md`, or use the workflow init co
 - Claude Code: `/orchestrator init`
 - Codex: `$orchestrator init`
 
+Use `/init-project init` or `$init-project init` when only the compact guidance
+files and explicit operator-context update are needed without a full
+orchestrator state transition.
+
 ## 8. Initial research commit
 
 Commit only research-owned files:
@@ -539,8 +557,11 @@ Practical notes from a successful bring-up:
   `python tooling/codex_hooks/install_hooks.py --workspace-root .`. That writes
   only `.codex/config.toml` and `.codex/hooks.json`; hook logic stays in
   `tooling/codex_hooks/`. Check the effective state with
-  `python tooling/codex_hooks/hook_status.py --workspace-root .`. Harness hook
-  state is written to `.harness_hooks/` and should never be committed.
+  `python tooling/codex_hooks/hook_status.py --workspace-root .`, and check
+  Codex `/hooks` trust review with
+  `python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status`.
+  Harness hook state is written to `.harness_hooks/` and should never be
+  committed.
 - `--dry-run` validates controller plumbing but does not satisfy the plan-stage
   postcondition that a new iteration entry exists; `plan did not create a new
   iteration entry` is expected in a dry-run smoke test
