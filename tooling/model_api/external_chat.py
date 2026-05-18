@@ -33,6 +33,8 @@ class ModelApiError(RuntimeError):
 
 
 RETRYABLE_HTTP_STATUS_CODES = {429, 500, 502, 503, 504}
+THINKING_EXTRA_BODY_KEYS = {"thinking", "reasoning_effort"}
+THINKING_SCOPES = {"all", "none"}
 
 
 @dataclass(frozen=True)
@@ -150,8 +152,10 @@ def build_chat_payload(
     system_prompt: str | None = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
+    thinking_scope: str = "all",
 ) -> dict[str, Any]:
     """Build an OpenAI-compatible chat-completions request body."""
+    selected_thinking_scope = validate_thinking_scope(thinking_scope)
     messages: list[dict[str, str]] = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -166,8 +170,31 @@ def build_chat_payload(
         payload["temperature"] = temperature
     if max_tokens is not None:
         payload["max_tokens"] = max_tokens
-    payload.update(provider.extra_body)
+    payload.update(scoped_extra_body(provider.extra_body, selected_thinking_scope))
     return payload
+
+
+def validate_thinking_scope(value: str) -> str:
+    selected = value.strip().lower()
+    if selected not in THINKING_SCOPES:
+        raise ModelApiError(
+            "thinking_scope must be one of: " + ", ".join(sorted(THINKING_SCOPES))
+        )
+    return selected
+
+
+def scoped_extra_body(
+    extra_body: dict[str, Any],
+    thinking_scope: str,
+) -> dict[str, Any]:
+    selected = validate_thinking_scope(thinking_scope)
+    if selected == "all":
+        return dict(extra_body)
+    return {
+        key: value
+        for key, value in extra_body.items()
+        if key not in THINKING_EXTRA_BODY_KEYS
+    }
 
 
 def invoke_chat_completion(
@@ -326,6 +353,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--temperature", type=float)
     parser.add_argument("--max-tokens", type=int)
     parser.add_argument(
+        "--thinking-scope",
+        choices=sorted(THINKING_SCOPES),
+        default="all",
+        help="Apply provider thinking/reasoning extra_body on all requests or none.",
+    )
+    parser.add_argument(
         "--api-retry-attempts",
         type=int,
         default=1,
@@ -360,6 +393,7 @@ def main(argv: list[str] | None = None) -> int:
             system_prompt=system_prompt,
             temperature=args.temperature,
             max_tokens=args.max_tokens,
+            thinking_scope=args.thinking_scope,
         )
         if args.request_json:
             write_request_artifact(

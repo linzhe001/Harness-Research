@@ -214,6 +214,38 @@ def test_external_review_wrapper_builds_fixed_agentic_command() -> None:
     ]
 
 
+def test_external_review_wrapper_defaults_chat_to_no_thinking() -> None:
+    command = harness_external_review.build_reviewer_command(
+        REPO_ROOT,
+        "chat",
+        [
+            "--provider",
+            "deepseek",
+            "--output",
+            ".agents/state/review_traces/code-review/run05/review.md",
+        ],
+    )
+
+    assert command[-2:] == ["--thinking-scope", "none"]
+
+
+def test_external_review_wrapper_preserves_explicit_chat_thinking_scope() -> None:
+    command = harness_external_review.build_reviewer_command(
+        REPO_ROOT,
+        "chat",
+        [
+            "--provider",
+            "deepseek",
+            "--output",
+            ".agents/state/review_traces/code-review/run05/review.md",
+            "--thinking-scope",
+            "all",
+        ],
+    )
+
+    assert command[-2:] == ["--thinking-scope", "all"]
+
+
 def test_external_review_wrapper_rejects_output_outside_trace() -> None:
     with pytest.raises(
         harness_external_review.HarnessExternalReviewError,
@@ -421,6 +453,30 @@ def test_build_chat_payload_includes_system_prompt_and_provider_extras() -> None
     assert payload["temperature"] == 0.2
     assert payload["max_tokens"] == 256
     assert payload["reasoning_effort"] == "high"
+
+
+def test_build_chat_payload_can_disable_provider_thinking_extras() -> None:
+    provider = external_chat.ProviderConfig(
+        name="test",
+        base_url="https://example.test",
+        api_key_env="TEST_KEY",
+        model="test-model",
+        extra_body={
+            "reasoning_effort": "high",
+            "thinking": {"type": "enabled"},
+            "top_p": 0.9,
+        },
+    )
+
+    payload = external_chat.build_chat_payload(
+        provider,
+        prompt="Review this diff.",
+        thinking_scope="none",
+    )
+
+    assert "reasoning_effort" not in payload
+    assert "thinking" not in payload
+    assert payload["top_p"] == 0.9
 
 
 def test_invoke_chat_completion_uses_bearer_auth() -> None:
@@ -1635,6 +1691,26 @@ def test_agentic_review_rejects_impossible_force_final_limit(tmp_path: Path) -> 
                 force_final_after_tool_calls=2,
             ),
         )
+
+
+def test_agentic_cli_default_force_final_clamps_to_max_tool_calls() -> None:
+    assert (
+        agentic_review.resolve_force_final_after_tool_calls(
+            max_tool_calls=30,
+            requested=None,
+        )
+        == 30
+    )
+
+
+def test_agentic_cli_respects_explicit_force_final_limit() -> None:
+    assert (
+        agentic_review.resolve_force_final_after_tool_calls(
+            max_tool_calls=30,
+            requested=12,
+        )
+        == 12
+    )
 
 
 def test_agentic_review_retries_unchanged_high_miss_final_payload(

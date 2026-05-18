@@ -24,6 +24,7 @@ FORBIDDEN_PASSTHROUGH_ARGS = {"--base-url", "--config"}
 INPUT_PATH_ARGS = {"--prompt-file", "--system-file", "--task-file"}
 OUTPUT_PATH_ARGS = {"--meta-json", "--output", "--request-json", "--trace-json"}
 DEFAULT_TIMEOUT_SEC = 900
+CHAT_DEFAULT_ARGS = ("--thinking-scope", "none")
 
 
 class HarnessExternalReviewError(RuntimeError):
@@ -151,6 +152,10 @@ def validate_passthrough_args(root: Path, args: Sequence[str]) -> None:
         index += 2 if matched_value_flag and item in OUTPUT_PATH_ARGS else 1
 
 
+def has_passthrough_flag(args: Sequence[str], flag: str) -> bool:
+    return any(item == flag or item.startswith(f"{flag}=") for item in args)
+
+
 def build_reviewer_command(
     root: Path,
     reviewer: str,
@@ -162,7 +167,13 @@ def build_reviewer_command(
     script = root / "tooling" / "model_api" / REVIEWER_SCRIPTS[reviewer]
     if not script.exists():
         raise HarnessExternalReviewError(f"missing reviewer script: {script}")
-    return [sys.executable, script.as_posix(), *reviewer_args]
+    command_args = list(reviewer_args)
+    if reviewer == "chat" and not has_passthrough_flag(
+        command_args,
+        "--thinking-scope",
+    ):
+        command_args.extend(CHAT_DEFAULT_ARGS)
+    return [sys.executable, script.as_posix(), *command_args]
 
 
 def run_reviewer(command: Sequence[str], *, timeout_sec: int) -> int:

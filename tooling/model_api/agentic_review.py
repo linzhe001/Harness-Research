@@ -707,6 +707,16 @@ def _validate_limits(limits: AgenticReviewLimits) -> AgenticReviewLimits:
     return limits
 
 
+def resolve_force_final_after_tool_calls(
+    *,
+    max_tool_calls: int,
+    requested: int | None,
+) -> int:
+    if requested is not None:
+        return requested
+    return min(DEFAULT_FORCE_FINAL_AFTER_TOOL_CALLS, max_tool_calls)
+
+
 def _cache_retry_allowed(cache_retry_scope: str, force_final: bool) -> bool:
     return cache_retry_scope == "all" or force_final
 
@@ -1490,7 +1500,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--force-final-after-tool-calls",
         type=int,
-        default=DEFAULT_FORCE_FINAL_AFTER_TOOL_CALLS,
+        default=None,
         help="Force final answer after this many local tool calls.",
     )
     parser.add_argument(
@@ -1579,7 +1589,10 @@ def main(argv: list[str] | None = None) -> int:
             limits=AgenticReviewLimits(
                 max_iterations=args.max_iterations,
                 max_tool_calls=args.max_tool_calls,
-                force_final_after_tool_calls=args.force_final_after_tool_calls,
+                force_final_after_tool_calls=resolve_force_final_after_tool_calls(
+                    max_tool_calls=args.max_tool_calls,
+                    requested=args.force_final_after_tool_calls,
+                ),
                 max_tool_result_bytes=args.max_tool_result_bytes,
                 max_total_tool_bytes=args.max_total_tool_bytes,
                 tool_timeout_sec=args.tool_timeout_sec,
