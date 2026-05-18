@@ -50,7 +50,32 @@ project_root/
 └── tests/
 ```
 
-### 2. module_pseudocode
+### 2. slice_plan
+
+Roadmap tasks must be ordered as vertical slices before any broad layer-by-layer
+expansion. Each slice should be small enough to review and must have a feedback
+command.
+
+#### Slice Trace: {slice_id}
+
+- User / research outcome:
+- Source Artifact:
+- Conclusion Evidence:
+- Design anchor: `docs/Technical_Spec.md#...`
+- Planned files:
+- Public interfaces:
+- Test / smoke command:
+- Gate Evidence target:
+- Downstream validation doc:
+- Commit boundary:
+- Suggested commit message:
+- Out of scope:
+
+| slice_id | Outcome | Path | Acceptance | Tests / feedback | Dependencies |
+|----------|---------|------|------------|------------------|--------------|
+| | | UI/CLI -> service/module -> domain behavior -> artifact -> output | | | |
+
+### 3. module_pseudocode
 
 For each new file, provide:
 - Class/function signatures (with Type Hints)
@@ -64,7 +89,7 @@ For each new file, provide:
   compatibility requirements with baselines or evaluation scripts, and ownership
   notes for the next code generation step
 
-### 2b. shared_interfaces
+### 3b. shared_interfaces
 
 List the project-level interfaces that multiple files must agree on:
 
@@ -74,7 +99,34 @@ List the project-level interfaces that multiple files must agree on:
 | Model forward | `src/models/...` | trainer, eval | | | |
 | Metric output | `scripts/eval.py` | `$iterate eval`, reports | | | |
 
-### 3. config_schema
+### 3c. application_codebase_language_updates
+
+WF7 owns glossary refinement from the approved architecture into executable
+implementation language. Update `docs/20_facts/Project_Glossary.md` from stable
+files, interfaces, configs, metrics, tests, and error names.
+
+| Proposed Term | Canonical Term | Code Term | Used In | Decision / Reason |
+|---------------|----------------|-----------|---------|-------------------|
+| | | | | keep / rename / proposed |
+
+### 4. test_plan
+
+Use the smallest feedback loop that can prove each slice.
+
+| slice_id | Red Test / Expected Failure | Green Implementation Scope | Refactor Check | Command | Manual Fallback / NOT_RUN Reason |
+|----------|-----------------------------|----------------------------|----------------|---------|----------------------------------|
+| | | | | | |
+
+### 4b. commit_plan
+
+Use `.agents/references/sliced-commit-rule.md`. Each completed slice should map
+to one commit after its validation or `NOT_RUN` reason is recorded.
+
+| commit_slice | Files / Hunks | Validation Before Commit | Commit Message | Cross-Cutting Reason |
+|--------------|---------------|--------------------------|----------------|----------------------|
+| `{slice_id}` | | | | |
+
+### 5. config_schema
 
 ```yaml
 experiment:
@@ -95,7 +147,7 @@ train:
   learning_rate: float
 ```
 
-### 4. training_pipeline
+### 6. training_pipeline
 
 #### Stage 1: Smoke Test
 - Entry conditions: ...
@@ -115,10 +167,20 @@ train:
 - Validation checkpoints: ...
 - Failure handling: ...
 
-### 5. validation_checkpoints
+### 7. validation_checkpoints
 
 | Stage | Check Item | Pass Criteria |
 |------|--------|----------|
 | Smoke Test | Training can start | No errors |
 | Module Integration | Gradient flow is normal | grad_norm > 0 |
 | Full Training | Convergence | val_loss decreasing |
+
+### 8. complexity_budget
+
+| Constraint | Budget | Review Notes |
+|------------|--------|--------------|
+| New public APIs | | |
+| New glossary terms | | |
+| New dependencies | | |
+| Maximum files per slice | | |
+| Deletions / simplifications | | |

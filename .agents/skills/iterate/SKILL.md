@@ -13,6 +13,7 @@ Read these first:
 - `../../../.agents/references/contract-gating-rule.md`
 - `../../../.agents/references/lesson-quality-rule.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -26,6 +27,7 @@ Read these first:
 - `../../../CLAUDE.md`
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
 - `../../../docs/10_contract/Baseline_Contract.md` if it exists
+- `../../../docs/20_facts/Project_Glossary.md` if it exists
 - `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
@@ -83,8 +85,10 @@ Interpret natural-language requests as one of these canonical intents:
 3. Mirror active context to `.agents/state/current_iteration.json`.
 4. Follow `./references/iteration-context.md` when creating both the persistent and active context files.
 5. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
-6. Invoke `$code-debug`.
-7. Require a semantic commit before moving from `coding` to `training`.
+6. Preserve the current slice boundary and glossary terms. Route any needed
+   stable implementation edits through `$code-debug`.
+7. Invoke `$code-debug`.
+8. Require a semantic commit before moving from `coding` to `training`.
 
 ### `run`
 
@@ -110,6 +114,8 @@ Interpret natural-language requests as one of these canonical intents:
    - lessons
    - lesson_candidates when a finding may be promoted later
    - lesson_promotion_status
+   - slice completion or drift
+   - complexity and boundary observations
    - completion state
 7. Produce or refresh the per-iteration report and, when useful, `docs/50_memory/Lessons.md`.
 8. Append to `MEMORY.md` only for accepted lessons that satisfy `lesson-quality-rule.md`.

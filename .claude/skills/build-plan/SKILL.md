@@ -27,6 +27,10 @@ For code style requirements, see [../../shared/code-style.md](../../shared/code-
 For the roadmap format, see [templates/implementation-roadmap.md](templates/implementation-roadmap.md).
 For the project map schema, see [templates/project-map-schema.json](templates/project-map-schema.json).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
+For commit slicing behavior, see [../../shared/sliced-commit-rule.md](../../shared/sliced-commit-rule.md).
+WF7 refines `docs/20_facts/Project_Glossary.md` from the approved architecture,
+file tree, interfaces, configs, metrics, tests, and error names.
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
@@ -38,7 +42,10 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
 	   - Dataset_Stats.md: Data statistics
 	   - Baseline_Report.md and evaluation protocol/contract
    - Codebase structure: Existing files and modules
+   - `docs/20_facts/Project_Glossary.md` if it exists
    - Identify which parts are **main research code** (your innovation) and which are **reproduced baselines** (comparison methods)
+   - Update or create `docs/20_facts/Project_Glossary.md` from stable roadmap
+     vocabulary; disputed names stay as proposed terms
 
 2. **Design the project file structure**
 
@@ -85,6 +92,11 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    - `entry_point`: Training entry file
 
 4. **Write module pseudocode and shared interfaces**
+
+   Before broad file planning, convert the WF6 first vertical slice into a
+   dependency-ordered slice plan. Each slice must include a `Slice Trace`,
+   acceptance checks, feedback command, downstream validation doc, Commit Slice
+   boundary, suggested semantic commit message, and out-of-scope work.
 
    For each **new** file under `src/`, provide:
    - Class/function signatures (with Type Hints)
@@ -142,12 +154,19 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    For **baseline training**, training scripts can reuse the same flow,
    just set `training_type` to `"baseline/{method_name}"`.
 
+   Add a test plan for each slice using Red/Green/Refactor when practical, or
+   a smoke command plus a `NOT_RUN` reason when automated validation is not
+   available. Include a complexity budget for public APIs, new terms,
+   dependencies, and maximum files per slice.
+
 7. **Output files**
 
    Generate two files:
 
    a. `docs/Implementation_Roadmap.md`, containing:
       - context_summary (≤20 lines)
+      - slice_plan and commit_plan, with one Commit Slice per roadmap slice
+        unless a cross-cutting reason is recorded
       - module_pseudocode (signatures and pseudocode for each module, including git_snapshot)
       - config_schema (configuration definitions, including TrackingConfig)
       - training_pipeline (three-stage pipeline, including startup flow)

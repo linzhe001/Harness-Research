@@ -18,16 +18,18 @@ Read first:
 - `docs/35_protocol/Research_Protocol.md` if it exists
 - `../../shared/context-layering-policy.md`
 - `../../shared/research-invariants.md`
+- `../../shared/ubiquitous-language.md`
 - `../../shared/documentation-evidence-rule.md`
 - `../../shared/documentation-style.md`
 - `../../shared/language-policy.md`
 
 Required work:
-1. Extract 2-6 candidate ideas or variants. If only one idea exists, create conservative, balanced, and aggressive variants.
-2. For each candidate, document strongest objection, likely failure mode, minimum viable experiment, kill criteria, compute estimate, and fallback/pivot path.
-3. When dynamic context is enabled, refresh draft protocol assumptions without approving contracts.
-4. Write `docs/Idea_Debate.md`.
-5. Update `PROJECT_STATE.json` when stage synchronization is required.
+1. Consume the Explore Intake and Explore Synthesis Grill records from WF1; do not repeat a full Grill unless a new contradiction changes Contract or Build boundaries.
+2. Extract 2-6 candidate ideas or variants. If only one idea exists, create conservative, balanced, and aggressive variants.
+3. For each candidate, document strongest objection, likely failure mode, minimum viable experiment, kill criteria, compute estimate, fallback/pivot path, and any vocabulary conflict that may need `docs/20_facts/Project_Glossary.md`.
+4. When dynamic context is enabled, refresh draft protocol assumptions without approving contracts.
+5. Write `docs/Idea_Debate.md`.
+6. Update `PROJECT_STATE.json` when stage synchronization is required.
 
 Final decision vocabulary: `SELECT`, `PILOT_FIRST`, `MERGE`, `PIVOT`, or `ABANDON`.
 

@@ -26,6 +26,7 @@ The iteration log file is at `iteration_log.json` in the project root.
 For the schema, see [templates/iteration-log-schema.json](templates/iteration-log-schema.json).
 For code style behavior, see [../../shared/code-style.md](../../shared/code-style.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
@@ -164,13 +165,14 @@ If there are incomplete iterations, prompt the user to complete or abandon them 
    ```
 4. **Create symlink** `.claude/current_iteration.json` → `.claude/iterations/iter{N}/context.json`
 5. Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md)
-6. Call `/code-debug {description}`, letting code-debug perform the actual code changes and commit
-7. **Remove symlink** `.claude/current_iteration.json` (keep persistent context)
-8. **Force-fetch git commit**: Get commit hash and message from git log
+6. Preserve the current vertical slice boundary from `docs/Implementation_Roadmap.md` when present and preserve `docs/20_facts/Project_Glossary.md` vocabulary when present
+7. Call `/code-debug {description}`, letting code-debug perform the actual code changes and commit
+8. **Remove symlink** `.claude/current_iteration.json` (keep persistent context)
+9. **Force-fetch git commit**: Get commit hash and message from git log
    - **If commit hash cannot be obtained** (code-debug did not successfully commit) → keep status="coding",
      report error and prompt user to check manually. **Must not advance to training status**.
    - If successfully obtained → continue
-9. Update iteration_log.json:
+10. Update iteration_log.json:
    - `git_commit`: commit hash (required, cannot be null)
    - `git_message`: commit message
    - `status`: "training" (code is ready, awaiting training registration)
@@ -259,10 +261,16 @@ user calls `/iterate eval` after training completes.
     - `metrics`: fill in extracted metrics
     - `decision`: decision
     - `lessons`: lessons learned
+    - slice completion or drift observations when a planned slice changed scope
+    - complexity and boundary observations when public APIs, dependencies, or naming changed during the iteration
     - `status`: "completed"
     - If this is a new best → update `best_iteration`
 11. **Do not write to PROJECT_STATE.json**. Stage-level transitions are orchestrator's responsibility.
-12. **Output recommended next-step command** (based on decision):
+12. When `iteration_log.json`, lesson files, or accepted memory changed, report
+    a Gate ledger. Run `check_workflow_state.py` near WF10 handoff points; for
+    routine in-loop updates, explicitly state whether the workflow-state gate was
+    run or deferred.
+13. **Output recommended next-step command** (based on decision):
     - NEXT_ROUND → `Recommended: /iterate plan "{improvement hypothesis based on lessons}"`
     - DEBUG → `Recommended: /iterate plan "{improvement hypothesis based on lessons}" [debug-oriented]`
     - CONTINUE → `Recommended: /orchestrator next  (advance to WF11 ablation experiments)`

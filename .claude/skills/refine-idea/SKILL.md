@@ -20,16 +20,18 @@ Read first:
 - `templates/refined-idea.md`
 - `../../shared/context-layering-policy.md`
 - `../../shared/research-invariants.md`
+- `../../shared/ubiquitous-language.md`
 - `../../shared/documentation-evidence-rule.md`
 - `../../shared/documentation-style.md`
 - `../../shared/language-policy.md`
 
 Required work:
-1. Identify the selected idea or variant and record why alternatives were rejected or deferred.
-2. Define problem statement, target task, data assumptions, candidate baselines, target metrics, success criteria, minimum viable experiment, kill criteria, and pivot triggers.
-3. Record open questions that must be resolved by WF4 data-prep or WF5 baseline-repro.
-4. When dynamic context is enabled, refresh draft protocol assumptions or run `/protocol-compiler` if evidence tables changed.
-5. Write `docs/Refined_Idea.md`.
-6. Update `PROJECT_STATE.json` when stage synchronization is required.
+1. Use WF1 Grill records as intent inputs. Do not rerun a full Grill here; only ask blocking questions that affect success criteria, kill criteria, pivot triggers, or Contract readiness.
+2. Identify the selected idea or variant and record why alternatives were rejected or deferred.
+3. Define problem statement, target task, data assumptions, candidate baselines, target metrics, success criteria, minimum viable experiment, kill criteria, pivot triggers, and candidate vocabulary signals for WF6/WF7 to use when generating or refining `docs/20_facts/Project_Glossary.md`.
+4. Record open questions that must be resolved by WF4 data-prep or WF5 baseline-repro.
+5. When dynamic context is enabled, refresh draft protocol assumptions or run `/protocol-compiler` if evidence tables changed.
+6. Write `docs/Refined_Idea.md`.
+7. Update `PROJECT_STATE.json` when stage synchronization is required.
 
 Do not write architecture, module plans, file trees, or implementation roadmaps. Architecture design belongs to WF6 after data and baseline evidence exist.

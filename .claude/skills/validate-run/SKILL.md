@@ -28,6 +28,7 @@ Input: Working codebase from WF7 + config file + baseline code (from baselines/)
 Output: Code review findings + smoke test pass/fail report.
 On PASS → WF10 (iterate). On FAIL → fix issues via /code-debug.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
@@ -54,6 +55,8 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
 
    **③ Design documents** (implementation intent reference):
    - `docs/Technical_Spec.md` (architecture design from WF6, specifying which parts should be equivalent to baseline and which are new additions)
+   - `docs/Implementation_Roadmap.md` (slice trace, planned files, public interfaces, test/smoke commands)
+   - `docs/20_facts/Project_Glossary.md` if it exists
 
 2. **Codex code review** (always attempt)
 
@@ -146,6 +149,13 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    recording `codex_review: "unavailable"`.
 
 3. **Run 100-step training**
+
+   Before the smoke test, review slice completion against `docs/Implementation_Roadmap.md` and record:
+   - whether each implemented slice matches its `Slice Trace`
+   - whether planned files and public interfaces match `project_map.json`
+   - whether the listed test/smoke command ran or has a `NOT_RUN` reason
+   - whether identifiers, configs, metrics, tests, and errors follow `docs/20_facts/Project_Glossary.md` when present
+   - whether public APIs, dependencies, and complexity budget changes are explicit
 
    Read `{TRAIN_SCRIPT}` from CLAUDE.md `## Entry Scripts`:
    ```bash

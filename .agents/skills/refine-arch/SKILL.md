@@ -12,6 +12,7 @@ Read these first:
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/research-invariants.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -25,6 +26,7 @@ Read these first:
 - `../../../docs/10_contract/Claim_Boundary.md` if it exists
 - `../../../docs/30_evidence/Evidence_Index.md` if it exists
 - `../../../docs/35_protocol/Research_Protocol.md` if it exists
+- `../../../docs/20_facts/Project_Glossary.md` if it exists
 
 ## When To Use
 
@@ -38,15 +40,27 @@ Do not use this skill as WF2. Early idea selection belongs to `$idea-debate` and
 2. Inspect the existing codebase structure only after the target task, data constraints, and baseline behavior are clear.
 3. Identify extension points, config patterns, registry or inheritance patterns, and integration boundaries.
 4. Design the MVP architecture that is justified by literature evidence, dataset facts, baseline gaps, and evaluation constraints.
-5. For each major decision, provide the canonical A/B/C alternatives with pros, cons, evidence, and rollback strategy.
-6. Estimate resource requirements for MVP, full training, and ablations.
-7. When dynamic context is enabled, run protocol drift or request contract review if the proposed architecture changes evaluation assumptions, claim boundaries, or project scope.
-8. Write `docs/Technical_Spec.md` using the canonical template and update `PROJECT_STATE.json` when appropriate.
+5. Define the first vertical slice that proves one end-to-end path, including
+   entry point, module/domain behavior, artifact/output, acceptance check, and
+   out-of-scope work.
+6. Define module boundaries before file plans: owns, does not own, public API,
+   dependencies, forbidden dependencies, and tests. Prefer deep modules with
+   small public APIs.
+7. Generate or refresh the initial `docs/20_facts/Project_Glossary.md` seed
+   when the project uses dynamic context or when stable codebase vocabulary is
+   needed. Use only terms grounded in WF1-WF6 artifacts and architecture
+   decisions; mark uncertain names as proposed terms.
+8. For each major decision, provide the canonical A/B/C alternatives with pros, cons, evidence, and rollback strategy.
+9. Estimate resource requirements for MVP, full training, and ablations.
+10. When dynamic context is enabled, run protocol drift or request contract review if the proposed architecture changes evaluation assumptions, claim boundaries, or project scope.
+11. Write `docs/Technical_Spec.md` using the canonical template and update `PROJECT_STATE.json` when appropriate.
 
 ## Output Rules
 
 - Use `./references/technical-spec.md`.
 - Include the required sections: architecture overview, module modification plan, MVP definition, alternative plans, integration points, resource estimation, and risk mitigation.
+- Include `application_codebase_language_seed` to show the glossary terms WF6
+  generated or proposed for WF7.
 - Include evidence sources and separate verified facts from inferences.
 - Keep protocol content project-local and evidence-backed; do not introduce pre-baked research-track rules.
 - Do not write the implementation roadmap or `project_map.json`; those belong to WF7 `$build-plan`.

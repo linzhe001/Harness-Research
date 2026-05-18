@@ -40,6 +40,21 @@
 - **Trace path:** `{.agents/state/review_traces/...}` or N/A
 - **Unresolved critical findings:** ...
 
+### Slice Completion Review
+
+| slice_id | Planned Trace | Implemented Path | Acceptance Result | Feedback Evidence | Status |
+|----------|---------------|------------------|-------------------|-------------------|--------|
+| | `docs/Implementation_Roadmap.md#...` | | | | PASS/REVIEW/FAIL |
+
+### Language / Boundary / Complexity Review
+
+| Area | Source | Result | Notes |
+|------|--------|--------|-------|
+| Project glossary usage | `docs/20_facts/Project_Glossary.md` or N/A | PASS/WARNING/CRITICAL/NOT_RUN | |
+| Module boundary adherence | `docs/Technical_Spec.md`, `project_map.json` | PASS/WARNING/CRITICAL/NOT_RUN | |
+| Public API changes | `project_map.json`, diff | PASS/WARNING/CRITICAL/NOT_RUN | |
+| Complexity budget | `docs/Implementation_Roadmap.md#complexity_budget` | PASS/WARNING/CRITICAL/NOT_RUN | |
+
 ### Smoke Test Commands
 
 ```bash

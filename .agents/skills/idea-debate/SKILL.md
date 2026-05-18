@@ -11,6 +11,7 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/research-invariants.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -33,6 +34,9 @@ should not skip from WF1 directly to architecture design.
 ## Required Work
 
 1. Re-read `docs/Feasibility_Report.md`, existing project state, relevant local code/docs, and any user-provided idea notes.
+   Consume the Explore Intake and Explore Synthesis Grill records from WF1;
+   do not repeat a full Grill unless a new contradiction changes Contract or
+   Build boundaries.
 2. Extract 2-6 candidate ideas or variants. If only one idea exists, create conservative/balanced/aggressive variants.
 3. For each candidate, document:
    - strongest objection
@@ -41,6 +45,8 @@ should not skip from WF1 directly to architecture design.
    - kill criteria
    - estimated compute and implementation effort
    - fallback or pivot path
+   - language conflicts or new project terms that may need
+     `docs/20_facts/Project_Glossary.md`
 4. When an external reviewer is available, follow reviewer independence and tracing protocols for a fresh critique of the candidate artifacts.
 5. When dynamic context is enabled, write or refresh `docs/35_protocol/Research_Protocol.md`, `docs/35_protocol/Protocol_Assumptions.md`, and `docs/35_protocol/Protocol_Changelog.md` with project-local protocol implications.
 6. Write `docs/Idea_Debate.md` using the local template.

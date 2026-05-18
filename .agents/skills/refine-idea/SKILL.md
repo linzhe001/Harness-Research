@@ -11,6 +11,7 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/research-invariants.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -31,6 +32,9 @@ The goal is to refine the research idea, not to design the architecture. Archite
 ## Required Work
 
 1. Re-read the WF1 feasibility report, WF2 idea debate, evidence tables, and any explicit operator constraints.
+   Use WF1 Grill records as intent inputs. Do not rerun a full Grill here;
+   only ask blocking questions that affect success criteria, kill criteria,
+   pivot triggers, or Contract readiness.
 2. Identify the selected idea or variant and record why alternatives were rejected or deferred.
 3. Define the project-local research framing:
    - problem statement
@@ -40,6 +44,8 @@ The goal is to refine the research idea, not to design the architecture. Archite
    - minimum viable experiment
    - kill criteria and pivot triggers
    - open questions that must be resolved by WF4/WF5
+   - candidate project vocabulary signals for WF6/WF7 to consider when they
+     generate or refine `docs/20_facts/Project_Glossary.md`
 4. When dynamic context is enabled, refresh draft protocol assumptions or run `$protocol-compiler` if evidence tables changed.
 5. Write `docs/Refined_Idea.md`.
 6. Update `PROJECT_STATE.json` when stage-state synchronization is requested or required by the orchestrator.

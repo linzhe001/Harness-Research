@@ -26,6 +26,9 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For dynamic context boundaries, see [../../shared/context-layering-policy.md](../../shared/context-layering-policy.md) and [../../shared/research-invariants.md](../../shared/research-invariants.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
+WF6 generates or refreshes the initial project codebase vocabulary in
+`docs/20_facts/Project_Glossary.md` when stable architecture terms are needed.
 When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_protocol/**`; run protocol drift or request contract review if the proposed architecture changes evaluation assumptions, claim boundaries, or project scope.
 </context>
 
@@ -53,6 +56,9 @@ When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_pr
 	   - New modules should follow existing abstract base classes and registry/config patterns when present
 	   - Integration must preserve fair baseline/evaluation comparison
 	   - If architecture conflicts with an approved contract, stop and request review instead of editing the contract silently
+	   - Define the first vertical slice that proves one end-to-end path before broad implementation planning
+	   - Define module boundaries and prefer deep modules with small public APIs
+	   - Seed `docs/20_facts/Project_Glossary.md` from Source Artifacts and architecture decisions; mark uncertain terms as proposed
 
 4. **Define MVP (Minimum Viable Prototype)**
 
@@ -60,6 +66,7 @@ When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_pr
    - Trainable on 10% of the data
    - Contains the simplest implementation of the core innovation
    - Has clearly defined validation metrics
+   - Contains the first vertical slice with entry point, module/domain behavior, artifact/output, acceptance check, and out-of-scope work
 
 5. **Design Alternative Plans**
 

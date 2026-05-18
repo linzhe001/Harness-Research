@@ -22,6 +22,8 @@ Inputs (all must be read before generating any code):
 1. `project_map.json` — Architectural blueprint defining file structure and each file's responsibilities
 2. `docs/Implementation_Roadmap.md` — Execution plan containing module pseudocode and dependency order
 3. `../../shared/code-style.md` — Code style guidelines
+4. `docs/20_facts/Project_Glossary.md` if it exists — project vocabulary for identifiers, configs, metrics, tests, and errors
+5. `../../shared/sliced-commit-rule.md` — Commit one completed roadmap slice at a time
 
 Output: All code files defined in project_map.json.
 On success → WF9 (validate-run), then WF10 (iterate) only after validation passes.
@@ -39,8 +41,21 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `docs/Implementation_Roadmap.md`: Module pseudocode and generation order
    - PROJECT_STATE.json: Project state
    - `../../shared/code-style.md`: Code style guidelines and the Pre-Edit Checklist
+   - `docs/20_facts/Project_Glossary.md` if it exists
 
    Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md) before writing or editing code.
+   Select the current roadmap slice and keep implementation inside that slice.
+   Do not broaden public APIs beyond the slice trace without recording the
+   boundary change and updating `project_map.json`.
+   New identifiers, config keys, metric keys, test names, and error messages
+   must use existing glossary terms or record proposed terms for review.
+   Write or update the first focused test or smoke check before implementation
+   when the slice is automatable; otherwise record the manual feedback step and
+   `NOT_RUN` reason.
+   Complete one roadmap slice at a time. After the slice is implemented,
+   validated, and any required `project_map.json` update is complete, create a
+   semantic commit for that Commit Slice before starting the next independent
+   slice. If the environment cannot commit, report `NOT_RUN` with the reason.
 
 2. **Generate all code in dependency order**
 
@@ -99,4 +114,5 @@ User-facing progress notes and summaries should follow [../../shared/language-po
 - ALWAYS apply the Pre-Edit Checklist in `../../shared/code-style.md` before writing code
 - ALWAYS run py_compile after generating each file
 - ALWAYS update project_map.json after creating any file
+- ALWAYS commit one completed and validated Commit Slice before moving to the next independent slice, or report `NOT_RUN`
 </constraints>

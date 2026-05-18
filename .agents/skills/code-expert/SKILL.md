@@ -11,12 +11,15 @@ Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/contract-gating-rule.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
+- `../../../.agents/references/sliced-commit-rule.md`
 - `./references/generation-order.md`
 - `../../../PROJECT_STATE.json`
 - `../../../project_map.json`
 - `../../../docs/Implementation_Roadmap.md`
+- `../../../docs/20_facts/Project_Glossary.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
 - `../../../docs/10_contract/Baseline_Contract.md` if it exists
 
@@ -28,19 +31,32 @@ Use this skill for WF8 first-pass code generation only.
 
 1. Read `project_map.json`, `docs/Implementation_Roadmap.md`, `PROJECT_STATE.json`, contracts when present, and the style/rule files before editing.
 2. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
-3. Generate code in dependency order, following the canonical sequence:
+3. Select the current roadmap slice. Do not implement unrelated slices or
+   broaden public APIs beyond the slice trace without recording the boundary
+   change and updating `project_map.json`.
+4. Read `docs/20_facts/Project_Glossary.md` when present. New identifiers,
+   config keys, metric keys, test names, and error messages must use existing
+   glossary terms or record proposed terms for review.
+5. Write or update the first focused test or smoke check before implementation
+   when the slice is automatable. If it cannot be automated, record the manual
+   feedback step and `NOT_RUN` reason.
+6. Complete one roadmap slice at a time. After a slice is implemented,
+   validated, and any required `project_map.json` update is complete, create a
+   semantic commit for that Commit Slice before moving to the next independent
+   slice. If the environment cannot commit, report `NOT_RUN` with the reason.
+7. Generate code in dependency order, following the canonical sequence:
    - `src/utils/`
    - `src/models/`
    - `src/data/`
    - `src/losses/`
    - `scripts/`
    - `tests/`
-4. After each stable-file creation or interface change, sync `project_map.json`.
-5. Validate modified Python files with:
+8. After each stable-file creation or interface change, sync `project_map.json`.
+9. Validate modified Python files with:
    - `python -m py_compile`
    - `ruff check --select=E,F,I`
-6. Update `PROJECT_STATE.json` on full success.
-7. Run `python tooling/evidence/check_workflow_state.py --workspace-root .`
+10. Update `PROJECT_STATE.json` on full success.
+11. Run `python tooling/evidence/check_workflow_state.py --workspace-root .`
    when `PROJECT_STATE.json` or `project_map.json` changed, and report the gate
    ledger.
 
@@ -52,6 +68,9 @@ Use this skill for WF8 first-pass code generation only.
 
 - Treat natural-language requests as the canonical `$code-expert [target or all]` flow.
 - Preserve the dependency-ordered generation style and the requirement to read `project_map.json` and the roadmap before editing.
+- Preserve vertical-slice scope and TDD/smoke feedback from the roadmap.
+- Preserve sliced-commit behavior: one completed and validated roadmap slice
+  should become one semantic commit before the next independent slice starts.
 - Keep the canonical validation pattern and project-map synchronization.
 - Use `../../../.agents/references/language-policy.md` for reply language and for any natural-language summaries; keep paths, schema keys, commands, and code identifiers in English.
 

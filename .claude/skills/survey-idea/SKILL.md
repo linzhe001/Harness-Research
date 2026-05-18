@@ -26,6 +26,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For dynamic context boundaries, see [../../shared/context-layering-policy.md](../../shared/context-layering-policy.md) and [../../shared/research-invariants.md](../../shared/research-invariants.md).
+For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
 When enabled, also refresh `docs/30_evidence/**` as evidence tables; do not turn evidence into approved rules.
 </context>
 
@@ -51,6 +52,12 @@ When enabled, also refresh `docs/30_evidence/**` as evidence tables; do not turn
    - Where are the potential risk points for this idea?
    </thinking>
 
+   Run an Explore Intake Grill before broad research when the user's goal,
+   motivation, target task/data/user, success shape, non-goals, resource
+   constraints, preferences, or known concerns are missing or ambiguous.
+   Ask only the questions needed to map intent to survey keywords, competitor
+   search, baseline candidates, metric candidates, and open questions.
+
 3. **Literature Search**
 
    Use the WebSearch tool to perform multiple rounds of search. Suggested query strategies:
@@ -61,6 +68,11 @@ When enabled, also refresh `docs/30_evidence/**` as evidence tables; do not turn
    Note: Advanced search operators like `site:` may not be supported; use natural language keyword combinations.
 
    Collect at least 10 highly relevant papers. For each key paper, use WebFetch to get abstract details.
+
+   After collecting Source Artifacts, run an Explore Synthesis Grill when
+   evidence conflicts, baseline choices, metrics, Claim Boundary, first
+   vertical slice, or pivot/abort conditions remain unclear. Each question
+   must name the downstream artifact it affects.
 
 4. **Gap Analysis**
 
@@ -152,6 +164,7 @@ When enabled, also refresh `docs/30_evidence/**` as evidence tables; do not turn
    ```
 
    Preserve the template structure and decision vocabulary, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
+   Keep Grill sections as intent records and open-question routing, not as Gate Evidence or Human Approval.
 
 10. **Update Project State**
 

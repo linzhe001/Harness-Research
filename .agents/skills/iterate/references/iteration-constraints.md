@@ -41,6 +41,9 @@ These are mandatory behavior rules for `$iterate`.
   - `.agents/state/iterations/<iter-id>/context.json`
   - `.agents/state/current_iteration.json`
 - Must route implementation work through `$code-debug`.
+- Must preserve the current vertical slice boundary from
+  `docs/Implementation_Roadmap.md` when present.
+- Must preserve `docs/20_facts/Project_Glossary.md` vocabulary when present.
 - Must not move an iteration from `coding` to `training` without a semantic git commit.
 - Must record `git_commit` and `git_message` into `iteration_log.json` before returning success.
 - If no commit hash can be proven, the iteration must remain `coding`.
@@ -87,6 +90,9 @@ These are mandatory behavior rules for `$iterate`.
   - non-empty `lessons`
   - `lesson_candidates` when promotion-worthy findings are identified
   - `lesson_promotion_status` when a lesson is accepted or rejected
+  - slice completion or drift observations when a planned slice changed scope
+  - complexity and boundary observations when public APIs, dependencies, or
+    naming changed during the iteration
   - `status=completed` when evaluation is complete
 - Must produce or refresh a per-iteration report at `docs/iterations/<iter-id>.md`
   for legacy/report-directory workflows or at `docs/40_iterations/<iter-id>.md`

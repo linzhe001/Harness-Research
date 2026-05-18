@@ -29,7 +29,50 @@ Every output file must begin with a context_summary block, no more than 20 lines
 - **Search Keywords:** {keywords}
 - **Related Paper Count:** {paper_count}
 - **Most Relevant Competitor:** {top_competitor}
+- **Intent Summary:** {one_sentence_user_goal}
 </context_summary>
+
+## Evidence Sources
+
+| Source | Why It Was Read | Key Facts Used |
+|--------|-----------------|----------------|
+| {path_or_url_or_query} | | |
+
+## Explore Intake Grill
+
+Record the user's own intent before broad research begins.
+
+| Category | Answer | Survey / Contract / Build Impact |
+|----------|--------|-----------------------------------|
+| User goal | | |
+| Original motivation | | |
+| Target task / data / user | | |
+| Success shape | | |
+| Non-goals | | |
+| Resource constraints | | |
+| Personal preferences | | |
+| Known concerns | | |
+
+## Explore Synthesis Grill
+
+Use collected Conclusion Evidence to ask only questions that affect Contract or
+Build boundaries.
+
+| Question | Triggering Source Artifact | Affects Artifact | Current Answer or Open Issue |
+|----------|----------------------------|------------------|------------------------------|
+| | | Evaluation Contract / Baseline Contract / Claim Boundary / first slice / pivot condition | |
+
+## Verified Facts
+
+- ...
+
+## Inferences
+
+- ...
+
+## Open Questions
+
+- ...
 
 ## 1. Feasibility Score
 
