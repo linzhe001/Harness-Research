@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VALID_FIXTURE = REPO_ROOT / "tests" / "fixtures" / "evidence_docchain" / "valid"
@@ -32,7 +32,9 @@ def load_tool(name: str):
 
 def init_git_repo(path: Path) -> None:
     subprocess.run(["git", "init"], cwd=path, check=True, stdout=subprocess.DEVNULL)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=path, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=path, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=path, check=True)
 
 
@@ -59,6 +61,54 @@ def test_missing_docchain_file_fails_validator(tmp_path: Path) -> None:
     assert validator.main([str(empty_dir)]) == 1
 
 
+def copy_valid_docchain(tmp_path: Path) -> Path:
+    target = tmp_path / "chain"
+    shutil.copytree(VALID_FIXTURE, target)
+    return target
+
+
+def test_validator_fails_fact_missing_claim(tmp_path: Path) -> None:
+    validator = load_validator()
+    chain_dir = copy_valid_docchain(tmp_path)
+    chain_path = chain_dir / "evidence_chain.json"
+    chain = json.loads(chain_path.read_text(encoding="utf-8"))
+    chain["facts"][0].pop("claim")
+    chain_path.write_text(json.dumps(chain, indent=2) + "\n", encoding="utf-8")
+
+    errors = validator.validate_evidence_chain(chain_path)
+
+    assert any("facts[0]: missing claim" in error for error in errors)
+    assert validator.main([str(chain_dir)]) == 1
+
+
+def test_validator_fails_evidence_missing_supports(tmp_path: Path) -> None:
+    validator = load_validator()
+    chain_dir = copy_valid_docchain(tmp_path)
+    chain_path = chain_dir / "evidence_chain.json"
+    chain = json.loads(chain_path.read_text(encoding="utf-8"))
+    chain["evidence"][0].pop("supports")
+    chain_path.write_text(json.dumps(chain, indent=2) + "\n", encoding="utf-8")
+
+    errors = validator.validate_evidence_chain(chain_path)
+
+    assert any("evidence[0]: missing supports" in error for error in errors)
+    assert validator.main([str(chain_dir)]) == 1
+
+
+def test_validator_fails_doc_audit_check_missing_result(tmp_path: Path) -> None:
+    validator = load_validator()
+    chain_dir = copy_valid_docchain(tmp_path)
+    audit_path = chain_dir / "doc_audit.json"
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    audit["checks"][0].pop("result")
+    audit_path.write_text(json.dumps(audit, indent=2) + "\n", encoding="utf-8")
+
+    errors = validator.validate_doc_audit(audit_path)
+
+    assert any("checks[0]: missing result" in error for error in errors)
+    assert validator.main([str(chain_dir)]) == 1
+
+
 def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     compiler = load_tool("compile_doc")
     validator = load_validator()
@@ -67,7 +117,9 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     source = tmp_path / "PROJECT_STATE.json"
     doc.parent.mkdir(parents=True)
     doc.write_text(
-        "# Project Contract\n\nStatus: draft\n\n- The project scope is draft. [F:project.scope]\n- Open issue. [U:project.open]\n",
+        "# Project Contract\n\nStatus: draft\n\n"
+        "- The project scope is draft. [F:project.scope]\n"
+        "- Open issue. [U:project.open]\n",
         encoding="utf-8",
     )
     source.write_text('{"project": "demo"}\n', encoding="utf-8")
@@ -80,7 +132,13 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
         compiled_by="test",
     )
 
-    chain_dir = tmp_path / ".evidence" / "chains" / "docs__10_contract__Project_Contract" / "test_build"
+    chain_dir = (
+        tmp_path
+        / ".evidence"
+        / "chains"
+        / "docs__10_contract__Project_Contract"
+        / "test_build"
+    )
     assert summary["ok"] is True
     assert summary["fact_count"] == 1
     assert summary["unresolved_count"] == 1
@@ -88,13 +146,22 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
 
     chain = json.loads((chain_dir / "evidence_chain.json").read_text(encoding="utf-8"))
     doc_text = doc.read_text(encoding="utf-8")
-    index = json.loads((tmp_path / ".evidence" / "index.json").read_text(encoding="utf-8"))
+    index = json.loads(
+        (tmp_path / ".evidence" / "index.json").read_text(encoding="utf-8")
+    )
 
     assert chain["facts"][0]["fact_id"] == "project.scope"
     assert chain["unresolved"][0]["question_id"] == "project.open"
     assert chain["doc_links"]["markdown_path"] == "docs/10_contract/Project_Contract.md"
-    assert "Evidence chain: `.evidence/chains/docs__10_contract__Project_Contract/test_build/evidence_chain.json`" in doc_text
-    assert index["docs"]["docs__10_contract__Project_Contract"]["latest_build_id"] == "test_build"
+    chain_link = (
+        "Evidence chain: `.evidence/chains/"
+        "docs__10_contract__Project_Contract/test_build/evidence_chain.json`"
+    )
+    assert chain_link in doc_text
+    assert (
+        index["docs"]["docs__10_contract__Project_Contract"]["latest_build_id"]
+        == "test_build"
+    )
 
 
 def test_compile_doc_preserves_dirty_source_patch(tmp_path: Path) -> None:
@@ -104,10 +171,18 @@ def test_compile_doc_preserves_dirty_source_patch(tmp_path: Path) -> None:
     doc = tmp_path / "docs" / "20_facts" / "Execution_Contract.md"
     source = tmp_path / "PROJECT_STATE.json"
     doc.parent.mkdir(parents=True)
-    doc.write_text("# Execution Contract\n\nStatus: draft\n\n- Env: demo. [F:env.demo]\n", encoding="utf-8")
+    doc.write_text(
+        "# Execution Contract\n\nStatus: draft\n\n- Env: demo. [F:env.demo]\n",
+        encoding="utf-8",
+    )
     source.write_text('{"project": "demo"}\n', encoding="utf-8")
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
-    subprocess.run(["git", "commit", "-m", "init"], cwd=tmp_path, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(
+        ["git", "commit", "-m", "init"],
+        cwd=tmp_path,
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
 
     source.write_text('{"project": "demo", "dirty": true}\n', encoding="utf-8")
     compiler.compile_document(
@@ -118,11 +193,20 @@ def test_compile_doc_preserves_dirty_source_patch(tmp_path: Path) -> None:
         compiled_by="test",
     )
 
-    chain_dir = tmp_path / ".evidence" / "chains" / "docs__20_facts__Execution_Contract" / "test_build"
+    chain_dir = (
+        tmp_path
+        / ".evidence"
+        / "chains"
+        / "docs__20_facts__Execution_Contract"
+        / "test_build"
+    )
     chain = json.loads((chain_dir / "evidence_chain.json").read_text(encoding="utf-8"))
 
     assert chain["git"]["is_dirty"] is True
-    assert chain["git"]["diff_path"] == ".evidence/chains/docs__20_facts__Execution_Contract/test_build/patch.diff"
+    assert (
+        chain["git"]["diff_path"]
+        == ".evidence/chains/docs__20_facts__Execution_Contract/test_build/patch.diff"
+    )
     assert (chain_dir / "patch.diff").exists()
 
 
@@ -133,9 +217,17 @@ def test_compile_doc_preserves_untracked_source_snapshot(tmp_path: Path) -> None
     doc = tmp_path / "docs" / "20_facts" / "Project_Facts.md"
     source = tmp_path / "local_source.json"
     doc.parent.mkdir(parents=True)
-    doc.write_text("# Project Facts\n\nStatus: draft\n\n- Local source exists. [F:local.source]\n", encoding="utf-8")
+    doc.write_text(
+        "# Project Facts\n\nStatus: draft\n\n- Local source exists. [F:local.source]\n",
+        encoding="utf-8",
+    )
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
-    subprocess.run(["git", "commit", "-m", "init"], cwd=tmp_path, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(
+        ["git", "commit", "-m", "init"],
+        cwd=tmp_path,
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
     source.write_text('{"local": true}\n', encoding="utf-8")
 
     compiler.compile_document(
@@ -146,13 +238,25 @@ def test_compile_doc_preserves_untracked_source_snapshot(tmp_path: Path) -> None
         compiled_by="test",
     )
 
-    chain_dir = tmp_path / ".evidence" / "chains" / "docs__20_facts__Project_Facts" / "test_build"
+    chain_dir = (
+        tmp_path
+        / ".evidence"
+        / "chains"
+        / "docs__20_facts__Project_Facts"
+        / "test_build"
+    )
     chain = json.loads((chain_dir / "evidence_chain.json").read_text(encoding="utf-8"))
     snapshots = chain["git"]["untracked_snapshots"]
 
     assert snapshots[0]["path"] == "local_source.json"
-    assert snapshots[0]["snapshot_path"] == ".evidence/chains/docs__20_facts__Project_Facts/test_build/untracked/local_source.json"
-    assert (chain_dir / "untracked" / "local_source.json").read_text(encoding="utf-8") == '{"local": true}\n'
+    snapshot_path = (
+        ".evidence/chains/docs__20_facts__Project_Facts/test_build/"
+        "untracked/local_source.json"
+    )
+    assert snapshots[0]["snapshot_path"] == snapshot_path
+    assert (chain_dir / "untracked" / "local_source.json").read_text(
+        encoding="utf-8"
+    ) == '{"local": true}\n'
 
 
 def test_compile_doc_cli_fails_for_missing_source(tmp_path: Path) -> None:
