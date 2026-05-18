@@ -59,7 +59,9 @@ def test_init_context_copies_templates_without_overwrite(tmp_path: Path) -> None
 
     assert summary["ok"] is True
     assert (tmp_path / "docs" / "30_evidence" / "Evidence_Index.md").exists()
+    assert (tmp_path / "docs" / "20_facts" / "Project_Glossary.md").exists()
     assert (tmp_path / ".evidence" / "schemas" / "evidence_chain.schema.json").exists()
+    assert not (tmp_path / "OPERATOR_CONTEXT.md").exists()
     assert existing.read_text(encoding="utf-8") == "custom contract\n"
     assert any(
         action["action"] == "skip_exists"
