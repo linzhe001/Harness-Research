@@ -6,6 +6,10 @@
 /baselines/
 /experiments/
 /docs/*
+!/docs/Harness_Workflow_Deep_Dive.md
+!/docs/AI_Coding_Methods_Workflow.md
+!/docs/Workflow_Operator_Handbook.md
+!/docs/Workflow_Stage_Cards.md
 !/docs/90_legacy/
 /docs/90_legacy/*
 !/docs/90_legacy/.gitkeep
