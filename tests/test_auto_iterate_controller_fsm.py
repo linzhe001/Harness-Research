@@ -418,6 +418,126 @@ class TestDynamicPreflight:
         assert events[-1]["event"] == "MANUAL_ACTION_REQUIRED"
         assert events[-1]["payload"]["reason"] == "dynamic_context_preflight_failed"
 
+
+class TestRuntimeFailureHandling:
+    def test_internal_error_does_not_complete_presatisfied_phase(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.policy = {"timeouts": {"code": 30}, "terminate_grace_sec": 1}
+        ctl.state = {
+            "schema_version": 1,
+            "loop_id": "test_loop",
+            "status": "running",
+            "tool": "codex",
+            "current_round_index": 0,
+            "current_phase_key": "code",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 1,
+            "goal": {
+                "source_path": "goal.md",
+                "activated_at": "2026-01-01T00:00:00Z",
+            },
+            "objective": {"primary_metric": {"name": "PSNR"}},
+            "initial_hypotheses": [],
+            "forbidden_directions": [],
+            "best": {
+                "iteration_id": None,
+                "round_index": None,
+                "primary_metric": None,
+                "updated_at": None,
+            },
+            "patience": {
+                "max_no_improve_rounds": 5,
+                "min_primary_delta": 0.1,
+                "consecutive_no_improve": 0,
+            },
+            "budget": {
+                "max_rounds": 20,
+                "completed_rounds": 0,
+                "gpu_count": 1,
+                "max_gpu_hours": 100,
+                "used_gpu_hours": 0,
+                "tracking_method": "wall_time_hours_x_gpu_count",
+            },
+            "llm_budget": {
+                "max_calls": 200,
+                "used_calls": 0,
+                "tracking_method": "runtime_invocation_count",
+            },
+            "accounts": {"selected_account_id": None, "by_account": {}},
+            "last_decision": None,
+            "halt_reason": None,
+            "last_failure": None,
+            "timeouts": {"code": 30},
+            "terminate_grace_sec": 1,
+            "retry_policy": {"max_phase_attempts": 2},
+            "heartbeat": {},
+            "event_log": {},
+            "runtime": {},
+            "screening_policy": {"enabled": False},
+        }
+
+        class FakeSupervisor:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                del args, kwargs
+
+            def run_phase(self, **kwargs: object) -> dict[str, object]:
+                del kwargs
+                return {
+                    "runtime_exit_class": "internal_error",
+                    "exit_code": 1,
+                    "failure_reason": "codex exited 1",
+                    "duration_sec": 0,
+                }
+
+        class PassingValidator:
+            def get_iteration_ids(self) -> set[str]:
+                return {"iter1"}
+
+            def load_iteration_log(self) -> dict[str, object]:
+                return {"iterations": []}
+
+            def validate(self, *args: object, **kwargs: object) -> dict[str, object]:
+                del args, kwargs
+                return {
+                    "ok": True,
+                    "classification": "completed",
+                    "iteration_id": "iter1",
+                    "payload": {},
+                }
+
+        monkeypatch.setattr(
+            "auto_iterate.controller.PhaseSupervisor",
+            FakeSupervisor,
+        )
+        ctl.validator = PassingValidator()
+
+        result = ctl._run_one_phase("code", 0)
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
+            if line.strip()
+        ]
+
+        assert result == {
+            "ok": False,
+            "phase_key": "code",
+            "classification": "retrying",
+        }
+        assert ctl.state["current_phase_key"] == "code"
+        assert ctl.state["last_failure"].startswith(
+            "runtime_exit_class=internal_error"
+        )
+        assert any(event["event"] == "PHASE_FAILED" for event in events)
+        assert not any(event["event"] == "PHASE_COMPLETED" for event in events)
+
     def test_missing_dynamic_tooling_fails_when_dynamic_markers_exist(
         self,
         tmp_path: Path,

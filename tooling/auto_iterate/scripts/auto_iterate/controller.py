@@ -676,6 +676,25 @@ class LoopController:
                 external_auth_retry=True,
             )
 
+        if exit_class != "success":
+            failure_reason = runtime_result.get("failure_reason") or exit_class
+            self.state["last_failure"] = (
+                f"runtime_exit_class={exit_class}: {failure_reason}"
+            )
+            self.events.emit(
+                "PHASE_FAILED",
+                loop_id,
+                "running",
+                round_index=round_idx,
+                phase_key=phase_key,
+                payload={
+                    "runtime_exit_class": exit_class,
+                    "exit_code": runtime_result.get("exit_code"),
+                    "failure_reason": failure_reason,
+                },
+            )
+            return self._handle_phase_failure(phase_key, round_idx)
+
         # Validate postcondition.
         validation = self.validator.validate(
             phase_key,
