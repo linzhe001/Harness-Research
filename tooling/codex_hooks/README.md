@@ -49,8 +49,11 @@ The installer ensures hooks are enabled in `.codex/config.toml`:
 
 ```toml
 [features]
-codex_hooks = true
+hooks = true
 ```
+
+Older Codex versions used `[features].codex_hooks`; current Codex versions use
+`[features].hooks`. The installer migrates the old key when it updates config.
 
 It also installs a narrow project-local Codex execpolicy rule that allows
 network escalation without prompting only for:
@@ -63,12 +66,130 @@ The wrapper and PreToolUse hook still require an active `$code-review heavy`
 session before a provider-backed external review script can run. Restart Codex
 after changing hooks or rules.
 
+Current Codex versions require human review before newly installed hook commands
+run. After installing or changing `.codex/hooks.json`, open `/hooks` in the
+Codex TUI and trust the four Harness workspace hooks if the commands match this
+file.
+
 Check the effective installation:
 
 ```bash
 python tooling/codex_hooks/hook_status.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status
 python tooling/codex_hooks/check_contracts.py --workspace-root . --hook-status
+python tooling/codex_hooks/check_contracts.py --workspace-root . --hook-status --trust-status
 ```
+
+`--trust-status` asks the local Codex app-server for the same trust state shown
+by `/hooks`. It exits non-zero when enabled hooks are still `untrusted` or
+`modified`.
+
+## Workflow Write Boundaries
+
+Harness uses two different layers for write control:
+
+```text
+Codex sandbox
+  -> coarse filesystem / network boundary
+
+Harness hooks
+  -> stage-aware read sets, sensitive path checks, Gate ledger, approval checks
+```
+
+Recommended default:
+
+```toml
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+network_access = false
+writable_roots = []
+
+[features]
+hooks = true
+```
+
+Use `workspace-write` for normal workflow work. Add a path to
+`sandbox_workspace_write.writable_roots` or use `--add-dir` only when the work
+must write outside the repo root. Avoid `danger-full-access` unless the
+environment is already isolated and you explicitly want hooks to be the only
+remaining boundary.
+
+Stage-specific writes are best modeled as temporary permission elevations:
+
+```text
+base session
+  |
+  v
+UserPromptSubmit detects stage / skill
+  |
+  v
+active contract grants a narrow write surface for that stage
+  |
+  v
+PreToolUse checks required reads and forbidden writes
+  |
+  v
+PostToolUse marks sensitive writes for Gate ledger
+  |
+  v
+Stop requires final read-set and Gate ledger evidence
+```
+
+The docs layer is not the permission entry point. The active stage is the entry
+point; docs paths are only part of that stage's write surface.
+For enforcement, every repository contract declares `write_scope.allowed_paths`;
+that field is the stage write surface. The check is path-aware: `apply_patch`,
+`Edit`, `Write`, and parsed tool output paths are denied when they fall outside
+the active stage scope. Missing `write_scope.allowed_paths` is treated as a
+contract error and path-aware writes fail closed instead of falling back to
+`sensitive_paths`.
+Complex Bash mutations that do not expose a reliable path are not treated as
+proof of strict scoping; they still remain subject to tool-owned path blocks and
+Gate ledger checks.
+
+| Stage / skill | Permission elevation | Must remain gated |
+| --- | --- | --- |
+| `init-project` | `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, `PROJECT_STATE.json`, `docs/**`, `.evidence/**` scaffold | no inferred operator preferences; use evidence tooling for `.evidence/**` |
+| `survey-idea` / WF1 | `docs/30_evidence/**`, `docs/Feasibility_Report.md`, `docs/35_protocol/**` | protocol draft is not an approved contract |
+| `idea-debate` / WF2 | `docs/Idea_Debate.md`, `docs/35_protocol/**` | reviewer independence and protocol drift checks |
+| `refine-idea` / WF3 | `docs/Refined_Idea.md`, `docs/35_protocol/**` | no premature architecture decision |
+| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts must come from artifacts and reproducible commands |
+| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/10_contract/**`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic context gates, human approval for contracts |
+| `refine-arch` / WF6 | `docs/Technical_Spec.md`, `docs/20_facts/Project_Glossary.md`, `docs/35_protocol/**` | architecture must respect approved contracts and protocol drift |
+| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`, `project_map.json`, `PROJECT_STATE.json` | project map must not become stale |
+| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map sync |
+| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `PROJECT_STATE.json` | no PASS without semantic review and smoke evidence |
+| `iterate` / WF10 | `iteration_log.json`, `docs/iterations/**`, `docs/40_iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
+| `auto-iterate-goal` | `docs/auto_iterate_goal.md`; controller owns `.auto_iterate/**` | goal validation before unattended controller runs |
+| `final-exp` / WF11 | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | approved contracts and claim boundary |
+| `release` / WF12 | `submission/**`, `docs/**`, `PROJECT_STATE.json` | release claims stay inside `Claim_Boundary.md` |
+| `code-review` | `.agents/state/review_traces/code-review/**` only | code fixes route through `code-debug`; guardrail fixes route through `harness-maintenance` |
+| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json` | ordinary implementation code only; hooks/skills/contracts stay out of scope |
+| `harness-maintenance` | `tooling/codex_hooks/**`, `.agents/skill-contracts/**`, `.agents/skills/**`, `.claude/skills/**`, `.claude/shared/**`, `tooling/model_api/**`, `tests/**`, `schemas/**`, core framework docs | hook, skill, routing, permission, and trust behavior require focused tests and Gate ledger |
+| `review-packet` | `.evidence/review_packets/<stage>/<build_id>/**`, related contract/state approval records | packet is not approval; explicit human approval is required |
+
+Direct `Edit`, `Write`, or manual `apply_patch` calls into `.evidence/**` and
+`.auto_iterate/**` are blocked. Skills that produce artifacts there should use
+the owning tooling, such as `tooling/evidence/*` or the auto-iterate controller.
+
+This keeps the operator-facing rule easy to read:
+
+```text
+filesystem permission = can this directory be written?
+stage permission      = has this stage earned the right to write this path now?
+```
+
+For operator-facing summaries, generate Stage Cards from the contract source:
+
+```bash
+python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output docs/Workflow_Stage_Cards.md
+```
+
+Stage Cards are reading aids. `.agents/skill-contracts/contracts.json` remains
+the source of truth for required reads, write scopes, required actions, and
+forbidden actions.
 
 ## Optional: User-Level Install
 
@@ -96,7 +217,7 @@ User-level installation writes or updates:
 
 Specifically:
 
-- `~/.codex/config.toml` gets `[features] codex_hooks = true`.
+- `~/.codex/config.toml` gets `[features] hooks = true`.
 - `~/.codex/hooks.json` contains absolute commands pointing at
   `~/.codex/harness_hooks/*.py`.
 - `~/.codex/harness_hooks/` stores copied runtime scripts:
@@ -116,7 +237,7 @@ sources. To keep workspace-only behavior, do not keep an active
 
 Hooks are active when all of these are true:
 
-- Codex is running with `[features] codex_hooks = true` in its active config.
+- Codex is running with `[features] hooks = true` in its active config.
 - A hooks definition exists in `hooks.json` or inline `[hooks]` config.
 - The current lifecycle event matches the configured hook event and matcher.
 
@@ -136,6 +257,13 @@ such as `Read`, `View`, and `Open` are recorded only when the target path is par
 of the tracked file set for the active contract or daily workspace context.
 Reads that are not exposed to hooks cannot be treated as audited proof.
 
+`git commit` has an additional always-on read requirement in Harness
+workspaces. Before an agent can run `git commit`, the current prompt turn must
+read `.agents/references/sliced-commit-rule.md`. The PreToolUse hook blocks the
+commit until that file is recorded, then the agent must identify independent
+Commit Slices, stage only the current slice, validate or record `NOT_RUN`, and
+commit one completed slice at a time.
+
 ## Detection Policy
 
 Skill detection is intentionally stricter than substring matching:
@@ -149,9 +277,14 @@ Skill detection is intentionally stricter than substring matching:
 - Path-like text and filenames are ignored for generic trigger matching, so a
   filename such as `Harness_Workflow_Implementation_Review.md` does not trigger
   `implement`.
-- Ordinary code-change prompts can infer a code skill without explicit syntax:
-  modification/fix/refactor prompts infer `code-debug`, while new implementation
-  prompts infer `code-expert`.
+- Ordinary implementation code-change prompts can infer a code skill without
+  explicit syntax: modification/fix/refactor prompts infer `code-debug`, while
+  new implementation prompts infer `code-expert`.
+- Guardrail maintenance prompts that mention hooks, hook trust/status, skill
+  contracts, skill routing/triggers, permission policy, or
+  `.agents/.claude` skill alignment infer `harness-maintenance` before generic
+  `fix` or `debug` routing. This keeps hook/skill permission work out of
+  `code-debug`.
 - Code review prompts infer `code-review` when the user asks for review of code,
   diffs, changed files, or code-backed docs. The intent records a mode:
   `code_review_light`, `code_review_medium`, or `code_review_heavy`.
@@ -174,7 +307,8 @@ part of the review evidence.
 
 When `code-review` is active, mutating tools are allowed only for local review
 artifacts under `.agents/state/review_traces/code-review/`; source fixes must be
-routed through `code-debug`.
+routed through `code-debug`, while hook/skill/permission fixes must be routed
+through `harness-maintenance`.
 Pure local writes under `.agents/state/review_traces/code-review/` do not create
 a pending Gate ledger requirement or approval requirement, even when the
 working tree already has unrelated dirty source, docs, tests, config, or other

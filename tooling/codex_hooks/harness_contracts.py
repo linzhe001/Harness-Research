@@ -11,9 +11,13 @@ from pathlib import Path
 from typing import Any
 
 CONTRACTS_PATH = Path(".agents/skill-contracts/contracts.json")
+SLICED_COMMIT_RULE_PATH = ".agents/references/sliced-commit-rule.md"
+COMMIT_GUIDANCE_FILES = (SLICED_COMMIT_RULE_PATH,)
 RUNTIME_DIR = Path(".harness_hooks")
 SESSION_PATH = RUNTIME_DIR / "session.json"
+SESSIONS_DIR = RUNTIME_DIR / "sessions"
 READ_LEDGER_PATH = RUNTIME_DIR / "read_ledger.json"
+READ_LEDGERS_DIR = RUNTIME_DIR / "read_ledgers"
 PENDING_PATH = RUNTIME_DIR / "pending_actions.json"
 
 IGNORE_GIT_ADD_PATTERNS = [
@@ -101,7 +105,7 @@ KNOWN_FORBIDDEN_ACTIONS = {
 }
 
 READ_COMMAND_RE = re.compile(
-    r"\b(cat|sed|nl|rg|grep|head|tail|less|more|find|ls|git\s+diff|git\s+show|git\s+status)\b"
+    r"\b(cat|sed|nl|rg|grep|head|tail|less|more|git\s+diff|git\s+show)\b"
 )
 MUTATING_COMMAND_RE = re.compile(
     r"(^|\s)(rm|mv|cp|touch|mkdir|chmod|chown|git\s+add|git\s+commit|git\s+rm)\b|"
@@ -162,6 +166,30 @@ CODE_TARGET_RE = re.compile(
     r"(代码|函数|类|模块|脚本|测试|钩子|修改代码|写代码)",
     re.IGNORECASE,
 )
+HARNESS_MAINTENANCE_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:harness[- ]?maintenance|codex[- ]?hooks?|hooks?|"
+    r"hook[- ]?(?:maintenance|detection|trigger|routing|status|trust)|"
+    r"skill[- ]?(?:maintenance|contract|detection|routing|trigger|permission)|"
+    r"prompt[- ]?(?:routing|trigger|detection|classification)|"
+    r"(?:ubiquitous[- ]?language|operator[- ]?handbook|stage[- ]?cards?|"
+    r"stage[- ]?card[- ]?generator|workflow[- ]?(?:vocabulary|terms|language)|"
+    r"project_glossary)|"
+    r"permission[- ]?(?:policy|boundary|elevation|scope|model)|"
+    r"tooling/codex_hooks|\.agents/skill-contracts|\.agents/skills|"
+    r"\.claude/skills)(?![A-Za-z0-9_])|"
+    r"hook\s*的?\s*(?:判断|触发|路由|信任|状态)|"
+    r"(?:判断|触发|路由|信任|状态).{0,12}hook|"
+    r"workflow\s*(?:语言|词汇|术语|路由|触发|维护|阶段|权限)|"
+    r"(?:prompt|skill|hook).{0,16}(?:误归|误判|错归|归到|路由|触发)|"
+    r"(?:误归|误判|错归|归到).{0,16}(?:code-debug|code-expert|harness-maintenance)|"
+    r"(?:权限|提权).{0,8}(?:策略|模型|边界|范围|细化)|"
+    r"(?:维护类任务|维护任务|写入面|错误写入面)|"
+    r"(?:通用语言|统一语言|术语|关键概念|命名规则|认知负担|阶段卡片|"
+    r"工作流语言|工作流词汇)|"
+    r"skill\s*(?:触发|路由|权限|限制|合约)|"
+    r"技能(?:触发|路由|权限|限制|合约)|钩子",
+    re.IGNORECASE,
+)
 CODE_SEARCH_RE = re.compile(
     r"\b(where|find|search|locate|grep|rg|show|list|inspect|explain|read|look up)\b|"
     r"(在哪|在哪里|位置|找一下|找到|查找|检索|搜索|看一下|查看|解释|说明|是什么|有哪些|列出)",
@@ -192,6 +220,18 @@ REVIEW_MEDIUM_RE = re.compile(
     r"(中型|修改完|改完|改动|差异|当前修改|工作区)",
     re.IGNORECASE,
 )
+SHELL_CONTROL_RE = re.compile(r"&&|\|\||;|\n|\|")
+SHELL_CONTROL_TOKENS = {"&&", "||", ";", "|"}
+INLINE_INTERPRETER_FLAGS = {"-c", "-e", "--eval"}
+SCRIPTING_EXECUTABLES = {
+    "bash",
+    "node",
+    "nodejs",
+    "perl",
+    "ruby",
+    "sh",
+    "zsh",
+}
 
 
 def repo_root(cwd: str | Path | None = None) -> Path:
@@ -283,6 +323,13 @@ def classify_review_mode(prompt: str) -> str:
     return "medium"
 
 
+def is_harness_maintenance_prompt(prompt: str) -> bool:
+    return bool(
+        HARNESS_MAINTENANCE_RE.search(prompt)
+        or HARNESS_MAINTENANCE_RE.search(detection_text(prompt))
+    )
+
+
 def _trigger_match(text: str, trigger: str) -> re.Match[str] | None:
     trigger = trigger.strip()
     if not trigger:
@@ -304,6 +351,8 @@ def _trigger_score(trigger: str, explicit: bool) -> int:
         return 10_000 + len(trigger)
     if WORKFLOW_TRIGGER_RE.match(trigger):
         return 8_000 + len(trigger)
+    if "-" in trigger:
+        return 2_000 + len(trigger)
     if " " in trigger:
         return 1_000 + len(trigger)
     return 100 + len(trigger)
@@ -326,9 +375,27 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
             score = _trigger_score(trigger, explicit)
             if best is None or score > best[0]:
                 best = (score, contract, trigger, trigger_type)
+    intent = classify_prompt_intent(prompt)
+    maintenance_contract = (
+        contract_by_skill(root, "harness-maintenance")
+        if is_harness_maintenance_prompt(prompt)
+        else None
+    )
     if best:
         _, contract, trigger, trigger_type = best
-        intent = classify_prompt_intent(prompt)
+        if (
+            trigger_type != "explicit"
+            and contract.get("skill") in {"code-debug", "code-expert"}
+            and maintenance_contract is not None
+        ):
+            return {
+                "contract": maintenance_contract,
+                "skill": "harness-maintenance",
+                "trigger": "inferred_harness_maintenance",
+                "trigger_type": "inferred",
+                "intent_class": intent,
+                "read_contract_stop_required": False,
+            }
         read_required = (
             trigger_type == "explicit" or contract.get("skill") == "code-review"
         )
@@ -341,7 +408,6 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
             "read_contract_stop_required": read_required,
         }
 
-    intent = classify_prompt_intent(prompt)
     if intent.startswith("code_review_"):
         contract = contract_by_skill(root, "code-review")
         if contract:
@@ -354,6 +420,17 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
                 "read_contract_stop_required": True,
             }
     if intent == "code_write":
+        if is_harness_maintenance_prompt(prompt):
+            contract = contract_by_skill(root, "harness-maintenance")
+            if contract:
+                return {
+                    "contract": contract,
+                    "skill": "harness-maintenance",
+                    "trigger": "inferred_harness_maintenance",
+                    "trigger_type": "inferred",
+                    "intent_class": intent,
+                    "read_contract_stop_required": False,
+                }
         create_score = bool(CODE_CREATE_RE.search(detection_text(prompt)))
         modify_score = bool(CODE_MODIFY_RE.search(detection_text(prompt)))
         skill = "code-expert" if create_score and not modify_score else "code-debug"
@@ -472,6 +549,19 @@ def validate_contract_files(root: Path) -> list[str]:
         for action in contract.get("forbidden_actions", []):
             if action not in KNOWN_FORBIDDEN_ACTIONS:
                 errors.append(f"{skill}: unknown forbidden action: {action}")
+        write_scope = contract.get("write_scope")
+        if write_scope is None:
+            errors.append(f"{skill}: write_scope.allowed_paths is required")
+        elif not isinstance(write_scope, dict):
+            errors.append(f"{skill}: write_scope must be an object")
+        else:
+            allowed_paths = write_scope.get("allowed_paths")
+            if not isinstance(allowed_paths, list) or not all(
+                isinstance(path, str) for path in allowed_paths
+            ):
+                errors.append(
+                    f"{skill}: write_scope.allowed_paths must be a string list"
+                )
         for section in ("harness", "skill"):
             for path in read_set.get(section, []):
                 if not (root / path).exists():
@@ -492,6 +582,25 @@ def load_session(root: Path) -> dict[str, Any]:
 
 def save_session(root: Path, session: dict[str, Any]) -> None:
     write_json(root / SESSION_PATH, session)
+    session_id = session.get("session_id")
+    if isinstance(session_id, str) and session_id.strip():
+        write_json(root / SESSIONS_DIR / f"{runtime_key(session_id)}.json", session)
+
+
+def runtime_key(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip()) or "unknown"
+
+
+def load_session_for_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
+    session_id = event.get("session_id")
+    if isinstance(session_id, str) and session_id.strip():
+        session = load_json(
+            root / SESSIONS_DIR / f"{runtime_key(session_id)}.json",
+            None,
+        )
+        if isinstance(session, dict):
+            return session
+    return load_session(root)
 
 
 def load_read_ledger(root: Path) -> dict[str, Any]:
@@ -502,8 +611,42 @@ def save_read_ledger(root: Path, ledger: dict[str, Any]) -> None:
     write_json(root / READ_LEDGER_PATH, ledger)
 
 
-def reset_read_ledger(root: Path) -> None:
+def load_read_ledger_for_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
+    session_id = event.get("session_id")
+    if isinstance(session_id, str) and session_id.strip():
+        ledger = load_json(
+            root / READ_LEDGERS_DIR / f"{runtime_key(session_id)}.json",
+            None,
+        )
+        if isinstance(ledger, dict):
+            return ledger
+    return load_read_ledger(root)
+
+
+def save_read_ledger_for_event(
+    root: Path,
+    event: dict[str, Any],
+    ledger: dict[str, Any],
+) -> None:
+    save_read_ledger(root, ledger)
+    session_id = event.get("session_id")
+    if isinstance(session_id, str) and session_id.strip():
+        write_json(
+            root / READ_LEDGERS_DIR / f"{runtime_key(session_id)}.json",
+            ledger,
+        )
+
+
+def reset_read_ledger(root: Path, event: dict[str, Any] | None = None) -> None:
+    if event is None:
+        event = {}
     save_read_ledger(root, {"reads": {}})
+    session_id = event.get("session_id")
+    if isinstance(session_id, str) and session_id.strip():
+        write_json(
+            root / READ_LEDGERS_DIR / f"{runtime_key(session_id)}.json",
+            {"reads": {}},
+        )
 
 
 def load_pending(root: Path) -> dict[str, Any]:
@@ -548,7 +691,7 @@ def clear_pending(root: Path) -> None:
 def read_tracking_candidates(
     root: Path, contract: dict[str, Any] | None = None
 ) -> list[str]:
-    candidates: list[str] = []
+    candidates: list[str] = list(COMMIT_GUIDANCE_FILES)
     if contract:
         candidates.extend(required_existing_files(root, contract))
         candidates.extend(
@@ -568,13 +711,55 @@ def read_tracking_candidates(
     return sorted(dict.fromkeys(existing))
 
 
+def is_git_commit_command(command: str) -> bool:
+    try:
+        tokens = _strip_env_assignments(shlex.split(command))
+    except ValueError:
+        return False
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token in SHELL_CONTROL_TOKENS:
+            index += 1
+            continue
+        if Path(token).name != "git":
+            index += 1
+            continue
+        cursor = index + 1
+        while cursor < len(tokens):
+            value = tokens[cursor]
+            if value in SHELL_CONTROL_TOKENS:
+                break
+            if value == "commit":
+                return True
+            if value in {"-c", "-C", "--git-dir", "--work-tree"}:
+                cursor += 2
+                continue
+            if value.startswith("-"):
+                cursor += 1
+                continue
+            break
+        index = max(cursor + 1, index + 1)
+    return False
+
+
+def missing_commit_guidance_reads(root: Path, event: dict[str, Any]) -> list[str]:
+    ledger = load_read_ledger_for_event(root, event)
+    read_paths = set(ledger.get("reads", {}).keys())
+    return [
+        path
+        for path in COMMIT_GUIDANCE_FILES
+        if (root / path).is_file() and path not in read_paths
+    ]
+
+
 def record_read(
     root: Path, path: str, event: dict[str, Any], source: str = "tool"
 ) -> bool:
     full = root / path
     if not full.exists() or not full.is_file():
         return False
-    ledger = load_read_ledger(root)
+    ledger = load_read_ledger_for_event(root, event)
     reads = ledger.setdefault("reads", {})
     rel = rel_path(full, root)
     is_new_read = rel not in reads
@@ -589,21 +774,94 @@ def record_read(
             "source": source,
         }
     )
-    save_read_ledger(root, ledger)
+    save_read_ledger_for_event(root, event, ledger)
     return is_new_read
+
+
+def _strip_env_assignments(tokens: list[str]) -> list[str]:
+    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
+        tokens.pop(0)
+    return tokens
+
+
+def _normalize_operand(token: str, root: Path) -> str:
+    normalized = rel_path(token, root)
+    if normalized.startswith("./"):
+        return normalized[2:]
+    return normalized
+
+
+def _content_read_operands(root: Path, command: str) -> set[str]:
+    if SHELL_CONTROL_RE.search(command):
+        return set()
+    try:
+        tokens = _strip_env_assignments(shlex.split(command))
+    except ValueError:
+        return set()
+    if not tokens:
+        return set()
+
+    executable = Path(tokens[0]).name
+    args = tokens[1:]
+    operands: list[str] = []
+    if executable in {"cat", "nl", "head", "tail", "less", "more"}:
+        operands = [token for token in args if not token.startswith("-")]
+    elif executable == "sed":
+        skip_next = False
+        for token in args:
+            if skip_next:
+                skip_next = False
+                continue
+            if token in {"-e", "-f"}:
+                skip_next = True
+                continue
+            if token.startswith("-"):
+                continue
+            candidate = root / _normalize_operand(token, root)
+            if candidate.is_file():
+                operands.append(token)
+    elif executable in {"grep", "rg"}:
+        pattern_seen = False
+        skip_next = False
+        for token in args:
+            if skip_next:
+                skip_next = False
+                continue
+            if token in {"-e", "--regexp", "-f", "--file"}:
+                skip_next = True
+                pattern_seen = True
+                continue
+            if token.startswith("-"):
+                continue
+            if not pattern_seen:
+                pattern_seen = True
+                continue
+            operands.append(token)
+    elif executable == "git" and args and args[0] in {"diff", "show"}:
+        for token in args[1:]:
+            if token == "--":
+                continue
+            if token.startswith("-"):
+                continue
+            if ":" in token and not (root / token).exists():
+                continue
+            operands.append(token)
+
+    return {_normalize_operand(token, root) for token in operands}
 
 
 def record_command_reads(root: Path, command: str, event: dict[str, Any]) -> list[str]:
     if not READ_COMMAND_RE.search(command):
         return []
-    session = load_session(root)
+    session = load_session_for_event(root, event)
     skill = session.get("active_skill")
     contract = None
     if skill:
         contract = contract_by_skill(root, skill)
+    operands = _content_read_operands(root, command)
     recorded: list[str] = []
     for path in sorted(read_tracking_candidates(root, contract), key=len, reverse=True):
-        if path in command:
+        if path in operands:
             if record_read(root, path, event, source="command"):
                 recorded.append(path)
     return recorded
@@ -619,7 +877,7 @@ def record_direct_tool_read(root: Path, event: dict[str, Any]) -> list[str]:
         value = payload.get(key)
         if isinstance(value, str):
             candidates.append(value)
-    allowed = set(read_tracking_candidates(root, active_contract(root)))
+    allowed = set(read_tracking_candidates(root, active_contract(root, event)))
     recorded: list[str] = []
     for candidate in candidates:
         rel = rel_path(candidate, root)
@@ -629,8 +887,12 @@ def record_direct_tool_read(root: Path, event: dict[str, Any]) -> list[str]:
     return recorded
 
 
-def missing_reads(root: Path, contract: dict[str, Any]) -> list[str]:
-    ledger = load_read_ledger(root)
+def missing_reads(
+    root: Path,
+    contract: dict[str, Any],
+    event: dict[str, Any] | None = None,
+) -> list[str]:
+    ledger = load_read_ledger_for_event(root, event or {})
     read_paths = set(ledger.get("reads", {}).keys())
     return [
         path
@@ -639,8 +901,11 @@ def missing_reads(root: Path, contract: dict[str, Any]) -> list[str]:
     ]
 
 
-def active_contract(root: Path) -> dict[str, Any] | None:
-    session = load_session(root)
+def active_contract(
+    root: Path,
+    event: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    session = load_session_for_event(root, event or {})
     skill = session.get("active_skill")
     if not skill:
         return None
@@ -678,14 +943,12 @@ def has_shell_redirection(command: str) -> bool:
 
 
 def is_tool_owned_write_tool_command(command: str, root: Path | None = None) -> bool:
-    if re.search(r"&&|\|\||;|\n|\|", command):
+    if SHELL_CONTROL_RE.search(command):
         return False
     try:
-        tokens = shlex.split(command)
+        tokens = _strip_env_assignments(shlex.split(command))
     except ValueError:
         return False
-    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
-        tokens.pop(0)
     if not tokens:
         return False
 
@@ -697,15 +960,37 @@ def is_tool_owned_write_tool_command(command: str, root: Path | None = None) -> 
     return script.startswith(TOOL_OWNED_WRITE_TOOL_PREFIXES)
 
 
-def is_review_trace_bash_write(root: Path, command: str) -> bool:
-    if re.search(r"&&|\|\||;|\n|\|", command):
+def is_untrusted_tool_owned_path_command(
+    command: str,
+    root: Path | None = None,
+) -> bool:
+    if is_tool_owned_write_tool_command(command, root):
+        return False
+    if looks_mutating_bash(command):
+        return True
+    if SHELL_CONTROL_RE.search(command):
         return False
     try:
-        tokens = shlex.split(command)
+        tokens = _strip_env_assignments(shlex.split(command))
     except ValueError:
         return False
-    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
-        tokens.pop(0)
+    if not tokens:
+        return False
+    executable = Path(tokens[0]).name
+    if _is_python_executable(executable):
+        return len(tokens) > 1
+    if executable in SCRIPTING_EXECUTABLES:
+        return any(token in INLINE_INTERPRETER_FLAGS for token in tokens[1:])
+    return False
+
+
+def is_review_trace_bash_write(root: Path, command: str) -> bool:
+    if SHELL_CONTROL_RE.search(command):
+        return False
+    try:
+        tokens = _strip_env_assignments(shlex.split(command))
+    except ValueError:
+        return False
     if not tokens or Path(tokens[0]).name != "mkdir":
         return False
 
@@ -727,14 +1012,12 @@ def _is_python_executable(executable: str) -> bool:
 
 
 def python_script_from_command(root: Path, command: str) -> str | None:
-    if re.search(r"&&|\|\||;|\n|\|", command):
+    if SHELL_CONTROL_RE.search(command):
         return None
     try:
-        tokens = shlex.split(command)
+        tokens = _strip_env_assignments(shlex.split(command))
     except ValueError:
         return None
-    while tokens and "=" in tokens[0] and not tokens[0].startswith("-"):
-        tokens.pop(0)
     if len(tokens) < 2:
         return None
     executable = Path(tokens[0]).name
@@ -778,8 +1061,11 @@ def external_review_output_paths(root: Path, command: str) -> list[str]:
     return paths
 
 
-def external_review_session_allowed(root: Path) -> bool:
-    session = load_session(root)
+def external_review_session_allowed(
+    root: Path,
+    event: dict[str, Any] | None = None,
+) -> bool:
+    session = load_session_for_event(root, event or {})
     return (
         session.get("active_skill") == "code-review"
         and session.get("intent_class") == "code_review_heavy"
@@ -829,7 +1115,7 @@ def mutating_event_paths(root: Path, event: dict[str, Any]) -> list[str]:
 
 
 def mark_tool_activity(root: Path, event: dict[str, Any]) -> dict[str, Any]:
-    session = load_session(root)
+    session = load_session_for_event(root, event)
     if not is_harness_workspace(root):
         return session
     if is_mutating_tool_event(event, root):
@@ -877,6 +1163,33 @@ def path_matches_any(path: str, patterns: list[str]) -> bool:
     return False
 
 
+def is_synthetic_mutation_path(path: str) -> bool:
+    return path.startswith("<") and path.endswith(">")
+
+
+def contract_write_scope_paths(contract: dict[str, Any]) -> list[str]:
+    scope = contract.get("write_scope")
+    if isinstance(scope, dict):
+        paths = scope.get("allowed_paths")
+        if isinstance(paths, list):
+            return [str(path) for path in paths]
+    return []
+
+
+def write_scope_violations(
+    contract: dict[str, Any], paths: list[str]
+) -> list[str]:
+    allowed_paths = contract_write_scope_paths(contract)
+    if not allowed_paths:
+        return [path for path in paths if not is_synthetic_mutation_path(path)]
+    return [
+        path
+        for path in paths
+        if not is_synthetic_mutation_path(path)
+        and not path_matches_any(path, allowed_paths)
+    ]
+
+
 def is_local_code_review_trace_path(path: str) -> bool:
     return path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS)
 
@@ -899,7 +1212,7 @@ def mark_pending_for_changes(root: Path, event: dict[str, Any]) -> dict[str, Any
     if not is_harness_workspace(root):
         return pending
 
-    contract = active_contract(root)
+    contract = active_contract(root, event)
     if is_code_review_audit_write_event(root, event, contract):
         save_pending(root, pending)
         return pending
@@ -960,6 +1273,16 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     command = tool_text(event)
 
     if name == "Bash":
+        if is_git_commit_command(command):
+            missing_commit_reads = missing_commit_guidance_reads(root, event)
+            if missing_commit_reads:
+                shown = "\n".join(f"- {p}" for p in missing_commit_reads[:12])
+                return (
+                    "Blocked by Harness policy: read sliced commit guidance "
+                    "before `git commit`, then identify independent Commit "
+                    "Slices and commit one completed slice at a time.\n"
+                    f"{shown}"
+                )
         if is_direct_external_review_command(root, command):
             return (
                 "Blocked by Harness policy: external model review must run "
@@ -968,7 +1291,7 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
             )
         if is_external_review_wrapper_command(
             root, command
-        ) and not external_review_session_allowed(root):
+        ) and not external_review_session_allowed(root, event):
             return (
                 "Blocked by Harness policy: the external review wrapper is "
                 "allowed only during an active `$code-review heavy` session."
@@ -979,10 +1302,8 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                     "Blocked by Harness policy: do not add local/reference "
                     f"artifact `{pattern}` to git."
                 )
-        if any(
-            path in command for path in DIRECT_TOOL_OWNED_PATHS
-        ) and looks_mutating_bash(command):
-            if not is_tool_owned_write_tool_command(command, root):
+        if any(path in command for path in DIRECT_TOOL_OWNED_PATHS):
+            if is_untrusted_tool_owned_path_command(command, root):
                 return (
                     "Blocked by Harness policy: .evidence/** and "
                     ".auto_iterate/** are tool/controller-owned paths."
@@ -1001,10 +1322,24 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                 ".evidence/** or .auto_iterate/**."
             )
 
-    contract = active_contract(root)
+    if name in {"Edit", "Write"}:
+        tool_owned_paths = [
+            path
+            for path in mutating_event_paths(root, event)
+            if path_matches_any(path, DIRECT_TOOL_OWNED_PATHS)
+        ]
+        if tool_owned_paths:
+            shown = "\n".join(f"- {p}" for p in tool_owned_paths[:12])
+            return (
+                "Blocked by Harness policy: do not manually edit or write "
+                ".evidence/** or .auto_iterate/**.\n"
+                f"{shown}"
+            )
+
+    contract = active_contract(root, event)
     is_mutating_tool = is_mutating_tool_event(event, root)
     if contract and is_mutating_tool:
-        missing = missing_reads(root, contract)
+        missing = missing_reads(root, contract, event)
         if missing:
             shown = "\n".join(f"- {p}" for p in missing[:12])
             return (
@@ -1022,8 +1357,19 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                     "Blocked by Harness policy: `code-review` is review-only. "
                     "Write review artifacts only under "
                     "`.agents/state/review_traces/code-review/` and route fixes "
-                    f"through `$code-debug`.\n{shown}"
+                    f"through `$code-debug` or `$harness-maintenance`.\n{shown}"
                 )
+        violations = write_scope_violations(contract, mutating_event_paths(root, event))
+        if violations:
+            shown = "\n".join(f"- {p}" for p in violations[:12])
+            allowed = "\n".join(
+                f"- {p}" for p in contract_write_scope_paths(contract)[:12]
+            )
+            return (
+                "Blocked by Harness policy: write is outside the active "
+                f"`{contract['skill']}` stage write scope.\n"
+                f"Attempted paths:\n{shown}\nAllowed paths:\n{allowed}"
+            )
     return None
 
 
@@ -1052,9 +1398,9 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
     if not is_harness_workspace(root):
         return None
 
-    session = load_session(root)
+    session = load_session_for_event(root, event)
     pending = load_pending(root)
-    contract = active_contract(root)
+    contract = active_contract(root, event)
     enforce_read_set = bool(
         contract
         and (
@@ -1064,7 +1410,7 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
         )
     )
     if contract and enforce_read_set:
-        missing = missing_reads(root, contract)
+        missing = missing_reads(root, contract, event)
         if missing:
             shown = "\n".join(f"- {p}" for p in missing[:12])
             return {

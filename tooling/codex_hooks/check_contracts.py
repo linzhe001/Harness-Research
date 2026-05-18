@@ -62,11 +62,24 @@ def main() -> int:
         action="store_true",
         help="Print user/repo Codex hook installation status.",
     )
+    parser.add_argument(
+        "--trust-status",
+        action="store_true",
+        help=(
+            "When printing hook status, also ask Codex for /hooks trust state "
+            "and fail if enabled hooks still need review."
+        ),
+    )
     args = parser.parse_args()
+    if args.trust_status and not args.hook_status:
+        parser.error("--trust-status requires --hook-status")
 
     root = repo_root(Path(args.workspace_root))
     if args.hook_status:
-        print(render_status(build_status(root)))
+        status = build_status(root, include_trust_status=args.trust_status)
+        print(render_status(status))
+        if args.trust_status and not status["hook_trust_ready"]:
+            return 1
         return 0
 
     if args.list:

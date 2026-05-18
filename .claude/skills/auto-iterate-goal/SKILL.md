@@ -39,7 +39,7 @@ Generate `docs/auto_iterate_goal.md` when it does not exist.
 - WF5 baseline metrics and evaluation protocol
 - WF9 validate-run output
 - Project context from `CLAUDE.md` / `PROJECT_STATE.json`
-- Dynamic projects: `docs/10_contract/Evaluation_Contract.md`
+- Dynamic projects: `docs/10_contract/Evaluation_Contract.md` and `docs/10_contract/Baseline_Contract.md` when present
 
 **Output:** `docs/auto_iterate_goal.md` with all required structured fields.
 
@@ -64,6 +64,8 @@ Validate the existing goal file without modifying it.
 - No placeholder `{{...}}` markers remain
 - Dynamic projects: Evaluation Contract is approved, or the current operator explicitly accepts running with a draft contract
   - Prefer `python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto` when shell access is available
+- Report the Gate ledger for goal validation and context-gate readiness before
+  handing control to WF10 auto-iterate.
 
 **Output:** PASS or list of validation errors.
 

@@ -1,6 +1,6 @@
 ---
 name: code-debug
-description: Codex wrapper for post-WF8 code modification and debugging. Use when the user wants planned iteration changes, bug fixes, or tightly scoped performance edits while preserving the original workflow constraints.
+description: Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, or project_map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those.
 ---
 
 # Code Debug
@@ -10,19 +10,30 @@ description: Codex wrapper for post-WF8 code modification and debugging. Use whe
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
 - `../../../.agents/references/pre-training-rule.md`
+- `../../../.agents/references/sliced-commit-rule.md`
 - `./references/debug-modes.md`
 - `../../../project_map.json`
 - `../../../CLAUDE.md`
+- `../../../docs/20_facts/Project_Glossary.md` if it exists
 
 ## When To Use
 
-Use this skill for all post-WF8 code changes:
+Use this skill for post-WF8 implementation code changes:
 - planned iteration changes
 - bug fixes
 - narrow performance tuning
+
+Do not use this skill for Harness guardrail maintenance:
+- Codex hook runtime or trust/status scripts
+- skill contracts, skill routing, or trigger detection
+- `.agents/skills/**` or `.claude/skills/**` edits
+- permission policy or Stage write-scope changes
+
+Use `$harness-maintenance` for those changes.
 
 ## Required Work
 
@@ -32,18 +43,34 @@ Use this skill for all post-WF8 code changes:
 4. Treat `.agents/state/` as a reserved local runtime directory, but do not assume an active context file exists.
 5. Read the latest iteration report when a DEBUG decision triggered the work.
 6. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
-7. Make the smallest defensible change.
-8. Validate changed Python files with `py_compile` and `ruff`.
-9. Sync `project_map.json` when stable files were added, removed, renamed, or when stable interfaces changed.
-10. Create the required semantic commit before handing the code back to training.
-11. If `project_map.json` changed, run
+7. Read `docs/20_facts/Project_Glossary.md` when present and preserve project vocabulary.
+8. Keep the fix inside the active slice, bug, or planned iteration scope.
+   If the root cause crosses module boundaries, report the boundary issue
+   instead of scattering patches across unrelated modules.
+9. Add or update the smallest focused test or smoke command that catches the
+   bug or planned behavior when practical; otherwise report the manual feedback
+   step and `NOT_RUN` reason.
+10. Make the smallest defensible change.
+11. Validate changed Python files with `py_compile` and `ruff`.
+12. Sync `project_map.json` when stable files were added, removed, renamed, or when stable interfaces changed.
+13. Before committing, inspect the changed files, identify independent Commit
+    Slices, and stage only the files or hunks for the completed slice. Commit
+    each completed slice separately. If one cross-cutting commit is required,
+    record why splitting would be unsafe.
+14. Create the required semantic commit before handing the code back to training.
+15. If `project_map.json` changed, run
     `python tooling/evidence/check_workflow_state.py --workspace-root .` and
     report the gate ledger.
 
 ## Codex Adaptation
 
-- Treat natural-language requests as the canonical `$code-debug` flow.
+- Treat natural-language requests about ordinary repository implementation code
+  as the canonical `$code-debug` flow.
+- Route hook, skill, contract, routing, and permission-policy requests to
+  `$harness-maintenance`.
 - Preserve the original minimal-change, validation, and semantic-commit requirements.
+- Preserve sliced-commit behavior for daily changes: identify slices from the
+  current diff and commit one completed slice at a time.
 - Keep `project_map.json` synchronization for stable interface changes.
 - Use `../../../.agents/references/language-policy.md` for reply language and for any natural-language debugging summaries; keep commands, commit prefixes, paths, and identifiers in English.
 

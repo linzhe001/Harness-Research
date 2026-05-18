@@ -17,7 +17,8 @@
           "required_read_set",
           "required_actions",
           "forbidden_actions",
-          "gate_ledger_required_when"
+          "gate_ledger_required_when",
+          "write_scope"
         ],
         "properties": {
           "skill": {
@@ -69,6 +70,17 @@
           "sensitive_paths": {
             "type": "array",
             "items": { "type": "string" }
+          },
+          "write_scope": {
+            "type": "object",
+            "required": ["allowed_paths"],
+            "properties": {
+              "allowed_paths": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Harness research project orchestrator. Coordinates the 12-stage research workflow (WF1-WF12), tracks progress, and manages PROJECT_STATE.json. Supported commands: init (initialize), status (view state), next (advance stage), rollback (revert), decision (record decisions). Use when the user wants to manage research project progress, initialize a project, view status, or switch workflow stages.
+description: "Harness research project orchestrator. Coordinates the 12-stage research workflow (WF1-WF12), tracks progress, and manages PROJECT_STATE.json. Supported commands: init (initialize), status (view state), next (advance stage), rollback (revert), decision (record decisions). Use when the user wants to manage research project progress, initialize a project, view status, or switch workflow stages."
 argument-hint: "[command: init|status|next|rollback|decision]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Glob, Edit, Skill

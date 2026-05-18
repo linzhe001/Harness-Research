@@ -9,7 +9,7 @@ from harness_contracts import (
     emit,
     is_continuation_prompt,
     is_harness_workspace,
-    load_session,
+    load_session_for_event,
     read_hook_event,
     repo_root,
     reset_read_ledger,
@@ -20,7 +20,7 @@ from harness_contracts import (
 def continuation_match(root, prompt: str, event: dict) -> dict | None:
     if not is_continuation_prompt(prompt):
         return None
-    previous = load_session(root)
+    previous = load_session_for_event(root, event)
     previous_session_id = previous.get("session_id")
     current_session_id = event.get("session_id")
     if not previous_session_id or not current_session_id:
@@ -56,7 +56,7 @@ def main() -> int:
         match = detect_skill_match(root, prompt)
     contract = match["contract"] if match else None
     if continued:
-        session = load_session(root)
+        session = load_session_for_event(root, event)
         session.pop("last_mutating_tool", None)
         session.pop("last_mutating_turn_id", None)
         session.update(
@@ -94,7 +94,7 @@ def main() -> int:
         }
     save_session(root, session)
     if is_harness_workspace(root) and not continued:
-        reset_read_ledger(root)
+        reset_read_ledger(root, event)
     daily_context = daily_context_for_workspace(root)
     if not contract:
         if daily_context:

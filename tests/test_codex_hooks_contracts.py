@@ -12,9 +12,13 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "codex_hooks"))
 
+import check_contracts  # noqa: E402
+import generate_stage_cards  # noqa: E402
+import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
     READ_LEDGER_PATH,
     RUNTIME_DIR,
+    SLICED_COMMIT_RULE_PATH,
     block_pre_tool,
     classify_prompt_intent,
     consume_gate_ledger_notice,
@@ -23,6 +27,7 @@ from harness_contracts import (  # noqa: E402
     detect_skill,
     detect_skill_match,
     external_review_output_paths,
+    is_git_commit_command,
     is_harness_workspace,
     load_contracts,
     load_pending,
@@ -39,15 +44,21 @@ from harness_contracts import (  # noqa: E402
     reset_read_ledger,
     save_pending,
     save_read_ledger,
+    save_read_ledger_for_event,
     save_session,
     stop_decision,
     validate_contract_files,
 )
-from hook_status import build_status  # noqa: E402
+from hook_status import (  # noqa: E402
+    build_status,
+    hook_trust_entries_from_response,
+    render_status,
+    summarize_hook_trust,
+)
 from install_hooks import (  # noqa: E402
     _copy_rule_templates,
     _copy_runtime_scripts,
-    _ensure_codex_hooks_enabled,
+    _ensure_hooks_enabled,
     _load_hook_config,
     _remove_rule_templates,
 )
@@ -84,6 +95,8 @@ def test_skill_contract_files_are_valid() -> None:
         for path in (REPO_ROOT / ".agents" / "skills").glob("*/SKILL.md")
     }
     assert available_skills.issubset(skills)
+    for contract in load_contracts(REPO_ROOT):
+        assert contract.get("write_scope", {}).get("allowed_paths"), contract["skill"]
 
 
 def test_iterate_contract_covers_eval_iteration_reports() -> None:
@@ -92,6 +105,125 @@ def test_iterate_contract_covers_eval_iteration_reports() -> None:
 
     assert "iteration_report_write" in contract["gate_ledger_required_when"]
     assert "docs/iterations/" in contract["sensitive_paths"]
+
+
+def test_code_debug_contract_excludes_harness_maintenance_paths() -> None:
+    contract = contract_by_skill(REPO_ROOT, "code-debug")
+    assert contract is not None
+
+    allowed = contract["write_scope"]["allowed_paths"]
+    assert "tooling/codex_hooks/" not in allowed
+    assert ".agents/skill-contracts/" not in allowed
+    assert ".agents/skills/" not in allowed
+
+
+def test_harness_maintenance_contract_covers_guardrail_paths() -> None:
+    contract = contract_by_skill(REPO_ROOT, "harness-maintenance")
+    assert contract is not None
+
+    allowed = contract["write_scope"]["allowed_paths"]
+    assert "tooling/codex_hooks/" in allowed
+    assert ".agents/skill-contracts/" in allowed
+    assert ".agents/skills/" in allowed
+    assert ".claude/skills/" in allowed
+    assert "docs/" in allowed
+    assert ".gitignore" in allowed
+    assert "AGENTS.md.template" in allowed
+    assert "CLAUDE.md.template" in allowed
+    assert (
+        ".agents/references/ubiquitous-language.md"
+        in contract["required_read_set"]["harness"]
+    )
+
+
+def test_stage_specific_coding_contracts_require_glossary_when_present() -> None:
+    required_skills = [
+        "survey-idea",
+        "idea-debate",
+        "refine-idea",
+        "data-prep",
+        "baseline-repro",
+        "refine-arch",
+        "build-plan",
+        "code-expert",
+        "code-debug",
+        "validate-run",
+        "iterate",
+    ]
+
+    for skill in required_skills:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        read_set = contract["required_read_set"]
+        assert ".agents/references/ubiquitous-language.md" in read_set["harness"]
+        assert "docs/20_facts/Project_Glossary.md" in read_set[
+            "project_when_present"
+        ]
+
+
+def test_commit_stage_contracts_require_sliced_commit_rule() -> None:
+    for skill in ["build-plan", "code-expert", "code-debug"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert SLICED_COMMIT_RULE_PATH in contract["required_read_set"]["harness"]
+
+
+def test_refine_arch_and_build_plan_own_project_glossary_writes() -> None:
+    for skill in ["refine-arch", "build-plan"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+
+        assert "docs/20_facts/Project_Glossary.md" in contract["sensitive_paths"]
+        assert "docs/20_facts/Project_Glossary.md" in contract["write_scope"][
+            "allowed_paths"
+        ]
+        assert "project_glossary_write" in contract["gate_ledger_required_when"]
+
+
+def test_validate_run_contract_reads_slice_plan_when_present() -> None:
+    contract = contract_by_skill(REPO_ROOT, "validate-run")
+    assert contract is not None
+
+    assert "docs/Implementation_Roadmap.md" in contract["required_read_set"][
+        "project_when_present"
+    ]
+
+
+def test_stage_card_generator_renders_core_skill_boundaries() -> None:
+    rendered = generate_stage_cards.render_stage_cards(REPO_ROOT)
+
+    assert "# Harness Workflow Stage Cards" in rendered
+    assert "## code-debug" in rendered
+    assert "## harness-maintenance" in rendered
+    assert "Can write:" in rendered
+    assert "`src/`" in rendered
+    assert "`tooling/codex_hooks/`" in rendered
+    assert "`docs/`" in rendered
+
+
+def test_stage_card_generator_writes_output(tmp_path: Path) -> None:
+    output = tmp_path / "stage_cards.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tooling/codex_hooks/generate_stage_cards.py",
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--output",
+            str(output),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "## harness-maintenance" in text
+    assert "Gate ledger" in text
 
 
 def test_hooks_json_references_existing_scripts() -> None:
@@ -162,10 +294,16 @@ def test_enable_feature_flag_updates_existing_features_table() -> None:
         "[features]\nexperimental = true\n\n"
         "[tools]\nweb = true\n"
     )
-    updated = _ensure_codex_hooks_enabled(text)
+    updated = _ensure_hooks_enabled(text)
 
-    assert "[features]\nexperimental = true\ncodex_hooks = true\n\n[tools]" in updated
+    assert "[features]\nexperimental = true\nhooks = true\n\n[tools]" in updated
     assert updated.count("[features]") == 1
+
+
+def test_enable_feature_flag_migrates_legacy_codex_hooks_flag() -> None:
+    updated = _ensure_hooks_enabled("[features]\ncodex_hooks = true\n")
+
+    assert updated == "[features]\nhooks = true\n"
 
 
 def test_hook_status_reports_user_runtime_and_workspace_policy(tmp_path: Path) -> None:
@@ -173,7 +311,7 @@ def test_hook_status_reports_user_runtime_and_workspace_policy(tmp_path: Path) -
     runtime_dir = codex_dir / "harness_hooks"
     _copy_runtime_scripts(REPO_ROOT, runtime_dir)
     (codex_dir / "config.toml").write_text(
-        "[features]\ncodex_hooks = true\n", encoding="utf-8"
+        "[features]\nhooks = true\n", encoding="utf-8"
     )
     (codex_dir / "hooks.json").write_text(
         _load_hook_config(REPO_ROOT / "tooling/codex_hooks/hooks.json", runtime_dir),
@@ -181,7 +319,7 @@ def test_hook_status_reports_user_runtime_and_workspace_policy(tmp_path: Path) -
     )
 
     status = build_status(REPO_ROOT, codex_dir=codex_dir)
-    assert status["codex_hooks_enabled"] is True
+    assert status["hooks_feature_enabled"] is True
     assert status["harness_workspace"] is True
     assert status["workspace_policy_effect"] == "active"
     assert status["user_hook_errors"] == []
@@ -198,7 +336,7 @@ def test_hook_status_accepts_workspace_only_install(tmp_path: Path) -> None:
     )
     (root / ".codex").mkdir()
     (root / ".codex/config.toml").write_text(
-        "[features]\ncodex_hooks = true\n", encoding="utf-8"
+        "[features]\nhooks = true\n", encoding="utf-8"
     )
     (root / ".codex/hooks.json").write_text(
         (REPO_ROOT / "tooling/codex_hooks/hooks.json").read_text(encoding="utf-8"),
@@ -206,12 +344,355 @@ def test_hook_status_accepts_workspace_only_install(tmp_path: Path) -> None:
     )
 
     status = build_status(root, codex_dir=tmp_path / "empty-user-codex")
-    assert status["codex_hooks_enabled"] is True
-    assert status["repo_codex_hooks_enabled"] is True
+    assert status["hooks_feature_enabled"] is True
+    assert status["repo_hooks_feature_enabled"] is True
     assert status["user_hooks_exists"] is False
     assert status["user_hook_errors"] == []
     assert status["active_hook_source"] == "workspace"
     assert status["hook_install_ready"] is True
+
+
+def test_hook_trust_summary_reports_review_required() -> None:
+    response = {
+        "result": {
+            "data": [
+                {
+                    "cwd": str(REPO_ROOT),
+                    "hooks": [
+                        {
+                            "eventName": "preToolUse",
+                            "source": "project",
+                            "sourcePath": str(REPO_ROOT / ".codex/hooks.json"),
+                            "command": "python pre_tool_use_policy.py",
+                            "enabled": True,
+                            "currentHash": "sha256:abc",
+                            "trustStatus": "untrusted",
+                        },
+                        {
+                            "eventName": "stop",
+                            "source": "project",
+                            "sourcePath": str(REPO_ROOT / ".codex/hooks.json"),
+                            "command": "python require_gate_ledger.py",
+                            "enabled": False,
+                            "currentHash": "sha256:def",
+                            "trustStatus": "untrusted",
+                        },
+                    ],
+                }
+            ]
+        }
+    }
+
+    entries = hook_trust_entries_from_response(response)
+    summary = summarize_hook_trust(entries)
+
+    assert summary["hook_trust_ready"] is False
+    assert len(summary["hook_trust_review_required"]) == 1
+    assert summary["hook_trust_review_required"][0]["event_name"] == "preToolUse"
+
+
+def test_hook_status_can_include_codex_trust_state(monkeypatch) -> None:
+    def fake_fetch(root: Path, home: Path) -> tuple[list[dict[str, object]], None]:
+        return (
+            [
+                {
+                    "cwd": root.as_posix(),
+                    "event_name": "preToolUse",
+                    "source": "project",
+                    "source_path": (root / ".codex/hooks.json").as_posix(),
+                    "command": "python pre_tool_use_policy.py",
+                    "enabled": True,
+                    "current_hash": "sha256:abc",
+                    "trust_status": "trusted",
+                }
+            ],
+            None,
+        )
+
+    monkeypatch.setattr(hook_status, "fetch_hook_trust_entries", fake_fetch)
+
+    status = build_status(REPO_ROOT, include_trust_status=True)
+
+    assert status["hook_trust_checked"] is True
+    assert status["hook_trust_ready"] is True
+    assert "- hook trust status: trusted" in render_status(status)
+
+
+def test_fetch_hook_trust_entries_uses_initialize_and_initialized(
+    monkeypatch,
+) -> None:
+    class FakeStdin:
+        def __init__(self) -> None:
+            self.chunks: list[str] = []
+            self.closed = False
+
+        def write(self, chunk: str) -> int:
+            self.chunks.append(chunk)
+            return len(chunk)
+
+        def flush(self) -> None:
+            return None
+
+        def close(self) -> None:
+            self.closed = True
+
+        def getvalue(self) -> str:
+            return "".join(self.chunks)
+
+    class FakeProcess:
+        def __init__(self) -> None:
+            self.stdin = FakeStdin()
+            self.stdout = StringIO()
+            self._terminated = False
+
+        def poll(self) -> int | None:
+            return 0 if self._terminated else None
+
+        def terminate(self) -> None:
+            self._terminated = True
+
+        def wait(self, timeout: float | None = None) -> int:
+            self._terminated = True
+            return 0
+
+        def kill(self) -> None:
+            self._terminated = True
+
+    fake_process = FakeProcess()
+    requests: list[tuple[int, float]] = []
+
+    def fake_popen(*args, **kwargs) -> FakeProcess:
+        return fake_process
+
+    def fake_read(
+        process: subprocess.Popen[str],
+        request_id: int,
+        timeout_seconds: float,
+    ) -> dict[str, object]:
+        requests.append((request_id, timeout_seconds))
+        if request_id == 1:
+            return {"id": 1, "result": {"userAgent": "codex"}}
+        if request_id == 2:
+            return {
+                "id": 2,
+                "result": {
+                    "data": [
+                        {
+                            "cwd": REPO_ROOT.as_posix(),
+                            "hooks": [
+                                {
+                                    "eventName": "preToolUse",
+                                    "source": "project",
+                                    "sourcePath": (
+                                        REPO_ROOT / ".codex/hooks.json"
+                                    ).as_posix(),
+                                    "command": "python pre_tool_use_policy.py",
+                                    "enabled": True,
+                                    "currentHash": "sha256:abc",
+                                    "trustStatus": "trusted",
+                                }
+                            ],
+                        }
+                    ]
+                },
+            }
+        raise AssertionError(f"unexpected request id {request_id}")
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(hook_status, "_read_json_rpc_response", fake_read)
+
+    entries, error = hook_status.fetch_hook_trust_entries(
+        REPO_ROOT, Path.home() / ".codex", timeout_seconds=3.0
+    )
+
+    assert error is None
+    assert entries[0]["trust_status"] == "trusted"
+    assert requests == [(1, 3.0), (2, 3.0)]
+
+    written = [json.loads(line) for line in fake_process.stdin.getvalue().splitlines()]
+    assert written[0]["method"] == "initialize"
+    assert "jsonrpc" not in written[0]
+    assert "capabilities" not in written[0]
+    assert written[1] == {"method": "initialized"}
+    assert written[2]["method"] == "hooks/list"
+    assert "jsonrpc" not in written[2]
+
+
+def test_fetch_hook_trust_entries_reports_app_server_exit(monkeypatch) -> None:
+    class FakeStdin:
+        def __init__(self) -> None:
+            self.chunks: list[str] = []
+            self.closed = False
+
+        def write(self, chunk: str) -> int:
+            self.chunks.append(chunk)
+            return len(chunk)
+
+        def flush(self) -> None:
+            return None
+
+        def close(self) -> None:
+            self.closed = True
+
+    class FakeProcess:
+        def __init__(self) -> None:
+            self.stdin = FakeStdin()
+            self.stdout = StringIO()
+            self.stderr = StringIO(
+                "Codex could not find bubblewrap on PATH.\n"
+                "Error: Read-only file system (os error 30)\n"
+            )
+
+        def poll(self) -> int | None:
+            return 1
+
+        def terminate(self) -> None:
+            return None
+
+        def wait(self, timeout: float | None = None) -> int:
+            return 1
+
+        def kill(self) -> None:
+            return None
+
+    fake_process = FakeProcess()
+
+    def fake_popen(*args, **kwargs) -> FakeProcess:
+        return fake_process
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    entries, error = hook_status.fetch_hook_trust_entries(
+        REPO_ROOT, Path.home() / ".codex", timeout_seconds=3.0
+    )
+
+    assert entries == []
+    assert error is not None
+    assert "Codex app-server exited with code 1" in error
+    assert "bubblewrap" in error
+
+
+def _fake_check_contracts_status(
+    root: Path,
+    *,
+    hook_trust_ready: bool,
+    review_required: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    return {
+        "hook_trust_ready": hook_trust_ready,
+        "hook_trust_checked": True,
+        "hook_trust_error": None,
+        "hook_install_ready": True,
+        "harness_workspace": True,
+        "contract_path": str(root / ".agents/skill-contracts/contracts.json"),
+        "workspace_root": str(root),
+        "workspace_policy_effect": "active",
+        "codex_home": str(Path.home() / ".codex"),
+        "hooks_feature_enabled": True,
+        "active_hook_source": "workspace",
+        "repo_hooks_feature_enabled": True,
+        "repo_config": str(root / ".codex/config.toml"),
+        "user_hooks_feature_enabled": True,
+        "user_config": str(Path.home() / ".codex/config.toml"),
+        "user_hooks_exists": False,
+        "user_hooks": str(Path.home() / ".codex/hooks.json"),
+        "user_runtime_exists": False,
+        "user_runtime": str(Path.home() / ".codex/harness_hooks"),
+        "repo_codex_kind": "directory",
+        "repo_codex": str(root / ".codex"),
+        "repo_hooks_exists": True,
+        "repo_hooks": str(root / ".codex/hooks.json"),
+        "user_hook_errors": [],
+        "repo_hook_errors": [],
+        "user_hook_commands": [],
+        "repo_hook_commands": [],
+        "hook_trust_review_required": review_required or [],
+    }
+
+
+def test_check_contracts_hook_status_can_fail_on_untrusted_hooks(
+    monkeypatch,
+    capsys,
+) -> None:
+    def fake_build_status(
+        root: Path,
+        include_trust_status: bool = False,
+    ) -> dict[str, object]:
+        assert include_trust_status is True
+        return _fake_check_contracts_status(
+            root,
+            hook_trust_ready=False,
+            review_required=[
+                {
+                    "event_name": "preToolUse",
+                    "trust_status": "untrusted",
+                    "current_hash": "sha256:abc",
+                    "command": "python pre_tool_use_policy.py",
+                }
+            ],
+        )
+
+    monkeypatch.setattr(check_contracts, "build_status", fake_build_status)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_contracts.py",
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--hook-status",
+            "--trust-status",
+        ],
+    )
+
+    assert check_contracts.main() == 1
+    assert "review required" in capsys.readouterr().out
+
+
+def test_check_contracts_hook_status_passes_when_trusted(
+    monkeypatch,
+    capsys,
+) -> None:
+    def fake_build_status(
+        root: Path,
+        include_trust_status: bool = False,
+    ) -> dict[str, object]:
+        assert include_trust_status is True
+        return _fake_check_contracts_status(root, hook_trust_ready=True)
+
+    monkeypatch.setattr(check_contracts, "build_status", fake_build_status)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_contracts.py",
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--hook-status",
+            "--trust-status",
+        ],
+    )
+
+    assert check_contracts.main() == 0
+    assert "hook trust status: trusted" in capsys.readouterr().out
+
+
+def test_check_contracts_trust_status_requires_hook_status(monkeypatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_contracts.py",
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--trust-status",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        check_contracts.main()
+
+    assert exc_info.value.code == 2
 
 
 def test_daily_context_lists_repo_guidance_files(tmp_path: Path) -> None:
@@ -232,10 +713,77 @@ def test_daily_context_lists_repo_guidance_files(tmp_path: Path) -> None:
     assert "CLAUDE.md" in context
 
 
+def test_command_reads_track_sliced_commit_rule_without_active_contract() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": f"sed -n '1,40p' {SLICED_COMMIT_RULE_PATH}",
+        },
+    }
+
+    recorded = record_command_reads(
+        REPO_ROOT,
+        event["tool_input"]["command"],
+        event,
+    )
+
+    assert SLICED_COMMIT_RULE_PATH in recorded
+    assert SLICED_COMMIT_RULE_PATH in load_read_ledger(REPO_ROOT)["reads"]
+
+
+def test_pre_tool_blocks_git_commit_until_sliced_commit_rule_read() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "git commit -m 'docs: update workflow'"},
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "sliced commit guidance" in reason
+    assert SLICED_COMMIT_RULE_PATH in reason
+
+
+def test_git_commit_detection_ignores_search_text() -> None:
+    assert not is_git_commit_command("rg -n 'git commit' tooling/codex_hooks")
+    assert is_git_commit_command("git status && git commit -m 'docs: update'")
+
+
+def test_pre_tool_allows_git_commit_after_sliced_commit_rule_read() -> None:
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                SLICED_COMMIT_RULE_PATH: {
+                    "events": [{"turn_id": "turn-1"}],
+                    "sha256": "test",
+                }
+            }
+        },
+    )
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": "git -c commit.gpgsign=false commit -m 'docs: update workflow'"
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+
+
 def test_detect_skill_from_prompt() -> None:
     contract = detect_skill(REPO_ROOT, "请运行 $validate-run 并准备 WF10 readiness")
     assert contract is not None
     assert contract["skill"] == "validate-run"
+
+
+def test_detection_maps_wf0_bootstrap_to_init_project() -> None:
+    match = detect_skill_match(REPO_ROOT, "请执行 WF0 bootstrap init")
+
+    assert match is not None
+    assert match["skill"] == "init-project"
+    assert match["trigger"] in {"wf0", "bootstrap init"}
+    assert match["read_contract_stop_required"] is True
 
 
 def test_detection_ignores_trigger_words_inside_file_paths() -> None:
@@ -245,14 +793,75 @@ def test_detection_ignores_trigger_words_inside_file_paths() -> None:
 
 
 def test_detection_infers_code_debug_for_ordinary_code_modification() -> None:
-    match = detect_skill_match(
-        REPO_ROOT, "帮我修改 Skill Detection 和 read-only/code-search 相关内容"
-    )
+    match = detect_skill_match(REPO_ROOT, "帮我修改 Python 模块中的数据处理逻辑")
+
     assert match is not None
     assert match["skill"] == "code-debug"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
     assert match["read_contract_stop_required"] is False
+
+
+def test_detection_infers_harness_maintenance_for_skill_detection() -> None:
+    match = detect_skill_match(
+        REPO_ROOT, "帮我修改 Skill Detection 和 read-only/code-search 相关内容"
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger_type"] in {"implicit", "inferred"}
+    assert match["intent_class"] == "code_write"
+    assert match["read_contract_stop_required"] is False
+
+
+def test_detection_infers_harness_maintenance_for_hook_trigger_text() -> None:
+    match = detect_skill_match(REPO_ROOT, "帮我修改 hook的判断和触发")
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger_type"] in {"implicit", "inferred"}
+
+
+def test_detection_infers_harness_maintenance_over_generic_fix() -> None:
+    match = detect_skill_match(REPO_ROOT, "fix hooks trust routing")
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger_type"] == "inferred"
+    assert match["intent_class"] == "code_write"
+
+
+def test_detection_infers_harness_maintenance_for_workflow_language() -> None:
+    match = detect_skill_match(
+        REPO_ROOT, "帮我优化 workflow 通用语言、关键概念和 Stage Card generator"
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["intent_class"] == "code_write"
+
+
+def test_detection_prefers_harness_maintenance_for_prompt_routing_terms() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "workflow 语言为什么被归到 code-debug，触发规则在哪里错了",
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger"] == "inferred_harness_maintenance"
+    assert match["trigger_type"] == "inferred"
+
+
+def test_detection_infers_harness_maintenance_for_mixed_workflow_trigger() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "帮我看下 prompt routing 和 workflow 触发规则怎么修改",
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["intent_class"] == "code_write"
 
 
 def test_detection_infers_code_expert_for_new_implementation_request() -> None:
@@ -289,6 +898,17 @@ def test_detection_classifies_cjk_adjacent_hook_review_as_heavy() -> None:
     assert match is not None
     assert match["skill"] == "code-review"
     assert match["intent_class"] == "code_review_heavy"
+
+
+def test_detection_prefers_plain_code_debug_over_review_phrase() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "帮我修复上次 code review 中发现的问题 code-debug",
+    )
+
+    assert match is not None
+    assert match["skill"] == "code-debug"
+    assert match["trigger"] == "code-debug"
 
 
 def test_user_prompt_continuation_preserves_heavy_review_session(
@@ -345,6 +965,73 @@ def test_user_prompt_continuation_preserves_heavy_review_session(
             "command": (
                 "python tooling/model_api/harness_external_review.py "
                 "agentic --provider deepseek"
+            )
+        },
+    }
+    assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
+def test_nested_session_does_not_clobber_parent_heavy_review_wrapper_access(
+    monkeypatch,
+    capsys,
+) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "使用 code review heavy 来检查 workflow hook",
+                    "session_id": "parent-session",
+                    "turn_id": "parent-turn",
+                }
+            )
+        ),
+    )
+    assert user_prompt_submit_main() == 0
+    capsys.readouterr()
+    contract = contract_by_skill(REPO_ROOT, "code-review")
+    assert contract is not None
+    save_read_ledger_for_event(
+        REPO_ROOT,
+        {"session_id": "parent-session"},
+        {
+            "reads": {
+                path: {"events": [{"turn_id": "parent-turn"}]}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "Review this repository and fix workflow risks",
+                    "session_id": "nested-session",
+                    "turn_id": "nested-turn",
+                }
+            )
+        ),
+    )
+    assert user_prompt_submit_main() == 0
+    capsys.readouterr()
+    assert load_session(REPO_ROOT)["session_id"] == "nested-session"
+
+    event = {
+        "session_id": "parent-session",
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "python tooling/model_api/harness_external_review.py "
+                "agentic --provider deepseek --output "
+                ".agents/state/review_traces/code-review/run05/review.md"
             )
         },
     }
@@ -483,6 +1170,23 @@ def test_pre_tool_blocks_mixed_manual_tool_owned_mutation() -> None:
     assert "tool/controller-owned paths" in reason
 
 
+def test_pre_tool_blocks_interpreter_write_to_tool_owned_path() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "python -c "
+                "\"open('.evidence/review_packets/x.json', 'w').write('x')\""
+            )
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "tool/controller-owned paths" in reason
+
+
 def test_pre_tool_blocks_manual_tool_owned_patch_delete(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     (root / ".agents" / "skill-contracts").mkdir(parents=True)
@@ -506,6 +1210,44 @@ def test_pre_tool_blocks_manual_tool_owned_patch_delete(tmp_path: Path) -> None:
 
     assert reason is not None
     assert "manually patch" in reason
+
+
+def test_pre_tool_blocks_manual_tool_owned_write_tool(tmp_path: Path) -> None:
+    root = tmp_path / "workspace"
+    (root / ".agents" / "skill-contracts").mkdir(parents=True)
+    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+        '{"schema_version":"0.1","contracts":[]}\n',
+        encoding="utf-8",
+    )
+    event = {
+        "tool_name": "Write",
+        "tool_input": {"filePath": ".evidence/chains/wf9/evidence_chain.json"},
+    }
+
+    reason = block_pre_tool(root, event)
+
+    assert reason is not None
+    assert "do not manually edit or write" in reason
+    assert ".evidence/chains/wf9/evidence_chain.json" in reason
+
+
+def test_pre_tool_blocks_manual_auto_iterate_edit_tool(tmp_path: Path) -> None:
+    root = tmp_path / "workspace"
+    (root / ".agents" / "skill-contracts").mkdir(parents=True)
+    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+        '{"schema_version":"0.1","contracts":[]}\n',
+        encoding="utf-8",
+    )
+    event = {
+        "tool_name": "Edit",
+        "tool_input": {"filePath": ".auto_iterate/state.json"},
+    }
+
+    reason = block_pre_tool(root, event)
+
+    assert reason is not None
+    assert "do not manually edit or write" in reason
+    assert ".auto_iterate/state.json" in reason
 
 
 def test_pre_tool_allows_primary_evidence_tool_mutation() -> None:
@@ -764,6 +1506,148 @@ def test_pre_tool_blocks_write_before_required_reads() -> None:
     _clean_runtime()
 
 
+def test_pre_tool_blocks_write_outside_active_stage_scope() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "validate-run")
+    assert contract is not None
+    save_session(REPO_ROOT, {"active_skill": "validate-run"})
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: README.md\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "outside the active `validate-run` stage write scope" in reason
+    assert "README.md" in reason
+    assert "docs/Validate_Run_Report.md" in reason
+    _clean_runtime()
+
+
+def test_pre_tool_allows_write_inside_active_stage_scope() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "validate-run")
+    assert contract is not None
+    save_session(REPO_ROOT, {"active_skill": "validate-run"})
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: docs/Validate_Run_Report.md\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
+def test_pre_tool_explicit_write_scope_overrides_sensitive_paths(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "workspace"
+    root.mkdir()
+    _write_contracts(
+        root,
+        [
+            {
+                "skill": "scoped-stage",
+                "triggers": [],
+                "required_read_set": {},
+                "required_actions": [],
+                "forbidden_actions": [],
+                "gate_ledger_required_when": [],
+                "sensitive_paths": ["docs/"],
+                "write_scope": {"allowed_paths": ["reports/"]},
+            }
+        ],
+    )
+    save_session(root, {"active_skill": "scoped-stage"})
+    blocked = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Add File: docs/Blocked.md\n"
+            "+# Blocked\n"
+            "*** End Patch\n"
+        },
+    }
+    allowed = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Add File: reports/Allowed.md\n"
+            "+# Allowed\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(root, blocked)
+
+    assert reason is not None
+    assert "outside the active `scoped-stage` stage write scope" in reason
+    assert block_pre_tool(root, allowed) is None
+
+
+def test_pre_tool_missing_write_scope_fails_closed(tmp_path: Path) -> None:
+    root = tmp_path / "workspace"
+    root.mkdir()
+    _write_contracts(
+        root,
+        [
+            {
+                "skill": "legacy-stage",
+                "triggers": [],
+                "required_read_set": {},
+                "required_actions": [],
+                "forbidden_actions": [],
+                "gate_ledger_required_when": [],
+                "sensitive_paths": ["docs/"],
+            }
+        ],
+    )
+    save_session(root, {"active_skill": "legacy-stage"})
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Add File: docs/Legacy.md\n"
+            "+# Legacy\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(root, event)
+
+    assert reason is not None
+    assert "outside the active `legacy-stage` stage write scope" in reason
+
+
 def test_stop_allows_read_only_implicit_skill_without_writes() -> None:
     _clean_runtime()
     save_session(
@@ -903,6 +1787,65 @@ def test_pre_tool_allows_code_review_trace_writes() -> None:
     _clean_runtime()
 
 
+def test_pre_tool_blocks_code_debug_hook_guardrail_write() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "code-debug")
+    assert contract is not None
+    save_session(REPO_ROOT, {"active_skill": "code-debug"})
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: tooling/codex_hooks/README.md\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "outside the active `code-debug` stage write scope" in reason
+    _clean_runtime()
+
+
+def test_pre_tool_allows_harness_maintenance_guardrail_write() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "harness-maintenance")
+    assert contract is not None
+    save_session(REPO_ROOT, {"active_skill": "harness-maintenance"})
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: tooling/codex_hooks/README.md\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
 def test_pre_tool_blocks_mixed_bash_write_during_code_review() -> None:
     _clean_runtime()
     contract = contract_by_skill(REPO_ROOT, "code-review")
@@ -977,6 +1920,26 @@ def test_post_tool_only_reports_new_read_files() -> None:
         len(ledger["reads"][".agents/skills/validate-run/SKILL.md"]["events"])
         == 2
     )
+    _clean_runtime()
+
+
+def test_post_tool_does_not_credit_required_read_from_piped_path_mention() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": "validate-run"})
+    event = {
+        "hook_event_name": "PostToolUse",
+        "turn_id": "turn-test",
+        "tool_name": "Bash",
+    }
+
+    recorded = record_command_reads(
+        REPO_ROOT,
+        "rg --files | rg '.agents/skills/validate-run/SKILL.md'",
+        event,
+    )
+
+    assert recorded == []
+    assert load_read_ledger(REPO_ROOT) == {"reads": {}}
     _clean_runtime()
 
 

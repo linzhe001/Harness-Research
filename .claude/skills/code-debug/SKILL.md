@@ -1,6 +1,6 @@
 ---
 name: code-debug
-description: Code Fix and Iteration Tool. Handles all code modifications including training error fixes, performance tuning, etc. Can be called by /iterate code or used standalone. After modifying code, creates a semantic commit, then re-trains.
+description: Code Fix and Iteration Tool for ordinary repository implementation code. Handles training error fixes, planned iteration changes, and performance tuning under src, scripts, configs, or project_map. Use /harness-maintenance for hooks, skill contracts, skill routing, and permission policy.
 argument-hint: "[error_log_path or issue description]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
@@ -15,8 +15,13 @@ before re-training.
 </role>
 
 <context>
-This skill is called whenever code needs to be **modified** after initial generation.
+This skill is called whenever ordinary implementation code needs to be
+**modified** after initial generation.
 It can be called by `/iterate code` or used standalone.
+
+Do not use this skill for Harness guardrail maintenance. Route Codex hooks,
+skill contracts, skill routing/triggers, `.agents/.claude` skill alignment, and
+permission policy changes to `/harness-maintenance`.
 
 **Operation modes** (determined by context):
 - **`planned_change`**: Called via `/iterate code`. Context in `.claude/current_iteration.json`
@@ -27,10 +32,12 @@ It can be called by `/iterate code` or used standalone.
 Inputs:
 1. Error log or issue description (from $ARGUMENTS)
 2. `project_map.json` — Locate relevant files and dependency chains (stable implementation files only)
-3. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
+3. `docs/20_facts/Project_Glossary.md` if it exists — project vocabulary for identifiers, configs, metrics, tests, and errors
+4. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
    Contains mode, iteration_id, hypothesis, config_diff, files_to_modify, lessons_from_previous, etc.
    If this file exists, **prioritize its information** to understand the modification intent and scope.
-4. Per-iteration report `docs/iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision)
+5. Per-iteration report `docs/iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision)
+6. `../../shared/sliced-commit-rule.md` — Identify independent Commit Slices before each commit
 
 After fix → re-train → /iterate eval or /evaluate re-evaluates.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
@@ -46,6 +53,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 
    Then read:
    - `project_map.json`: Locate relevant modules and their dependency chains
+   - `docs/20_facts/Project_Glossary.md` if it exists
    - Latest per-iteration report in the `docs/iterations/` directory (if triggered by a DEBUG decision)
    - Relevant source code files
 
@@ -73,6 +81,9 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - Only change what must be changed
    - Do not perform unrelated refactoring or cosmetic improvements
    - Follow the code conventions in [../../shared/code-style.md](../../shared/code-style.md)
+   - Preserve project vocabulary from `docs/20_facts/Project_Glossary.md`
+   - Keep the fix inside the active slice, bug, or planned iteration scope
+   - If the root cause crosses module boundaries, report the boundary issue instead of scattering patches across unrelated modules
 
 4. **Verify the fix**
 
@@ -81,6 +92,9 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    ruff check --select=E,F,I <modified_files>
    ```
    If there are relevant tests, run them to confirm the fix is effective.
+   Add or update the smallest focused test or smoke command that catches the
+   bug or planned behavior when practical; otherwise report the manual feedback
+   step and `NOT_RUN` reason.
 
 5. **Sync project_map.json**
 
@@ -88,11 +102,20 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    update the corresponding node in project_map.json.
    Volatile files (per-iteration scripts/configs) do not need project_map updates.
 
-6. **Semantic Git Commit**
+6. **Sliced Semantic Git Commit**
 
-   After the fix is complete and verified, you must execute:
+   After the fix is complete and verified, inspect the diff, identify
+   independent Commit Slices, and stage only the files or hunks for the
+   completed slice:
    ```bash
-   git add <modified files>
+   git status --short
+   git diff --name-only
+   git diff --cached --name-only
+   ```
+
+   Commit one completed slice at a time:
+   ```bash
+   git add <files-or-hunks-for-current-slice>
    git commit -m "train(research): {semantic description}"
    ```
    The message must describe **what was done and why**, for example:
@@ -101,7 +124,10 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `train(research): fix OOM — batch_size 16→8, enable gradient accumulation with 2 steps`
    - `train(baseline/{name}): fix data loading path, align evaluation metric computation`
 
-   **The commit is mandatory**. If the commit fails, do not silently skip it — report the error.
+   **The commit is mandatory**. If the work contains multiple independent
+   slices, commit them separately. If one cross-cutting commit is required,
+   record why splitting would be unsafe. If the commit fails, do not silently
+   skip it — report the error.
 
 User-facing debugging summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, commit prefixes, paths, and identifiers remain in English.
 </instructions>
@@ -116,4 +142,5 @@ User-facing debugging summaries should follow [../../shared/language-policy.md](
 - ALWAYS read project_map.json to understand module dependencies before fixing
 - ALWAYS trace the full data flow when debugging shape mismatches
 - ALWAYS commit successfully — do not silently skip or proceed without a valid commit
+- NEVER bundle unrelated Commit Slices in one commit when they can be separated
 </constraints>

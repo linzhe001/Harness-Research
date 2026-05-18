@@ -63,7 +63,7 @@ Validate the existing goal file without modifying it.
 - No placeholder `{{...}}` markers remain
 - Dynamic projects: Evaluation Contract is approved, or the current operator explicitly accepts running with a draft contract
   - Prefer `python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto` when shell access is available
-- Report the gate ledger for goal validation and context-gate readiness before
+- Report the Gate ledger for goal validation and context-gate readiness before
   handing control to WF10 auto-iterate.
 
 **Output:** PASS or list of validation errors.

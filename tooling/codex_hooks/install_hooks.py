@@ -17,6 +17,8 @@ RUNTIME_SCRIPTS = [
 RULE_TEMPLATES = [
     "harness_external_review.rules",
 ]
+HOOKS_FEATURE = "hooks"
+LEGACY_HOOKS_FEATURE = "codex_hooks"
 
 
 def codex_home() -> Path:
@@ -40,17 +42,22 @@ def _load_hook_config(source: Path, script_dir: Path | None) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
-def _ensure_codex_hooks_enabled(text: str) -> str:
+def _is_feature_assignment(line: str, feature_name: str) -> bool:
+    return re.match(rf"^{re.escape(feature_name)}\s*=", line) is not None
+
+
+def _set_feature_assignment(line: str, feature_name: str) -> str:
+    return re.sub(
+        rf"^(\s*){re.escape(feature_name)}\s*=.*$",
+        rf"\1{feature_name} = true",
+        line,
+        count=1,
+    )
+
+
+def _ensure_hooks_enabled(text: str) -> str:
     lines = text.splitlines()
     newline = "\n" if text.endswith("\n") or text == "" else ""
-
-    for index, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("#"):
-            continue
-        if re.match(r"^codex_hooks\s*=", stripped):
-            lines[index] = re.sub(r"=\s*.*$", "= true", line, count=1)
-            return "\n".join(lines) + newline
 
     features_index: int | None = None
     next_section_index: int | None = None
@@ -70,23 +77,56 @@ def _ensure_codex_hooks_enabled(text: str) -> str:
 
     if features_index is not None:
         insert_at = next_section_index if next_section_index is not None else len(lines)
+        hooks_index: int | None = None
+        legacy_indexes: list[int] = []
+        for index in range(features_index + 1, insert_at):
+            stripped = lines[index].strip()
+            if stripped.startswith("#"):
+                continue
+            if _is_feature_assignment(stripped, HOOKS_FEATURE):
+                hooks_index = index
+                continue
+            if _is_feature_assignment(stripped, LEGACY_HOOKS_FEATURE):
+                legacy_indexes.append(index)
+
+        if hooks_index is not None:
+            lines[hooks_index] = _set_feature_assignment(
+                lines[hooks_index], HOOKS_FEATURE
+            )
+            for index in reversed(legacy_indexes):
+                lines.pop(index)
+            return "\n".join(lines) + newline
+
+        if legacy_indexes:
+            first_legacy_index = legacy_indexes[0]
+            lines[first_legacy_index] = _set_feature_assignment(
+                lines[first_legacy_index], LEGACY_HOOKS_FEATURE
+            ).replace(LEGACY_HOOKS_FEATURE, HOOKS_FEATURE, 1)
+            for index in reversed(legacy_indexes[1:]):
+                lines.pop(index)
+            return "\n".join(lines) + newline
+
         while insert_at > features_index + 1 and lines[insert_at - 1].strip() == "":
             insert_at -= 1
-        lines.insert(insert_at, "codex_hooks = true")
+        lines.insert(insert_at, "hooks = true")
         return "\n".join(lines) + "\n"
 
     if not text:
-        return "[features]\ncodex_hooks = true\n"
+        return "[features]\nhooks = true\n"
     prefix = "\n" if text and not text.endswith("\n") else ""
-    return text + prefix + "\n[features]\ncodex_hooks = true\n"
+    return text + prefix + "\n[features]\nhooks = true\n"
+
+
+def _ensure_codex_hooks_enabled(text: str) -> str:
+    return _ensure_hooks_enabled(text)
 
 
 def _ensure_feature_flag(config_path: Path) -> None:
     if not config_path.exists():
-        config_path.write_text("[features]\ncodex_hooks = true\n", encoding="utf-8")
+        config_path.write_text("[features]\nhooks = true\n", encoding="utf-8")
         return
     text = config_path.read_text(encoding="utf-8")
-    updated = _ensure_codex_hooks_enabled(text)
+    updated = _ensure_hooks_enabled(text)
     if updated != text:
         config_path.write_text(updated, encoding="utf-8")
 
@@ -166,6 +206,10 @@ def main() -> int:
         _remove_rule_templates(codex_dir)
 
     print(f"installed Harness Codex hooks to {codex_dir} ({scope} scope)")
+    print(
+        "open /hooks in Codex and trust the Harness hooks before relying on "
+        "them to run"
+    )
     if scope == "user":
         print(f"copied hook runtime scripts to {codex_dir / 'harness_hooks'}")
         print("removed user-level Harness external review execpolicy rules")

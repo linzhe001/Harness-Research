@@ -56,7 +56,8 @@ editing the reviewed files.
    Local review trace writes are audit state, not human approval artifacts, and
    do not require operator approval by themselves.
 8. Do not edit source files, current docs, canonical state, or `.evidence/**`
-   while this skill is active. Route fixes to `/code-debug`.
+   while this skill is active. Route ordinary implementation code fixes to
+   `/code-debug` and guardrail fixes to `/harness-maintenance`.
 9. Do not report PASS/ready for heavy review while any accepted critical
    finding remains unresolved.
 </instructions>

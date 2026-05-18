@@ -27,8 +27,9 @@ Use this skill for review-only checks of code or code-backed docs:
 - heavy review when stage docs, evidence chains, release claims, or gate packets
   depend on the changed code
 
-Use `$code-debug` for fixes after the review. Do not modify subject code while
-this skill is active.
+Use `$code-debug` for ordinary implementation code fixes after the review, and
+`$harness-maintenance` for hooks, skill contracts, routing, or permission-policy
+fixes. Do not modify subject code while this skill is active.
 
 ## Modes
 

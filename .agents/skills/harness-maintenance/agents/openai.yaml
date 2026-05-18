@@ -1,0 +1,7 @@
+interface:
+  display_name: "Harness Maintenance"
+  short_description: "Maintain hooks, skill contracts, and permissions"
+  default_prompt: "Use $harness-maintenance to update Harness hooks, skill contracts, routing, or permission policy."
+
+policy:
+  allow_implicit_invocation: false
