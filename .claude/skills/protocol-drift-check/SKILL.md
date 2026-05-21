@@ -55,6 +55,10 @@ note, not a forced migration.
    `check_docchain_gates.py`.
 6. Report a gate ledger for the drift check and any docchain gate rerun.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Do not silently mark protocol review as accepted.

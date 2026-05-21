@@ -36,16 +36,27 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 5. Reproduce each requested baseline with minimal environment-specific changes.
 6. Compare reproduced metrics against paper-reported metrics.
 7. Write `docs/Baseline_Report.md` using the canonical template.
-8. Update:
+8. Create or refresh `docs/30_evidence/Baseline_Table.md` as the
+   human-readable Conclusion Evidence table for baseline repos, papers,
+   configs, reproduced metrics, logs, and skip reasons.
+9. If `docs/20_facts/Codebase_Map.md` exists, keep it synchronized when
+   baseline directories, scripts, configs, or durable entry points change.
+10. Update:
    - `PROJECT_STATE.json` baseline metrics
    - `PROJECT_STATE.json` evaluation protocol or tracked metrics for later WF10 comparison
    - `project_map.json` baseline status and entry point
    - `CLAUDE.md` environment facts and baseline reference
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Keep adaptation notes, training config notes, and reproduced-versus-paper comparison.
 - Include evidence sources for reproduced metrics, commit hashes, configs, and any paper-reported values.
+- Keep `docs/30_evidence/Baseline_Table.md` source-artifact oriented; it is
+  human-readable Conclusion Evidence, not an `.evidence/**` Evidence Chain.
 - If no approved Baseline or Evaluation Contract exists, write the affected baseline/evaluation protocol as draft/derived and surface the approval gap.
 - WF5 is the first hard approval point for baseline/evaluation contracts in dynamic-context projects. Use protocol drift, context gates, docchain gates, and review packets when approval or explicit draft acceptance is needed.
 - Treat environment creation here as part of the canonical WF5 gate, not as a separate pre-workflow step.

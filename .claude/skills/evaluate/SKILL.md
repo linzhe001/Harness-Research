@@ -96,7 +96,8 @@ For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/les
 
    **Per-iteration report** (when called from /iterate eval):
    - Check `.claude/current_iteration.json` to get iteration_id
-   - Write to `docs/iterations/iter{N}.md` (create `docs/iterations/` if directory doesn't exist)
+   - Write to `docs/40_iterations/iter{N}.md` (create `docs/40_iterations/` if directory doesn't exist)
+   - Mirror `docs/iterations/iter{N}.md` only when legacy compatibility is required
    - Also update `docs/Stage_Report.md` as a summary index pointing to the latest iteration report
 
    **Standalone invocation report**:
@@ -131,6 +132,11 @@ For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/les
 - ALWAYS analyze both training and validation metrics
 - ALWAYS check for common training issues (overfitting, NaN, gradient issues)
 - ALWAYS provide specific actionable recommendations with each decision
-- ALWAYS write per-iteration reports to `docs/iterations/iter{N}.md` when called from iterate
+- ALWAYS write per-iteration reports to `docs/40_iterations/iter{N}.md` when called from iterate
+- Use `docs/iterations/iter{N}.md` only as a legacy compatibility mirror
 - NEVER overwrite previous iteration reports — each iteration gets its own file
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

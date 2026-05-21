@@ -15,7 +15,9 @@ Before editing code:
 - Before changing stable implementation files, read `.claude/rules/project-map.md`;
   update `project_map.json` when a stable file is added, deleted, renamed, or
   when stable interfaces, responsibilities, exports, config schema, or tensor
-  shapes change.
+  shapes change. If `docs/20_facts/Codebase_Map.md` exists, update it in the
+  same change when stable codebase structure, responsibilities, public
+  interfaces, entry points, or dependencies changed.
 - Add or update focused tests when behavior changes.
 - Run the phase-appropriate validation commands, or state clearly why they could not run.
 

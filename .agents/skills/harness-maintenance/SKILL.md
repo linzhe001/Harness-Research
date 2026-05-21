@@ -1,6 +1,6 @@
 ---
 name: harness-maintenance
-description: "Maintain Harness framework guardrails: Codex hooks, skill contracts, skill routing/triggers, permission policy docs, schema/tests, and .agents/.claude skill alignment. Use when modifying tooling/codex_hooks, .agents/skill-contracts, .agents/skills, .claude/skills, hook detection, hook trust/status, or permission boundaries."
+description: "Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries."
 ---
 
 # Harness Maintenance
@@ -11,8 +11,9 @@ Read these first:
 - `../../../AGENTS.md`
 - `../../../CLAUDE.md`
 - `../../../tooling/codex_hooks/README.md`
-- `../../../.agents/skill-contracts/contracts.json`
-- `../../../tests/test_codex_hooks_contracts.py`
+- `../../../schemas/skill_contracts.json`
+- `../../../schemas/skill_contracts.schema.json`
+- `../../../tooling/.tests/test_codex_hooks_contracts.py`
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/ubiquitous-language.md` when workflow terms or operator-facing docs change
@@ -22,8 +23,10 @@ Read these first:
 
 Use this skill for Harness framework maintenance:
 - Codex hook runtime and hook installation/status scripts
+- evidence tooling guardrails, schema validation, and generated-artifact schemas
 - skill contracts, trigger detection, and routing behavior
 - `.agents/skills/**` and `.claude/skills/**` alignment
+- `.agents/references/**`, `.claude/Workflow_Guide.md`, `.claude/rules/**`, `.claude/shared/**`, and bootstrap `templates/**` alignment
 - permission boundaries, trust/status checks, and external review wrapper policy
 - ubiquitous language, operator handbook, and generated Stage Cards
 - tests that validate hook, contract, skill routing, or permission behavior
@@ -41,7 +44,7 @@ Do not use this skill for ordinary research project implementation under `src/`,
    `Execution Evidence` is meant.
 6. Update focused tests for hook, contract, detection, generator, or permission behavior changes.
 7. Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` after contract or hook changes.
-8. Run `pytest tests/test_codex_hooks_contracts.py` after hook detection, policy, generator, or status changes.
+8. Run `pytest tooling/.tests/test_codex_hooks_contracts.py` after hook detection, policy, generator, or status changes.
 9. Run `python -m py_compile <modified python files>` and `ruff check --select=E,F,I <modified python files>` after Python edits.
 10. Do not hand-edit `.evidence/**` or `.auto_iterate/**`; use owning tools or controller.
 11. Report a Gate ledger for hook, skill contract, routing, permission, generator, or trust behavior changes.

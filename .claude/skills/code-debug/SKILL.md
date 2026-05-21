@@ -1,6 +1,6 @@
 ---
 name: code-debug
-description: Code Fix and Iteration Tool for ordinary repository implementation code. Handles training error fixes, planned iteration changes, and performance tuning under src, scripts, configs, or project_map. Use /harness-maintenance for hooks, skill contracts, skill routing, and permission policy.
+description: Code Fix and Iteration Tool for ordinary repository implementation code. Handles training error fixes, planned iteration changes, and performance tuning under src, scripts, configs, project_map, or Codebase_Map. Use /harness-maintenance for hooks, skill contracts, skill routing, and permission policy.
 argument-hint: "[error_log_path or issue description]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
@@ -33,11 +33,12 @@ Inputs:
 1. Error log or issue description (from $ARGUMENTS)
 2. `project_map.json` — Locate relevant files and dependency chains (stable implementation files only)
 3. `docs/20_facts/Project_Glossary.md` if it exists — project vocabulary for identifiers, configs, metrics, tests, and errors
-4. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
+4. `docs/20_facts/Codebase_Map.md` if it exists — operator-facing stable codebase map
+5. `.claude/current_iteration.json` — Iteration context (exists when called by /iterate code, symlink to persistent context).
    Contains mode, iteration_id, hypothesis, config_diff, files_to_modify, lessons_from_previous, etc.
    If this file exists, **prioritize its information** to understand the modification intent and scope.
-5. Per-iteration report `docs/iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision)
-6. `../../shared/sliced-commit-rule.md` — Identify independent Commit Slices before each commit
+6. Per-iteration report `docs/40_iterations/iter{N}.md` — Previous iteration's evaluation report (if triggered by a DEBUG decision; legacy mirror may exist under `docs/iterations/`)
+7. `../../shared/sliced-commit-rule.md` — Identify independent Commit Slices before each commit
 
 After fix → re-train → /iterate eval or /evaluate re-evaluates.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
@@ -54,7 +55,8 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    Then read:
    - `project_map.json`: Locate relevant modules and their dependency chains
    - `docs/20_facts/Project_Glossary.md` if it exists
-   - Latest per-iteration report in the `docs/iterations/` directory (if triggered by a DEBUG decision)
+   - `docs/20_facts/Codebase_Map.md` if it exists
+   - Latest per-iteration report in `docs/40_iterations/`, falling back to legacy `docs/iterations/` if needed (if triggered by a DEBUG decision)
    - Relevant source code files
 
    <thinking>
@@ -96,11 +98,17 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    bug or planned behavior when practical; otherwise report the manual feedback
    step and `NOT_RUN` reason.
 
-5. **Sync project_map.json**
+5. **Sync project_map.json and Codebase_Map.md**
 
    If the fix involves interface changes to **stable files** (function signatures, tensor shapes, added/removed exports),
-   update the corresponding node in project_map.json.
-   Volatile files (per-iteration scripts/configs) do not need project_map updates.
+   update the corresponding node in project_map.json and update
+   `docs/20_facts/Codebase_Map.md` when it exists.
+   Volatile files (per-iteration scripts/configs) do not need project_map or
+   Codebase_Map updates.
+   If `docs/20_facts/Codebase_Map.md` changed, compile its Evidence Chain with
+   `python tooling/evidence/compile_doc.py --workspace-root . --doc docs/20_facts/Codebase_Map.md --source project_map.json`
+   plus any explicit stable source files needed to support the changed facts,
+   or report `compile_doc_or_NOT_RUN`. Do not hand-edit `.evidence/**`.
 
 6. **Sliced Semantic Git Commit**
 
@@ -128,6 +136,10 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    slices, commit them separately. If one cross-cutting commit is required,
    record why splitting would be unsafe. If the commit fails, do not silently
    skip it — report the error.
+
+   If `docs/20_facts/Codebase_Map.md` was changed and the fix is otherwise
+   validated, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do
+   not render after temporary draft edits.
 
 User-facing debugging summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, commit prefixes, paths, and identifiers remain in English.
 </instructions>

@@ -25,9 +25,13 @@ conda activate {env_name or "<pending>"}
 - `MEMORY.md` — Human-readable accepted lessons and decisions once WF10 starts
 - `OPERATOR_CONTEXT.md` — Optional operator preferences, not project facts; write only from explicit operator input
 - `.evidence/` — Evidence-chain artifacts for compiled current docs when enabled
+- `docs/_views/` and `docs/_site/` — Generated evidence-preview data and
+  human-readable HTML views; Markdown remains the source of truth.
 
 ## Context Layers
-- Research evidence belongs in `docs/30_evidence/`.
+- Current fact-layer summaries belong in `docs/20_facts/`.
+- `docs/20_facts/Codebase_Map.md` is the operator-facing stable codebase map when present.
+- Research Conclusion Evidence tables belong in `docs/30_evidence/`.
 - Dynamic protocol drafts belong in `docs/35_protocol/`.
 - Human-approved contracts belong in `docs/10_contract/`.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains.
@@ -44,7 +48,8 @@ conda activate {env_name or "<pending>"}
 
 ## Global Rule: project_map.json Maintenance
 Any skill must sync-update `project_map.json` after creating, deleting, or
-renaming stable files, or changing stable interfaces.
+renaming stable files, or changing stable interfaces. When
+`docs/20_facts/Codebase_Map.md` exists, update it in the same slice.
 See `.claude/rules/project-map.md` for detailed rules.
 
 ## Global Rule: Code Style
@@ -54,7 +59,7 @@ See `.claude/rules/project-map.md` for detailed rules.
 
 ## Global Rule: Ubiquitous Language
 - Use `.claude/shared/ubiquitous-language.md` for workflow terms.
-- WF6 `/refine-arch` generates `docs/20_facts/Project_Glossary.md`; WF7 `/build-plan` refines it for implementation.
+- WF6 `/refine-arch` generates `docs/20_facts/Project_Glossary.md`; WF7 `/build-plan` refines it for implementation and creates or refreshes `docs/20_facts/Codebase_Map.md`.
 - Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
 
 ## Global Rule: Code Review
@@ -66,6 +71,8 @@ See `.claude/rules/project-map.md` for detailed rules.
 ## Global Rule: Documentation Style
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
 - For contract, fact, protocol, or release docs, also read `.claude/shared/evidence-chain-rule.md`.
+- After durable Markdown docs are finalized, run `/docs-site` to refresh
+  `docs/_views/**` and `docs/_site/**`, or report `NOT_RUN`.
 - Before implementation, validation, iteration, auto-iteration, or release, read `.claude/shared/contract-gating-rule.md`.
 - Before promoting lessons into `MEMORY.md`, read `.claude/shared/lesson-quality-rule.md`.
 - Also read `.claude/shared/documentation-style.md`.

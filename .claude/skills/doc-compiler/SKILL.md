@@ -63,6 +63,13 @@ Use `python tooling/evidence/check_docchain_gates.py --workspace-root .` before
 declaring current contract/fact/protocol docs ready.
 Report the compile, validation, and docchain-gate commands in a gate ledger.
 
+## Docs Site Handoff
+
+After the current Markdown is finalized for this turn or stage and docchain
+gates have passed, invoke `/docs-site` to refresh `docs/_views/**` and
+`docs/_site/**`, or report `docs_site_render_or_NOT_RUN` with the reason. This
+is a durable-boundary handoff, not a per-keystroke or temporary-draft action.
+
 ## Output Rules
 
 - Markdown is for human review; JSON is for audit.

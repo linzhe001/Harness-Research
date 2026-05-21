@@ -1,6 +1,6 @@
 ---
 name: code-expert
-description: WF8 Initial Code Generator. Strictly follows project_map.json and Implementation_Roadmap.md to generate all project code in one pass. Used only for initial code generation; subsequent modifications use code-debug.
+description: WF8 Initial Code Generator. Strictly follows project_map.json, docs/20_facts/Codebase_Map.md, and Implementation_Roadmap.md to generate all project code in one pass. Used only for initial code generation; subsequent modifications use code-debug.
 argument-hint: "[target_module or 'all']"
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
@@ -23,7 +23,8 @@ Inputs (all must be read before generating any code):
 2. `docs/Implementation_Roadmap.md` — Execution plan containing module pseudocode and dependency order
 3. `../../shared/code-style.md` — Code style guidelines
 4. `docs/20_facts/Project_Glossary.md` if it exists — project vocabulary for identifiers, configs, metrics, tests, and errors
-5. `../../shared/sliced-commit-rule.md` — Commit one completed roadmap slice at a time
+5. `docs/20_facts/Codebase_Map.md` if it exists — operator-facing stable codebase map
+6. `../../shared/sliced-commit-rule.md` — Commit one completed roadmap slice at a time
 
 Output: All code files defined in project_map.json.
 On success → WF9 (validate-run), then WF10 (iterate) only after validation passes.
@@ -49,6 +50,8 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    boundary change and updating `project_map.json`.
    New identifiers, config keys, metric keys, test names, and error messages
    must use existing glossary terms or record proposed terms for review.
+   Read `docs/20_facts/Codebase_Map.md` when present and use it to locate
+   stable files, module responsibilities, entry points, and maintenance owners.
    Write or update the first focused test or smoke check before implementation
    when the slice is automatable; otherwise record the manual feedback step and
    `NOT_RUN` reason.
@@ -95,6 +98,13 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 
    After generating each new file, confirm that the corresponding node's
    exports, io, and dependencies in project_map.json match the actual code.
+   If `docs/20_facts/Codebase_Map.md` exists, update it in the same slice when
+   stable file presence, responsibility, public interface, entry point, or
+   dependency information changed.
+   If `docs/20_facts/Codebase_Map.md` changed, compile its Evidence Chain with
+   `python tooling/evidence/compile_doc.py --workspace-root . --doc docs/20_facts/Codebase_Map.md --source project_map.json`
+   plus any explicit stable source files needed to support the changed facts,
+   or report `compile_doc_or_NOT_RUN`. Do not hand-edit `.evidence/**`.
 
 6. **Update project state**
 
@@ -103,6 +113,10 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `artifacts.project_map` → "project_map.json"
    - `current_stage.status` → "completed"
    - `history` append record
+
+   If `docs/20_facts/Codebase_Map.md` was changed and the slice is otherwise
+   validated, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do
+   not render after temporary draft edits.
 
 User-facing progress notes and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while paths, commands, schema keys, and code identifiers remain in English.
 </instructions>

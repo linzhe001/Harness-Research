@@ -95,11 +95,11 @@ Execute the corresponding command based on $ARGUMENTS.
    ```
    {project_root}/
    ├── docs/
-   │   └── iterations/      # per-iteration eval reports
    │   ├── 10_contract/     # dynamic context contracts when enabled
-   │   ├── 30_evidence/     # research evidence tables when enabled
+   │   ├── 20_facts/        # current facts and codebase map when enabled
+   │   ├── 30_evidence/     # Conclusion Evidence tables when enabled
    │   ├── 35_protocol/     # dynamic protocol drafts when enabled
-   │   ├── 40_iterations/   # current iteration summaries when enabled
+   │   ├── 40_iterations/   # current per-iteration reports
    │   └── 50_memory/       # decisions, negative results, lesson candidates
    ├── .evidence/
    │   ├── chains/

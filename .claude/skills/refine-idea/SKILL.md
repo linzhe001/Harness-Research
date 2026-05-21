@@ -35,3 +35,7 @@ Required work:
 7. Update `PROJECT_STATE.json` when stage synchronization is required.
 
 Do not write architecture, module plans, file trees, or implementation roadmaps. Architecture design belongs to WF6 after data and baseline evidence exist.
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

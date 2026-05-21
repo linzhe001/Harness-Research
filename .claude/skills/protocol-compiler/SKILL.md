@@ -65,6 +65,10 @@ only compile project-local protocol candidates from current evidence tables.
 7. Report a gate ledger for protocol compilation, application, drift check, and
    docchain compilation when one was required.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Keep `Status: draft` and `Review required: yes` unless the current

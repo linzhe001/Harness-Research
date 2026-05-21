@@ -1,5 +1,5 @@
 ---
-description: project_map.json maintenance rules — sync when stable files or stable interfaces change
+description: project_map.json and Codebase_Map.md maintenance rules — sync when stable files or stable interfaces change
 globs:
   - "src/**/*.py"
   - "baselines/**/*"
@@ -11,12 +11,13 @@ globs:
   - "tests/**/*.py"
 ---
 
-# project_map.json Maintenance Rules
+# project_map.json and Codebase_Map.md Maintenance Rules
 
 ## Stable vs Volatile Layering
 
-project_map.json only tracks **stable implementation files** (long-lived files that define module interfaces). It describes file layout and interfaces; it does not replace the WF6 architecture decision in `docs/Technical_Spec.md`.
-**Volatile experiment assets** (per-iteration configs, ablation scripts, one-off utilities) do not need to be maintained in project_map.json.
+project_map.json tracks **stable implementation files** (long-lived files that define module interfaces). It describes file layout and interfaces; it does not replace the WF6 architecture decision in `docs/Technical_Spec.md`.
+When `docs/20_facts/Codebase_Map.md` exists, keep it synchronized as the operator-facing current fact document for the same stable codebase structure. `project_map.json` remains the machine-readable source; `Codebase_Map.md` is for fast human orientation.
+**Volatile experiment assets** (per-iteration configs, ablation scripts, one-off utilities) do not need to be maintained in `project_map.json` or `Codebase_Map.md`.
 
 ### Stable (must track)
 - `src/**/*.py` — main research code (models, data, losses, utils)
@@ -37,15 +38,23 @@ Rule of thumb: if a file is only used in 1-2 iterations, it is volatile.
 - **Trivial changes** (typos, comments, import order) → can edit directly, but must still run these checks:
   1. `python -m py_compile <file>`
   2. `ruff check --select=E,F,I <file>`
-  3. If interface changes are involved → update project_map.json (see rules below)
+  3. If stable interface changes are involved → update `project_map.json` and, when present, `docs/20_facts/Codebase_Map.md` (see rules below)
 
-## When to Update project_map.json
-- **New stable file added** → add a node under the corresponding directory in project_map.json
+## When to Update project_map.json and Codebase_Map.md
+- **New stable file added** → add a node under the corresponding directory in `project_map.json`; update `Codebase_Map.md` if it exists
 - **Stable file deleted** → remove the corresponding node
 - **Stable file renamed** → update the old and new paths
 - **Stable interface changed** (exports, function signature, tensor shape, durable config schema, responsibilities, dependencies) → update the corresponding fields
 - Internal implementation changes only, no stable interface changes — no update needed
-- **Volatile file added/deleted/renamed** → no update to project_map.json needed
+- **Operator-facing map drift** → if `Codebase_Map.md` exists and stable codebase structure, responsibilities, public interfaces, entry points, or dependencies changed, update it in the same Commit Slice
+- **Operator-facing map evidence** → if `Codebase_Map.md` changed, run
+  `python tooling/evidence/compile_doc.py --workspace-root . --doc docs/20_facts/Codebase_Map.md --source project_map.json`
+  plus any explicit stable source files needed to support the changed facts, or
+  report `compile_doc_or_NOT_RUN`; do not hand-edit `.evidence/**`
+- **Human docs view** → after the Markdown is finalized for the current slice,
+  invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`; do not render
+  after temporary draft edits
+- **Volatile file added/deleted/renamed** → no update to `project_map.json` or `Codebase_Map.md` needed
 
 ## Description Detail Level by Directory
 

@@ -128,6 +128,10 @@ Interpret natural-language requests as one of these canonical intents:
 
 - Preserve the canonical behavior and schema for ablations, summaries, and full history views.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Codex Adaptation
 
 - Treat natural-language requests as the canonical `$iterate {plan|code|run|eval|ablate|status|log}` interface.

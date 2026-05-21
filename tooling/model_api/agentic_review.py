@@ -1092,7 +1092,8 @@ def workflow_hints(topic: str) -> dict[str, Any]:
             "Hook files are runtime guardrails, not proof that a gate passed.",
             "Hook model: UserPromptSubmit, PreToolUse, PostToolUse, Stop.",
             "When changing hooks/contracts, inspect tooling/codex_hooks/README.md, "
-            "contracts.json, and tests/test_codex_hooks_contracts.py.",
+            "schemas/skill_contracts.json, and "
+            "tooling/.tests/test_codex_hooks_contracts.py.",
             "Gate ledger is required for sensitive workflow files before finalizing.",
         ],
         "auto_iterate": [

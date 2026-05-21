@@ -50,6 +50,10 @@ The goal is to refine the research idea, not to design the architecture. Archite
 5. Write `docs/Refined_Idea.md`.
 6. Update `PROJECT_STATE.json` when stage-state synchronization is requested or required by the orchestrator.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Do not write architecture, module plans, registry changes, file trees, or implementation roadmaps here.

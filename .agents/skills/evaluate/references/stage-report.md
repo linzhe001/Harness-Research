@@ -7,7 +7,7 @@
 - **Project:** {project_name}
 - **Current Stage:** WF10 - Results Analysis
 - **Prior Inputs:** Training logs, eval output, baseline protocol
-- **Deliverables:** `docs/iterations/iter{N}.md` or `Stage_Report.md`
+- **Deliverables:** `docs/40_iterations/iter{N}.md` or `Stage_Report.md`; legacy mirror: `docs/iterations/iter{N}.md`
 - **Key Conclusions:**
   1. {conclusion_1}
   2. {conclusion_2}

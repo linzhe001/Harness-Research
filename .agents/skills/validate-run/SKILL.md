@@ -22,6 +22,8 @@ Read these first:
 - `../../../docs/Technical_Spec.md`
 - `../../../docs/Implementation_Roadmap.md` if it exists
 - `../../../docs/20_facts/Project_Glossary.md` if it exists
+- `../../../docs/20_facts/Codebase_Map.md` if it exists
+- `../../../docs/30_evidence/Validation_Table.md` if it exists
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
 - `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../CLAUDE.md`
@@ -58,9 +60,17 @@ Use this skill for WF9 when the user wants to verify the codebase is safe to ent
    - `REVIEW`
    - `FAIL`
 7. Write `docs/Validate_Run_Report.md` with evidence sources, raw log paths, review trace paths, commands, and verdict.
-8. Clean up temporary smoke-test artifacts.
-9. Report a gate ledger for semantic review, smoke test, report write, and any
+8. Create or refresh `docs/30_evidence/Validation_Table.md` with the
+   human-readable Conclusion Evidence behind the validation verdict: reviewed
+   slices, smoke commands, raw log paths, review traces, failures, and open
+   validation questions.
+9. Clean up temporary smoke-test artifacts.
+10. Report a gate ledger for semantic review, smoke test, report write, and any
    workflow-state check run before WF10 readiness.
+11. After `docs/Validate_Run_Report.md` or
+    `docs/30_evidence/Validation_Table.md` is finalized, invoke `$docs-site` or
+    report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft
+    edits.
 
 ## Codex Adaptation
 

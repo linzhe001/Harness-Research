@@ -25,10 +25,13 @@ conda activate {env_name or "<pending>"}
 - `MEMORY.md` — Human-readable append-only lessons and decisions once WF10 starts
 - `OPERATOR_CONTEXT.md` — Optional operator preferences, not project facts; write only from explicit operator input
 - `.evidence/` — Evidence-chain artifacts for compiled current docs when enabled
+- `docs/_views/` and `docs/_site/` — Generated evidence-preview data and
+  human-readable HTML views; Markdown remains the source of truth.
 
 ## Context Layers
 - Current fact-layer summaries belong in `docs/20_facts/`.
-- Research evidence belongs in `docs/30_evidence/`.
+- `docs/20_facts/Codebase_Map.md` is the operator-facing stable codebase map when present.
+- Research Conclusion Evidence tables belong in `docs/30_evidence/`.
 - Dynamic protocol drafts belong in `docs/35_protocol/`.
 - Human-approved contracts belong in `docs/10_contract/`.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains.
@@ -45,12 +48,13 @@ conda activate {env_name or "<pending>"}
 
 ## Global Rule: project_map.json Maintenance
 Any skill must sync-update `project_map.json` after creating, deleting, or
-renaming stable files, or changing stable interfaces.
+renaming stable files, or changing stable interfaces. When
+`docs/20_facts/Codebase_Map.md` exists, update it in the same slice.
 See `.agents/references/project-map-rule.md` for detailed rules.
 
 ## Global Rule: Ubiquitous Language
 - Use `.agents/references/ubiquitous-language.md` for workflow terms.
-- WF6 `$refine-arch` generates `docs/20_facts/Project_Glossary.md`; WF7 `$build-plan` refines it for implementation.
+- WF6 `$refine-arch` generates `docs/20_facts/Project_Glossary.md`; WF7 `$build-plan` refines it for implementation and creates or refreshes `docs/20_facts/Codebase_Map.md`.
 - Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
 
 ## Global Rule: Code Review
@@ -68,6 +72,8 @@ Current stage: {current_stage or "not initialized"}
 - Before writing docs, re-read relevant source artifacts from disk.
 - Separate verified facts, inferences, and open questions.
 - For contract, fact, protocol, or release docs, compile evidence_chain/source_manifest/doc_audit before replacing current Markdown.
+- After durable Markdown docs are finalized, run `$docs-site` to refresh
+  `docs/_views/**` and `docs/_site/**`, or report `NOT_RUN`.
 - Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
 - Before refreshing an existing `docs/*.md`, move the old version into `docs/90_legacy/`.
 

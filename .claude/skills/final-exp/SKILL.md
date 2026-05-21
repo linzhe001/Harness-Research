@@ -117,3 +117,7 @@ For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared
 - ALWAYS consider what experiments the target venue reviewers would expect
 - NEVER design experiments without clear hypothesis and expected outcome
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

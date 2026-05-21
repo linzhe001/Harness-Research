@@ -40,6 +40,10 @@ Use this skill for WF11 when the user wants the final validation matrix after th
 6. Write `docs/Final_Experiment_Matrix.md` using the canonical template.
 7. Update `PROJECT_STATE.json` when appropriate.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Codex Adaptation
 
 - Treat natural-language requests as the canonical `$final-exp` flow.

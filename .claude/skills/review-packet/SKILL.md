@@ -66,6 +66,10 @@ context gate without reading every source document:
 7. Include a gate ledger for the dynamic-context check, packet build, and
    approval command when one was run.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Do not mark any contract as approved from the packet alone.

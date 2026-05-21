@@ -390,3 +390,7 @@ If `.claude/iterations/` directory does not exist, create it.
 - `ablate` MUST skip sub-iterations that already exist with status="completed" (idempotent)
 - `ablate` MUST only use component overrides from the `--components` parameter or iteration_log.json history
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

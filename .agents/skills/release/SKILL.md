@@ -54,6 +54,10 @@ Interpret natural-language requests as one of the canonical intents:
 - Before any final release claim, run or report the `check_dynamic_context.py
   --stage wf12 --review-packet` gate and list the result in the gate ledger.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Codex Adaptation
 
 - Treat natural-language requests as the canonical `$release {validate|package|submit}` interface.

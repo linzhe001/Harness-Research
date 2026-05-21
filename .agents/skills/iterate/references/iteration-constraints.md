@@ -94,9 +94,9 @@ These are mandatory behavior rules for `$iterate`.
   - complexity and boundary observations when public APIs, dependencies, or
     naming changed during the iteration
   - `status=completed` when evaluation is complete
-- Must produce or refresh a per-iteration report at `docs/iterations/<iter-id>.md`
-  for legacy/report-directory workflows or at `docs/40_iterations/<iter-id>.md`
-  for dynamic-context workflows.
+- Must produce or refresh a per-iteration report at `docs/40_iterations/<iter-id>.md`
+  for dynamic-context workflows. Legacy/report-directory workflows may also
+  mirror `docs/iterations/<iter-id>.md`.
 - Should produce or refresh `docs/40_iterations/latest.md` when the dynamic context layout is enabled.
 - Should append or refresh candidate lessons in `docs/50_memory/Lessons.md`.
 - Must append to `MEMORY.md` only for accepted lessons that satisfy the lesson quality rule; raw observations and auto-run findings must not enter `MEMORY.md` directly.

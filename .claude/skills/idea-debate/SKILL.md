@@ -34,3 +34,7 @@ Required work:
 Final decision vocabulary: `SELECT`, `PILOT_FIRST`, `MERGE`, `PIVOT`, or `ABANDON`.
 
 Do not design architecture in this stage. The next stage is WF3 refine-idea.
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

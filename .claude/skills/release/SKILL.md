@@ -94,3 +94,7 @@ Update PROJECT_STATE.json:
 - NEVER overwrite existing submission packages without user confirmation
 - ALWAYS record which checkpoint was used for each scene
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

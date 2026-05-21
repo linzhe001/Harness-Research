@@ -16,6 +16,7 @@ Read these first:
 - `../../../PROJECT_STATE.json`
 - `../../../CLAUDE.md` if it exists
 - `../../../AGENTS.md` if it exists
+- `../../../docs/30_evidence/Dataset_Table.md` if it exists
 
 ## When To Use
 
@@ -30,17 +31,26 @@ Use this skill for WF4 when the user wants dataset analysis, subset design, and 
    - NVS or 3DGS: resolution scaling, scene selection, or point-cloud downsampling
    - detection: stratified subset indices
 5. Write `docs/Dataset_Stats.md` using the canonical template.
-6. Write the expected config artifact, such as `configs/subset_config.json` or `configs/subset_indices.json`.
-7. Create or update the data pipeline script path expected by the canonical prompt.
-8. Update `PROJECT_STATE.json`, especially `dataset_paths`, when appropriate.
-9. Refresh `CLAUDE.md` so `### Dataset Paths` reflects the resolved dataset addresses immediately after WF4.
-10. Check `AGENTS.md` when it exists. Keep it stable, but ensure it points operators to `CLAUDE.md` for volatile dataset and environment paths instead of carrying stale duplicated paths.
+6. Create or refresh `docs/30_evidence/Dataset_Table.md` as the human-readable
+   Conclusion Evidence table for dataset source artifacts, stats commands,
+   split/subset choices, and unresolved data questions.
+7. Write the expected config artifact, such as `configs/subset_config.json` or `configs/subset_indices.json`.
+8. Create or update the data pipeline script path expected by the canonical prompt.
+9. Update `PROJECT_STATE.json`, especially `dataset_paths`, when appropriate.
+10. Refresh `CLAUDE.md` so `### Dataset Paths` reflects the resolved dataset addresses immediately after WF4.
+11. Check `AGENTS.md` when it exists. Keep it stable, but ensure it points operators to `CLAUDE.md` for volatile dataset and environment paths instead of carrying stale duplicated paths.
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
 
 ## Output Rules
 
 - Use `./references/dataset-stats.md`.
 - Keep the `context_summary`, dataset format summary, full stats, subset strategy, and expected speedup.
 - Include evidence sources and separate verified dataset facts from inferred dataset properties.
+- Keep `docs/30_evidence/Dataset_Table.md` concise and source-artifact oriented;
+  `.evidence/**` Evidence Chains remain tool-owned and must not be hand-edited.
 - Dataset path synchronization into `CLAUDE.md` is required WF4 output, not an optional downstream refresh.
 - `AGENTS.md` synchronization means consistency of the stable pointer to `CLAUDE.md`; do not duplicate volatile dataset paths into `AGENTS.md` unless the user explicitly changes the project policy.
 - Report a Gate ledger when dataset stats, configs, pipeline files, `CLAUDE.md`, `AGENTS.md`, or `PROJECT_STATE.json` are written. If docchain or workflow-state checks are not run, mark them `NOT_RUN` with the reason.

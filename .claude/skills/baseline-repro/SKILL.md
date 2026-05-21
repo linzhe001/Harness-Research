@@ -17,7 +17,7 @@ under identical data and evaluation conditions.
 <context>
 This is Stage 5 of the 12-stage Harness research workflow.
 Input: Refined_Idea.md baseline candidates from WF3 + Dataset_Stats.md from WF4 + evidence tables. Legacy projects may fall back to Technical_Spec.md when no refined idea exists.
-Output: docs/Baseline_Report.md, updated PROJECT_STATE.json with baseline_metrics, updated project_map.json baselines section.
+Output: docs/Baseline_Report.md, docs/30_evidence/Baseline_Table.md, updated PROJECT_STATE.json with baseline_metrics, updated project_map.json baselines section.
 On success → WF6 (refine-arch). On failure → debug reproduction issues or skip problematic baselines with explicit partial status.
 
 First, read PROJECT_STATE.json to get project context and `docs/Refined_Idea.md` / evidence tables for the baseline list.
@@ -88,6 +88,11 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
    - Per-baseline adaptation notes and training configurations
    - Discrepancy analysis against paper-reported values
 
+   Create or refresh `docs/30_evidence/Baseline_Table.md` with baseline repos,
+   paper citations, configs, commit hashes, reproduced metrics, raw log paths,
+   skip reasons, and unresolved reproduction questions. This is human-readable
+   Conclusion Evidence; `.evidence/**` Evidence Chains remain tool-owned.
+
    Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 5. **Update project_map.json**
@@ -95,6 +100,8 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
    Update each reproduced baseline node under `baselines/`:
    - `status`: "verified" / "partial" / "failed"
    - `entry_point`: Training entry file
+   - If `docs/20_facts/Codebase_Map.md` exists, keep it synchronized with any
+     durable baseline, script, config, or entry-point changes.
 
 6. **Update project state**
 
@@ -113,3 +120,7 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
 - NEVER modify baseline code more than necessary — document all changes
 - NEVER skip a baseline without recording why it was skipped
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

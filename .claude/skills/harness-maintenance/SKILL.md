@@ -1,6 +1,6 @@
 ---
 name: harness-maintenance
-description: "Maintain Harness guardrails: Codex hooks, skill contracts, skill routing/triggers, permission policy, schema/tests, and .agents/.claude skill alignment. Use for hooks, contracts, trust/status, and permission boundaries; use code-debug for ordinary implementation code."
+description: "Maintain Harness guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use for hooks, contracts, schema validation, trust/status, templates, workflow guidance, and permission boundaries; use code-debug for ordinary implementation code."
 argument-hint: "[hook|contract|skill|permission issue]"
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
@@ -14,11 +14,14 @@ debugging into framework-policy work.
 
 <instructions>
 1. Read `AGENTS.md`, `CLAUDE.md`, `tooling/codex_hooks/README.md`,
-   `.agents/skill-contracts/contracts.json`, and
-   `tests/test_codex_hooks_contracts.py` before changing hooks or contracts.
+   `schemas/skill_contracts.json`, `schemas/skill_contracts.schema.json`, and
+   `tooling/.tests/test_codex_hooks_contracts.py` before changing hooks or contracts.
 2. Use this skill for Codex hook runtime, hook trust/status scripts, skill
-   contracts, trigger/routing behavior, `.agents/skills/**`,
-   `.claude/skills/**`, permission boundaries, and guardrail tests/docs.
+   contracts, evidence tooling guardrails, schema validation,
+   trigger/routing behavior, `.agents/skills/**`,
+   `.agents/references/**`, `.claude/Workflow_Guide.md`,
+   `.claude/skills/**`, `.claude/rules/**`, `.claude/shared/**`, bootstrap `templates/**`,
+   permission boundaries, and guardrail tests/docs.
 3. Do not use this skill for ordinary implementation changes under `src/`,
    `scripts/`, or `configs/`; route those to `/code-debug` or `/code-expert`.
 4. Keep `.agents/` and `.claude/` behavior semantically aligned when routing or
@@ -33,7 +36,7 @@ debugging into framework-policy work.
    `ruff check --select=E,F,I` on modified Python files.
 9. After contract, hook, generator, or detection changes, run
    `python tooling/codex_hooks/check_contracts.py --workspace-root .` and
-   `pytest tests/test_codex_hooks_contracts.py`.
+   `pytest tooling/.tests/test_codex_hooks_contracts.py`.
 10. When validating a live Codex install, run
    `python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status`
    and report `NOT_RUN` if unavailable.

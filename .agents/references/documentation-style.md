@@ -74,7 +74,7 @@ Before refreshing an existing current doc:
 Rules:
 
 - Do not archive files already under `docs/90_legacy/`.
-- Preserve subdirectory context when useful, for example archive `docs/iterations/iter3.md` as `docs/90_legacy/<YYYY-MM-DD>/iterations__iter3__<HHMMSS>.md`.
+- Preserve subdirectory context when useful, for example archive `docs/40_iterations/iter3.md` as `docs/90_legacy/<YYYY-MM-DD>/40_iterations__iter3__<HHMMSS>.md`.
 - Do not keep duplicate, stale, or superseded Markdown files in root `docs/`.
 - Keep current index-style files concise; link to legacy files instead of copying old content back into current docs.
 - `docs/90_legacy/` is historical audit material, not canonical current state.

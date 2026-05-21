@@ -32,7 +32,7 @@ Most Harness work can be explained as eight primitives:
 | `evidence` | What do we actually know? | fact docs, evidence tables, `compile_doc.py` | Evidence must come from source artifacts, logs, metrics, or explicit records. |
 | `protocol` | What procedure should this project follow? | `/protocol-compiler`, `compile_protocol.py` | Drafts are evidence-derived until a human accepts the relevant contract. |
 | `contract` | What boundaries are approved? | `/review-packet`, `approve_contract.py`, dynamic gates | Human approval is explicit and auditable; hooks are not approval. |
-| `code` | What implementation changes are needed? | `/code-expert`, `/code-debug` | Code changes must respect contracts, plans, and project_map ownership. |
+| `code` | What implementation changes are needed? | `/code-expert`, `/code-debug` | Code changes must respect contracts, plans, `project_map.json`, and `Codebase_Map.md` ownership. |
 | `validate` | Did the change or stage actually pass? | `/validate-run`, tests, context/docchain gates | Report `PASS`, `FAIL`, or `NOT_RUN`; do not imply unrun gates passed. |
 | `iterate` | What is the next experiment loop decision? | `/iterate`, auto-iterate controller | `iteration_log.json` is the experiment source of truth. |
 | `release` | Which claims are supported? | `/final-exp`, `/release`, docchain/context gates | Claims must stay inside approved boundaries and evidence support. |
@@ -51,7 +51,8 @@ Each state file has a designated ownership boundary to avoid multi-source diverg
 |------|------------|---------|
 | `PROJECT_STATE.json` | orchestrator owns stage transitions; stage skills may record their own artifact metadata when invoked by the workflow | Stage transitions (single source of truth for stages) |
 | `iteration_log.json` | iterate skill | Experiment history (single source of truth for experiments) |
-| `project_map.json` | build-plan generates; code-expert, code-debug, or any workflow step that adds/removes/renames stable files or changes stable interfaces must update it | Stable implementation structure (single source of truth for durable files, not the architecture decision) |
+| `project_map.json` | build-plan generates; code-expert, code-debug, or any workflow step that adds/removes/renames stable files or changes stable interfaces must update it | Machine-readable stable implementation structure (durable files, not the architecture decision) |
+| `docs/20_facts/Codebase_Map.md` | build-plan generates; code-expert/code-debug sync when stable structure, entry points, interfaces, responsibilities, or dependencies change | Operator-facing current codebase map |
 | `CLAUDE.md` | init-project generates in stages | Global context for each Claude Code session |
 | `OPERATOR_CONTEXT.md` | operator, recorded by init/orchestrator only from explicit input | Stable operator preferences; not evidence for project facts |
 
@@ -92,7 +93,7 @@ it did not run, report `NOT_RUN` with the reason. Codex runtime guards can
 block or remind around tool use, but Harness readiness still depends on
 `tooling/evidence/*.py`, controller checks, and explicit human approval records.
 High-risk Codex skills may also define a machine-readable read/action/boundary
-contract in `.agents/skill-contracts/contracts.json`; hooks and CI should treat
+contract in `schemas/skill_contracts.json`; hooks and CI should treat
 that file as the source of truth for required read sets and forbidden actions.
 
 ### 1.3 Dynamic Context Model
@@ -114,13 +115,15 @@ Current-project dynamic context files are research-owned:
   and template layout, and may update `PROJECT_STATE.json` when `--set-state`
   is used, but it does not create or infer `OPERATOR_CONTEXT.md`.
 - `docs/20_facts/**` stores current fact-layer summaries compiled from project
-  artifacts, logs, configs, metrics, or evidence chains.
-- `docs/30_evidence/**` stores evidence tables and open questions.
+  artifacts, logs, configs, metrics, or evidence chains. `Codebase_Map.md`
+  is the operator-facing stable codebase map when present.
+- `docs/30_evidence/**` stores operator-readable Conclusion Evidence tables
+  and open questions.
 - `docs/35_protocol/**` stores evidence-derived protocol drafts.
 - `docs/10_contract/**` stores human-approved project, evaluation, baseline,
   and claim contracts.
-- `.evidence/chains/**` stores evidence_chain/source_manifest/doc_audit JSON
-  for compiled current docs.
+- `.evidence/chains/**` stores tool-owned evidence_chain/source_manifest/doc_audit JSON
+  for compiled current docs; do not hand-edit `.evidence/**`.
 - `docs/50_memory/**` stores decisions, negative results, and candidate or
   accepted lessons; `MEMORY.md` stores accepted high-value lessons only.
 
@@ -194,7 +197,7 @@ The orchestrator does not perform specific research work, but manages the state 
 | WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md + optional `docs/30_evidence/**` | PROCEED/PIVOT/ABANDON |
 | WF2 idea-debate | `/idea-debate` | docs/Idea_Debate.md + optional protocol updates | SELECT/PILOT_FIRST/MERGE/PIVOT/ABANDON |
 | WF3 refine-idea | `/refine-idea` | docs/Refined_Idea.md + optional protocol drafts | SELECT/PILOT_FIRST/PIVOT/ABANDON |
-| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + data pipeline + CLAUDE.md dataset path sync + AGENTS.md consistency check | — |
+| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + `docs/30_evidence/Dataset_Table.md` + data pipeline + CLAUDE.md dataset path sync + AGENTS.md consistency check | — |
 
 WF2 is mandatory for new projects. Legacy projects that predate idea-debate may warn instead of failing, but a new dynamic-context project must hard-fail if it tries to move from WF1 directly to data preparation, baseline reproduction, or architecture design.
 
@@ -210,7 +213,7 @@ the exact approve/revise/reject action.
 | | |
 |---|---|
 | **Skill** | `/baseline-repro [baseline_name or 'all']` |
-| **Output** | `docs/Baseline_Report.md` + baseline_metrics + evaluation_protocol |
+| **Output** | `docs/Baseline_Report.md` + `docs/30_evidence/Baseline_Table.md` + baseline_metrics + evaluation_protocol + optional `docs/20_facts/Codebase_Map.md` sync |
 | **Gate** | Baseline_Report.md must exist, each baseline's status must be verified/partial (cannot be untested) |
 
 If intentionally skipping certain baselines, they must be marked as `partial` with reasons explained in the report.
@@ -229,12 +232,13 @@ evaluation protocol.
 | Stage | Skill | Output |
 |-------|-------|--------|
 | WF6 architecture-design | `/refine-arch` | docs/Technical_Spec.md |
-| WF7 build-plan | `/build-plan` | docs/Implementation_Roadmap.md + project_map.json |
-| WF8 code-expert | `/code-expert` | Complete project code |
+| WF7 build-plan | `/build-plan` | docs/Implementation_Roadmap.md + project_map.json + `docs/20_facts/Codebase_Map.md` |
+| WF8 code-expert | `/code-expert` | Complete project code + stable map sync |
 
 WF6 chooses the MVP architecture from WF1-WF5 evidence, dataset constraints,
 baseline behavior, and the Evaluation Contract. WF7 translates that design into
-file ownership, implementation order, smoke tests, and `project_map.json`.
+file ownership, implementation order, smoke tests, `project_map.json`, and
+`docs/20_facts/Codebase_Map.md`.
 Architecture answers what should exist and why; the plan answers how to build
 and verify it.
 
@@ -327,7 +331,7 @@ PIVOT/ABORT signal require protocol review before unattended iteration.
   → Status becomes "running", output metrics summary
 
 /iterate eval experiments/{exp_prefix}_iter27/
-  → Call /evaluate to parse metrics → per-iteration report (docs/iterations/iter27.md)
+  → Call /evaluate to parse metrics → per-iteration report (docs/40_iterations/iter27.md)
   → Compare against baseline + best, make decision
   → Output recommended next command
 
@@ -432,7 +436,10 @@ When `requirements*.txt`, `environment*.yml`, or `pyproject.toml` change, the `d
 - `bugfix`: called independently, diagnoses and fixes crashes/errors
 - `perf_tuning`: called independently, performance optimization
 
-After modifying code, automatically runs `py_compile` + `ruff check`; syncs `project_map.json` when interfaces change.
+After modifying code, automatically runs `py_compile` + `ruff check`; syncs
+`project_map.json` and the existing `docs/20_facts/Codebase_Map.md` when stable
+interfaces, entry points, responsibilities, dependencies, or file presence
+change.
 
 ### 4.3 evaluate — Result Analysis
 
@@ -444,7 +451,7 @@ Core features:
 - Compare against baseline performance + historical best
 - Provide NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
-**Per-iteration reports**: when called from /iterate eval, writes to `docs/iterations/iter{N}.md`.
+**Per-iteration reports**: when called from /iterate eval, write to `docs/40_iterations/iter{N}.md`; mirror to legacy `docs/iterations/iter{N}.md` only when compatibility requires it.
 `docs/Stage_Report.md` serves as the latest summary index.
 `docs/50_memory/Lessons.md` is the candidate/accepted lesson workspace.
 `MEMORY.md` stores accepted human-readable lessons; `iteration_log.json` remains
@@ -458,7 +465,9 @@ into `MEMORY.md`.
 
 ### 5.1 Stable vs Volatile File Layering
 
-project_map.json only tracks **stable implementation files**:
+`project_map.json` only tracks **stable implementation files** for machines.
+`docs/20_facts/Codebase_Map.md` is the matching operator-facing current
+codebase description when present:
 - src/ core modules
 - baselines/ subdirectories
 - Core configs and scripts (listed in CLAUDE.md Entry Scripts)
@@ -643,7 +652,8 @@ Fast-changing content (current best, current risks, next experiment) resides in 
 ### 5.7 Per-iteration Reports
 
 Evaluation reports are stored per iteration:
-- `docs/iterations/iter1.md`, `docs/iterations/iter2.md`, ...
+- `docs/40_iterations/iter1.md`, `docs/40_iterations/iter2.md`, ...
+- legacy mirrors may exist under `docs/iterations/`
 - `docs/Stage_Report.md` serves as the latest summary index
 - code-debug reads the latest iteration report rather than an outdated singleton
 
@@ -775,7 +785,7 @@ orchestrator to update CLAUDE.md.
                     │           running              │  Call /evaluate to parse
                     │  Compare against baseline +    │  Generate per-iteration
                     │  historical best               │  report
-                    │  Extract lessons learned        │  docs/iterations/iter{N}.md
+                    │  Extract lessons learned        │  docs/40_iterations/iter{N}.md
                     │  Make decision                  │
                     └───────────────┬───────────────┘
                                     │

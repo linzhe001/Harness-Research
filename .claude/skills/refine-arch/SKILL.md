@@ -115,7 +115,11 @@ When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_pr
    - `current_stage.status` → "completed"
    - `artifacts.technical_spec` → file path
    - `history` append completion record
-	   - `decisions` record key design decisions
+   - `decisions` record key design decisions
+
+   After `docs/Technical_Spec.md` or `docs/20_facts/Project_Glossary.md` is
+   finalized for the stage, invoke `/docs-site` or report
+   `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits.
 	</instructions>
 
 	<constraints>

@@ -1,6 +1,6 @@
 ---
 name: build-plan
-description: Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md` and `project_map.json` built from the technical spec, baseline evidence, templates, and schemas.
+description: Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas.
 ---
 
 # Build Plan
@@ -27,6 +27,7 @@ Read these first:
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
 - `../../../docs/10_contract/Baseline_Contract.md` if it exists
 - `../../../docs/20_facts/Project_Glossary.md` if it exists
+- `../../../docs/20_facts/Codebase_Map.md` if it exists
 
 ## When To Use
 
@@ -39,8 +40,11 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 1. Read the technical spec, refined idea, dataset stats, baseline report, and baseline/evaluation contracts or protocol.
 2. Convert the approved architecture into a stable file tree that separates research code from baselines.
 3. Write `project_map.json` using the canonical schema and stable/volatile policy.
-4. Write `docs/Implementation_Roadmap.md` using the canonical template.
-5. Include:
+4. Write or refresh `docs/20_facts/Codebase_Map.md` as the human-readable
+   companion to `project_map.json`, covering stable directories, module
+   responsibilities, public interfaces, entry points, and maintenance owners.
+5. Write `docs/Implementation_Roadmap.md` using the canonical template.
+6. Include:
    - vertical slices ordered by dependency and user/research outcome
    - a `Slice Trace` block for each slice
    - module pseudocode
@@ -55,12 +59,12 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
    - complexity budget for public APIs, new terms, dependencies, and files per slice
    - commit boundary and suggested semantic commit message for each completed slice
    - `git_snapshot.py` expectations
-6. Refine `docs/20_facts/Project_Glossary.md` from the WF6 seed, stable file
+7. Refine `docs/20_facts/Project_Glossary.md` from the WF6 seed, stable file
    tree, shared interfaces, config keys, metrics, errors, and tests. Do not
    introduce vocabulary outside the approved architecture or roadmap scope;
    record disputed terms as proposed terms.
-7. Update `PROJECT_STATE.json` with roadmap and project-map artifacts.
-8. Run `python tooling/evidence/check_workflow_state.py --workspace-root .`
+8. Update `PROJECT_STATE.json` with roadmap, project-map, and codebase-map artifacts.
+9. Run `python tooling/evidence/check_workflow_state.py --workspace-root .`
    when `PROJECT_STATE.json` or `project_map.json` changed, and report the gate
    ledger.
 
@@ -69,12 +73,19 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 - Use `./references/implementation-roadmap.md`.
 - Use `./references/project-map-schema.json`.
 - Apply `../../../.agents/references/project-map-rule.md` when deciding what belongs in `project_map.json`.
+- Keep `docs/20_facts/Codebase_Map.md` synchronized with `project_map.json`.
+  `project_map.json` remains the machine-readable stable implementation map;
+  `Codebase_Map.md` is the operator-facing current fact document.
 - Include evidence sources for all source docs, discovered stable files, entry scripts, and interface assumptions.
 - Include `application_codebase_language_updates` so WF8/WF10 can read stable
   Domain Term to Code Term decisions from `docs/20_facts/Project_Glossary.md`.
 - Include commit slices that map one-to-one with roadmap slices unless a
   documented cross-cutting reason makes a combined commit safer.
 - Do not introduce new architecture choices here. WF7 may refine implementation details, module interfaces, configuration fields, validation checks, and coding constraints needed to execute the approved architecture efficiently. If the roadmap requires a different architecture, stop and route back to WF6 or a design review.
+- After `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`,
+  or `docs/20_facts/Codebase_Map.md` is finalized for the stage, invoke
+  `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after
+  temporary draft edits.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

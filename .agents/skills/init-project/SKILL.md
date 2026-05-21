@@ -69,6 +69,10 @@ operator context; it does not validate research evidence or approve contracts.
 
 - Refresh only the environment section, equivalent to `$env-setup refresh`.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Codex Adaptation
 
 - Treat natural-language requests as the canonical `$init-project {init|update|deps-changed}` interface.

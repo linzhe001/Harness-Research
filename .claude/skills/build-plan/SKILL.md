@@ -1,6 +1,6 @@
 ---
 name: build-plan
-description: WF7 implementation planning. Translate the WF6 architecture into project file structure, module pseudocode, configuration schema, training pipeline, Implementation_Roadmap.md, and project_map.json.
+description: WF7 implementation planning. Translate the WF6 architecture into project file structure, module pseudocode, configuration schema, training pipeline, Implementation_Roadmap.md, project_map.json, and docs/20_facts/Codebase_Map.md.
 argument-hint: "[project_path]"
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep
@@ -19,7 +19,7 @@ project_map.json.
 <context>
 This is WF7 of the Harness research workflow.
 Input: Technical_Spec.md (WF6) + Refined_Idea.md (WF3) + Dataset_Stats.md (WF4) + Baseline_Report.md (WF5) + evaluation contract/protocol.
-Output: Implementation_Roadmap.md + project_map.json for WF7.
+Output: Implementation_Roadmap.md + project_map.json + `docs/20_facts/Codebase_Map.md` for WF7.
 On success → WF8 (code-expert). On failure → return to WF6 or `/deep-check` if a new architecture decision is needed.
 
 First, read PROJECT_STATE.json to locate input artifacts.
@@ -31,6 +31,10 @@ For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared
 For commit slicing behavior, see [../../shared/sliced-commit-rule.md](../../shared/sliced-commit-rule.md).
 WF7 refines `docs/20_facts/Project_Glossary.md` from the approved architecture,
 file tree, interfaces, configs, metrics, tests, and error names.
+WF7 also creates or refreshes `docs/20_facts/Codebase_Map.md`, the
+operator-facing companion to `project_map.json` that summarizes stable
+directories, module responsibilities, public interfaces, entry points, and
+maintenance owners.
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 </context>
@@ -91,6 +95,12 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    - `status`: verified / untested / modified / broken
    - `entry_point`: Training entry file
 
+   Also generate or refresh `docs/20_facts/Codebase_Map.md` from the same
+   stable file tree. `project_map.json` remains the machine-readable source;
+   `Codebase_Map.md` is the human-readable current fact document and must stay
+   synchronized when stable file presence, responsibility, public interface, or
+   dependency information changes.
+
 4. **Write module pseudocode and shared interfaces**
 
    Before broad file planning, convert the WF6 first vertical slice into a
@@ -113,6 +123,11 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    architecture choices.
 
    Preserve the roadmap structure and schema fields, but localize roadmap headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
+
+   After `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`,
+   or `docs/20_facts/Codebase_Map.md` is finalized for the stage, invoke
+   `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after
+   temporary draft edits.
 
    **Must include pseudocode for `src/utils/git_snapshot.py`**:
    - `git_snapshot(training_type, auto_push)` → dict

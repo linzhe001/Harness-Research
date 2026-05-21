@@ -52,6 +52,10 @@ should not skip from WF1 directly to architecture design.
 6. Write `docs/Idea_Debate.md` using the local template.
 7. Update `PROJECT_STATE.json` when stage-state synchronization is requested or required by the orchestrator.
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Use `./references/idea-debate-report.md`.

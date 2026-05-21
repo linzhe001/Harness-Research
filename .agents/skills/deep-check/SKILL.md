@@ -44,6 +44,10 @@ Use this skill after WF6 `$refine-arch` and before WF7 `$build-plan` when the ar
    - `CONDITIONAL GO`
    - `NO-GO`
 
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
 ## Output Rules
 
 - Keep the `context_summary`.

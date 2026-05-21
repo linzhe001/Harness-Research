@@ -21,6 +21,10 @@ Output: Data_Pipeline_Script.py, Dataset_Stats.md, subset config.
 On success → WF5 (baseline-repro). On failure → requires human intervention for data issues.
 
 Note: WF4 itself must ensure dataset paths are written into `CLAUDE.md`; do not leave this as a best-effort downstream refresh. When `AGENTS.md` exists, check that it still points to `CLAUDE.md` for volatile dataset/environment paths instead of duplicating stale paths.
+WF4 also owns `docs/30_evidence/Dataset_Table.md` as the human-readable
+Conclusion Evidence table for dataset source artifacts, stats commands,
+split/subset choices, and open data questions. `.evidence/**` Evidence Chains
+remain tool-owned and must not be hand-edited.
 
 First, read PROJECT_STATE.json to get dataset_name and codebase_path.
 For the output format, see [templates/dataset-stats.md](templates/dataset-stats.md).
@@ -96,6 +100,10 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    - Subset strategy description and configuration
    - Estimated speedup ratio
 
+   Create or refresh `docs/30_evidence/Dataset_Table.md` with source paths,
+   commands, logs, sampled records, verified facts, inferred properties, and
+   unresolved data questions.
+
    Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
 7. **Update Project State**
@@ -123,3 +131,7 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
 - ALWAYS set random seed for all sampling operations
 - For detection datasets, ALWAYS verify subset distribution matches full dataset within 5% deviation
 </constraints>
+
+## Durable Docs Render
+
+After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

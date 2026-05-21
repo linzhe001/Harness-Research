@@ -25,7 +25,7 @@ This skill catches both: Codex code review (semantic) + smoke test (infrastructu
 Failure here means issues that must be fixed before entering WF10.
 
 Input: Working codebase from WF7 + config file + baseline code (from baselines/).
-Output: Code review findings + smoke test pass/fail report.
+Output: Code review findings + smoke test pass/fail report, plus `docs/30_evidence/Validation_Table.md`.
 On PASS → WF10 (iterate). On FAIL → fix issues via /code-debug.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
@@ -57,6 +57,7 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    - `docs/Technical_Spec.md` (architecture design from WF6, specifying which parts should be equivalent to baseline and which are new additions)
    - `docs/Implementation_Roadmap.md` (slice trace, planned files, public interfaces, test/smoke commands)
    - `docs/20_facts/Project_Glossary.md` if it exists
+   - `docs/20_facts/Codebase_Map.md` if it exists
 
 2. **Codex code review** (always attempt)
 
@@ -215,6 +216,16 @@ For documentation style and `docs/90_legacy/` archiving, see [../../shared/docum
    - **PASS**: Smoke test all passed AND code review has no critical findings (warnings are recorded but do not block)
    - **REVIEW**: Smoke test passed BUT code review has critical findings — list issues needing confirmation, user decides whether to proceed
    - **FAIL**: Smoke test has failed items — must be fixed
+
+   Create or refresh `docs/30_evidence/Validation_Table.md` with reviewed
+   slices, smoke commands, raw log paths, review traces, failures, and open
+   validation questions. This is human-readable Conclusion Evidence; command
+   outputs and logs remain Gate Evidence.
+
+   After `docs/Validate_Run_Report.md` or
+   `docs/30_evidence/Validation_Table.md` is finalized, invoke `/docs-site` or
+   report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft
+   edits.
 
    Keep checklist item names, status labels, commands, and identifiers stable, but localize surrounding narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
