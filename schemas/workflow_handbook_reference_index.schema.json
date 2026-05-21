@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow Handbook Reference Index",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "source_index_version",
+    "source_roots",
+    "entries",
+    "links_by_doc"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["0.1"] },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "source_index_version": { "type": "string", "minLength": 1 },
+    "source_roots": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "entries": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/reference_entry" }
+    },
+    "links_by_doc": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/doc_link" }
+      }
+    }
+  },
+  "definitions": {
+    "reference_entry": {
+      "type": "object",
+      "required": [
+        "ref",
+        "kind",
+        "title",
+        "summary",
+        "truth_status",
+        "owner",
+        "source_paths",
+        "preview",
+        "related_refs"
+      ],
+      "properties": {
+        "ref": { "$ref": "#/definitions/reference_id" },
+        "kind": {
+          "type": "string",
+          "enum": ["stage", "skill", "artifact", "term", "source", "page"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "truth_status": {
+          "type": "string",
+          "enum": [
+            "source_of_truth",
+            "generated_view",
+            "runtime_state",
+            "external_reference",
+            "planned"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "enum": [
+            "operator",
+            "orchestrator",
+            "skill",
+            "hook_runtime",
+            "docs-site",
+            "evidence_tooling",
+            "auto_iterate_controller",
+            "maintainer",
+            "external"
+          ]
+        },
+        "source_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/source_locator" }
+        },
+        "preview": { "$ref": "#/definitions/preview_card" },
+        "related_refs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/reference_id" }
+        },
+        "last_validated_by": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "source_locator": {
+      "type": "object",
+      "required": ["path", "role"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "anchor": { "type": ["string", "null"] },
+        "line": { "type": ["integer", "null"], "minimum": 1 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "skill_contract",
+            "skill_source",
+            "shared_rule",
+            "schema",
+            "tooling",
+            "test",
+            "handbook_page",
+            "external_reference"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "preview_card": {
+      "type": "object",
+      "required": ["title", "body", "format", "truncated"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string", "minLength": 1 },
+        "format": { "type": "string", "enum": ["plain", "markdown"] },
+        "source_excerpt": { "type": ["string", "null"] },
+        "excerpt_hash": { "type": ["string", "null"] },
+        "truncated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "doc_link": {
+      "type": "object",
+      "required": ["ref", "source_path", "marker", "status"],
+      "properties": {
+        "ref": { "$ref": "#/definitions/reference_id" },
+        "source_path": {
+          "type": "string",
+          "pattern": "^workflow_handbook/.+\\.md$"
+        },
+        "marker": {
+          "type": "string",
+          "pattern": "^\\[\\[[^\\]]+\\]\\]$"
+        },
+        "line": { "type": ["integer", "null"], "minimum": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["resolved", "missing", "ambiguous"]
+        },
+        "target_html": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "reference_id": {
+      "type": "string",
+      "pattern": "^(stage|skill|artifact|term|source|page):[A-Za-z0-9_./:# -]+$"
+    }
+  },
+  "additionalProperties": false
+}

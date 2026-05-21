@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow Handbook Navigation",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "site_title",
+    "source_root",
+    "output_root",
+    "preview_index_path",
+    "sections"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["0.1"] },
+    "site_title": { "type": "string", "minLength": 1 },
+    "source_root": { "type": "string", "enum": ["workflow_handbook"] },
+    "output_root": {
+      "type": "string",
+      "enum": ["docs/_site/workflow_handbook"]
+    },
+    "preview_index_path": {
+      "type": "string",
+      "enum": ["docs/_views/workflow_handbook_reference_index.json"]
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/nav_section" }
+    }
+  },
+  "definitions": {
+    "nav_section": {
+      "type": "object",
+      "required": ["id", "title", "kind", "position", "items"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "overview",
+            "workflow",
+            "evidence",
+            "reference",
+            "playbook",
+            "maintenance",
+            "plans"
+          ]
+        },
+        "position": { "type": "integer", "minimum": 0 },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/nav_item" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nav_item": {
+      "type": "object",
+      "required": ["page_id", "label", "source_path"],
+      "properties": {
+        "page_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "source_path": {
+          "type": "string",
+          "pattern": "^workflow_handbook/.+\\.md$"
+        },
+        "generated": { "type": "boolean" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/nav_item" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

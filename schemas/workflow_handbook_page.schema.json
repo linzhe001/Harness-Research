@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow Handbook Page",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "page_id",
+    "title",
+    "kind",
+    "audience",
+    "source_type",
+    "source_path",
+    "source_of_truth",
+    "status",
+    "summary",
+    "nav",
+    "canonical_sources",
+    "references",
+    "html"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["0.1"] },
+    "page_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "overview",
+        "concept",
+        "how_to",
+        "reference",
+        "playbook",
+        "stage",
+        "skill",
+        "artifact",
+        "term",
+        "maintenance",
+        "plan"
+      ]
+    },
+    "audience": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["operator", "agent", "maintainer", "reviewer"]
+      }
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["hand_authored", "generated", "assembled"]
+    },
+    "source_path": {
+      "type": "string",
+      "pattern": "^workflow_handbook/.+\\.md$"
+    },
+    "source_of_truth": { "type": "boolean" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "current", "generated", "superseded"]
+    },
+    "summary": { "type": "string", "minLength": 1 },
+    "nav": {
+      "type": "object",
+      "required": ["section", "position"],
+      "properties": {
+        "section": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "position": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "canonical_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "role": {
+            "type": "string",
+            "enum": [
+              "aggregate_source",
+              "framework_rule",
+              "skill_contract",
+              "skill_source",
+              "hook_source",
+              "schema",
+              "test",
+              "tooling",
+              "external_reference"
+            ]
+          },
+          "anchor": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "references": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/definitions/reference_id" }
+    },
+    "required_headings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "discovered_headings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "html": {
+      "type": "object",
+      "required": ["render", "output_path", "preview_index_path"],
+      "properties": {
+        "render": { "type": "boolean" },
+        "output_path": {
+          "type": ["string", "null"],
+          "pattern": "^docs/_site/workflow_handbook/.+\\.html$"
+        },
+        "preview_index_path": {
+          "type": ["string", "null"],
+          "enum": [
+            "docs/_views/workflow_handbook_reference_index.json",
+            null
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "reference_id": {
+      "type": "string",
+      "pattern": "^(stage|skill|artifact|term|source|page):[A-Za-z0-9_./:# -]+$"
+    }
+  },
+  "additionalProperties": false
+}
