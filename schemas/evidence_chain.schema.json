@@ -43,6 +43,24 @@
           "epistemic_status": { "type": "string", "enum": ["FACT", "INFERENCE", "DECISION", "LESSON"] },
           "confidence": { "type": ["string", "null"], "enum": ["low", "medium", "high", null] },
           "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "support_edges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["evidence_id", "support_relation", "preview_ref"],
+              "properties": {
+                "evidence_id": { "type": "string" },
+                "support_relation": {
+                  "type": "string",
+                  "enum": ["supports", "partially_supports", "contradicts", "context_only"]
+                },
+                "confidence": { "type": ["string", "null"], "enum": ["low", "medium", "high", null] },
+                "preview_ref": { "type": "string" },
+                "locator": { "$ref": "#/definitions/locator" }
+              },
+              "additionalProperties": true
+            }
+          },
           "support_summary": { "type": ["string", "null"] },
           "limitations": { "type": "array", "items": { "type": "string" } },
           "used_in_doc": { "type": "boolean" },
@@ -66,6 +84,19 @@
           "end_line": { "type": ["integer", "null"] },
           "symbol": { "type": ["string", "null"] },
           "excerpt_hash": { "type": ["string", "null"] },
+          "locator": { "$ref": "#/definitions/locator" },
+          "preview": {
+            "type": "object",
+            "required": ["title", "excerpt", "excerpt_hash", "mime_type", "truncated"],
+            "properties": {
+              "title": { "type": "string" },
+              "excerpt": { "type": "string" },
+              "excerpt_hash": { "type": "string" },
+              "mime_type": { "type": "string" },
+              "truncated": { "type": "boolean" }
+            },
+            "additionalProperties": true
+          },
           "supports": { "type": "array", "items": { "type": "string" } },
           "support_relation": {
             "type": "string",
@@ -84,6 +115,20 @@
         "markdown_path": { "type": "string" },
         "audit_path": { "type": "string" },
         "source_manifest_path": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "locator": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "start_line": { "type": ["integer", "null"] },
+        "end_line": { "type": ["integer", "null"] },
+        "selector": { "type": ["string", "null"] },
+        "row_id": { "type": ["string", "null"] }
       },
       "additionalProperties": true
     }

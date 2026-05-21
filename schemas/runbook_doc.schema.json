@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Runbook Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "status", "commands", "operational_checks"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "status": { "type": "string" },
+    "commands": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "environments": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "operational_checks": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "troubleshooting": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

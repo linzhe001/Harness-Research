@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence Preview Index",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "source_index_path", "facts", "evidence", "markers"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "source_index_path": { "type": "string" },
+    "facts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["fact_id", "claim", "doc_path", "previews"],
+        "properties": {
+          "fact_id": { "type": "string" },
+          "claim": { "type": "string" },
+          "epistemic_status": { "type": ["string", "null"] },
+          "confidence": { "type": ["string", "null"] },
+          "doc_path": { "type": "string" },
+          "doc_id": { "type": "string" },
+          "build_id": { "type": "string" },
+          "doc_anchors": { "type": "array" },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "previews": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/preview_entry" }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/preview_entry" }
+    },
+    "markers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["marker", "marker_type", "marker_id"],
+        "properties": {
+          "marker": { "type": "string" },
+          "marker_type": { "type": "string" },
+          "marker_id": { "type": "string" },
+          "fact_id": { "type": ["string", "null"] },
+          "question_id": { "type": ["string", "null"] },
+          "previews": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/preview_entry" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "definitions": {
+    "preview_entry": {
+      "type": "object",
+      "required": ["span_id", "title", "path", "excerpt"],
+      "properties": {
+        "span_id": { "type": "string" },
+        "evidence_id": { "type": "string" },
+        "title": { "type": "string" },
+        "path": { "type": "string" },
+        "kind": { "type": ["string", "null"] },
+        "support_relation": { "type": ["string", "null"] },
+        "locator": { "type": "object", "additionalProperties": true },
+        "excerpt": { "type": "string" },
+        "excerpt_hash": { "type": ["string", "null"] },
+        "mime_type": { "type": ["string", "null"] },
+        "truncated": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

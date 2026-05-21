@@ -1,11 +1,11 @@
+# ruff: noqa: E501
 from __future__ import annotations
 
 import importlib.util
 import json
 from pathlib import Path
 
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def load_tool(name: str):
@@ -16,6 +16,10 @@ def load_tool(name: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_validator():
+    return load_tool("validate_docchain")
 
 
 def write(path: Path, text: str) -> None:
@@ -30,13 +34,16 @@ def write_json(path: Path, data: dict) -> None:
 
 def test_review_packet_passes_legacy_workspace(tmp_path: Path) -> None:
     packet_tool = load_tool("build_review_packet")
+    validator = load_validator()
 
     summary = packet_tool.build_review_packet(tmp_path, stage="status", build_id_override="test_build")
 
     packet_path = tmp_path / ".evidence" / "review_packets" / "status" / "test_build" / "review_packet.md"
+    packet_json_path = packet_path.parent / "review_packet.json"
     assert summary["ready_for_human_approval"] is False
     assert summary["blocking_count"] == 0
     assert packet_path.exists()
+    assert validator.validate_review_packet(packet_json_path) == []
     packet_text = packet_path.read_text(encoding="utf-8")
     assert "Review Packet - Dynamic Context Status" in packet_text
     assert "Review applicability: not_applicable_legacy_or_empty" in packet_text
@@ -44,6 +51,7 @@ def test_review_packet_passes_legacy_workspace(tmp_path: Path) -> None:
 
 def test_review_packet_summarizes_dynamic_blockers(tmp_path: Path) -> None:
     packet_tool = load_tool("build_review_packet")
+    validator = load_validator()
     write_json(tmp_path / "PROJECT_STATE.json", {"context_model_version": "dynamic-protocol-v1"})
     write(tmp_path / "docs" / "10_contract" / "Evaluation_Contract.md", "# Evaluation Contract\n\nStatus: draft\nEvidence chain: N/A\n")
     write(tmp_path / "docs" / "35_protocol" / "Research_Protocol.md", "# Research Protocol\n\nStatus: draft\nReview required: yes\nEvidence chain: N/A\n")
@@ -69,10 +77,12 @@ def test_review_packet_summarizes_dynamic_blockers(tmp_path: Path) -> None:
 
     packet_path = tmp_path / ".evidence" / "review_packets" / "wf10" / "test_build" / "review_packet.md"
     packet_text = packet_path.read_text(encoding="utf-8")
-    packet_json = json.loads((packet_path.parent / "review_packet.json").read_text(encoding="utf-8"))
+    packet_json_path = packet_path.parent / "review_packet.json"
+    packet_json = json.loads(packet_json_path.read_text(encoding="utf-8"))
 
     assert summary["ready_for_human_approval"] is False
     assert summary["blocking_count"] > 0
+    assert validator.validate_review_packet(packet_json_path) == []
     assert "U009" in packet_text
     assert "baseline_contract" in packet_text
     assert "docs/10_contract/Baseline_Contract.md" in packet_text

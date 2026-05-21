@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Implementation Roadmap Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "status", "slices"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "status": { "type": "string" },
+    "current_slice_id": { "type": ["string", "null"] },
+    "slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slice_id", "goal", "status"],
+        "properties": {
+          "slice_id": { "type": "string" },
+          "goal": { "type": "string" },
+          "status": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } },
+          "test_plan": { "type": "array", "items": { "type": "string" } },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "dependencies": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+  },
+  "additionalProperties": true
+}

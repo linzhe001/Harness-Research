@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Validation Report Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "status", "checks"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "status": { "type": "string" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "command_or_review", "result", "verdict"],
+        "properties": {
+          "check_id": { "type": "string" },
+          "command_or_review": { "type": "string" },
+          "result": { "type": "string", "enum": ["PASS", "FAIL", "WARN", "NOT_RUN"] },
+          "artifact": { "type": ["string", "null"] },
+          "verdict": { "type": "string" },
+          "notes": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "residual_risks": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

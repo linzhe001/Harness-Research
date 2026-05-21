@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project Glossary Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "status", "canonical_terms", "naming_rules", "bounded_contexts"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "status": { "type": "string" },
+    "canonical_terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["domain_term", "code_term", "definition"],
+        "properties": {
+          "domain_term": { "type": "string" },
+          "code_term": { "type": "string" },
+          "definition": { "type": "string" },
+          "do_not_use": { "type": "array", "items": { "type": "string" } },
+          "source_artifact": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "naming_rules": { "type": "array", "items": { "type": "string" } },
+    "bounded_contexts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "proposed_terms": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

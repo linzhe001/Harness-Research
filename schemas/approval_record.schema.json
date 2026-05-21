@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contract Approval Record",
+  "type": "object",
+  "required": ["path", "status"],
+  "properties": {
+    "path": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "approved", "superseded", "missing"]
+    },
+    "exists": { "type": "boolean" },
+    "operator_accepted_draft": { "type": "boolean" },
+    "approved_at": { "type": "string" },
+    "approved_by": { "type": "string" },
+    "approval_source": { "type": "string" },
+    "approval_note": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "approved" }
+        }
+      },
+      "then": {
+        "required": ["approved_at", "approved_by", "approval_source"]
+      }
+    }
+  ],
+  "additionalProperties": true
+}

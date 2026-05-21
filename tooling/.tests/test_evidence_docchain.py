@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 from __future__ import annotations
 
 import importlib.util
@@ -6,8 +7,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-VALID_FIXTURE = REPO_ROOT / "tests" / "fixtures" / "evidence_docchain" / "valid"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+VALID_FIXTURE = (
+    REPO_ROOT / "tooling" / ".tests" / "fixtures" / "evidence_docchain" / "valid"
+)
 
 
 def load_validator():
@@ -43,6 +46,22 @@ def test_schema_files_parse_as_json() -> None:
         REPO_ROOT / "schemas" / "evidence_chain.schema.json",
         REPO_ROOT / "schemas" / "source_manifest.schema.json",
         REPO_ROOT / "schemas" / "doc_audit.schema.json",
+        REPO_ROOT / "schemas" / "evidence_index.schema.json",
+        REPO_ROOT / "schemas" / "review_packet.schema.json",
+        REPO_ROOT / "schemas" / "approval_record.schema.json",
+        REPO_ROOT / "schemas" / "project_state.schema.json",
+        REPO_ROOT / "schemas" / "iteration_log.schema.json",
+        REPO_ROOT / "schemas" / "project_map.schema.json",
+        REPO_ROOT / "schemas" / "docs_site_manifest.schema.json",
+        REPO_ROOT / "schemas" / "codebase_map_doc.schema.json",
+        REPO_ROOT / "schemas" / "glossary_doc.schema.json",
+        REPO_ROOT / "schemas" / "architecture_doc.schema.json",
+        REPO_ROOT / "schemas" / "api_reference_doc.schema.json",
+        REPO_ROOT / "schemas" / "runbook_doc.schema.json",
+        REPO_ROOT / "schemas" / "implementation_roadmap_doc.schema.json",
+        REPO_ROOT / "schemas" / "decision_log_doc.schema.json",
+        REPO_ROOT / "schemas" / "validation_report_doc.schema.json",
+        REPO_ROOT / "schemas" / "evidence_preview_index.schema.json",
     ]:
         data = json.loads(schema_path.read_text(encoding="utf-8"))
         assert data["type"] == "object"
@@ -111,6 +130,8 @@ def test_validator_fails_doc_audit_check_missing_result(tmp_path: Path) -> None:
 
 def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     compiler = load_tool("compile_doc")
+    preview_builder = load_tool("build_evidence_preview_index")
+    site_builder = load_tool("build_docs_site")
     validator = load_validator()
 
     doc = tmp_path / "docs" / "10_contract" / "Project_Contract.md"
@@ -143,6 +164,9 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     assert summary["fact_count"] == 1
     assert summary["unresolved_count"] == 1
     assert validator.main([str(chain_dir)]) == 0
+    assert (
+        validator.validate_evidence_index(tmp_path / ".evidence" / "index.json") == []
+    )
 
     chain = json.loads((chain_dir / "evidence_chain.json").read_text(encoding="utf-8"))
     doc_text = doc.read_text(encoding="utf-8")
@@ -151,6 +175,12 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     )
 
     assert chain["facts"][0]["fact_id"] == "project.scope"
+    assert chain["facts"][0]["support_edges"][0]["preview_ref"].endswith(":E001")
+    assert (
+        chain["evidence"][0]["locator"]["path"]
+        == "docs/10_contract/Project_Contract.md"
+    )
+    assert "The project scope is draft" in chain["evidence"][0]["preview"]["excerpt"]
     assert chain["unresolved"][0]["question_id"] == "project.open"
     assert chain["doc_links"]["markdown_path"] == "docs/10_contract/Project_Contract.md"
     chain_link = (
@@ -162,6 +192,48 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
         index["docs"]["docs__10_contract__Project_Contract"]["latest_build_id"]
         == "test_build"
     )
+    assert "project.scope" in index["facts_by_id"]
+    assert (
+        "docs__10_contract__Project_Contract:test_build:E001" in index["evidence_by_id"]
+    )
+    assert (
+        index["markers_by_doc"]["docs/10_contract/Project_Contract.md"][0]["marker"]
+        == "[F:project.scope]"
+    )
+
+    preview = preview_builder.build_preview_index(
+        tmp_path,
+        output_path=Path("docs/_views/evidence_preview_index.json"),
+    )
+    preview_path = tmp_path / "docs" / "_views" / "evidence_preview_index.json"
+
+    assert preview["facts"]["project.scope"]["previews"]
+    assert (
+        "The project scope is draft"
+        in preview["markers"]["F:project.scope"]["previews"][0]["excerpt"]
+    )
+    assert preview_path.exists()
+    assert validator.validate_evidence_preview_index(preview_path) == []
+
+    manifest = site_builder.build_docs_site(tmp_path)
+    manifest_path = tmp_path / "docs" / "_site" / "manifest.json"
+    html_path = tmp_path / "docs" / "_site" / "10_contract" / "Project_Contract.html"
+    html_text = html_path.read_text(encoding="utf-8")
+
+    assert manifest_path.exists()
+    assert html_path.exists()
+    assert manifest["pages"][0]["source_path"] == "docs/10_contract/Project_Contract.md"
+    assert manifest["pages"][0]["preview_index_path"] == (
+        "docs/_views/evidence_preview_index.json"
+    )
+    assert validator.validate_docs_site_manifest(manifest_path) == []
+    assert 'data-marker="F:project.scope"' in html_text
+    assert "The project scope is draft" in html_text
+
+    stale_html = tmp_path / "docs" / "_site" / "stale.html"
+    stale_html.write_text("stale", encoding="utf-8")
+    site_builder.build_docs_site(tmp_path)
+    assert not stale_html.exists()
 
 
 def test_compile_doc_preserves_dirty_source_patch(tmp_path: Path) -> None:

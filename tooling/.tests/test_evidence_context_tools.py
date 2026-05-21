@@ -4,7 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def load_tool(name: str):
@@ -59,8 +59,18 @@ def test_init_context_copies_templates_without_overwrite(tmp_path: Path) -> None
 
     assert summary["ok"] is True
     assert (tmp_path / "docs" / "30_evidence" / "Evidence_Index.md").exists()
+    assert (tmp_path / "docs" / "30_evidence" / "Validation_Table.md").exists()
     assert (tmp_path / "docs" / "20_facts" / "Project_Glossary.md").exists()
+    assert (tmp_path / "docs" / "20_facts" / "Codebase_Map.md").exists()
     assert (tmp_path / ".evidence" / "schemas" / "evidence_chain.schema.json").exists()
+    assert (tmp_path / ".evidence" / "schemas" / "review_packet.schema.json").exists()
+    assert (tmp_path / ".evidence" / "schemas" / "project_state.schema.json").exists()
+    assert (
+        tmp_path / ".evidence" / "schemas" / "docs_site_manifest.schema.json"
+    ).exists()
+    assert (
+        tmp_path / ".evidence" / "schemas" / "evidence_preview_index.schema.json"
+    ).exists()
     assert not (tmp_path / "OPERATOR_CONTEXT.md").exists()
     assert existing.read_text(encoding="utf-8") == "custom contract\n"
     assert any(
@@ -231,6 +241,7 @@ def test_context_gate_dynamic_wf10_can_allow_draft(tmp_path: Path) -> None:
 def test_approve_contract_records_dual_approval_markers(tmp_path: Path) -> None:
     approve = load_tool("approve_contract")
     gates = load_tool("check_context_gates")
+    validator = load_tool("validate_docchain")
     state = minimal_state()
     state["context_model_version"] = "dynamic-protocol-v1"
     state["contracts"] = {
@@ -265,6 +276,13 @@ def test_approve_contract_records_dual_approval_markers(tmp_path: Path) -> None:
     assert "Human approved: yes" in updated_contract
     assert "Approved by: expert" in updated_contract
     assert updated_state["contracts"]["evaluation_contract"]["status"] == "approved"
+    assert (
+        validator.validate_approval_record_data(
+            updated_state["contracts"]["evaluation_contract"],
+            label="PROJECT_STATE.contracts.evaluation_contract",
+        )
+        == []
+    )
     assert updated_state["contracts"]["evaluation_contract"][
         "approval_source"
     ].endswith("review_packet.md")

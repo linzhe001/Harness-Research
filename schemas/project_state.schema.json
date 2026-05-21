@@ -1,0 +1,388 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PROJECT_STATE",
+  "description": "Harness research project state file schema. Note: this is a reference schema; the actual PROJECT_STATE.json may use a simplified flat structure (e.g., project_name instead of project_meta.name). The schema guides field semantics and is not used for runtime validation.",
+  "type": "object",
+  "required": ["project_meta", "current_stage", "artifacts", "decisions", "history"],
+  "properties": {
+    "project_meta": {
+      "type": "object",
+      "description": "Project metadata",
+      "required": ["name", "idea_summary", "target_venue", "deadline", "created_at", "updated_at"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project codename (English, PascalCase or kebab-case allowed)",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$"
+        },
+        "idea_summary": {
+          "type": "string",
+          "description": "One-sentence idea description"
+        },
+        "target_venue": {
+          "type": "string",
+          "description": "Target conference/journal",
+          "enum": ["CVPR", "ICCV", "ECCV", "NeurIPS", "ICLR", "AAAI", "Other"]
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date",
+          "description": "Submission deadline (YYYY-MM-DD)"
+        },
+        "codebase_path": {
+          "type": ["string", "null"],
+          "description": "Base codebase path (optional)"
+        },
+        "dataset_name": {
+          "type": "string",
+          "description": "Primary dataset name"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Project creation time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update time"
+        }
+      }
+    },
+    "context_model_version": {
+      "type": ["string", "null"],
+      "description": "Optional dynamic context mode marker. Use dynamic-protocol-v1 for numbered evidence/protocol/contract docs."
+    },
+    "workflow_mode": {
+      "type": ["string", "null"],
+      "enum": ["dynamic_context", "standard", "compatibility", null],
+      "description": "Workflow gate mode. Use dynamic_context for new numbered-context projects, standard for new projects without numbered context docs, and compatibility only for older projects that predate mandatory WF2/dynamic gates."
+    },
+    "current_stage": {
+      "type": "object",
+      "description": "Current workflow stage",
+      "required": ["workflow_id", "workflow_name", "status"],
+      "properties": {
+        "workflow_id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Current stage ID (1-12, continuous numbering)"
+        },
+        "workflow_name": {
+          "type": "string",
+          "enum": [
+            "survey_idea",
+            "idea_debate",
+            "refine_idea",
+            "refine_arch",
+            "deep_check",
+            "data_prep",
+            "baseline_repro",
+            "build_plan",
+            "code_expert",
+            "validate_run",
+            "iterate",
+            "final_exp",
+            "release"
+          ],
+          "description": "Current stage name"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "completed", "blocked", "active"],
+          "description": "Stage status"
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Stage start time"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Stage completion time"
+        },
+        "iteration_count": {
+          "type": ["integer", "null"],
+          "description": "Iteration count during WF10"
+        },
+        "latest_iteration": {
+          "type": ["string", "null"],
+          "description": "Latest iteration ID during WF10"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Output file paths for each stage",
+      "properties": {
+        "feasibility_report": {
+          "type": ["string", "null"],
+          "description": "WF1 output: docs/Feasibility_Report.md"
+        },
+        "idea_debate_report": {
+          "type": ["string", "null"],
+          "description": "WF2 output: docs/Idea_Debate.md"
+        },
+        "refined_idea": {
+          "type": ["string", "null"],
+          "description": "WF3 output: docs/Refined_Idea.md"
+        },
+        "technical_spec": {
+          "type": ["string", "null"],
+          "description": "WF6 output: docs/Technical_Spec.md"
+        },
+        "sanity_check_log": {
+          "type": ["string", "null"],
+          "description": "WF6 design-review output: docs/Sanity_Check_Log.md"
+        },
+        "data_pipeline_script": {
+          "type": ["string", "null"],
+          "description": "WF4 output: src/data/Data_Pipeline_Script.py"
+        },
+        "dataset_stats": {
+          "type": ["string", "null"],
+          "description": "WF4 output: docs/Dataset_Stats.md"
+        },
+        "implementation_roadmap": {
+          "type": ["string", "null"],
+          "description": "WF7 output: docs/Implementation_Roadmap.md"
+        },
+        "code_modules": {
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "description": "WF8 output: list of code file paths"
+        },
+        "baseline_report": {
+          "type": ["string", "null"],
+          "description": "WF5 output: docs/Baseline_Report.md"
+        },
+        "stage_report": {
+          "type": ["string", "null"],
+          "description": "evaluate output: docs/Stage_Report.md"
+        },
+        "iteration_log": {
+          "type": ["string", "null"],
+          "description": "WF10 output: iteration_log.json (iteration records, continuously updated)"
+        },
+        "experiment_matrix": {
+          "type": ["string", "null"],
+          "description": "WF11 output: docs/Final_Experiment_Matrix.md"
+        },
+        "project_map": {
+          "type": ["string", "null"],
+          "description": "WF7 output: project_map.json (project file structure blueprint, continuously maintained)"
+        }
+      }
+    },
+    "baseline_metrics": {
+      "type": "object",
+      "description": "WF5 output: per-scene baseline metrics, used for comparison in subsequent iterations",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": ["number", "string", "null"] },
+        "properties": {
+          "source": { "type": "string", "description": "Name of the method that produced these metrics" }
+        }
+      }
+    },
+    "evaluation_protocol": {
+      "type": ["object", "null"],
+      "description": "Evaluation protocol established in WF5, inherited by WF10 run/eval",
+      "properties": {
+        "primary_metric": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string" },
+                "direction": { "type": ["string", "null"], "enum": ["maximize", "minimize", "max", "min", null] },
+                "target": { "type": ["number", "string", "null"] }
+              },
+              "additionalProperties": true
+            },
+            { "type": "null" }
+          ],
+          "description": "Primary metric name or object. Checker supports both legacy string and object forms."
+        },
+        "tracked_metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "goal": { "type": "string", "enum": ["max", "min", "maximize", "minimize"] },
+              "direction": { "type": "string", "enum": ["max", "min", "maximize", "minimize"] }
+            }
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": ["object", "null"],
+      "description": "Human-approved contract tracking for dynamic-protocol projects",
+      "properties": {
+        "project_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "evaluation_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "baseline_contract": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "claim_boundary": {
+          "type": ["object", "null"],
+          "properties": {
+            "path": { "type": "string" },
+            "status": { "type": "string", "enum": ["missing", "draft", "approved", "superseded"] },
+            "approved_at": { "type": ["string", "null"], "format": "date-time" },
+            "approved_by": { "type": ["string", "null"] },
+            "approval_source": { "type": ["string", "null"] },
+            "evidence_chain": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "dataset_paths": {
+      "type": ["object", "null"],
+      "description": "Dataset paths established in WF4, must be synced with CLAUDE.md; AGENTS.md keeps only a stable pointer to CLAUDE.md",
+      "additionalProperties": { "type": "string" }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Key decision records",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "stage", "decision", "rationale"],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stage": {
+            "type": "string",
+            "description": "Stage when the decision was made"
+          },
+          "decision": {
+            "type": "string",
+            "description": "Decision content"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Decision rationale"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Alternative options that were considered"
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "Stage history records",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "event", "stage"],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "type": "string",
+            "enum": ["started", "completed", "rollback", "blocked", "unblocked"],
+            "description": "Event type"
+          },
+          "stage": {
+            "type": "string",
+            "description": "Related stage"
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional details"
+          }
+        }
+      }
+    },
+    "active_experiments": {
+      "type": "array",
+      "description": "Currently running experiments",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exp_id": { "type": "string" },
+          "config_path": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "running", "completed", "failed"]
+          },
+          "started_at": { "type": ["string", "null"] },
+          "metrics": { "type": "object" }
+        }
+      }
+    },
+    "tracking": {
+      "type": "object",
+      "description": "Experiment tracking configuration",
+      "properties": {
+        "backend": {
+          "type": "string",
+          "enum": ["none", "wandb", "mlflow", "tensorboard"],
+          "default": "none"
+        },
+        "project": {
+          "type": "string",
+          "description": "Tracking project name"
+        },
+        "entity": {
+          "type": "string",
+          "description": "Tracking team/user name"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "config_sync": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to sync config to the tracking backend"
+        }
+      }
+    }
+  }
+}

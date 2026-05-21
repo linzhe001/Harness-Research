@@ -6,8 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from jsonschema import Draft7Validator
+
+SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -21,6 +26,34 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return data
+
+
+@lru_cache(maxsize=None)
+def load_schema(schema_name: str) -> dict[str, Any]:
+    return load_json(SCHEMA_DIR / schema_name)
+
+
+def schema_error_location(label: str, path: Any) -> str:
+    location = label
+    for part in path:
+        if isinstance(part, int):
+            location += f"[{part}]"
+        else:
+            location += f".{part}"
+    return location
+
+
+def validate_json_schema(
+    label: str,
+    data: dict[str, Any],
+    schema_name: str,
+) -> list[str]:
+    validator = Draft7Validator(load_schema(schema_name))
+    errors = sorted(validator.iter_errors(data), key=lambda error: list(error.path))
+    return [
+        f"{schema_error_location(label, error.path)}: {error.message}"
+        for error in errors
+    ]
 
 
 def require_keys(label: str, data: dict[str, Any], keys: list[str]) -> list[str]:
@@ -102,19 +135,22 @@ def validate_evidence_items(evidence: Any) -> list[str]:
 
 def validate_evidence_chain(path: Path) -> list[str]:
     data = load_json(path)
-    errors = require_keys(
-        "evidence_chain",
-        data,
-        [
-            "schema_version",
-            "chain_id",
-            "doc",
-            "git",
-            "facts",
-            "evidence",
-            "unresolved",
-            "doc_links",
-        ],
+    errors = validate_json_schema("evidence_chain", data, "evidence_chain.schema.json")
+    errors.extend(
+        require_keys(
+            "evidence_chain",
+            data,
+            [
+                "schema_version",
+                "chain_id",
+                "doc",
+                "git",
+                "facts",
+                "evidence",
+                "unresolved",
+                "doc_links",
+            ],
+        )
     )
     doc = data.get("doc", {})
     git = data.get("git", {})
@@ -154,8 +190,13 @@ def validate_evidence_chain(path: Path) -> list[str]:
 
 def validate_source_manifest(path: Path) -> list[str]:
     data = load_json(path)
-    errors = require_keys(
-        "source_manifest", data, ["schema_version", "chain_id", "read_set"]
+    errors = validate_json_schema(
+        "source_manifest", data, "source_manifest.schema.json"
+    )
+    errors.extend(
+        require_keys(
+            "source_manifest", data, ["schema_version", "chain_id", "read_set"]
+        )
     )
     read_set = data.get("read_set")
     if not isinstance(read_set, list):
@@ -177,10 +218,19 @@ def validate_source_manifest(path: Path) -> list[str]:
 
 def validate_doc_audit(path: Path) -> list[str]:
     data = load_json(path)
-    errors = require_keys(
-        "doc_audit",
-        data,
-        ["schema_version", "doc_path", "evidence_chain_path", "audit_result", "checks"],
+    errors = validate_json_schema("doc_audit", data, "doc_audit.schema.json")
+    errors.extend(
+        require_keys(
+            "doc_audit",
+            data,
+            [
+                "schema_version",
+                "doc_path",
+                "evidence_chain_path",
+                "audit_result",
+                "checks",
+            ],
+        )
     )
     if data.get("audit_result") not in {"PASS", "FAIL", "DRAFT_ONLY"}:
         errors.append("doc_audit.audit_result must be PASS, FAIL, or DRAFT_ONLY")
@@ -201,6 +251,47 @@ def validate_doc_audit(path: Path) -> list[str]:
                 f"{label}.result must be one of: " + ", ".join(sorted(allowed_results))
             )
     return errors
+
+
+def validate_evidence_index(path: Path) -> list[str]:
+    data = load_json(path)
+    return validate_json_schema("evidence_index", data, "evidence_index.schema.json")
+
+
+def validate_review_packet(path: Path) -> list[str]:
+    data = load_json(path)
+    return validate_json_schema("review_packet", data, "review_packet.schema.json")
+
+
+def validate_approval_record_data(
+    data: dict[str, Any],
+    *,
+    label: str = "approval_record",
+) -> list[str]:
+    return validate_json_schema(label, data, "approval_record.schema.json")
+
+
+def validate_approval_record(path: Path) -> list[str]:
+    data = load_json(path)
+    return validate_approval_record_data(data)
+
+
+def validate_evidence_preview_index(path: Path) -> list[str]:
+    data = load_json(path)
+    return validate_json_schema(
+        "evidence_preview_index",
+        data,
+        "evidence_preview_index.schema.json",
+    )
+
+
+def validate_docs_site_manifest(path: Path) -> list[str]:
+    data = load_json(path)
+    return validate_json_schema(
+        "docs_site_manifest",
+        data,
+        "docs_site_manifest.schema.json",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

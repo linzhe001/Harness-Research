@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Decision Log Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "decisions"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "title", "status", "decision"],
+        "properties": {
+          "decision_id": { "type": "string" },
+          "title": { "type": "string" },
+          "status": { "type": "string" },
+          "decision": { "type": "string" },
+          "rationale": { "type": ["string", "null"] },
+          "date": { "type": ["string", "null"] },
+          "owner": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

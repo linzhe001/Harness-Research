@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Codebase Map Document View",
+  "type": "object",
+  "required": ["schema_version", "source_path", "title", "status", "stable_files", "entry_points", "module_boundaries", "public_interfaces"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "source_path": { "type": "string" },
+    "html_path": { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "status": { "type": "string" },
+    "summary": { "type": ["string", "null"] },
+    "stable_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "responsibility"],
+        "properties": {
+          "path": { "type": "string" },
+          "responsibility": { "type": "string" },
+          "public_interfaces": { "type": "array", "items": { "type": "string" } },
+          "entry_points": { "type": "array", "items": { "type": "string" } },
+          "maintenance_owner": { "type": ["string", "null"] },
+          "source_artifact": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "entry_points": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "module_boundaries": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "public_interfaces": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

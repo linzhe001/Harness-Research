@@ -13,6 +13,7 @@ approved rules.
 - `docs/30_evidence/Repo_Table.md`
 - `docs/30_evidence/Dataset_Table.md`
 - `docs/30_evidence/Baseline_Table.md`
+- `docs/30_evidence/Validation_Table.md`
 - `docs/30_evidence/Metric_Table.md`
 - `docs/30_evidence/Open_Questions.md`
 

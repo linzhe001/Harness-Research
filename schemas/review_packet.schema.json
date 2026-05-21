@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Review Packet",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "stage",
+    "generated_at",
+    "build_id",
+    "git",
+    "review_applicability",
+    "ready_for_human_approval",
+    "gates",
+    "contract_rows",
+    "evidence_sources",
+    "blocking_items",
+    "open_questions",
+    "changelog_rows",
+    "paths"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "stage": {
+      "type": "string",
+      "enum": ["status", "wf5", "wf10", "wf11", "wf12"]
+    },
+    "generated_at": { "type": "string" },
+    "build_id": { "type": "string" },
+    "git": {
+      "type": "object",
+      "required": ["commit", "branch", "is_dirty", "status_summary"],
+      "properties": {
+        "commit": { "type": ["string", "null"] },
+        "branch": { "type": ["string", "null"] },
+        "is_dirty": { "type": "boolean" },
+        "status_summary": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "review_applicability": {
+      "type": "string",
+      "enum": [
+        "dynamic_context",
+        "legacy_docchain_only",
+        "not_applicable_legacy_or_empty"
+      ]
+    },
+    "ready_for_human_approval": { "type": "boolean" },
+    "gates": {
+      "type": "object",
+      "required": ["context", "protocol_drift", "docchain", "workflow_state"],
+      "properties": {
+        "context": { "$ref": "#/definitions/gate_result" },
+        "protocol_drift": { "$ref": "#/definitions/gate_result" },
+        "docchain": { "$ref": "#/definitions/gate_result" },
+        "workflow_state": { "$ref": "#/definitions/gate_result" }
+      },
+      "additionalProperties": true
+    },
+    "contract_rows": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/string_row" }
+    },
+    "evidence_sources": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/string_row" }
+    },
+    "blocking_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "name", "severity", "detail", "path"],
+        "properties": {
+          "gate": { "type": "string" },
+          "name": { "type": "string" },
+          "severity": { "type": "string" },
+          "detail": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "blocking_stage", "next_evidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "question": { "type": "string" },
+          "blocking_stage": { "type": "string" },
+          "next_evidence": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "changelog_rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": ["markdown", "json"],
+      "properties": {
+        "markdown": { "type": "string" },
+        "json": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "gate_result": {
+      "type": "object",
+      "required": ["ok"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "checks": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "string_row": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

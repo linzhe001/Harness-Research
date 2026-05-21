@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence Index",
+  "type": "object",
+  "required": ["schema_version", "docs", "history"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "docs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/index_entry"
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/index_entry"
+      }
+    },
+    "latest_docchain_by_doc": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/index_entry"
+      }
+    },
+    "facts_by_id": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["fact_id", "doc_id", "latest_build_id", "claim", "evidence_refs"],
+        "properties": {
+          "fact_id": { "type": "string" },
+          "doc_id": { "type": "string" },
+          "latest_build_id": { "type": "string" },
+          "doc_path": { "type": "string" },
+          "evidence_chain_path": { "type": "string" },
+          "claim": { "type": "string" },
+          "epistemic_status": { "type": ["string", "null"] },
+          "confidence": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "support_edges": { "type": "array" },
+          "doc_anchors": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "evidence_by_id": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/evidence_span"
+      }
+    },
+    "source_spans_by_id": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/evidence_span"
+      }
+    },
+    "markers_by_doc": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["marker", "marker_type", "marker_id"],
+          "properties": {
+            "marker": { "type": "string" },
+            "marker_type": { "type": "string" },
+            "marker_id": { "type": "string" },
+            "fact_id": { "type": ["string", "null"] },
+            "question_id": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "definitions": {
+    "index_entry": {
+      "type": "object",
+      "required": [
+        "doc_id",
+        "latest_build_id",
+        "evidence_chain_path",
+        "source_manifest_path",
+        "doc_audit_path",
+        "audit_result"
+      ],
+      "properties": {
+        "doc_id": { "type": "string" },
+        "latest_build_id": { "type": "string" },
+        "evidence_chain_path": { "type": "string" },
+        "source_manifest_path": { "type": "string" },
+        "doc_audit_path": { "type": "string" },
+        "audit_result": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "DRAFT_ONLY"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence_span": {
+      "type": "object",
+      "required": ["span_id", "doc_id", "latest_build_id", "evidence_id", "path", "locator", "preview"],
+      "properties": {
+        "span_id": { "type": "string" },
+        "doc_id": { "type": "string" },
+        "latest_build_id": { "type": "string" },
+        "evidence_id": { "type": "string" },
+        "kind": { "type": "string" },
+        "path": { "type": "string" },
+        "supports": { "type": "array", "items": { "type": "string" } },
+        "support_relation": { "type": ["string", "null"] },
+        "evidence_chain_path": { "type": "string" },
+        "locator": { "type": "object", "additionalProperties": true },
+        "preview": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
