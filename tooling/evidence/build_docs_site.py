@@ -14,15 +14,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 SCHEMA_VERSION = "0.1"
 DEFAULT_SOURCE_ROOT = Path("docs")
 DEFAULT_OUTPUT_ROOT = Path("docs/_site")
 DEFAULT_PREVIEW_INDEX = Path("docs/_views/evidence_preview_index.json")
 MANIFEST_NAME = "manifest.json"
 MARKER_RE = re.compile(r"\[(F|U|E):([A-Za-z0-9_.:-]+)\]")
+WIKI_REF_RE = re.compile(r"\[\[([A-Za-z][A-Za-z0-9_-]*:[^\]|]+)(?:\|([^\]]+))?\]\]")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 STATUS_RE = re.compile(r"^Status:\s*(.+?)\s*$", re.IGNORECASE)
+FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 
 STYLE_CSS = """
 :root {
@@ -42,18 +46,19 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
+  min-width: 0;
 }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .layout {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  grid-template-columns: minmax(232px, 19rem) minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
   border-right: 1px solid var(--line);
   background: #eef2f6;
-  padding: 24px 18px;
+  padding: 24px 20px;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -64,15 +69,52 @@ a:hover { text-decoration: underline; }
   line-height: 1.25;
   margin: 0 0 18px;
 }
-.nav-section { margin: 18px 0; }
-.nav-section h2 {
+.nav-section {
+  margin: 12px 0;
+}
+.nav-section > summary {
   color: var(--muted);
+  cursor: pointer;
   font-size: 12px;
   font-weight: 700;
+  list-style: none;
   margin: 0 0 8px;
   text-transform: uppercase;
 }
-.nav-section a {
+.nav-section > summary::-webkit-details-marker,
+.nav-folder > summary::-webkit-details-marker {
+  display: none;
+}
+.nav-section > summary::before,
+.nav-folder > summary::before {
+  color: var(--muted);
+  content: "+";
+  display: inline-block;
+  font-weight: 700;
+  margin-right: 6px;
+  width: 10px;
+}
+.nav-section[open] > summary::before,
+.nav-folder[open] > summary::before {
+  content: "-";
+}
+.nav-section-body {
+  padding: 1px 0 4px;
+}
+.nav-folder {
+  margin: 2px 0;
+}
+.nav-folder > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.nav-children {
+  border-left: 1px solid var(--line);
+  margin-left: 13px;
+  padding-left: 8px;
+}
+.nav-section a,
+.nav-folder > summary a {
   display: block;
   border-radius: 6px;
   color: var(--text);
@@ -81,47 +123,73 @@ a:hover { text-decoration: underline; }
   padding: 7px 8px;
 }
 .nav-section a.active,
-.nav-section a:hover {
+.nav-section a:hover,
+.nav-folder > summary a.active,
+.nav-folder > summary a:hover {
   background: var(--panel);
   text-decoration: none;
 }
 .content {
-  max-width: 980px;
+  margin: 0 auto;
+  max-width: 1120px;
+  min-width: 0;
   width: 100%;
-  padding: 36px 48px 72px;
+  padding: 40px 56px 72px;
 }
 .doc-meta {
   color: var(--muted);
   font-size: 13px;
   margin-bottom: 22px;
+  overflow-wrap: break-word;
 }
 article {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 32px;
+  min-width: 0;
+  overflow-wrap: break-word;
+  padding: 34px;
 }
 article h1, article h2, article h3 { line-height: 1.25; }
 article h1 { font-size: 32px; margin-top: 0; }
 article h2 { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 24px; }
 article p, article li { line-height: 1.65; }
+.code-block {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.code-label {
+  background: #eef2f6;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  text-transform: uppercase;
+}
 pre {
   background: var(--code);
-  border-radius: 6px;
   color: #f9fafb;
+  margin: 0;
   overflow: auto;
-  padding: 14px;
+  padding: 16px;
+  tab-size: 2;
 }
 code {
   background: #edf0f4;
   border-radius: 4px;
   padding: 1px 4px;
+  overflow-wrap: anywhere;
 }
 pre code { background: transparent; padding: 0; }
 table { border-collapse: collapse; display: block; overflow-x: auto; width: 100%; }
 th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
 th { background: #f1f4f8; text-align: left; }
-.evidence-marker {
+.evidence-marker,
+.reference-marker {
   background: var(--accent-soft);
   border: 1px solid #9bd5cb;
   border-radius: 999px;
@@ -146,11 +214,45 @@ th { background: #f1f4f8; text-align: left; }
 .evidence-popover strong { display: block; margin-bottom: 6px; }
 .evidence-popover p { margin: 6px 0; }
 .evidence-popover .muted { color: #bfccd9; font-size: 12px; }
-@media (max-width: 800px) {
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 224px minmax(0, 1fr);
+  }
+  .content {
+    padding: 32px 28px 64px;
+  }
+}
+@media (max-width: 860px) {
   .layout { display: block; }
-  .sidebar { height: auto; position: static; }
-  .content { padding: 20px 14px 48px; }
-  article { padding: 22px 18px; }
+  .sidebar {
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+    height: auto;
+    max-height: 48vh;
+    position: static;
+  }
+  .nav-section { margin: 14px 0; }
+  .nav-section a,
+  .nav-folder > summary a {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+  }
+  .nav-children {
+    margin-left: 4px;
+    padding-left: 8px;
+  }
+  .content { padding: 22px 14px 48px; }
+  article { padding: 24px 18px; }
+}
+@media (max-width: 520px) {
+  article {
+    border-left: 0;
+    border-radius: 0;
+    border-right: 0;
+    margin-left: -14px;
+    margin-right: -14px;
+  }
+  article h1 { font-size: 28px; }
 }
 """.strip()
 
@@ -175,7 +277,8 @@ PREVIEW_JS = """
 
   function show(event) {
     const marker = event.currentTarget.getAttribute("data-marker");
-    const preview = previewFor(marker);
+    const ref = event.currentTarget.getAttribute("data-ref");
+    const preview = ref ? referencePreviewFor(ref) : previewFor(marker);
     if (!preview) return;
     popover.innerHTML = "";
     const title = document.createElement("strong");
@@ -209,6 +312,27 @@ PREVIEW_JS = """
     el.addEventListener("mouseleave", hide);
     el.addEventListener("blur", hide);
   });
+  document.querySelectorAll(".reference-marker").forEach((el) => {
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("focus", show);
+    el.addEventListener("mouseleave", hide);
+    el.addEventListener("blur", hide);
+  });
+
+  function referencePreviewFor(ref) {
+    const entry = (previews.entries || {})[ref];
+    if (!entry) return null;
+    const card = entry.preview || {};
+    const paths = (entry.source_paths || []).map((item) => item.path).filter(Boolean);
+    return {
+      title: card.title || entry.title || ref,
+      excerpt: card.body || entry.summary || "No preview recorded.",
+      path: paths.join(", "),
+      support_relation: [entry.kind, entry.truth_status, entry.owner]
+        .filter(Boolean)
+        .join(" | "),
+    };
+  }
 })();
 """.strip()
 
@@ -258,6 +382,16 @@ def extract_title(markdown: str, fallback: str) -> str:
     return fallback
 
 
+def split_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
+    match = FRONTMATTER_RE.match(markdown)
+    if not match:
+        return {}, markdown
+    loaded = yaml.safe_load(match.group(1)) if match.group(1).strip() else {}
+    if not isinstance(loaded, dict):
+        raise ValueError("frontmatter must be a mapping")
+    return loaded, markdown[match.end() :]
+
+
 def extract_status(markdown: str) -> str | None:
     for line in markdown.splitlines():
         match = STATUS_RE.match(line)
@@ -284,7 +418,79 @@ def doc_kind_for(source_path: Path, source_root: Path) -> str:
     return "current_doc"
 
 
-def render_inline(text: str) -> str:
+def workflow_ref_target(
+    ref: str,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> str | None:
+    if current_html is None or workspace_root is None:
+        return None
+    entries = preview_data.get("entries", {})
+    if not isinstance(entries, dict):
+        return None
+    target: str | None = None
+    if ref.startswith("skill:"):
+        target = f"docs/_site/workflow_handbook/skills/{ref.split(':', 1)[1]}.html"
+    elif ref.startswith("stage:"):
+        stages = {
+            "WF0": "wf0_init",
+            "WF1": "wf1_survey_idea",
+            "WF2": "wf2_idea_debate",
+            "WF3": "wf3_refine_idea",
+            "WF4": "wf4_data_prep",
+            "WF5": "wf5_baseline_repro",
+            "WF6": "wf6_refine_arch",
+            "WF7": "wf7_build_plan",
+            "WF8": "wf8_code_expert",
+            "WF9": "wf9_validate_run",
+            "WF10": "wf10_iterate",
+            "WF11": "wf11_final_exp",
+            "WF12": "wf12_release",
+        }
+        page_id = stages.get(ref.split(":", 1)[1])
+        if page_id:
+            target = f"docs/_site/workflow_handbook/stages/{page_id}.html"
+    elif ref.startswith("term:"):
+        target = (
+            "docs/_site/workflow_handbook/pages/workflow_terms.html#"
+            + slugify(ref.split(":", 1)[1])
+        )
+    elif ref.startswith("source:"):
+        source_ref = ref.split(":", 1)[1]
+        source_path = source_ref.split("#", 1)[0]
+        if (workspace_root / source_path).exists():
+            target = source_ref
+    elif ref.startswith("artifact:"):
+        artifact_path = ref.split(":", 1)[1]
+        if (workspace_root / artifact_path).exists():
+            target = artifact_path
+    elif ref.startswith("page:"):
+        entry = entries.get(ref, {})
+        source_paths = entry.get("source_paths", [])
+        if isinstance(source_paths, list) and source_paths:
+            source_path = source_paths[0].get("path")
+            if isinstance(source_path, str) and source_path.startswith(
+                "workflow_handbook/"
+            ):
+                relative = Path(source_path).relative_to("workflow_handbook")
+                target = (
+                    Path("docs/_site/workflow_handbook") / relative.with_suffix(".html")
+                ).as_posix()
+    if not target:
+        return None
+    return href_between(current_html, workspace_root / target)
+
+
+def render_inline(
+    text: str,
+    *,
+    reference_mode: str = "project-evidence",
+    preview_data: dict[str, Any] | None = None,
+    current_html: Path | None = None,
+    workspace_root: Path | None = None,
+) -> str:
+    preview_data = preview_data or {}
     pieces: list[str] = []
     for part in re.split(r"(`[^`]*`)", text):
         if part.startswith("`") and part.endswith("`"):
@@ -306,8 +512,36 @@ def render_inline(text: str) -> str:
             ),
             escaped,
         )
+        if reference_mode == "workflow-handbook":
+            escaped = WIKI_REF_RE.sub(
+                lambda match: render_workflow_ref(
+                    match,
+                    preview_data=preview_data,
+                    current_html=current_html,
+                    workspace_root=workspace_root,
+                ),
+                escaped,
+            )
         pieces.append(escaped)
     return "".join(pieces)
+
+
+def render_workflow_ref(
+    match: re.Match[str],
+    *,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> str:
+    ref = match.group(1).strip()
+    label = match.group(2).strip() if match.group(2) else ref
+    href = workflow_ref_target(ref, preview_data, current_html, workspace_root) or "#"
+    return (
+        '<a class="reference-marker" tabindex="0" '
+        f'data-ref="{html.escape(ref, quote=True)}" '
+        f'href="{html.escape(href, quote=True)}">'
+        f"{html.escape(label)}</a>"
+    )
 
 
 def is_table_start(lines: list[str], index: int) -> bool:
@@ -316,7 +550,15 @@ def is_table_start(lines: list[str], index: int) -> bool:
     return "|" in lines[index] and bool(re.match(r"^\s*\|?[\s:-]+\|", lines[index + 1]))
 
 
-def render_table(lines: list[str], start: int) -> tuple[str, int]:
+def render_table(
+    lines: list[str],
+    start: int,
+    *,
+    reference_mode: str,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> tuple[str, int]:
     rows: list[list[str]] = []
     index = start
     while index < len(lines) and "|" in lines[index].strip():
@@ -329,21 +571,42 @@ def render_table(lines: list[str], start: int) -> tuple[str, int]:
         return "", index
     head = rows[0]
     body = rows[1:]
+    inline_kwargs = {
+        "reference_mode": reference_mode,
+        "preview_data": preview_data,
+        "current_html": current_html,
+        "workspace_root": workspace_root,
+    }
     html_rows = [
         "<table><thead><tr>"
-        + "".join(f"<th>{render_inline(cell)}</th>" for cell in head)
+        + "".join(f"<th>{render_inline(cell, **inline_kwargs)}</th>" for cell in head)
         + "</tr></thead><tbody>"
     ]
     for row in body:
-        cells = "".join(f"<td>{render_inline(cell)}</td>" for cell in row)
-        html_rows.append(
-            "<tr>" + cells + "</tr>"
+        cells = "".join(
+            f"<td>{render_inline(cell, **inline_kwargs)}</td>"
+            for cell in row
         )
+        html_rows.append("<tr>" + cells + "</tr>")
     html_rows.append("</tbody></table>")
     return "\n".join(html_rows), index
 
 
-def render_markdown(markdown: str) -> str:
+def render_markdown(
+    markdown: str,
+    *,
+    reference_mode: str = "project-evidence",
+    preview_data: dict[str, Any] | None = None,
+    current_html: Path | None = None,
+    workspace_root: Path | None = None,
+) -> str:
+    preview_data = preview_data or {}
+    inline_kwargs = {
+        "reference_mode": reference_mode,
+        "preview_data": preview_data,
+        "current_html": current_html,
+        "workspace_root": workspace_root,
+    }
     lines = markdown.splitlines()
     rendered: list[str] = []
     index = 0
@@ -355,7 +618,7 @@ def render_markdown(markdown: str) -> str:
             continue
 
         if stripped.startswith("```"):
-            language = stripped[3:].strip()
+            language = stripped[3:].strip() or "text"
             code_lines: list[str] = []
             index += 1
             while index < len(lines) and not lines[index].strip().startswith("```"):
@@ -363,14 +626,18 @@ def render_markdown(markdown: str) -> str:
                 index += 1
             if index < len(lines):
                 index += 1
+            language_class = slugify(language)
             class_attr = (
-                f' class="language-{html.escape(language, quote=True)}"'
+                f' class="language-{html.escape(language_class, quote=True)}"'
                 if language
                 else ""
             )
             rendered.append(
+                '<div class="code-block">'
+                f'<div class="code-label">{html.escape(language)}</div>'
                 f"<pre><code{class_attr}>"
                 f"{html.escape(chr(10).join(code_lines))}</code></pre>"
+                "</div>"
             )
             continue
 
@@ -379,13 +646,21 @@ def render_markdown(markdown: str) -> str:
             level = len(heading.group(1))
             text = heading.group(2).strip()
             rendered.append(
-                f'<h{level} id="{slugify(text)}">{render_inline(text)}</h{level}>'
+                f'<h{level} id="{slugify(text)}">'
+                f"{render_inline(text, **inline_kwargs)}</h{level}>"
             )
             index += 1
             continue
 
         if is_table_start(lines, index):
-            table_html, index = render_table(lines, index)
+            table_html, index = render_table(
+                lines,
+                index,
+                reference_mode=reference_mode,
+                preview_data=preview_data,
+                current_html=current_html,
+                workspace_root=workspace_root,
+            )
             rendered.append(table_html)
             continue
 
@@ -396,7 +671,10 @@ def render_markdown(markdown: str) -> str:
                 index += 1
             rendered.append(
                 "<ul>"
-                + "".join(f"<li>{render_inline(item)}</li>" for item in items)
+                + "".join(
+                    f"<li>{render_inline(item, **inline_kwargs)}</li>"
+                    for item in items
+                )
                 + "</ul>"
             )
             continue
@@ -415,7 +693,17 @@ def render_markdown(markdown: str) -> str:
                 break
             paragraph.append(next_line)
             index += 1
-        rendered.append(f"<p>{render_inline(' '.join(paragraph))}</p>")
+        rendered.append(
+            "<p>"
+            + render_inline(
+                " ".join(paragraph),
+                reference_mode=reference_mode,
+                preview_data=preview_data,
+                current_html=current_html,
+                workspace_root=workspace_root,
+            )
+            + "</p>"
+        )
     return "\n".join(rendered)
 
 
@@ -428,8 +716,7 @@ def discover_markdown(source_root: Path, output_root: Path) -> list[Path]:
     paths: list[Path] = []
     for path in source_root.rglob("*.md"):
         if any(
-            path.resolve().is_relative_to(excluded_path)
-            for excluded_path in excluded
+            path.resolve().is_relative_to(excluded_path) for excluded_path in excluded
         ):
             continue
         paths.append(path)
@@ -454,6 +741,145 @@ def navigation_for(pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def load_nav_config(
+    workspace_root: Path, nav_config_path: Path | None
+) -> dict[str, Any] | None:
+    if nav_config_path is None:
+        return None
+    path = workspace_root / nav_config_path
+    if not path.exists():
+        raise FileNotFoundError(f"navigation config not found: {nav_config_path}")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{nav_config_path} must contain a JSON object")
+    return data
+
+
+def flatten_nav_items(items: list[Any]) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        flattened.append(item)
+        children = item.get("children", [])
+        if isinstance(children, list):
+            flattened.extend(flatten_nav_items(children))
+    return flattened
+
+
+def nav_item_for_config(
+    item: dict[str, Any],
+    by_source: dict[str, str],
+) -> dict[str, Any] | None:
+    source_path = item.get("source_path")
+    if not isinstance(source_path, str) or source_path not in by_source:
+        return None
+    children: list[dict[str, Any]] = []
+    raw_children = item.get("children", [])
+    if isinstance(raw_children, list):
+        for child in raw_children:
+            if isinstance(child, dict):
+                rendered = nav_item_for_config(child, by_source)
+                if rendered is not None:
+                    children.append(rendered)
+    return {
+        "doc_id": by_source[source_path],
+        "label": str(item.get("label", by_source[source_path])),
+        "source_path": source_path,
+        "children": children,
+    }
+
+
+def nav_doc_ids(items: list[dict[str, Any]]) -> list[str]:
+    doc_ids: list[str] = []
+    for item in items:
+        doc_ids.append(str(item["doc_id"]))
+        children = item.get("children", [])
+        if isinstance(children, list):
+            doc_ids.extend(nav_doc_ids(children))
+    return doc_ids
+
+
+def navigation_for_config(
+    pages: list[dict[str, Any]],
+    nav_config: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    if nav_config is None:
+        return navigation_for(pages)
+    by_source = {str(page["source_path"]): str(page["doc_id"]) for page in pages}
+    navigation: list[dict[str, Any]] = []
+    sections = nav_config.get("sections", [])
+    if not isinstance(sections, list):
+        raise ValueError("navigation config sections must be a list")
+    for section in sorted(
+        [item for item in sections if isinstance(item, dict)],
+        key=lambda item: int(item.get("position", 0)),
+    ):
+        nav_items: list[dict[str, Any]] = []
+        for item in section.get("items", []):
+            if not isinstance(item, dict):
+                continue
+            rendered = nav_item_for_config(item, by_source)
+            if rendered is not None:
+                nav_items.append(rendered)
+        doc_ids = nav_doc_ids(nav_items)
+        navigation.append(
+            {
+                "label": str(section.get("title", section.get("id", "Section"))),
+                "pages": doc_ids,
+                "section_id": section.get("id"),
+                "items": nav_items,
+            }
+        )
+    return navigation
+
+
+def nav_item_contains_doc(item: dict[str, Any], current_doc_id: str | None) -> bool:
+    if current_doc_id is None:
+        return False
+    if str(item.get("doc_id")) == current_doc_id:
+        return True
+    children = item.get("children", [])
+    if not isinstance(children, list):
+        return False
+    return any(
+        nav_item_contains_doc(child, current_doc_id)
+        for child in children
+        if isinstance(child, dict)
+    )
+
+
+def render_nav_item(
+    item: dict[str, Any],
+    by_id: dict[str, dict[str, Any]],
+    current_doc_id: str | None,
+    current_html: Path,
+    workspace_root: Path,
+) -> str:
+    doc_id = str(item["doc_id"])
+    page = by_id[doc_id]
+    target = workspace_root / str(page["html_path"])
+    css = ' class="active"' if doc_id == current_doc_id else ""
+    href = html.escape(href_between(current_html, target), quote=True)
+    label = html.escape(str(item.get("label") or page["title"]))
+    link = f'<a{css} href="{href}">{label}</a>'
+    children = item.get("children", [])
+    if not isinstance(children, list) or not children:
+        return link
+    open_attr = " open" if nav_item_contains_doc(item, current_doc_id) else ""
+    children_html = "".join(
+        render_nav_item(child, by_id, current_doc_id, current_html, workspace_root)
+        for child in children
+        if isinstance(child, dict)
+    )
+    return (
+        f'<details class="nav-folder"{open_attr}>'
+        f"<summary>{link}</summary>"
+        f'<div class="nav-children">{children_html}</div>'
+        "</details>"
+    )
+
+
 def render_nav(
     pages: list[dict[str, Any]],
     navigation: list[dict[str, Any]],
@@ -463,18 +889,117 @@ def render_nav(
 ) -> str:
     by_id = {page["doc_id"]: page for page in pages}
     sections: list[str] = []
-    for group in navigation:
-        links: list[str] = [f"<h2>{html.escape(str(group['label']))}</h2>"]
-        for doc_id in group["pages"]:
-            page = by_id[doc_id]
-            target = workspace_root / str(page["html_path"])
-            css = ' class="active"' if doc_id == current_doc_id else ""
-            href = html.escape(href_between(current_html, target), quote=True)
-            links.append(
-                f'<a{css} href="{href}">{html.escape(str(page["title"]))}</a>'
+    for index, group in enumerate(navigation):
+        section_open = current_doc_id in group["pages"] or (
+            current_doc_id is None and index == 0
+        )
+        open_attr = " open" if section_open else ""
+        items = group.get("items")
+        if isinstance(items, list) and items:
+            body = "".join(
+                render_nav_item(
+                    item,
+                    by_id,
+                    current_doc_id,
+                    current_html,
+                    workspace_root,
+                )
+                for item in items
+                if isinstance(item, dict)
             )
-        sections.append(f'<div class="nav-section">{"".join(links)}</div>')
+        else:
+            links: list[str] = []
+            for doc_id in group["pages"]:
+                page = by_id[doc_id]
+                target = workspace_root / str(page["html_path"])
+                css = ' class="active"' if doc_id == current_doc_id else ""
+                href = html.escape(href_between(current_html, target), quote=True)
+                links.append(
+                    f'<a{css} href="{href}">{html.escape(str(page["title"]))}</a>'
+                )
+            body = "".join(links)
+        sections.append(
+            f'<details class="nav-section"{open_attr}>'
+            f"<summary>{html.escape(str(group['label']))}</summary>"
+            f'<div class="nav-section-body">{body}</div>'
+            "</details>"
+        )
     return "".join(sections)
+
+
+def render_index_item(
+    item: dict[str, Any],
+    by_id: dict[str, dict[str, Any]],
+    index_path: Path,
+    workspace_root: Path,
+) -> str:
+    doc_id = str(item["doc_id"])
+    page = by_id[doc_id]
+    target = workspace_root / str(page["html_path"])
+    href = html.escape(href_between(index_path, target), quote=True)
+    label = html.escape(str(item.get("label") or page["title"]))
+    link = f'<a href="{href}">{label}</a>'
+    children = item.get("children", [])
+    if not isinstance(children, list) or not children:
+        return f"<li>{link}</li>"
+    child_items = "".join(
+        render_index_item(child, by_id, index_path, workspace_root)
+        for child in children
+        if isinstance(child, dict)
+    )
+    return (
+        "<li>"
+        f"<details><summary>{link}</summary><ul>{child_items}</ul></details>"
+        "</li>"
+    )
+
+
+def render_index_body(
+    *,
+    site_title: str,
+    pages: list[dict[str, Any]],
+    navigation: list[dict[str, Any]],
+    index_path: Path,
+    workspace_root: Path,
+) -> str:
+    by_id = {str(page["doc_id"]): page for page in pages}
+    sections: list[str] = []
+    for group in navigation:
+        items = group.get("items")
+        if isinstance(items, list) and items:
+            body = "".join(
+                render_index_item(item, by_id, index_path, workspace_root)
+                for item in items
+                if isinstance(item, dict)
+            )
+        else:
+            body = "".join(
+                "<li>"
+                + '<a href="'
+                + html.escape(
+                    href_between(
+                        index_path,
+                        workspace_root / str(by_id[doc_id]["html_path"]),
+                    ),
+                    quote=True,
+                )
+                + '">'
+                + html.escape(str(by_id[doc_id]["title"]))
+                + "</a></li>"
+                for doc_id in group["pages"]
+            )
+        sections.append(
+            f"<h2>{html.escape(str(group['label']))}</h2><ul>{body}</ul>"
+        )
+    return f"<h1>{html.escape(site_title)}</h1>{''.join(sections)}"
+
+
+def homepage_doc_id(navigation: list[dict[str, Any]]) -> str | None:
+    for group in navigation:
+        pages = group.get("pages", [])
+        if isinstance(pages, list) and pages:
+            return str(pages[0])
+    return None
 
 
 def page_html(
@@ -518,6 +1043,35 @@ def page_html(
     )
 
 
+def root_entry_html(*, site_title: str, target_href: str) -> str:
+    safe_title = html.escape(site_title)
+    safe_href = html.escape(target_href, quote=True)
+    return (
+        "<!doctype html>\n"
+        '<html lang="en">\n'
+        "<head>\n"
+        '  <meta charset="utf-8">\n'
+        '  <meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f'  <meta http-equiv="refresh" content="0; url={safe_href}">\n'
+        f"  <title>{safe_title}</title>\n"
+        "  <style>\n"
+        "    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "
+        '"Segoe UI", sans-serif; background: #f7f8fa; color: #17202a; }\n'
+        "    main { max-width: 720px; margin: 18vh auto; padding: 0 24px; }\n"
+        "    a { color: #0f766e; }\n"
+        "  </style>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <main>\n"
+        f"    <h1>{safe_title}</h1>\n"
+        "    <p>Opening the rendered handbook.</p>\n"
+        f'    <p><a href="{safe_href}">Open {safe_title}</a></p>\n'
+        "  </main>\n"
+        "</body>\n"
+        "</html>\n"
+    )
+
+
 def load_preview_index(
     workspace_root: Path,
     preview_index_path: Path,
@@ -548,12 +1102,21 @@ def reset_output_root(output: Path, workspace: Path, source: Path) -> None:
         shutil.rmtree(output)
 
 
+def root_entry_path(output: Path) -> Path | None:
+    if output.name == "_site" or output.parent.name != "_site":
+        return None
+    return output.parent / "index.html"
+
+
 def build_docs_site(
     workspace_root: Path,
     *,
     source_root: Path = DEFAULT_SOURCE_ROOT,
     output_root: Path = DEFAULT_OUTPUT_ROOT,
     preview_index_path: Path = DEFAULT_PREVIEW_INDEX,
+    nav_config_path: Path | None = None,
+    site_title: str = "Project Docs",
+    reference_mode: str = "project-evidence",
     dry_run: bool = False,
 ) -> dict[str, Any]:
     workspace = workspace_root.resolve()
@@ -561,7 +1124,10 @@ def build_docs_site(
     output = (workspace / output_root).resolve()
     if not source.exists():
         raise FileNotFoundError(f"source root not found: {relpath(source, workspace)}")
+    if reference_mode not in {"project-evidence", "workflow-handbook"}:
+        raise ValueError("reference_mode must be project-evidence or workflow-handbook")
 
+    nav_config = load_nav_config(workspace, nav_config_path)
     preview_data = load_preview_index(workspace, preview_index_path)
     markdown_paths = discover_markdown(source, output)
     pages: list[dict[str, Any]] = []
@@ -569,34 +1135,47 @@ def build_docs_site(
 
     for path in markdown_paths:
         text = path.read_text(encoding="utf-8")
+        metadata, body = split_frontmatter(text)
         doc_id = doc_id_for(path, source)
         relative_source = path.relative_to(workspace).as_posix()
-        html_relative = (
-            Path(output_root) / path.relative_to(source).with_suffix(".html")
+        html_relative = Path(output_root) / path.relative_to(source).with_suffix(
+            ".html"
         )
+        doc_kind = str(metadata.get("kind") or doc_kind_for(path, source))
         pages.append(
             {
                 "doc_id": doc_id,
-                "doc_kind": doc_kind_for(path, source),
-                "title": extract_title(text, path.stem.replace("_", " ")),
+                "doc_kind": doc_kind,
+                "title": str(
+                    metadata.get("title")
+                    or extract_title(body, path.stem.replace("_", " "))
+                ),
                 "source_path": relative_source,
                 "html_path": html_relative.as_posix(),
-                "status": extract_status(text),
+                "status": metadata.get("status") or extract_status(body),
                 "evidence_chain_path": None,
                 "preview_index_path": (
                     preview_index_path.as_posix() if preview_data else None
                 ),
                 "related_pages": [],
+                "page_id": metadata.get("page_id"),
+                "page_kind": metadata.get("kind"),
+                "source_type": metadata.get("source_type"),
+                "summary": metadata.get("summary"),
+                "references": metadata.get("references", []),
             }
         )
-        markdown_by_id[doc_id] = text
+        markdown_by_id[doc_id] = body
 
-    navigation = navigation_for(pages)
+    navigation = navigation_for_config(pages, nav_config)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
         "source_root": Path(source_root).as_posix(),
         "output_root": Path(output_root).as_posix(),
+        "site_title": site_title,
+        "reference_mode": reference_mode,
+        "nav_config_path": nav_config_path.as_posix() if nav_config_path else None,
         "pages": pages,
         "navigation": navigation,
     }
@@ -623,40 +1202,72 @@ def build_docs_site(
         script_href = href_between(html_path, assets / "evidence-preview.js")
         page_text = page_html(
             title=str(page["title"]),
-            body=render_markdown(markdown_by_id[str(page["doc_id"])]),
+            body=render_markdown(
+                markdown_by_id[str(page["doc_id"])],
+                reference_mode=reference_mode,
+                preview_data=preview_data,
+                current_html=html_path,
+                workspace_root=workspace,
+            ),
             source_path=str(page["source_path"]),
             status=page.get("status"),
             nav_html=nav_html,
             preview_data=preview_data,
-            site_title="Project Docs",
+            site_title=site_title,
             style_href=style_href,
             script_href=script_href,
         )
         atomic_write_text(html_path, page_text)
 
     index_path = output / "index.html"
-    index_items = "".join(
-        '<li><a href="'
-        + html.escape(
-            href_between(index_path, workspace / str(page["html_path"])),
-            quote=True,
+    pages_by_id = {str(page["doc_id"]): page for page in pages}
+    home_doc_id = homepage_doc_id(navigation)
+    if home_doc_id and home_doc_id in markdown_by_id and home_doc_id in pages_by_id:
+        home_page = pages_by_id[home_doc_id]
+        index_body = render_markdown(
+            markdown_by_id[home_doc_id],
+            reference_mode=reference_mode,
+            preview_data=preview_data,
+            current_html=index_path,
+            workspace_root=workspace,
         )
-        + '">'
-        f"{html.escape(str(page['title']))}</a></li>"
-        for page in pages
-    )
+        index_title = str(home_page["title"])
+        index_source = str(home_page["source_path"])
+        index_status = home_page.get("status")
+        index_nav_doc_id: str | None = home_doc_id
+    else:
+        index_body = render_index_body(
+            site_title=site_title,
+            pages=pages,
+            navigation=navigation,
+            index_path=index_path,
+            workspace_root=workspace,
+        )
+        index_title = "Index"
+        index_source = Path(source_root).as_posix()
+        index_status = None
+        index_nav_doc_id = None
     index_html = page_html(
-        title="Index",
-        body=f"<h1>Project Docs</h1><ul>{index_items}</ul>",
-        source_path=Path(source_root).as_posix(),
-        status=None,
-        nav_html=render_nav(pages, navigation, None, index_path, workspace),
+        title=index_title,
+        body=index_body,
+        source_path=index_source,
+        status=index_status,
+        nav_html=render_nav(pages, navigation, index_nav_doc_id, index_path, workspace),
         preview_data=preview_data,
-        site_title="Project Docs",
+        site_title=site_title,
         style_href=href_between(index_path, assets / "site.css"),
         script_href=href_between(index_path, assets / "evidence-preview.js"),
     )
     atomic_write_text(index_path, index_html)
+    root_index_path = root_entry_path(output)
+    if root_index_path is not None:
+        atomic_write_text(
+            root_index_path,
+            root_entry_html(
+                site_title=site_title,
+                target_href=href_between(root_index_path, index_path),
+            ),
+        )
     return manifest
 
 
@@ -668,6 +1279,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-root", type=Path, default=DEFAULT_SOURCE_ROOT)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--preview-index", type=Path, default=DEFAULT_PREVIEW_INDEX)
+    parser.add_argument("--nav-config", type=Path)
+    parser.add_argument("--site-title", default="Project Docs")
+    parser.add_argument(
+        "--reference-mode",
+        choices=["project-evidence", "workflow-handbook"],
+        default="project-evidence",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -678,9 +1296,12 @@ def main(argv: list[str] | None = None) -> int:
             source_root=args.source_root,
             output_root=args.output_root,
             preview_index_path=args.preview_index,
+            nav_config_path=args.nav_config,
+            site_title=args.site_title,
+            reference_mode=args.reference_mode,
             dry_run=args.dry_run,
         )
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
