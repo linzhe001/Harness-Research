@@ -13,7 +13,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.lock import LockManager  # noqa: E402
@@ -27,7 +27,7 @@ from auto_iterate.recovery import (  # noqa: E402
 )
 from auto_iterate.state import atomic_write_json  # noqa: E402
 
-FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate"
+FIXTURES = REPO_ROOT / "tooling" / ".tests" / "fixtures" / "auto_iterate"
 
 
 # ===================================================================

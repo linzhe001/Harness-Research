@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = REPO_ROOT / "tooling" / "model_api" / "external_chat.py"
 PROMPT_BUILDER_PATH = REPO_ROOT / "tooling" / "model_api" / "build_review_prompt.py"
 AGENTIC_REVIEW_PATH = REPO_ROOT / "tooling" / "model_api" / "agentic_review.py"

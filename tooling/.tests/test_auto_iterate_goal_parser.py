@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.accounts import (
@@ -35,7 +35,7 @@ from auto_iterate.goal import (
 from auto_iterate.policy import PolicyConfig
 from auto_iterate.state import load_json
 
-FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
+FIXTURES = REPO_ROOT / "tooling" / ".tests" / "fixtures" / "auto_iterate" / "contracts"
 
 
 # ===================================================================

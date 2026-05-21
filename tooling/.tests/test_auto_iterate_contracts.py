@@ -1,3 +1,4 @@
+# ruff: noqa: E402,E501
 """Unit tests for auto-iterate V7 IO primitives.
 
 Tests cover:
@@ -13,7 +14,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import textwrap
 import time
 from pathlib import Path
 
@@ -22,9 +22,11 @@ import pytest
 # ---------------------------------------------------------------------------
 # Make the scripts/ package importable.
 # ---------------------------------------------------------------------------
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
+from auto_iterate.events import EventLogger, iso_now
+from auto_iterate.lock import LockConflictError, LockManager
 from auto_iterate.state import (
     SchemaVersionError,
     StateLoadError,
@@ -33,10 +35,8 @@ from auto_iterate.state import (
     load_json,
     validate_schema_version,
 )
-from auto_iterate.lock import LockConflictError, LockManager
-from auto_iterate.events import EventLogger, iso_now
 
-FIXTURES = REPO_ROOT / "tests" / "fixtures" / "auto_iterate" / "contracts"
+FIXTURES = REPO_ROOT / "tooling" / ".tests" / "fixtures" / "auto_iterate" / "contracts"
 
 
 # ===================================================================

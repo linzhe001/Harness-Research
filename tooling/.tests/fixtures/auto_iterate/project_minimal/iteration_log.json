@@ -1,0 +1,13 @@
+{
+  "project": "test_project",
+  "evaluation_protocol": {
+    "primary_metric": {"name": "PSNR", "goal": "maximize"},
+    "tracked_metrics": [
+      {"name": "PSNR", "goal": "maximize", "source": "eval_script"},
+      {"name": "SSIM", "goal": "maximize", "source": "eval_script"}
+    ],
+    "comparison_rule": "primary_metric_first"
+  },
+  "baseline_metrics": {"PSNR": 28.5, "SSIM": 0.85},
+  "iterations": []
+}
