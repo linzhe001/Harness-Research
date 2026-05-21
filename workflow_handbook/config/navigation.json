@@ -1,0 +1,128 @@
+{
+  "schema_version": "0.1",
+  "site_title": "Harness Workflow Handbook",
+  "source_root": "workflow_handbook",
+  "output_root": "docs/_site/workflow_handbook",
+  "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+  "sections": [
+    {
+      "id": "start",
+      "title": "Start",
+      "kind": "overview",
+      "position": 0,
+      "items": [
+        {
+          "page_id": "operator_handbook",
+          "label": "Operator Handbook",
+          "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+          "generated": false
+        }
+      ]
+    },
+    {
+      "id": "details",
+      "title": "Workflow Details",
+      "kind": "reference",
+      "position": 40,
+      "items": [
+        {
+          "page_id": "stage_cards",
+          "label": "Stage Details",
+          "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
+          "generated": true,
+          "children": [
+            { "page_id": "wf0_init", "label": "WF0 Init", "source_path": "workflow_handbook/stages/wf0_init.md", "generated": true },
+            { "page_id": "wf1_survey_idea", "label": "WF1 Survey Idea", "source_path": "workflow_handbook/stages/wf1_survey_idea.md", "generated": true },
+            { "page_id": "wf2_idea_debate", "label": "WF2 Idea Debate", "source_path": "workflow_handbook/stages/wf2_idea_debate.md", "generated": true },
+            { "page_id": "wf3_refine_idea", "label": "WF3 Refine Idea", "source_path": "workflow_handbook/stages/wf3_refine_idea.md", "generated": true },
+            { "page_id": "wf4_data_prep", "label": "WF4 Data Prep", "source_path": "workflow_handbook/stages/wf4_data_prep.md", "generated": true },
+            { "page_id": "wf5_baseline_repro", "label": "WF5 Baseline Repro", "source_path": "workflow_handbook/stages/wf5_baseline_repro.md", "generated": true },
+            { "page_id": "wf6_refine_arch", "label": "WF6 Refine Arch", "source_path": "workflow_handbook/stages/wf6_refine_arch.md", "generated": true },
+            { "page_id": "wf7_build_plan", "label": "WF7 Build Plan", "source_path": "workflow_handbook/stages/wf7_build_plan.md", "generated": true },
+            { "page_id": "wf8_code_expert", "label": "WF8 Code Expert", "source_path": "workflow_handbook/stages/wf8_code_expert.md", "generated": true },
+            { "page_id": "wf9_validate_run", "label": "WF9 Validate Run", "source_path": "workflow_handbook/stages/wf9_validate_run.md", "generated": true },
+            { "page_id": "wf10_iterate", "label": "WF10 Iterate", "source_path": "workflow_handbook/stages/wf10_iterate.md", "generated": true },
+            { "page_id": "wf11_final_exp", "label": "WF11 Final Exp", "source_path": "workflow_handbook/stages/wf11_final_exp.md", "generated": true },
+            { "page_id": "wf12_release", "label": "WF12 Release", "source_path": "workflow_handbook/stages/wf12_release.md", "generated": true }
+          ]
+        },
+        {
+          "page_id": "workflow_layers",
+          "label": "Workflow Layers",
+          "source_path": "workflow_handbook/pages/workflow_layers.md",
+          "generated": false,
+          "children": [
+            { "page_id": "layer_explore", "label": "Explore Layer", "source_path": "workflow_handbook/pages/layer_explore.md", "generated": false },
+            { "page_id": "layer_contract_plan", "label": "Contract And Plan Layer", "source_path": "workflow_handbook/pages/layer_contract_plan.md", "generated": false },
+            { "page_id": "layer_build_validate", "label": "Build And Validate Layer", "source_path": "workflow_handbook/pages/layer_build_validate.md", "generated": false },
+            { "page_id": "layer_iterate_release", "label": "Iterate And Release Layer", "source_path": "workflow_handbook/pages/layer_iterate_release.md", "generated": false }
+          ]
+        },
+        {
+          "page_id": "evidence_approval_model",
+          "label": "Evidence And Approval",
+          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
+          "generated": false
+        },
+        {
+          "page_id": "hooks_permissions_model",
+          "label": "Hooks And Permissions",
+          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
+          "generated": false
+        },
+        {
+          "page_id": "auto_iterate_model",
+          "label": "Auto-Iterate",
+          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
+          "generated": false
+        },
+        {
+          "page_id": "markdown_to_html_preview_chain",
+          "label": "HTML Preview Chain",
+          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+          "generated": false
+        },
+        {
+          "page_id": "workflow_terms",
+          "label": "Workflow Terms",
+          "source_path": "workflow_handbook/pages/workflow_terms.md",
+          "generated": false
+        },
+        {
+          "page_id": "skill_reference",
+          "label": "Skill Details",
+          "source_path": "workflow_handbook/pages/skill_reference.md",
+          "generated": false,
+          "children": [
+            { "page_id": "orchestrator", "label": "orchestrator", "source_path": "workflow_handbook/skills/orchestrator.md", "generated": true },
+            { "page_id": "doc-compiler", "label": "doc-compiler", "source_path": "workflow_handbook/skills/doc-compiler.md", "generated": true },
+            { "page_id": "docs-site", "label": "docs-site", "source_path": "workflow_handbook/skills/docs-site.md", "generated": true },
+            { "page_id": "review-packet", "label": "review-packet", "source_path": "workflow_handbook/skills/review-packet.md", "generated": true },
+            { "page_id": "protocol-compiler", "label": "protocol-compiler", "source_path": "workflow_handbook/skills/protocol-compiler.md", "generated": true },
+            { "page_id": "protocol-drift-check", "label": "protocol-drift-check", "source_path": "workflow_handbook/skills/protocol-drift-check.md", "generated": true },
+            { "page_id": "survey-idea", "label": "survey-idea", "source_path": "workflow_handbook/skills/survey-idea.md", "generated": true },
+            { "page_id": "idea-debate", "label": "idea-debate", "source_path": "workflow_handbook/skills/idea-debate.md", "generated": true },
+            { "page_id": "refine-idea", "label": "refine-idea", "source_path": "workflow_handbook/skills/refine-idea.md", "generated": true },
+            { "page_id": "data-prep", "label": "data-prep", "source_path": "workflow_handbook/skills/data-prep.md", "generated": true },
+            { "page_id": "baseline-repro", "label": "baseline-repro", "source_path": "workflow_handbook/skills/baseline-repro.md", "generated": true },
+            { "page_id": "refine-arch", "label": "refine-arch", "source_path": "workflow_handbook/skills/refine-arch.md", "generated": true },
+            { "page_id": "deep-check", "label": "deep-check", "source_path": "workflow_handbook/skills/deep-check.md", "generated": true },
+            { "page_id": "evaluate", "label": "evaluate", "source_path": "workflow_handbook/skills/evaluate.md", "generated": true },
+            { "page_id": "init-project", "label": "init-project", "source_path": "workflow_handbook/skills/init-project.md", "generated": true },
+            { "page_id": "env-setup", "label": "env-setup", "source_path": "workflow_handbook/skills/env-setup.md", "generated": true },
+            { "page_id": "build-plan", "label": "build-plan", "source_path": "workflow_handbook/skills/build-plan.md", "generated": true },
+            { "page_id": "code-expert", "label": "code-expert", "source_path": "workflow_handbook/skills/code-expert.md", "generated": true },
+            { "page_id": "code-debug", "label": "code-debug", "source_path": "workflow_handbook/skills/code-debug.md", "generated": true },
+            { "page_id": "harness-maintenance", "label": "harness-maintenance", "source_path": "workflow_handbook/skills/harness-maintenance.md", "generated": true },
+            { "page_id": "code-review", "label": "code-review", "source_path": "workflow_handbook/skills/code-review.md", "generated": true },
+            { "page_id": "validate-run", "label": "validate-run", "source_path": "workflow_handbook/skills/validate-run.md", "generated": true },
+            { "page_id": "iterate", "label": "iterate", "source_path": "workflow_handbook/skills/iterate.md", "generated": true },
+            { "page_id": "auto-iterate-goal", "label": "auto-iterate-goal", "source_path": "workflow_handbook/skills/auto-iterate-goal.md", "generated": true },
+            { "page_id": "final-exp", "label": "final-exp", "source_path": "workflow_handbook/skills/final-exp.md", "generated": true },
+            { "page_id": "release", "label": "release", "source_path": "workflow_handbook/skills/release.md", "generated": true }
+          ]
+        }
+      ]
+    }
+  ]
+}

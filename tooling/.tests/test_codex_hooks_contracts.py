@@ -364,15 +364,19 @@ def test_stage_card_generator_renders_core_skill_boundaries() -> None:
     rendered = generate_stage_cards.render_stage_cards(REPO_ROOT)
 
     assert "# Harness Workflow Stage Cards" in rendered
-    assert "## code-debug" in rendered
-    assert "## harness-maintenance" in rendered
-    assert "Can write:" in rendered
-    assert "Final outputs:" in rendered
-    assert "Tool-owned outputs:" in rendered
-    assert "`conclusion_evidence: docs/30_evidence/Dataset_Table.md`" in rendered
-    assert "`src/`" in rendered
-    assert "`tooling/codex_hooks/`" in rendered
-    assert "`docs/`" in rendered
+    assert "## Explore" in rendered
+    assert "## Contract & Plan" in rendered
+    assert "## Build & Validate" in rendered
+    assert "## Iterate & Release" in rendered
+    assert "### WF8 Code Expert" in rendered
+    assert "### WF10 Iterate" in rendered
+    assert "怎么启动:" in rendered
+    assert "完成后得到:" in rendered
+    assert "深入阅读:" in rendered
+    assert "[[stage:WF10|WF10 details]]" in rendered
+    assert "[[skill:iterate|iterate Skill]]" in rendered
+    assert "Can write:" not in rendered
+    assert "Tool-owned outputs:" not in rendered
     assert "--output docs/Workflow_Stage_Cards.md" not in rendered
 
 
@@ -397,8 +401,10 @@ def test_stage_card_generator_writes_output(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     text = output.read_text(encoding="utf-8")
-    assert "## harness-maintenance" in text
-    assert "Gate ledger" in text
+    assert "## Iterate & Release" in text
+    assert "### WF12 Release" in text
+    assert "Stage -> 一句话 -> 怎么启动 -> 完成后得到 -> 深入阅读" in text
+    assert "[[skill:release|release Skill]]" in text
     assert "--output docs/Workflow_Stage_Cards.md" not in text
 
 
@@ -422,9 +428,18 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
     handbook = (handbook_dir / "Workflow_Operator_Handbook.md").read_text(
         encoding="utf-8"
     )
-    assert "Handbook 和 Stage Cards 的分工" in handbook
-    assert "AI Coding Discipline In Harness" in handbook
+    assert "Start Here" in handbook
+    assert "The Four Layers" in handbook
+    assert "Daily Run Shape" in handbook
+    assert "Generated Views" in handbook
+    assert "docs/_views/workflow_handbook_reference_index.json" in handbook
     assert "不要再在 `workflow_handbook/` 下新增平行叙事文档" in handbook
+
+    html_plan = handbook_dir / "plans" / "HTML_Rendering_Handbook_Plan.md"
+    assert html_plan.exists()
+    plan_text = html_plan.read_text(encoding="utf-8")
+    assert "workflow_handbook/pages/**" in plan_text
+    assert "workflow_handbook_reference_index.schema.json" in plan_text
 
 
 def test_hooks_json_references_existing_scripts() -> None:

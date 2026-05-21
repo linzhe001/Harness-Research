@@ -1,0 +1,106 @@
+---
+schema_version: "0.1"
+page_id: "env-setup"
+title: "env-setup"
+kind: "skill"
+audience: ["operator", "agent", "maintainer"]
+source_type: "generated"
+source_path: "workflow_handbook/skills/env-setup.md"
+source_of_truth: true
+status: "generated"
+summary: "Codex wrapper for environment creation and refresh. Use when the user wants the environment detected, created, or synchronized into the legacy `CLAUDE.md` format."
+nav:
+  section: "skills"
+  position: 150
+canonical_sources:
+  - path: "schemas/skill_contracts.json"
+    role: "skill_contract"
+    anchor: "env-setup"
+  - path: ".agents/skills/env-setup/SKILL.md"
+    role: "skill_source"
+references: ["skill:env-setup", "source:schemas/skill_contracts.json#env-setup", "term:Gate Evidence"]
+html:
+  render: true
+  output_path: "docs/_site/workflow_handbook/skills/env-setup.html"
+  preview_index_path: "docs/_views/workflow_handbook_reference_index.json"
+---
+
+# env-setup
+
+## Purpose
+
+Codex wrapper for environment creation and refresh. Use when the user wants the environment detected, created, or synchronized into the legacy `CLAUDE.md` format.
+
+## Triggers
+
+- `$env-setup`
+- `/env-setup`
+- `env-setup`
+- `environment refresh`
+- `deps changed`
+- `dependency refresh`
+
+## Can Write
+
+- `CLAUDE.md`
+- `requirements.txt`
+- `requirements-dev.txt`
+- `environment.yml`
+- `environment.yaml`
+- `pyproject.toml`
+- `scripts/`
+- `configs/`
+
+## Final Outputs
+
+- `guidance: CLAUDE.md`
+- `operational_scope: requirements.txt`
+- `operational_scope: requirements-dev.txt`
+- `operational_scope: environment.yml`
+- `operational_scope: environment.yaml`
+- `operational_scope: pyproject.toml`
+
+## Tool-Owned Outputs
+
+- none
+
+## Must Read
+
+- `.agents/references/deps-update-rule.md`
+- `.agents/references/documentation-style.md`
+- `.agents/references/language-policy.md`
+- `.agents/skills/env-setup/SKILL.md`
+- `.agents/skills/env-setup/references/environment-refresh.md`
+- `.agents/skills/init-project/references/claude-maintenance.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `PROJECT_STATE.json`
+- `requirements.txt`
+- `requirements-dev.txt`
+- `environment.yml`
+- `environment.yaml`
+- `pyproject.toml`
+
+## Must Prove
+
+- `py_compile_or_NOT_RUN`
+- `ruff_or_NOT_RUN`
+- `gate_ledger`
+- `dependency_file_change`
+- `environment_section_write`
+- `setup_command_run`
+
+## Cannot Do
+
+- `training_without_semantic_commit`
+- `direct_edit_auto_iterate`
+
+## Exit Condition
+
+Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+
+## Related References
+
+- [[skill:env-setup]]
+- [[source:schemas/skill_contracts.json#env-setup]]
+- [[term:Gate Evidence]]
