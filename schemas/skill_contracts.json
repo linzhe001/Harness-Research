@@ -65,7 +65,21 @@
           "iteration_log.json",
           "project_map.json"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json",
+            "iteration_log.json",
+            "project_map.json"
+          ],
+          "owner": "orchestrator",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Workflow state and indexes; not Human Approval by themselves."
+        }
+      ]
     },
     {
       "skill": "doc-compiler",
@@ -99,7 +113,8 @@
       "required_actions": [
         "compile_doc_or_NOT_RUN",
         "check_docchain_gates_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "manual_edit_evidence_chain",
@@ -108,13 +123,16 @@
       "gate_ledger_required_when": [
         "current_doc_write",
         "contract_doc_write",
-        "protocol_doc_write"
+        "protocol_doc_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/10_contract/",
         "docs/20_facts/",
         "docs/35_protocol/",
-        ".evidence/"
+        ".evidence/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -122,9 +140,154 @@
           "docs/20_facts/",
           "docs/35_protocol/",
           ".evidence/chains/",
-          ".evidence/index.json"
+          ".evidence/index.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "approved_contract",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "doc-compiler",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Approval-facing contract docs; approval still needs Approval Evidence."
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/"
+          ],
+          "owner": "doc-compiler",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/35_protocol/"
+          ],
+          "owner": "doc-compiler",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Protocol drafts are not Approved Contracts."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "docs-site",
+      "triggers": [
+        "$docs-site",
+        "/docs-site",
+        "docs-site",
+        "docs site",
+        "render docs",
+        "HTML docs",
+        "human docs",
+        "rebuild docs site"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/evidence-chain-rule.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/language-policy.md",
+          ".agents/references/ubiquitous-language.md"
+        ],
+        "skill": [
+          ".agents/skills/docs-site/SKILL.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          ".evidence/index.json",
+          "docs/10_contract/Project_Contract.md",
+          "docs/20_facts/Codebase_Map.md",
+          "docs/20_facts/Project_Glossary.md",
+          "docs/Technical_Spec.md",
+          "docs/Implementation_Roadmap.md",
+          "docs/Validate_Run_Report.md",
+          "docs/30_evidence/Validation_Table.md"
+        ],
+        "project_optional": [
+          "PROJECT_STATE.json",
+          "project_map.json",
+          "docs/_views/evidence_preview_index.json",
+          "docs/_site/manifest.json"
+        ]
+      },
+      "required_actions": [
+        "build_evidence_preview_index_or_NOT_RUN",
+        "build_docs_site_or_NOT_RUN",
+        "validate_docs_site_or_NOT_RUN",
+        "gate_ledger"
+      ],
+      "forbidden_actions": [
+        "manual_edit_evidence_chain",
+        "direct_edit_evidence",
+        "edit_source_markdown_during_render",
+        "html_as_source_of_truth"
+      ],
+      "gate_ledger_required_when": [
+        "docs_site_render",
+        "human_doc_html_write",
+        "preview_index_write"
+      ],
+      "sensitive_paths": [
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated human-readable HTML view from source Markdown; Markdown remains source of truth."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            "docs/_views/evidence_preview_index.json",
+            "docs/_site/manifest.json"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated preview and manifest data for HTML hover/navigation behavior."
+        }
+      ]
     },
     {
       "skill": "review-packet",
@@ -160,7 +323,8 @@
         "check_dynamic_context_or_NOT_RUN",
         "build_review_packet_or_NOT_RUN",
         "approval_tool_only_after_explicit_human_approval",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "approve_without_explicit_human_approval",
@@ -171,20 +335,67 @@
         "review_packet_build",
         "WF10_readiness",
         "WF11_readiness",
-        "WF12_readiness"
+        "WF12_readiness",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/10_contract/",
         "PROJECT_STATE.json",
-        ".evidence/review_packets/"
+        ".evidence/review_packets/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/review_packets/",
           "docs/10_contract/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "approved_contract",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "review-packet",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Related approval records only after explicit Human Approval."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "review-packet",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/review_packets/"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Review Packet is decision input, not approval."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "protocol-compiler",
@@ -218,7 +429,8 @@
         "compile_protocol_or_NOT_RUN",
         "protocol_review_or_NOT_RUN",
         "docchain_gate_when_current_docs_change",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -227,18 +439,55 @@
       "gate_ledger_required_when": [
         "protocol_apply",
         "protocol_doc_write",
-        "contract_readiness"
+        "contract_readiness",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/35_protocol/",
-        ".evidence/protocol_compiler/"
+        ".evidence/protocol_compiler/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/protocol_compiler/",
-          "docs/35_protocol/"
+          "docs/35_protocol/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/35_protocol/"
+          ],
+          "owner": "protocol-compiler",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Protocol Draft output; not an Approved Contract."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/protocol_compiler/"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "protocol-drift-check",
@@ -271,7 +520,8 @@
       "required_actions": [
         "check_protocol_drift_or_NOT_RUN",
         "docchain_gate_when_current_docs_change",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "ignore_unresolved_protocol_drift",
@@ -281,18 +531,55 @@
         "protocol_readiness",
         "WF10_readiness",
         "WF11_readiness",
-        "WF12_readiness"
+        "WF12_readiness",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/35_protocol/",
-        "docs/10_contract/"
+        "docs/10_contract/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/35_protocol/",
-          "docs/10_contract/"
+          "docs/10_contract/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/35_protocol/"
+          ],
+          "owner": "protocol-drift-check",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "approved_contract",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "protocol-drift-check",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Drift notes do not approve contracts."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "survey-idea",
@@ -331,7 +618,8 @@
       "required_actions": [
         "compile_protocol_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -340,22 +628,60 @@
       "gate_ledger_required_when": [
         "evidence_table_write",
         "feasibility_report_write",
-        "canonical_state_edit"
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Feasibility_Report.md",
         "docs/30_evidence/",
         "docs/35_protocol/",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Feasibility_Report.md",
           "docs/30_evidence/",
           "docs/35_protocol/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Feasibility_Report.md",
+            "docs/30_evidence/",
+            "docs/35_protocol/"
+          ],
+          "owner": "survey-idea",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "survey-idea",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "idea-debate",
@@ -397,7 +723,8 @@
         "compile_protocol_or_NOT_RUN",
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -406,20 +733,57 @@
       "gate_ledger_required_when": [
         "idea_debate_report_write",
         "protocol_doc_write",
-        "canonical_state_edit"
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Idea_Debate.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Idea_Debate.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Idea_Debate.md",
+            "docs/35_protocol/"
+          ],
+          "owner": "idea-debate",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "idea-debate",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "refine-idea",
@@ -461,7 +825,8 @@
         "compile_protocol_or_NOT_RUN",
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -470,20 +835,57 @@
       "gate_ledger_required_when": [
         "refined_idea_write",
         "protocol_assumption_write",
-        "canonical_state_edit"
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Refined_Idea.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Refined_Idea.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Refined_Idea.md",
+            "docs/35_protocol/"
+          ],
+          "owner": "refine-idea",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "refine-idea",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "data-prep",
@@ -521,7 +923,8 @@
       "required_actions": [
         "compile_doc_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -529,30 +932,108 @@
       ],
       "gate_ledger_required_when": [
         "dataset_stats_write",
+        "evidence_table_write",
         "dataset_config_write",
         "canonical_state_edit",
-        "CLAUDE_dataset_sync"
+        "CLAUDE_dataset_sync",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Dataset_Stats.md",
         "docs/20_facts/",
+        "docs/30_evidence/Dataset_Table.md",
         "PROJECT_STATE.json",
         "CLAUDE.md",
         "AGENTS.md",
         "configs/",
-        "src/"
+        "src/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Dataset_Stats.md",
           "docs/20_facts/",
+          "docs/30_evidence/Dataset_Table.md",
           "PROJECT_STATE.json",
           "CLAUDE.md",
           "AGENTS.md",
           "configs/",
-          "src/"
+          "src/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Dataset_Stats.md"
+          ],
+          "owner": "data-prep",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/30_evidence/Dataset_Table.md"
+          ],
+          "owner": "data-prep",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Human-readable Conclusion Evidence table; Evidence Chains remain tool-owned under .evidence/**."
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/"
+          ],
+          "owner": "data-prep",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "data-prep",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "guidance",
+          "paths": [
+            "CLAUDE.md",
+            "AGENTS.md"
+          ],
+          "owner": "data-prep",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "configs/",
+            "src/"
+          ],
+          "owner": "data-prep",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "baseline-repro",
@@ -582,7 +1063,8 @@
           "AGENTS.md",
           "PROJECT_STATE.json",
           "CLAUDE.md",
-          "docs/20_facts/Project_Glossary.md"
+          "docs/20_facts/Project_Glossary.md",
+          "docs/20_facts/Codebase_Map.md"
         ],
         "project_optional": [
           "project_map.json",
@@ -598,8 +1080,10 @@
         "check_protocol_drift_or_NOT_RUN",
         "check_dynamic_context_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
+        "codebase_map_sync_when_baseline_layout_changes",
         "semantic_commit_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "training_without_semantic_commit",
@@ -608,35 +1092,129 @@
       ],
       "gate_ledger_required_when": [
         "baseline_report_write",
+        "evidence_table_write",
+        "codebase_map_write",
         "baseline_contract_readiness",
         "evaluation_contract_readiness",
         "canonical_state_edit",
-        "stable_code_change"
+        "stable_code_change",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Baseline_Report.md",
+        "docs/30_evidence/Baseline_Table.md",
         "docs/10_contract/",
+        "docs/20_facts/Codebase_Map.md",
         "PROJECT_STATE.json",
         "project_map.json",
         "CLAUDE.md",
         "baselines/",
         "configs/",
         "scripts/",
-        "src/"
+        "src/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Baseline_Report.md",
+          "docs/30_evidence/Baseline_Table.md",
           "docs/10_contract/",
+          "docs/20_facts/Codebase_Map.md",
           "PROJECT_STATE.json",
           "project_map.json",
           "CLAUDE.md",
           "baselines/",
           "configs/",
           "scripts/",
-          "src/"
+          "src/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Baseline_Report.md"
+          ],
+          "owner": "baseline-repro",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/30_evidence/Baseline_Table.md"
+          ],
+          "owner": "baseline-repro",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Human-readable reproduced-baseline Conclusion Evidence table; approval still requires Approval Evidence."
+        },
+        {
+          "kind": "approved_contract",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "baseline-repro",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Contract docs still require explicit Human Approval."
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/Codebase_Map.md"
+          ],
+          "owner": "baseline-repro",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Update when baseline, script, config, or stable interface layout changes."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json",
+            "project_map.json"
+          ],
+          "owner": "baseline-repro",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "guidance",
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "owner": "baseline-repro",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "baselines/",
+            "configs/",
+            "scripts/",
+            "src/"
+          ],
+          "owner": "baseline-repro",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "refine-arch",
@@ -682,7 +1260,8 @@
       "required_actions": [
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -692,22 +1271,68 @@
         "technical_spec_write",
         "contract_conflict",
         "project_glossary_write",
-        "canonical_state_edit"
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Technical_Spec.md",
         "docs/20_facts/Project_Glossary.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Technical_Spec.md",
           "docs/20_facts/Project_Glossary.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Technical_Spec.md",
+            "docs/35_protocol/"
+          ],
+          "owner": "refine-arch",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/Project_Glossary.md"
+          ],
+          "owner": "refine-arch",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "refine-arch",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "deep-check",
@@ -752,7 +1377,8 @@
         "codex_review_or_NOT_RUN",
         "external_model_review_or_NOT_RUN",
         "check_protocol_drift_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -761,20 +1387,58 @@
       "gate_ledger_required_when": [
         "sanity_check_write",
         "review_trace_write",
-        "contract_conflict"
+        "contract_conflict",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Sanity_Check_Log.md",
         "docs/35_protocol/",
-        "docs/10_contract/"
+        "docs/10_contract/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Sanity_Check_Log.md",
           "docs/35_protocol/",
-          "docs/10_contract/"
+          "docs/10_contract/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Sanity_Check_Log.md",
+            "docs/35_protocol/"
+          ],
+          "owner": "deep-check",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "approved_contract",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "deep-check",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Review notes do not approve contracts."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "evaluate",
@@ -816,7 +1480,8 @@
         "decision_vocabulary",
         "lesson_quality_check_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "stage_transition_from_iterate",
@@ -827,31 +1492,83 @@
         "stage_report_write",
         "iteration_report_write",
         "lesson_promotion",
-        "iteration_log_write"
+        "iteration_log_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "iteration_log.json",
-        "docs/iterations/",
         "docs/40_iterations/",
+        "docs/iterations/",
         "docs/50_memory/",
         "MEMORY.md",
-        "docs/Stage_Report.md"
+        "docs/Stage_Report.md",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
-          "docs/iterations/",
           "docs/40_iterations/",
+          "docs/iterations/",
           "docs/50_memory/",
           "MEMORY.md",
-          "docs/Stage_Report.md"
+          "docs/Stage_Report.md",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/40_iterations/",
+            "docs/50_memory/",
+            "docs/Stage_Report.md"
+          ],
+          "owner": "evaluate",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "iteration_log.json",
+            "MEMORY.md"
+          ],
+          "owner": "evaluate",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "legacy_compat",
+          "paths": [
+            "docs/iterations/"
+          ],
+          "owner": "evaluate",
+          "is_final": false,
+          "requires_tool": false,
+          "replacement": "docs/40_iterations/",
+          "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "init-project",
       "triggers": [
+        "$init",
         "$init-project",
+        "/init",
         "/init-project",
         "init-project",
         "init project",
@@ -890,7 +1607,8 @@
       "required_actions": [
         "context_gate_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -900,7 +1618,8 @@
         "dynamic_context_init",
         "CLAUDE_write",
         "operator_context_write",
-        "canonical_state_edit"
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "CLAUDE.md",
@@ -908,7 +1627,9 @@
         "OPERATOR_CONTEXT.md",
         "PROJECT_STATE.json",
         "docs/",
-        ".evidence/"
+        ".evidence/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -917,9 +1638,64 @@
           "OPERATOR_CONTEXT.md",
           "PROJECT_STATE.json",
           "docs/",
-          ".evidence/"
+          ".evidence/",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "guidance",
+          "paths": [
+            "CLAUDE.md",
+            "AGENTS.md",
+            "OPERATOR_CONTEXT.md"
+          ],
+          "owner": "init-project",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "init-project",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "operational_scope",
+          "paths": [
+            "docs/"
+          ],
+          "owner": "init-project",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Bootstrap docs surface; specific current docs are owned by later stages."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Scaffold with evidence tooling; do not hand-edit traces."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "env-setup",
@@ -990,7 +1766,41 @@
           "scripts/",
           "configs/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "guidance",
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "owner": "env-setup",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "operational_scope",
+          "paths": [
+            "requirements.txt",
+            "requirements-dev.txt",
+            "environment.yml",
+            "environment.yaml",
+            "pyproject.toml"
+          ],
+          "owner": "env-setup",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "scripts/",
+            "configs/"
+          ],
+          "owner": "env-setup",
+          "is_final": false,
+          "requires_tool": false
+        }
+      ]
     },
     {
       "skill": "build-plan",
@@ -1020,7 +1830,8 @@
           "AGENTS.md",
           "PROJECT_STATE.json",
           "project_map.json",
-          "docs/20_facts/Project_Glossary.md"
+          "docs/20_facts/Project_Glossary.md",
+          "docs/20_facts/Codebase_Map.md"
         ],
         "project_optional": [
           "docs/Technical_Spec.md",
@@ -1033,7 +1844,8 @@
         "write_implementation_roadmap",
         "update_project_map",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "architecture_decision_in_build_plan",
@@ -1042,22 +1854,72 @@
       "gate_ledger_required_when": [
         "project_map_write",
         "project_glossary_write",
-        "canonical_state_edit"
+        "codebase_map_write",
+        "canonical_state_edit",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "project_map.json",
         "PROJECT_STATE.json",
         "docs/20_facts/Project_Glossary.md",
-        "docs/Implementation_Roadmap.md"
+        "docs/20_facts/Codebase_Map.md",
+        "docs/Implementation_Roadmap.md",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "project_map.json",
           "PROJECT_STATE.json",
           "docs/20_facts/Project_Glossary.md",
-          "docs/Implementation_Roadmap.md"
+          "docs/20_facts/Codebase_Map.md",
+          "docs/Implementation_Roadmap.md",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Implementation_Roadmap.md"
+          ],
+          "owner": "build-plan",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/Project_Glossary.md",
+            "docs/20_facts/Codebase_Map.md"
+          ],
+          "owner": "build-plan",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "project_map.json",
+            "PROJECT_STATE.json"
+          ],
+          "owner": "build-plan",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "code-expert",
@@ -1087,7 +1949,8 @@
           "PROJECT_STATE.json",
           "project_map.json",
           "CLAUDE.md",
-          "docs/20_facts/Project_Glossary.md"
+          "docs/20_facts/Project_Glossary.md",
+          "docs/20_facts/Codebase_Map.md"
         ],
         "project_optional": [
           "docs/Implementation_Roadmap.md",
@@ -1101,7 +1964,9 @@
         "ruff_or_NOT_RUN",
         "semantic_commit_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN",
+        "compile_doc_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "stable_code_without_project_map_read",
@@ -1111,14 +1976,22 @@
       "gate_ledger_required_when": [
         "stable_code_change",
         "project_map_write",
-        "canonical_state_edit"
+        "codebase_map_write",
+        "canonical_state_edit",
+        "docs_site_render",
+        "codebase_map_docchain"
       ],
       "sensitive_paths": [
         "src/",
         "scripts/",
         "configs/",
         "project_map.json",
-        "PROJECT_STATE.json"
+        "docs/20_facts/Codebase_Map.md",
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/",
+        ".evidence/chains/",
+        ".evidence/index.json"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1126,9 +1999,69 @@
           "scripts/",
           "configs/",
           "project_map.json",
-          "PROJECT_STATE.json"
+          "docs/20_facts/Codebase_Map.md",
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/",
+          ".evidence/chains/",
+          ".evidence/index.json"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "implementation",
+          "paths": [
+            "src/",
+            "scripts/",
+            "configs/"
+          ],
+          "owner": "code-expert",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/Codebase_Map.md"
+          ],
+          "owner": "code-expert",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Sync with project_map.json when stable file presence, responsibility, public interface, or dependency changes."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "project_map.json",
+            "PROJECT_STATE.json"
+          ],
+          "owner": "code-expert",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Evidence Chain artifacts for docs/20_facts/Codebase_Map.md generated by compile_doc.py; manual .evidence edits remain forbidden."
+        }
+      ]
     },
     {
       "skill": "code-debug",
@@ -1156,7 +2089,8 @@
           "AGENTS.md",
           "project_map.json",
           "CLAUDE.md",
-          "docs/20_facts/Project_Glossary.md"
+          "docs/20_facts/Project_Glossary.md",
+          "docs/20_facts/Codebase_Map.md"
         ],
         "project_optional": [
           "docs/Validate_Run_Report.md",
@@ -1168,7 +2102,9 @@
         "py_compile_or_NOT_RUN",
         "ruff_or_NOT_RUN",
         "semantic_commit_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN",
+        "compile_doc_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "stable_code_without_project_map_read",
@@ -1177,22 +2113,89 @@
       ],
       "gate_ledger_required_when": [
         "stable_code_change",
-        "project_map_write"
+        "project_map_write",
+        "codebase_map_write",
+        "docs_site_render",
+        "codebase_map_docchain"
       ],
       "sensitive_paths": [
         "src/",
         "scripts/",
         "configs/",
-        "project_map.json"
+        "project_map.json",
+        "docs/20_facts/Codebase_Map.md",
+        "docs/_views/",
+        "docs/_site/",
+        ".evidence/chains/",
+        ".evidence/index.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "src/",
           "scripts/",
           "configs/",
-          "project_map.json"
+          "project_map.json",
+          "docs/20_facts/Codebase_Map.md",
+          "docs/_views/",
+          "docs/_site/",
+          ".evidence/chains/",
+          ".evidence/index.json"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "implementation",
+          "paths": [
+            "src/",
+            "scripts/",
+            "configs/"
+          ],
+          "owner": "code-debug",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "fact_doc",
+          "paths": [
+            "docs/20_facts/Codebase_Map.md"
+          ],
+          "owner": "code-debug",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Sync with project_map.json when stable file presence, responsibility, public interface, or dependency changes."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "project_map.json"
+          ],
+          "owner": "code-debug",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Evidence Chain artifacts for docs/20_facts/Codebase_Map.md generated by compile_doc.py; manual .evidence edits remain forbidden."
+        }
+      ]
     },
     {
       "skill": "harness-maintenance",
@@ -1223,37 +2226,37 @@
         "workflow language",
         "permission policy",
         "permission boundary",
-        "hook判断",
-        "hook触发",
-        "hook的判断",
-        "hook的触发",
-        "hook的路由",
-        "hook 的判断",
-        "hook 的触发",
-        "hook 的路由",
-        "触发判断",
-        "workflow 语言",
-        "workflow 词汇",
-        "workflow 术语",
-        "workflow 路由",
-        "workflow 触发",
-        "通用语言",
-        "统一语言",
-        "关键概念",
-        "命名规则",
-        "认知负担",
-        "阶段卡片",
-        "维护类任务",
-        "维护任务",
-        "写入面",
-        "prompt 误判",
-        "prompt 路由",
-        "prompt 触发",
-        "权限策略",
-        "权限模型",
-        "权限边界",
-        "权限提升",
-        "提权"
+        "hook\u5224\u65ad",
+        "hook\u89e6\u53d1",
+        "hook\u7684\u5224\u65ad",
+        "hook\u7684\u89e6\u53d1",
+        "hook\u7684\u8def\u7531",
+        "hook \u7684\u5224\u65ad",
+        "hook \u7684\u89e6\u53d1",
+        "hook \u7684\u8def\u7531",
+        "\u89e6\u53d1\u5224\u65ad",
+        "workflow \u8bed\u8a00",
+        "workflow \u8bcd\u6c47",
+        "workflow \u672f\u8bed",
+        "workflow \u8def\u7531",
+        "workflow \u89e6\u53d1",
+        "\u901a\u7528\u8bed\u8a00",
+        "\u7edf\u4e00\u8bed\u8a00",
+        "\u5173\u952e\u6982\u5ff5",
+        "\u547d\u540d\u89c4\u5219",
+        "\u8ba4\u77e5\u8d1f\u62c5",
+        "\u9636\u6bb5\u5361\u7247",
+        "\u7ef4\u62a4\u7c7b\u4efb\u52a1",
+        "\u7ef4\u62a4\u4efb\u52a1",
+        "\u5199\u5165\u9762",
+        "prompt \u8bef\u5224",
+        "prompt \u8def\u7531",
+        "prompt \u89e6\u53d1",
+        "\u6743\u9650\u7b56\u7565",
+        "\u6743\u9650\u6a21\u578b",
+        "\u6743\u9650\u8fb9\u754c",
+        "\u6743\u9650\u63d0\u5347",
+        "\u63d0\u6743"
       ],
       "required_read_set": {
         "harness": [
@@ -1261,8 +2264,9 @@
           ".agents/references/language-policy.md",
           ".agents/references/ubiquitous-language.md",
           "tooling/codex_hooks/README.md",
-          ".agents/skill-contracts/contracts.json",
-          "tests/test_codex_hooks_contracts.py"
+          "schemas/skill_contracts.json",
+          "schemas/skill_contracts.schema.json",
+          "tooling/.tests/test_codex_hooks_contracts.py"
         ],
         "skill": [
           ".agents/skills/harness-maintenance/SKILL.md"
@@ -1297,16 +2301,20 @@
         "permission_policy_change"
       ],
       "sensitive_paths": [
-        ".agents/skill-contracts/",
         ".agents/skills/",
         ".agents/references/",
+        ".claude/Workflow_Guide.md",
         ".claude/skills/",
+        ".claude/rules/",
         ".claude/shared/",
         "tooling/codex_hooks/",
+        "tooling/evidence/",
         "tooling/model_api/",
-        "tests/",
+        "tooling/.tests/",
+        "templates/",
         "schemas/",
         "docs/",
+        "workflow_handbook/",
         ".gitignore",
         "AGENTS.md",
         "AGENTS.md.template",
@@ -1317,16 +2325,20 @@
       ],
       "write_scope": {
         "allowed_paths": [
-          ".agents/skill-contracts/",
           ".agents/skills/",
           ".agents/references/",
+          ".claude/Workflow_Guide.md",
           ".claude/skills/",
+          ".claude/rules/",
           ".claude/shared/",
           "tooling/codex_hooks/",
+          "tooling/evidence/",
           "tooling/model_api/",
-          "tests/",
+          "tooling/.tests/",
+          "templates/",
           "schemas/",
           "docs/",
+          "workflow_handbook/",
           ".gitignore",
           "AGENTS.md",
           "AGENTS.md.template",
@@ -1335,7 +2347,66 @@
           "README.md",
           "AI_AGENT_SETUP.md"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "tooling/codex_hooks/README.md",
+            "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md",
+            "workflow_handbook/",
+            "README.md",
+            "AI_AGENT_SETUP.md"
+          ],
+          "owner": "harness-maintenance",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "guidance",
+          "paths": [
+            "AGENTS.md",
+            "AGENTS.md.template",
+            "CLAUDE.md",
+            "CLAUDE.md.template",
+            ".agents/skills/",
+            ".agents/references/",
+            ".claude/Workflow_Guide.md",
+            ".claude/skills/",
+            ".claude/rules/",
+            ".claude/shared/",
+            "templates/"
+          ],
+          "owner": "harness-maintenance",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "tooling/codex_hooks/",
+            "tooling/evidence/",
+            "tooling/model_api/",
+            "tooling/.tests/",
+            "schemas/"
+          ],
+          "owner": "harness-maintenance",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "operational_scope",
+          "paths": [
+            "docs/",
+            "workflow_handbook/",
+            ".gitignore"
+          ],
+          "owner": "harness-maintenance",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Framework maintenance surface; use narrower current-doc outputs when possible."
+        }
+      ]
     },
     {
       "skill": "code-review",
@@ -1349,10 +2420,10 @@
         "deepseek review",
         "external model review",
         "cross review",
-        "代码审查",
-        "代码 review",
-        "代码检查",
-        "交叉验证"
+        "\u4ee3\u7801\u5ba1\u67e5",
+        "\u4ee3\u7801 review",
+        "\u4ee3\u7801\u68c0\u67e5",
+        "\u4ea4\u53c9\u9a8c\u8bc1"
       ],
       "required_read_set": {
         "harness": [
@@ -1413,7 +2484,19 @@
         "allowed_paths": [
           ".agents/state/review_traces/code-review/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "review_trace",
+          "paths": [
+            ".agents/state/review_traces/code-review/"
+          ],
+          "owner": "code-review",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Review trace only; subject-file fixes route to code-debug or harness-maintenance."
+        }
+      ]
     },
     {
       "skill": "validate-run",
@@ -1445,11 +2528,13 @@
           "project_map.json",
           "CLAUDE.md",
           "docs/Implementation_Roadmap.md",
-          "docs/20_facts/Project_Glossary.md"
+          "docs/20_facts/Project_Glossary.md",
+          "docs/20_facts/Codebase_Map.md"
         ],
         "project_optional": [
           "docs/Technical_Spec.md",
           "docs/Baseline_Report.md",
+          "docs/30_evidence/Validation_Table.md",
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md"
         ]
@@ -1459,7 +2544,8 @@
         "smoke_test_or_NOT_RUN",
         "write_validate_report",
         "workflow_state_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "WF9_PASS_without_semantic_review",
@@ -1467,18 +2553,67 @@
       ],
       "gate_ledger_required_when": [
         "WF10_readiness",
-        "validate_report_write"
+        "validate_report_write",
+        "evidence_table_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Validate_Run_Report.md",
-        "PROJECT_STATE.json"
+        "docs/30_evidence/Validation_Table.md",
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Validate_Run_Report.md",
-          "PROJECT_STATE.json"
+          "docs/30_evidence/Validation_Table.md",
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Validate_Run_Report.md"
+          ],
+          "owner": "validate-run",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/30_evidence/Validation_Table.md"
+          ],
+          "owner": "validate-run",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Human-readable validation Conclusion Evidence table; command outputs and logs remain Gate Evidence."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "validate-run",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "iterate",
@@ -1527,7 +2662,8 @@
         "iteration_log_update",
         "decision_vocabulary",
         "lesson_quality_check_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "auto_observation_direct_to_MEMORY",
@@ -1538,24 +2674,73 @@
         "iteration_log_write",
         "iteration_report_write",
         "lesson_promotion",
-        "WF11_handoff"
+        "WF11_handoff",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "iteration_log.json",
-        "docs/iterations/",
         "docs/40_iterations/",
+        "docs/iterations/",
         "docs/50_memory/",
-        "MEMORY.md"
+        "MEMORY.md",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
-          "docs/iterations/",
           "docs/40_iterations/",
+          "docs/iterations/",
           "docs/50_memory/",
-          "MEMORY.md"
+          "MEMORY.md",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/40_iterations/",
+            "docs/50_memory/"
+          ],
+          "owner": "iterate",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "iteration_log.json",
+            "MEMORY.md"
+          ],
+          "owner": "iterate",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "legacy_compat",
+          "paths": [
+            "docs/iterations/"
+          ],
+          "owner": "iterate",
+          "is_final": false,
+          "requires_tool": false,
+          "replacement": "docs/40_iterations/",
+          "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "auto-iterate-goal",
@@ -1594,7 +2779,8 @@
       "required_actions": [
         "goal_validate_or_init",
         "context_gate_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "start_auto_iterate_without_goal_validation",
@@ -1602,17 +2788,45 @@
       ],
       "gate_ledger_required_when": [
         "WF10_auto_readiness",
-        "goal_write"
+        "goal_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/auto_iterate_goal.md",
-        ".auto_iterate/"
+        ".auto_iterate/",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
-          "docs/auto_iterate_goal.md"
+          "docs/auto_iterate_goal.md",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/auto_iterate_goal.md"
+          ],
+          "owner": "auto-iterate-goal",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": ".auto_iterate/ is controller-owned runtime state, not a manual Skill output."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "final-exp",
@@ -1650,7 +2864,8 @@
         "respect_evaluation_contract",
         "respect_claim_boundary",
         "check_dynamic_context_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "final_exp_outside_claim_boundary",
@@ -1658,18 +2873,54 @@
       ],
       "gate_ledger_required_when": [
         "WF11_readiness",
-        "final_experiment_matrix_write"
+        "final_experiment_matrix_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "docs/Final_Experiment_Matrix.md",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Final_Experiment_Matrix.md",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/Final_Experiment_Matrix.md"
+          ],
+          "owner": "final-exp",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "final-exp",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     },
     {
       "skill": "release",
@@ -1712,7 +2963,8 @@
         "check_dynamic_context_wf12_or_NOT_RUN",
         "release_manifest_validation",
         "claim_boundary_check",
-        "gate_ledger"
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "release_claim_outside_claim_boundary",
@@ -1722,20 +2974,76 @@
       "gate_ledger_required_when": [
         "WF12_readiness",
         "release_claim",
-        "submission_package_write"
+        "submission_package_write",
+        "docs_site_render"
       ],
       "sensitive_paths": [
         "submission/",
         "docs/",
-        "PROJECT_STATE.json"
+        "PROJECT_STATE.json",
+        "docs/_views/",
+        "docs/_site/"
       ],
       "write_scope": {
         "allowed_paths": [
           "submission/",
           "docs/",
-          "PROJECT_STATE.json"
+          "PROJECT_STATE.json",
+          "docs/_views/",
+          "docs/_site/"
         ]
-      }
+      },
+      "artifact_outputs": [
+        {
+          "kind": "release_package",
+          "paths": [
+            "submission/"
+          ],
+          "owner": "release",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/60_release/"
+          ],
+          "owner": "release",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Preferred narrow release-doc landing path."
+        },
+        {
+          "kind": "canonical_state",
+          "paths": [
+            "PROJECT_STATE.json"
+          ],
+          "owner": "release",
+          "is_final": false,
+          "requires_tool": false
+        },
+        {
+          "kind": "operational_scope",
+          "paths": [
+            "docs/"
+          ],
+          "owner": "release",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Broad legacy docs write surface; prefer docs/60_release/ for release docs."
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
     }
   ]
 }

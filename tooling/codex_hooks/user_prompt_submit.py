@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from harness_contracts import (
+    ENFORCEMENT_CONTEXT_ONLY,
+    ENFORCEMENT_NONE,
+    additional_context_for_candidate,
     additional_context_for_contract,
     classify_prompt_intent,
     contract_by_skill,
@@ -17,8 +20,19 @@ from harness_contracts import (
 )
 
 
+def _candidate_continuation_prompt(prompt: str) -> bool:
+    text = prompt.strip()
+    return bool(
+        is_continuation_prompt(text)
+        or "按这个方案" in text
+        or "按上面" in text
+        or "直接落地" in text
+        or "继续落地" in text
+    )
+
+
 def continuation_match(root, prompt: str, event: dict) -> dict | None:
-    if not is_continuation_prompt(prompt):
+    if not _candidate_continuation_prompt(prompt):
         return None
     previous = load_session_for_event(root, event)
     previous_session_id = previous.get("session_id")
@@ -28,21 +42,48 @@ def continuation_match(root, prompt: str, event: dict) -> dict | None:
     if previous_session_id != current_session_id:
         return None
     skill = previous.get("active_skill")
-    if not isinstance(skill, str) or not skill:
+    if isinstance(skill, str) and skill:
+        contract = contract_by_skill(root, skill)
+        if not contract:
+            return None
+        return {
+            "contract": contract,
+            "skill": skill,
+            "candidate_contract": None,
+            "candidate_skill": None,
+            "trigger": "continuation",
+            "trigger_type": "continuation",
+            "intent_class": previous.get("intent_class"),
+            "enforcement_mode": previous.get("enforcement_mode"),
+            "read_contract_stop_required": bool(
+                previous.get("read_contract_stop_required")
+            ),
+            "continued_from_previous_prompt": True,
+        }
+
+    candidate_skill = previous.get("candidate_skill")
+    if not isinstance(candidate_skill, str) or not candidate_skill:
         return None
-    contract = contract_by_skill(root, skill)
+    contract = contract_by_skill(root, candidate_skill)
     if not contract:
         return None
     return {
-        "contract": contract,
-        "skill": skill,
-        "trigger": "continuation",
-        "trigger_type": "continuation",
-        "intent_class": previous.get("intent_class"),
-        "read_contract_stop_required": bool(
-            previous.get("read_contract_stop_required")
+        "contract": None,
+        "skill": None,
+        "candidate_contract": contract,
+        "candidate_skill": candidate_skill,
+        "candidate_trigger": previous.get("candidate_trigger"),
+        "candidate_trigger_type": previous.get("candidate_trigger_type"),
+        "candidate_reason": (
+            "continued advisory context; hard activation required before writes"
         ),
+        "trigger": "candidate_continuation",
+        "trigger_type": "continuation",
+        "intent_class": classify_prompt_intent(prompt),
+        "enforcement_mode": ENFORCEMENT_CONTEXT_ONLY,
+        "read_contract_stop_required": False,
         "continued_from_previous_prompt": True,
+        "pending_candidate_activation": True,
     }
 
 
@@ -54,7 +95,8 @@ def main() -> int:
     continued = bool(match)
     if match is None:
         match = detect_skill_match(root, prompt)
-    contract = match["contract"] if match else None
+    contract = match.get("contract") if match else None
+    candidate_contract = match.get("candidate_contract") if match else None
     if continued:
         session = load_session_for_event(root, event)
         session.pop("last_mutating_tool", None)
@@ -64,14 +106,23 @@ def main() -> int:
                 "session_id": event.get("session_id"),
                 "turn_id": event.get("turn_id"),
                 "active_skill": contract.get("skill") if contract else None,
+                "candidate_skill": match.get("candidate_skill"),
+                "candidate_trigger": match.get("candidate_trigger"),
+                "candidate_trigger_type": match.get("candidate_trigger_type"),
+                "candidate_reason": match.get("candidate_reason"),
                 "intent_class": match.get("intent_class"),
                 "skill_trigger": match.get("trigger"),
                 "skill_trigger_type": match.get("trigger_type"),
+                "enforcement_mode": match.get("enforcement_mode")
+                or ENFORCEMENT_NONE,
                 "read_contract_stop_required": bool(
                     match.get("read_contract_stop_required")
                 ),
                 "continued_from_previous_prompt": True,
                 "continuation_prompt": prompt,
+                "pending_candidate_activation": bool(
+                    match.get("pending_candidate_activation")
+                ),
                 "mutating_tool_seen": False,
             }
         )
@@ -80,13 +131,27 @@ def main() -> int:
             "session_id": event.get("session_id"),
             "turn_id": event.get("turn_id"),
             "active_skill": contract.get("skill") if contract else None,
+            "candidate_skill": match.get("candidate_skill") if match else None,
+            "candidate_trigger": match.get("candidate_trigger") if match else None,
+            "candidate_trigger_type": match.get("candidate_trigger_type")
+            if match
+            else None,
+            "candidate_reason": match.get("candidate_reason") if match else None,
             "intent_class": match.get("intent_class")
             if match
             else classify_prompt_intent(prompt),
             "skill_trigger": match.get("trigger") if match else None,
             "skill_trigger_type": match.get("trigger_type") if match else None,
+            "enforcement_mode": match.get("enforcement_mode")
+            if match
+            else ENFORCEMENT_NONE,
             "read_contract_stop_required": bool(
                 match.get("read_contract_stop_required")
+            )
+            if match
+            else False,
+            "pending_candidate_activation": bool(
+                match.get("pending_candidate_activation")
             )
             if match
             else False,
@@ -97,6 +162,22 @@ def main() -> int:
         reset_read_ledger(root, event)
     daily_context = daily_context_for_workspace(root)
     if not contract:
+        if candidate_contract:
+            additional_context = additional_context_for_candidate(
+                candidate_contract,
+                match,
+            )
+            if daily_context:
+                additional_context = additional_context + "\n\n" + daily_context
+            emit(
+                {
+                    "hookSpecificOutput": {
+                        "hookEventName": "UserPromptSubmit",
+                        "additionalContext": additional_context,
+                    }
+                }
+            )
+            return 0
         if daily_context:
             emit(
                 {

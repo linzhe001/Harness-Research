@@ -54,15 +54,15 @@ write scope。
 
 | 文件 | 作用 |
 | --- | --- |
-| `.agents/skill-contracts/contracts.json` | 给每个 skill contract 显式声明 `write_scope.allowed_paths` |
-| `.agents/skill-contracts/schema.json` | 要求 skill contract 包含 `write_scope.allowed_paths` 字段 |
+| `schemas/skill_contracts.json` | 给每个 skill contract 显式声明 `write_scope.allowed_paths` |
+| `schemas/skill_contracts.schema.json` | 要求 skill contract 包含 `write_scope.allowed_paths` 字段 |
 | `tooling/codex_hooks/harness_contracts.py` | 在 `PreToolUse` 中执行 Stage 写入 scope 检查, 并把 hook/skill/permission 修改请求推断到 `$harness-maintenance` |
-| `tests/test_codex_hooks_contracts.py` | 覆盖 scope 内允许、scope 外阻止、缺失 `write_scope` fail-closed、`code-debug` 不能写 hooks、`harness-maintenance` 可以写 guardrails |
+| `tooling/.tests/test_codex_hooks_contracts.py` | 覆盖 scope 内允许、scope 外阻止、缺失 `write_scope` fail-closed、`code-debug` 不能写 hooks、`harness-maintenance` 可以写 guardrails |
 | `.agents/skills/harness-maintenance/` | Codex 侧 guardrail 维护 skill |
 | `.claude/skills/harness-maintenance/` | Claude Code 侧语义对齐的 guardrail 维护 skill |
 | `.agents/references/ubiquitous-language.md` | workflow skill 的通用语言 |
-| `docs/Workflow_Operator_Handbook.md` | operator 低负担入口 |
-| `tooling/codex_hooks/generate_stage_cards.py` | 从 `contracts.json` 生成 Stage Cards |
+| `workflow_handbook/Workflow_Operator_Handbook.md` | operator 低负担入口 |
+| `tooling/codex_hooks/generate_stage_cards.py` | 从 `schemas/skill_contracts.json` 生成 Stage Cards；版本化 operator 快照保存在 `workflow_handbook/Workflow_Stage_Cards.md` |
 | `tooling/codex_hooks/README.md` | 记录 Stage permission elevation、方案 B 路由和 operator-facing 解释 |
 
 ## 数据结构
@@ -86,6 +86,7 @@ write scope。
 ```text
 schema / check_contracts
   -> 要求每个 contract 都有 write_scope.allowed_paths
+  -> 要求每个 contract 声明 artifact_outputs
 
 PreToolUse
   -> 对可解析写入路径使用 write_scope.allowed_paths 作为 Stage 写入面
@@ -94,6 +95,47 @@ PreToolUse
 运行时代码不再使用 `sensitive_paths` 作为 `write_scope` fallback。缺失
 `write_scope.allowed_paths` 是 contract 错误; 对 path-aware writes, hook 会
 fail closed, 而不是临时退回到 `sensitive_paths`。
+
+`artifact_outputs` 是输出落点语义, 不是权限提升:
+
+```json
+{
+  "artifact_outputs": [
+    {
+      "kind": "current_doc",
+      "paths": ["docs/40_iterations/"],
+      "owner": "iterate",
+      "is_final": true,
+      "requires_tool": false
+    }
+  ]
+}
+```
+
+这层元数据把 final docs、canonical state、tool traces、review traces、
+implementation files、guidance 和 release packages 分开。Stage Cards 会把
+`Final outputs` 和 `Can write` 分开展示。权限仍只来自 hard `active_skill`
+和 `write_scope.allowed_paths`; `artifact_outputs` 不授予 Write Scope。
+
+当前 prompt intent 模型也把上下文提示和硬合约分开:
+
+```text
+active_skill    -> hard Skill Contract, 可在 Read Contract 完成后使用 Write Scope
+candidate_skill -> advisory context, 不授予 Write Scope
+```
+
+`enforcement_mode` 取值:
+
+| Mode | 含义 |
+| --- | --- |
+| `none` | 没有 workflow Skill |
+| `context_only` | 讨论/解释/设计问题, 只保留候选上下文 |
+| `active_read` | status/review/read-mode hard contract, 只能写声明的 read-mode artifact |
+| `active_write` | 明确执行或写入请求, 按 Read Contract 和 Write Scope 执行 |
+
+裸 `WF<N>` 和 `DEBUG`/`PIVOT`/`CONTINUE` 等 Decision vocabulary 是
+action-gated trigger。问题句不会激活 hard contract; Stage lifecycle 语言路由到
+`$orchestrator`; WF10 loop action 才路由到 `$iterate`。
 
 ## 执行链路
 
@@ -190,34 +232,34 @@ cmd_a && cmd_b > maybe_path
 ## Stage 权限矩阵
 
 这张表是 operator 视角的简表。对可解析写入路径的精确执行以
-`.agents/skill-contracts/contracts.json` 中每个 skill 的
+`schemas/skill_contracts.json` 中每个 skill 的
 `write_scope.allowed_paths` 为准; 对不可解析 Bash, 它是 contract 语义边界,
 不是完整的路径证明。
 
 | Stage / skill | 临时写入面 | 主要边界 |
 | --- | --- | --- |
 | `init-project` / WF0 | `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, `PROJECT_STATE.json`, `docs/**`, `.evidence/**` scaffold | 不能推断 operator preferences; `.evidence/**` 应由 `tooling/evidence/init_context.py` 等工具生成 |
-| `survey-idea` / WF1 | `docs/30_evidence/**`, `docs/Feasibility_Report.md`, `docs/35_protocol/**` | evidence 不是 approved contract; protocol draft 需要 review |
+| `survey-idea` / WF1 | `docs/30_evidence/**`, `docs/Feasibility_Report.md`, `docs/35_protocol/**` | Conclusion Evidence 不是 approved contract; protocol draft 需要 review |
 | `idea-debate` / WF2 | `docs/Idea_Debate.md`, `docs/35_protocol/**` | reviewer independence, protocol drift |
 | `refine-idea` / WF3 | `docs/Refined_Idea.md`, `docs/35_protocol/**` | 不提前写 architecture decision |
-| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts 必须来自 artifacts/commands |
-| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/10_contract/**`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic gates, contract human approval |
-| `refine-arch` / WF6 | `docs/Technical_Spec.md`, `docs/35_protocol/**` | architecture 必须服从 approved contracts 和 protocol drift |
-| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `project_map.json`, `PROJECT_STATE.json` | project map 不能 stale |
-| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map sync |
-| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json` | ordinary implementation code only; hooks/skills/contracts 不在此 scope |
-| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `PROJECT_STATE.json` | 没有 semantic review 和 smoke evidence 不能 PASS |
-| `iterate` / WF10 | `iteration_log.json`, `docs/iterations/**`, `docs/40_iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
+| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `docs/30_evidence/Dataset_Table.md`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts 必须来自 artifacts/commands |
+| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/30_evidence/Baseline_Table.md`, `docs/10_contract/**`, `docs/20_facts/Codebase_Map.md`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic gates, codebase map sync when baseline layout changes, contract human approval |
+| `refine-arch` / WF6 | `docs/Technical_Spec.md`, `docs/20_facts/Project_Glossary.md`, `docs/35_protocol/**` | architecture 必须服从 approved contracts 和 protocol drift |
+| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `docs/20_facts/Codebase_Map.md`, `project_map.json`, `PROJECT_STATE.json` | project map 和 codebase map 不能 stale |
+| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map/codebase map sync |
+| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md` | ordinary implementation code only; hooks/skills/contracts 不在此 scope |
+| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `docs/30_evidence/Validation_Table.md`, `PROJECT_STATE.json` | 没有 semantic review 和 smoke evidence 不能 PASS |
+| `iterate` / WF10 | `iteration_log.json`, `docs/40_iterations/**`, legacy `docs/iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
 | `auto-iterate-goal` | `docs/auto_iterate_goal.md`; `.auto_iterate/**` 由 controller 拥有 | goal validation 才能启动 unattended controller |
 | `final-exp` / WF11 | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | approved contracts 和 claim boundary |
 | `release` / WF12 | `submission/**`, `docs/**`, `PROJECT_STATE.json` | release claims 必须在 `Claim_Boundary.md` 内 |
 | `code-review` | `.agents/state/review_traces/code-review/**` | review-only; 代码修复转 `$code-debug`, guardrail 修复转 `$harness-maintenance` |
-| `harness-maintenance` | `tooling/codex_hooks/**`, `.agents/skill-contracts/**`, `.agents/skills/**`, `.agents/references/**`, `.claude/skills/**`, `.claude/shared/**`, `tooling/model_api/**`, `tests/**`, `schemas/**`, root framework docs | hooks、skill contracts、trigger/routing、permission policy、trust/status、guardrail tests/docs |
+| `harness-maintenance` | `tooling/codex_hooks/**`, `schemas/**`, `.agents/skills/**`, `.agents/references/**`, `.claude/Workflow_Guide.md`, `.claude/skills/**`, `.claude/rules/**`, `.claude/shared/**`, `tooling/model_api/**`, `tooling/.tests/**`, `templates/**`, `docs/**`, `workflow_handbook/**`, root framework docs | hooks、skill contracts、trigger/routing、permission policy、trust/status、guardrail tests/docs |
 | `review-packet` | `.evidence/review_packets/<stage>/<build_id>/**`, 相关合同/状态审批记录 | packet 不是 approval; approval 必须来自明确 human decision |
 
 ## Skill 权限参考
 
-下面是当前 `.agents/skill-contracts/contracts.json` 中每个 skill 的精确
+下面是当前 `schemas/skill_contracts.json` 中每个 skill 的精确
 `write_scope.allowed_paths`。目录以 `/` 结尾时表示该目录树。
 
 | Skill | `write_scope.allowed_paths` | 说明 |
@@ -230,20 +272,20 @@ cmd_a && cmd_b > maybe_path
 | `survey-idea` | `docs/Feasibility_Report.md`, `docs/30_evidence/`, `docs/35_protocol/`, `PROJECT_STATE.json` | 早期可行性和证据草案 |
 | `idea-debate` | `docs/Idea_Debate.md`, `docs/35_protocol/`, `PROJECT_STATE.json` | 记录 debate 和 protocol draft 调整 |
 | `refine-idea` | `docs/Refined_Idea.md`, `docs/35_protocol/`, `PROJECT_STATE.json` | 收敛 idea, 不写实现计划 |
-| `data-prep` | `docs/Dataset_Stats.md`, `docs/20_facts/`, `PROJECT_STATE.json`, `CLAUDE.md`, `AGENTS.md`, `configs/`, `src/` | 数据事实、配置和必要的数据处理代码 |
-| `baseline-repro` | `docs/Baseline_Report.md`, `docs/10_contract/`, `PROJECT_STATE.json`, `project_map.json`, `CLAUDE.md`, `baselines/`, `configs/`, `scripts/`, `src/` | 建立第一条可运行 baseline 和 contract |
+| `data-prep` | `docs/Dataset_Stats.md`, `docs/20_facts/`, `docs/30_evidence/Dataset_Table.md`, `PROJECT_STATE.json`, `CLAUDE.md`, `AGENTS.md`, `configs/`, `src/` | 数据事实、Conclusion Evidence 表、配置和必要的数据处理代码 |
+| `baseline-repro` | `docs/Baseline_Report.md`, `docs/30_evidence/Baseline_Table.md`, `docs/10_contract/`, `docs/20_facts/Codebase_Map.md`, `PROJECT_STATE.json`, `project_map.json`, `CLAUDE.md`, `baselines/`, `configs/`, `scripts/`, `src/` | 建立第一条可运行 baseline、Conclusion Evidence 表和 contract |
 | `refine-arch` | `docs/Technical_Spec.md`, `docs/35_protocol/`, `PROJECT_STATE.json` | 架构设计受 approved contracts 约束 |
 | `deep-check` | `docs/Sanity_Check_Log.md`, `docs/35_protocol/`, `docs/10_contract/` | 深度 sanity check, 不直接进入实现 |
-| `evaluate` | `iteration_log.json`, `docs/iterations/`, `docs/40_iterations/`, `docs/50_memory/`, `MEMORY.md`, `docs/Stage_Report.md` | 评估和记忆沉淀; observation 不应直接跳到 MEMORY |
+| `evaluate` | `iteration_log.json`, `docs/40_iterations/`, legacy `docs/iterations/`, `docs/50_memory/`, `MEMORY.md`, `docs/Stage_Report.md` | 评估和记忆沉淀; observation 不应直接跳到 MEMORY |
 | `init-project` | `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, `PROJECT_STATE.json`, `docs/`, `.evidence/` | bootstrap guidance/context; `.evidence` 目录用工具初始化 |
 | `env-setup` | `CLAUDE.md`, `requirements.txt`, `requirements-dev.txt`, `environment.yml`, `environment.yaml`, `pyproject.toml`, `scripts/`, `configs/` | 环境声明和启动脚本 |
-| `build-plan` | `project_map.json`, `PROJECT_STATE.json`, `docs/Implementation_Roadmap.md` | 规划实现, 不直接做架构决定之外的代码修改 |
-| `code-expert` | `src/`, `scripts/`, `configs/`, `project_map.json`, `PROJECT_STATE.json` | 从 roadmap 做首轮实现 |
-| `code-debug` | `src/`, `scripts/`, `configs/`, `project_map.json` | 普通实现代码修复; 不写 hooks、skills、contracts、permission docs |
-| `harness-maintenance` | `.agents/skill-contracts/`, `.agents/skills/`, `.agents/references/`, `.claude/skills/`, `.claude/shared/`, `tooling/codex_hooks/`, `tooling/model_api/`, `tests/`, `schemas/`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `AI_AGENT_SETUP.md` | 维护 hooks、skill contract、routing/trigger、permission policy、trust/status、guardrail 测试和文档 |
+| `build-plan` | `project_map.json`, `PROJECT_STATE.json`, `docs/20_facts/Codebase_Map.md`, `docs/Implementation_Roadmap.md` | 规划实现, 生成机器 map 和人读 codebase map |
+| `code-expert` | `src/`, `scripts/`, `configs/`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, `PROJECT_STATE.json` | 从 roadmap 做首轮实现并同步 stable map |
+| `code-debug` | `src/`, `scripts/`, `configs/`, `project_map.json`, `docs/20_facts/Codebase_Map.md` | 普通实现代码修复; 不写 hooks、skills、contracts、permission docs |
+| `harness-maintenance` | `schemas/`, `.agents/skills/`, `.agents/references/`, `.claude/Workflow_Guide.md`, `.claude/skills/`, `.claude/rules/`, `.claude/shared/`, `tooling/codex_hooks/`, `tooling/model_api/`, `tooling/.tests/`, `templates/`, `docs/`, `workflow_handbook/`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `AI_AGENT_SETUP.md` | 维护 hooks、skill contract、routing/trigger、permission policy、trust/status、guardrail 测试和文档 |
 | `code-review` | `.agents/state/review_traces/code-review/` | review-only; subject files 只读, 代码修复转 `$code-debug`, guardrail 修复转 `$harness-maintenance` |
-| `validate-run` | `docs/Validate_Run_Report.md`, `PROJECT_STATE.json` | 记录 WF9 验证结果; PASS 需要 smoke/semantic evidence |
-| `iterate` | `iteration_log.json`, `docs/iterations/`, `docs/40_iterations/`, `docs/50_memory/`, `MEMORY.md` | WF10 loop 状态和 lessons |
+| `validate-run` | `docs/Validate_Run_Report.md`, `docs/30_evidence/Validation_Table.md`, `PROJECT_STATE.json` | 记录 WF9 验证结果; PASS 需要 smoke/semantic evidence |
+| `iterate` | `iteration_log.json`, `docs/40_iterations/`, legacy `docs/iterations/`, `docs/50_memory/`, `MEMORY.md` | WF10 loop 状态和 lessons |
 | `auto-iterate-goal` | `docs/auto_iterate_goal.md` | 只写 operator-facing goal; `.auto_iterate/**` 由 controller 拥有 |
 | `final-exp` | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | 最终实验矩阵必须在 claim boundary 内 |
 | `release` | `submission/`, `docs/`, `PROJECT_STATE.json` | 发布材料和状态; claims 不能越过 `Claim_Boundary.md` |
@@ -267,7 +309,7 @@ cmd_a && cmd_b > maybe_path
 1. 找到或新增对应 skill contract:
 
 ```text
-.agents/skill-contracts/contracts.json
+schemas/skill_contracts.json
 ```
 
 2. 确认 trigger 能稳定激活该 Stage:
@@ -368,10 +410,10 @@ cmd_a && cmd_b > maybe_path
 修改 hooks、contracts 或 schema 后运行:
 
 ```bash
-python -m py_compile tooling/codex_hooks/harness_contracts.py tests/test_codex_hooks_contracts.py
-ruff check --select=E,F,I tooling/codex_hooks/harness_contracts.py tests/test_codex_hooks_contracts.py
+python -m py_compile tooling/codex_hooks/harness_contracts.py tooling/.tests/test_codex_hooks_contracts.py
+ruff check --select=E,F,I tooling/codex_hooks/harness_contracts.py tooling/.tests/test_codex_hooks_contracts.py
 python tooling/codex_hooks/check_contracts.py --workspace-root .
-pytest tests/test_codex_hooks_contracts.py
+pytest tooling/.tests/test_codex_hooks_contracts.py
 python tooling/codex_hooks/simulate_hook.py UserPromptSubmit --workspace-root . --event-json '{"prompt":"帮我修改 hook的判断和触发"}'
 python tooling/codex_hooks/simulate_hook.py UserPromptSubmit --workspace-root . --event-json '{"prompt":"帮我修改 Python 模块中的数据处理逻辑"}'
 python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status

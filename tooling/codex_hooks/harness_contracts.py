@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-CONTRACTS_PATH = Path(".agents/skill-contracts/contracts.json")
+CONTRACTS_PATH = Path("schemas/skill_contracts.json")
 SLICED_COMMIT_RULE_PATH = ".agents/references/sliced-commit-rule.md"
 COMMIT_GUIDANCE_FILES = (SLICED_COMMIT_RULE_PATH,)
 RUNTIME_DIR = Path(".harness_hooks")
@@ -30,15 +30,48 @@ IGNORE_GIT_ADD_PATTERNS = [
 DIRECT_TOOL_OWNED_PATHS = [
     ".evidence/",
     ".auto_iterate/",
+    "docs/_views/",
+    "docs/_site/",
 ]
+GUARDRAIL_PATH_OWNERS = {
+    "harness-maintenance": [
+        "tooling/codex_hooks/",
+        "schemas/skill_contracts.json",
+        "schemas/skill_contracts.schema.json",
+        ".agents/skills/",
+        ".agents/references/",
+        ".claude/Workflow_Guide.md",
+        ".claude/skills/",
+        ".claude/rules/",
+        ".claude/shared/",
+        "templates/",
+        "workflow_handbook/",
+        "tooling/.tests/",
+        "tooling/model_api/",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "README.md",
+        "AI_AGENT_SETUP.md",
+        "docs/Hook_Intent_Detection_Improvement_Plan.md",
+        "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md",
+    ]
+}
+
+ENFORCEMENT_NONE = "none"
+ENFORCEMENT_CONTEXT_ONLY = "context_only"
+ENFORCEMENT_ACTIVE_READ = "active_read"
+ENFORCEMENT_ACTIVE_WRITE = "active_write"
 
 KNOWN_REQUIRED_ACTIONS = {
     "approval_tool_only_after_explicit_human_approval",
     "build_review_packet_or_NOT_RUN",
+    "build_docs_site_or_NOT_RUN",
+    "build_evidence_preview_index_or_NOT_RUN",
     "changed_line_map",
     "check_docchain_gates_or_NOT_RUN",
     "check_dynamic_context_or_NOT_RUN",
     "check_dynamic_context_wf12_or_NOT_RUN",
+    "codebase_map_sync_when_baseline_layout_changes",
     "check_protocol_drift_or_NOT_RUN",
     "claim_boundary_check",
     "codex_review_or_NOT_RUN",
@@ -48,6 +81,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "context_gate_or_NOT_RUN",
     "decision_vocabulary",
     "docchain_gate_when_current_docs_change",
+    "docs_site_render_or_NOT_RUN",
     "explicit_user_approval_for_transition",
     "external_model_review_or_NOT_RUN",
     "gate_ledger",
@@ -67,6 +101,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "semantic_review",
     "smoke_test_or_NOT_RUN",
     "update_project_map",
+    "validate_docs_site_or_NOT_RUN",
     "workflow_state_gate_or_NOT_RUN",
     "write_implementation_roadmap",
     "write_review_report_or_NOT_RUN",
@@ -83,6 +118,7 @@ KNOWN_FORBIDDEN_ACTIONS = {
     "current_doc_without_docchain",
     "direct_edit_auto_iterate",
     "direct_edit_evidence",
+    "edit_source_markdown_during_render",
     "final_exp_outside_claim_boundary",
     "heavy_review_without_trace",
     "ignore_unresolved_protocol_drift",
@@ -93,6 +129,7 @@ KNOWN_FORBIDDEN_ACTIONS = {
     "packet_as_approval",
     "project_map_stale",
     "protocol_as_approved_contract",
+    "html_as_source_of_truth",
     "release_claim_outside_claim_boundary",
     "review_without_line_references",
     "stable_code_without_project_map_read",
@@ -102,6 +139,22 @@ KNOWN_FORBIDDEN_ACTIONS = {
     "submit_without_explicit_user_request",
     "training_without_semantic_commit",
     "unverified_model_finding_as_fact",
+}
+
+KNOWN_ARTIFACT_OUTPUT_KINDS = {
+    "approved_contract",
+    "canonical_state",
+    "conclusion_evidence",
+    "current_doc",
+    "fact_doc",
+    "generated_view",
+    "guidance",
+    "implementation",
+    "legacy_compat",
+    "operational_scope",
+    "release_package",
+    "review_trace",
+    "tool_trace",
 }
 
 READ_COMMAND_RE = re.compile(
@@ -115,6 +168,12 @@ MUTATING_TOOL_NAMES = {"apply_patch", "Edit", "Write", "Bash", "shell", "local_s
 READ_TOOL_NAMES = {"Read", "View", "Open"}
 REVIEW_WRITE_ALLOWED_PATHS = [".agents/state/review_traces/code-review/"]
 TOOL_OWNED_WRITE_TOOL_PREFIXES = ("tooling/evidence/", "tooling/auto_iterate/")
+TOOL_OWNED_OUTPUT_PATHS_BY_SCRIPT = {
+    "tooling/evidence/build_docs_site.py": ["docs/_views/", "docs/_site/"],
+    "tooling/evidence/build_evidence_preview_index.py": [
+        "docs/_views/evidence_preview_index.json",
+    ],
+}
 EXTERNAL_MODEL_REVIEW_SCRIPTS = {
     "tooling/model_api/agentic_review.py",
     "tooling/model_api/external_chat.py",
@@ -135,12 +194,94 @@ PATH_TOKEN_RE = re.compile(
 )
 EXPLICIT_TRIGGER_RE = re.compile(r"^[$/][A-Za-z0-9_-]+$")
 WORKFLOW_TRIGGER_RE = re.compile(r"^wf\d+[a-z-]*$", re.IGNORECASE)
+WORKFLOW_STAGE_RE = re.compile(r"\bWF\d+[a-z-]*\b", re.IGNORECASE)
+WF10_LOOP_ACTION_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:"
+    r"\$iterate|/iterate|iterate|"
+    r"plan|code|run|eval|next_round|debug|continue|pivot|abort"
+    r")(?![A-Za-z0-9_])|"
+    r"(本轮决策|记录为|迭代|运行|评估|计划)",
+    re.IGNORECASE,
+)
+STAGE_LIFECYCLE_RE = re.compile(
+    r"\b(?:advance|rollback|enter|transition|stage\s+status|workflow\s+status)\b|"
+    r"(进入|推进|回滚|切换|阶段状态|工作流状态|执行)",
+    re.IGNORECASE,
+)
+WORKFLOW_ACTION_RE = re.compile(
+    r"\b(?:run|execute|advance|rollback|enter|transition|status|check)\b|"
+    r"(运行|执行|进入|推进|回滚|切换|状态|检查)",
+    re.IGNORECASE,
+)
+DECISION_WORDS = {"next_round", "debug", "continue", "pivot", "abort"}
+DECISION_WORD_RE = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:NEXT_ROUND|DEBUG|CONTINUE|PIVOT|ABORT)"
+    r"(?![A-Za-z0-9_-])",
+    re.IGNORECASE,
+)
+DECISION_ACTION_RE = re.compile(
+    r"(?:本轮)?决策.{0,12}(?:记录为|设为|改为|写成)|"
+    r"(?:记录为|设为|改为|写成).{0,12}(?:NEXT_ROUND|DEBUG|CONTINUE|PIVOT|ABORT)",
+    re.IGNORECASE,
+)
 CONTINUATION_PROMPT_RE = re.compile(
     r"^\s*(?:"
     r"继续(?:吧|执行|处理|修复|审查|检查|review)?|"
     r"接着(?:来|做|执行|处理|修复|审查|检查)?|"
     r"continue|go on|resume|proceed|keep going"
     r")\s*[。.!！?？]*\s*$",
+    re.IGNORECASE,
+)
+QUESTION_OR_DISCUSSION_RE = re.compile(
+    r"[?？]|"
+    r"(怎么|如何|是否|为什么|为啥|正确吗|合适吗|是什么|作用是什么|区别|关系|"
+    r"有没有|应该怎么|能不能|可以吗|可不可以|你觉得|怎么看)|"
+    r"\b(?:what|why|how|should|could|can|is\s+this|would\s+it)\b",
+    re.IGNORECASE,
+)
+DESIGN_DISCUSSION_RE = re.compile(
+    r"(怎么|如何|是否|为什么|有没有|应该怎么|能不能|可以吗|你觉得|方案).{0,24}"
+    r"(完善|优化|修改|改造|设计|实现|选择|判断|路由|触发)|"
+    r"(完善|优化|修改|改造|设计|实现|选择|判断|路由|触发).{0,24}"
+    r"(怎么|如何|是否|为什么|有没有|应该怎么|能不能|可以吗|你觉得)|"
+    r"\b(?:how\s+should|should\s+we|can\s+we|could\s+we|why\s+does)\b",
+    re.IGNORECASE,
+)
+WORKFLOW_QUESTION_RE = re.compile(
+    r"(?:WF\d+[a-z-]*|workflow|stage).{0,40}"
+    r"(?:正确吗|合适吗|为什么|是什么|关系|区别|是否|怎么|如何|这个|这里)|"
+    r"(?:正确吗|合适吗|为什么|是什么|关系|区别|是否|怎么|如何|这个|这里)"
+    r".{0,40}(?:WF\d+[a-z-]*|workflow|stage)|"
+    r"\bWF\d+[a-z-]*\b\s*(?:->|→|-?>)\s*\bWF\d+[a-z-]*\b|"
+    r"\b(?:why|what|how|should|is\s+this)\b.{0,40}\b(?:WF\d+[a-z-]*|workflow|stage)\b",
+    re.IGNORECASE,
+)
+DECISION_QUESTION_RE = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:NEXT_ROUND|DEBUG|CONTINUE|PIVOT|ABORT)"
+    r"(?![A-Za-z0-9_-]).{0,40}"
+    r"(?:区别|是什么|是否|只能|合适|为什么|怎么|如何|关系)|"
+    r"(?:区别|是什么|是否|只能|合适|为什么|怎么|如何|关系).{0,40}"
+    r"(?<![A-Za-z0-9_-])(?:NEXT_ROUND|DEBUG|CONTINUE|PIVOT|ABORT)"
+    r"(?![A-Za-z0-9_-])|"
+    r"\b(?:what|why|how|should|is)\b.{0,40}"
+    r"(?<![A-Za-z0-9_-])(?:NEXT_ROUND|DEBUG|CONTINUE|PIVOT|ABORT)"
+    r"(?![A-Za-z0-9_-])",
+    re.IGNORECASE,
+)
+STRONG_WRITE_REQUEST_RE = re.compile(
+    r"(?:帮我|请|直接|开始|继续|现在|按.*方案|根据).{0,32}"
+    r"(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|迁移|补|添加|创建|写)|"
+    r"(?:apply|implement|modify|edit|patch|write|create|add|fix|refactor|delete|"
+    r"migrate|update)\s+(?:the\s+)?(?:file|module|code|hook|contract|schema|"
+    r"test|docs?|logic|implementation)|"
+    r"\b(?:help\s+me|please|go\s+ahead|directly)\b.{0,40}"
+    r"\b(?:implement|modify|edit|patch|write|create|add|fix|refactor|delete|"
+    r"migrate|update|improve)\b",
+    re.IGNORECASE,
+)
+WEAK_WRITE_VERB_RE = re.compile(
+    r"\b(?:modify|improve|adjust|fix|debug|update|change)\b|"
+    r"(完善|优化|调整|修改|改造|改|修复)",
     re.IGNORECASE,
 )
 CODE_WRITE_RE = re.compile(
@@ -175,7 +316,8 @@ HARNESS_MAINTENANCE_RE = re.compile(
     r"stage[- ]?card[- ]?generator|workflow[- ]?(?:vocabulary|terms|language)|"
     r"project_glossary)|"
     r"permission[- ]?(?:policy|boundary|elevation|scope|model)|"
-    r"tooling/codex_hooks|\.agents/skill-contracts|\.agents/skills|"
+    r"tooling/codex_hooks|schemas/skill_contracts(?:\.schema)?\.json|\.agents/skills|"
+    r"hook_intent_detection_improvement_plan|hook_intent_detection|intent_detection|"
     r"\.claude/skills)(?![A-Za-z0-9_])|"
     r"hook\s*的?\s*(?:判断|触发|路由|信任|状态)|"
     r"(?:判断|触发|路由|信任|状态).{0,12}hook|"
@@ -299,13 +441,60 @@ def detection_text(prompt: str) -> str:
     return PATH_TOKEN_RE.sub(" ", text)
 
 
+def is_question_or_discussion(prompt: str) -> bool:
+    return bool(QUESTION_OR_DISCUSSION_RE.search(detection_text(prompt)))
+
+
+def is_workflow_question(prompt: str) -> bool:
+    text = detection_text(prompt)
+    return bool(WORKFLOW_STAGE_RE.search(text) and WORKFLOW_QUESTION_RE.search(text))
+
+
+def is_decision_question(prompt: str) -> bool:
+    text = detection_text(prompt)
+    return bool(DECISION_WORD_RE.search(text) and DECISION_QUESTION_RE.search(text))
+
+
+def is_design_discussion(prompt: str) -> bool:
+    text = detection_text(prompt)
+    if not is_question_or_discussion(prompt):
+        return False
+    return bool(DESIGN_DISCUSSION_RE.search(text) or WEAK_WRITE_VERB_RE.search(text))
+
+
+def is_strong_write_request(prompt: str) -> bool:
+    text = detection_text(prompt)
+    if is_question_or_discussion(prompt) and not STRONG_WRITE_REQUEST_RE.search(text):
+        return False
+    if STRONG_WRITE_REQUEST_RE.search(text):
+        return True
+    return bool(CODE_WRITE_RE.search(text) and CODE_TARGET_RE.search(text))
+
+
+def is_workflow_action(prompt: str) -> bool:
+    text = detection_text(prompt)
+    if DECISION_ACTION_RE.search(text):
+        return True
+    if WORKFLOW_STAGE_RE.search(text) and WORKFLOW_ACTION_RE.search(text):
+        return True
+    return bool(re.search(r"[$/]iterate\b", text, flags=re.IGNORECASE))
+
+
 def classify_prompt_intent(prompt: str) -> str:
     text = detection_text(prompt)
     if CODE_REVIEW_RE.search(text) and (
         CODE_TARGET_RE.search(text) or REVIEW_TARGET_RE.search(text)
     ):
         return f"code_review_{classify_review_mode(prompt)}"
-    if CODE_WRITE_RE.search(text) and CODE_TARGET_RE.search(text):
+    if is_decision_question(prompt):
+        return "decision_question"
+    if is_workflow_question(prompt):
+        return "workflow_question"
+    if is_design_discussion(prompt):
+        return "design_discussion"
+    if is_workflow_action(prompt):
+        return "workflow_action"
+    if is_strong_write_request(prompt):
         return "code_write"
     if CODE_SEARCH_RE.search(text):
         return "code_search"
@@ -358,9 +547,250 @@ def _trigger_score(trigger: str, explicit: bool) -> int:
     return 100 + len(trigger)
 
 
+def _is_explicit_skill_trigger(trigger: str) -> bool:
+    return bool(EXPLICIT_TRIGGER_RE.match(trigger))
+
+
+def _is_decision_trigger(trigger: str) -> bool:
+    return trigger.strip().lower() in DECISION_WORDS
+
+
+def _is_question_safe_intent(intent: str) -> bool:
+    return intent in {
+        "workflow_question",
+        "decision_question",
+        "design_discussion",
+        "code_search",
+    }
+
+
+def _trigger_is_action_gated(trigger: str) -> bool:
+    return bool(WORKFLOW_TRIGGER_RE.match(trigger) or _is_decision_trigger(trigger))
+
+
+def _trigger_blocked_by_intent(trigger: str, intent: str) -> bool:
+    if _is_explicit_skill_trigger(trigger):
+        return False
+    if _trigger_is_action_gated(trigger) and _is_question_safe_intent(intent):
+        return True
+    if _is_decision_trigger(trigger) and intent != "workflow_action":
+        return True
+    if trigger in {"debug", "fix"} and intent == "decision_question":
+        return True
+    return False
+
+
+def _is_read_only_prompt(prompt: str) -> bool:
+    text = detection_text(prompt)
+    return bool(
+        re.search(
+            r"\b(status|show|explain|read|inspect|check|list)\b|"
+            r"(状态|查看|看一下|解释|说明|检查|只读)",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def _is_iterate_write_action(prompt: str) -> bool:
+    text = detection_text(prompt)
+    if DECISION_ACTION_RE.search(text):
+        return True
+    if re.search(r"\biterate\b", text, re.I) and re.search(
+        r"\b(?:run|execute)\b|(?:运行|执行)",
+        text,
+        re.I,
+    ):
+        return True
+    return bool(
+        re.search(
+            r"(?<![A-Za-z0-9_])(?:plan|code|run|eval)(?![A-Za-z0-9_])|"
+            r"(计划|编码|运行|评估|记录为)",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def _active_match(
+    contract: dict[str, Any],
+    skill: str,
+    trigger: str,
+    trigger_type: str,
+    intent: str,
+    enforcement_mode: str,
+    read_contract_stop_required: bool,
+) -> dict[str, Any]:
+    return {
+        "contract": contract,
+        "skill": skill,
+        "candidate_contract": None,
+        "candidate_skill": None,
+        "trigger": trigger,
+        "trigger_type": trigger_type,
+        "intent_class": intent,
+        "enforcement_mode": enforcement_mode,
+        "read_contract_stop_required": read_contract_stop_required,
+    }
+
+
+def _candidate_match(
+    contract: dict[str, Any] | None,
+    skill: str | None,
+    trigger: str | None,
+    trigger_type: str | None,
+    intent: str,
+    reason: str,
+    pending_candidate_activation: bool = False,
+) -> dict[str, Any]:
+    return {
+        "contract": None,
+        "skill": None,
+        "candidate_contract": contract,
+        "candidate_skill": skill,
+        "candidate_trigger": trigger,
+        "candidate_trigger_type": trigger_type,
+        "candidate_reason": reason,
+        "trigger": trigger,
+        "trigger_type": trigger_type,
+        "intent_class": intent,
+        "enforcement_mode": ENFORCEMENT_CONTEXT_ONLY
+        if skill
+        else ENFORCEMENT_NONE,
+        "read_contract_stop_required": False,
+        "pending_candidate_activation": pending_candidate_activation,
+    }
+
+
+def _enforcement_for_hard_match(skill: str, intent: str, prompt: str) -> str:
+    if intent == "code_write":
+        return ENFORCEMENT_ACTIVE_WRITE
+    if intent == "workflow_action":
+        if skill == "iterate":
+            return (
+                ENFORCEMENT_ACTIVE_WRITE
+                if _is_iterate_write_action(prompt)
+                else ENFORCEMENT_ACTIVE_READ
+            )
+        if skill == "orchestrator":
+            return ENFORCEMENT_ACTIVE_READ
+        return ENFORCEMENT_ACTIVE_WRITE
+    if intent.startswith("code_review_"):
+        return ENFORCEMENT_ACTIVE_READ
+    if _is_read_only_prompt(prompt):
+        return ENFORCEMENT_ACTIVE_READ
+    return ENFORCEMENT_ACTIVE_READ
+
+
+def _read_stop_required(
+    contract: dict[str, Any],
+    trigger_type: str,
+    enforcement_mode: str,
+) -> bool:
+    if enforcement_mode == ENFORCEMENT_ACTIVE_READ:
+        return True
+    return trigger_type == "explicit" or contract.get("skill") == "code-review"
+
+
+def _workflow_action_match(
+    root: Path,
+    prompt: str,
+    intent: str,
+) -> dict[str, Any] | None:
+    if intent != "workflow_action":
+        return None
+    text = detection_text(prompt)
+    if DECISION_ACTION_RE.search(text):
+        contract = contract_by_skill(root, "iterate")
+        if contract:
+            return _active_match(
+                contract,
+                "iterate",
+                "decision_action",
+                "action_gated",
+                intent,
+                ENFORCEMENT_ACTIVE_WRITE,
+                False,
+            )
+    if re.search(r"\bWF0\b|bootstrap\s+init|operator\s+context\s+init", text, re.I):
+        contract = contract_by_skill(root, "init-project")
+        if contract:
+            return _active_match(
+                contract,
+                "init-project",
+                "wf0",
+                "explicit",
+                intent,
+                ENFORCEMENT_ACTIVE_WRITE,
+                True,
+            )
+    if re.search(r"[$/]iterate\b", text, re.I) or (
+        re.search(r"\bWF10\b", text, re.I) and WF10_LOOP_ACTION_RE.search(text)
+    ):
+        contract = contract_by_skill(root, "iterate")
+        if contract:
+            mode = (
+                ENFORCEMENT_ACTIVE_WRITE
+                if _is_iterate_write_action(prompt)
+                else ENFORCEMENT_ACTIVE_READ
+            )
+            return _active_match(
+                contract,
+                "iterate",
+                "iterate_action",
+                "action_gated",
+                intent,
+                mode,
+                mode == ENFORCEMENT_ACTIVE_READ,
+            )
+    if WORKFLOW_STAGE_RE.search(text):
+        contract = contract_by_skill(root, "orchestrator")
+        if contract:
+            return _active_match(
+                contract,
+                "orchestrator",
+                "stage_lifecycle",
+                "action_gated",
+                intent,
+                ENFORCEMENT_ACTIVE_READ,
+                True,
+            )
+    return None
+
+
 def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     prompt_l = prompt.lower()
     cleaned_l = detection_text(prompt).lower()
+    intent = classify_prompt_intent(prompt)
+    explicit_best: tuple[int, dict[str, Any], str] | None = None
+    for contract in load_contracts(root):
+        for trigger_value in contract.get("triggers", []):
+            trigger = str(trigger_value).lower()
+            if not _is_explicit_skill_trigger(trigger):
+                continue
+            if not _trigger_match(prompt_l, trigger):
+                continue
+            score = _trigger_score(trigger, True)
+            if explicit_best is None or score > explicit_best[0]:
+                explicit_best = (score, contract, trigger)
+    if explicit_best:
+        _, contract, trigger = explicit_best
+        skill = str(contract.get("skill"))
+        mode = _enforcement_for_hard_match(skill, intent, prompt)
+        return _active_match(
+            contract,
+            skill,
+            trigger,
+            "explicit",
+            intent,
+            mode,
+            _read_stop_required(contract, "explicit", mode),
+        )
+
+    workflow_match = _workflow_action_match(root, prompt, intent)
+    if workflow_match:
+        return workflow_match
+
     best: tuple[int, dict[str, Any], str, str] | None = None
     for contract in load_contracts(root):
         for trigger_value in contract.get("triggers", []):
@@ -371,11 +801,12 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
             text = prompt_l if explicit else cleaned_l
             if not _trigger_match(text, trigger):
                 continue
+            if _trigger_blocked_by_intent(trigger, intent):
+                continue
             trigger_type = "explicit" if explicit else "implicit"
             score = _trigger_score(trigger, explicit)
             if best is None or score > best[0]:
                 best = (score, contract, trigger, trigger_type)
-    intent = classify_prompt_intent(prompt)
     maintenance_contract = (
         contract_by_skill(root, "harness-maintenance")
         if is_harness_maintenance_prompt(prompt)
@@ -383,73 +814,145 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     )
     if best:
         _, contract, trigger, trigger_type = best
+        if _is_question_safe_intent(intent) and trigger_type != "explicit":
+            candidate_contract = maintenance_contract or contract
+            candidate_skill = (
+                str(candidate_contract.get("skill")) if candidate_contract else None
+            )
+            return _candidate_match(
+                candidate_contract,
+                candidate_skill,
+                "inferred_harness_maintenance"
+                if maintenance_contract
+                else trigger,
+                "inferred" if maintenance_contract else trigger_type,
+                intent,
+                "question or discussion prompt; no hard Skill Contract selected",
+            )
         if (
             trigger_type != "explicit"
             and contract.get("skill") in {"code-debug", "code-expert"}
             and maintenance_contract is not None
         ):
-            return {
-                "contract": maintenance_contract,
-                "skill": "harness-maintenance",
-                "trigger": "inferred_harness_maintenance",
-                "trigger_type": "inferred",
-                "intent_class": intent,
-                "read_contract_stop_required": False,
-            }
-        read_required = (
-            trigger_type == "explicit" or contract.get("skill") == "code-review"
+            mode = _enforcement_for_hard_match("harness-maintenance", intent, prompt)
+            return _active_match(
+                maintenance_contract,
+                "harness-maintenance",
+                "inferred_harness_maintenance",
+                "inferred",
+                intent,
+                mode,
+                _read_stop_required(maintenance_contract, "inferred", mode),
+            )
+        skill = str(contract.get("skill"))
+        if (
+            trigger_type != "explicit"
+            and skill == "harness-maintenance"
+            and intent == "code_write"
+        ):
+            mode = ENFORCEMENT_ACTIVE_WRITE
+            return _active_match(
+                contract,
+                skill,
+                "inferred_harness_maintenance",
+                "inferred",
+                intent,
+                mode,
+                _read_stop_required(contract, "inferred", mode),
+            )
+        if trigger_type != "explicit" and intent not in {
+            "code_write",
+            "workflow_action",
+        } and not intent.startswith("code_review_"):
+            return None
+        mode = _enforcement_for_hard_match(skill, intent, prompt)
+        return _active_match(
+            contract,
+            skill,
+            trigger,
+            trigger_type,
+            intent,
+            mode,
+            _read_stop_required(contract, trigger_type, mode),
         )
-        return {
-            "contract": contract,
-            "skill": contract.get("skill"),
-            "trigger": trigger,
-            "trigger_type": trigger_type,
-            "intent_class": intent,
-            "read_contract_stop_required": read_required,
-        }
 
     if intent.startswith("code_review_"):
         contract = contract_by_skill(root, "code-review")
         if contract:
-            return {
-                "contract": contract,
-                "skill": "code-review",
-                "trigger": "inferred_code_review",
-                "trigger_type": "inferred",
-                "intent_class": intent,
-                "read_contract_stop_required": True,
-            }
+            return _active_match(
+                contract,
+                "code-review",
+                "inferred_code_review",
+                "inferred",
+                intent,
+                ENFORCEMENT_ACTIVE_READ,
+                True,
+            )
     if intent == "code_write":
         if is_harness_maintenance_prompt(prompt):
             contract = contract_by_skill(root, "harness-maintenance")
             if contract:
-                return {
-                    "contract": contract,
-                    "skill": "harness-maintenance",
-                    "trigger": "inferred_harness_maintenance",
-                    "trigger_type": "inferred",
-                    "intent_class": intent,
-                    "read_contract_stop_required": False,
-                }
+                return _active_match(
+                    contract,
+                    "harness-maintenance",
+                    "inferred_harness_maintenance",
+                    "inferred",
+                    intent,
+                    ENFORCEMENT_ACTIVE_WRITE,
+                    False,
+                )
         create_score = bool(CODE_CREATE_RE.search(detection_text(prompt)))
         modify_score = bool(CODE_MODIFY_RE.search(detection_text(prompt)))
         skill = "code-expert" if create_score and not modify_score else "code-debug"
         contract = contract_by_skill(root, skill)
         if contract:
-            return {
-                "contract": contract,
-                "skill": skill,
-                "trigger": "inferred_code_write",
-                "trigger_type": "inferred",
-                "intent_class": intent,
-                "read_contract_stop_required": False,
-            }
+            return _active_match(
+                contract,
+                skill,
+                "inferred_code_write",
+                "inferred",
+                intent,
+                ENFORCEMENT_ACTIVE_WRITE,
+                False,
+            )
+    if intent == "design_discussion" and maintenance_contract:
+        return _candidate_match(
+            maintenance_contract,
+            "harness-maintenance",
+            "inferred_harness_maintenance",
+            "inferred",
+            intent,
+            "question about Harness guardrails; no edit request",
+        )
+    if intent == "decision_question":
+        contract = contract_by_skill(root, "iterate")
+        return _candidate_match(
+            contract,
+            "iterate" if contract else None,
+            "decision_vocabulary",
+            "action_gated",
+            intent,
+            "Decision vocabulary question; no WF10 state write requested",
+        )
+    if intent == "workflow_question":
+        contract = contract_by_skill(root, "orchestrator")
+        return _candidate_match(
+            contract,
+            "orchestrator" if contract else None,
+            "workflow_question",
+            "action_gated",
+            intent,
+            "workflow stage question; no stage transition requested",
+        )
     return None
 
 
 def detect_skill(root: Path, prompt: str) -> dict[str, Any] | None:
     match = detect_skill_match(root, prompt)
-    return match["contract"] if match else None
+    if not match:
+        return None
+    contract = match.get("contract")
+    return contract if isinstance(contract, dict) else None
 
 
 def is_continuation_prompt(prompt: str) -> bool:
@@ -562,6 +1065,75 @@ def validate_contract_files(root: Path) -> list[str]:
                 errors.append(
                     f"{skill}: write_scope.allowed_paths must be a string list"
                 )
+        artifact_outputs = contract.get("artifact_outputs")
+        if not isinstance(artifact_outputs, list) or not artifact_outputs:
+            errors.append(f"{skill}: artifact_outputs must be a non-empty list")
+        else:
+            for index, output in enumerate(artifact_outputs):
+                if not isinstance(output, dict):
+                    errors.append(f"{skill}: artifact_outputs[{index}] must be object")
+                    continue
+                kind = output.get("kind")
+                if kind not in KNOWN_ARTIFACT_OUTPUT_KINDS:
+                    errors.append(
+                        f"{skill}: artifact_outputs[{index}].kind is unknown: {kind}"
+                    )
+                paths = output.get("paths")
+                if not isinstance(paths, list) or not all(
+                    isinstance(path, str) for path in paths
+                ):
+                    errors.append(
+                        f"{skill}: artifact_outputs[{index}].paths "
+                        "must be a string list"
+                    )
+                    continue
+                requires_tool = bool(output.get("requires_tool"))
+                if kind == "legacy_compat" and not output.get("replacement"):
+                    errors.append(
+                        f"{skill}: legacy_compat output must declare replacement"
+                    )
+                for output_path in paths:
+                    if output_path.startswith(".evidence/") and not requires_tool:
+                        errors.append(
+                            f"{skill}: .evidence output {output_path} "
+                            "must set requires_tool=true"
+                        )
+                    if output_path.startswith(".auto_iterate/") and not requires_tool:
+                        errors.append(
+                            f"{skill}: .auto_iterate output {output_path} "
+                            "must set requires_tool=true"
+                        )
+                    if (
+                        not requires_tool
+                        and write_scope is not None
+                        and isinstance(write_scope, dict)
+                        and not path_pattern_covered_by(
+                            output_path,
+                            contract_write_scope_paths(contract),
+                        )
+                    ):
+                        errors.append(
+                            f"{skill}: artifact output path {output_path} "
+                            "is not covered by write_scope.allowed_paths"
+                        )
+        broad_docs = "docs/" in contract_write_scope_paths(contract)
+        if broad_docs and isinstance(artifact_outputs, list):
+            has_docs_explanation = any(
+                isinstance(output, dict)
+                and (
+                    output.get("kind") == "operational_scope"
+                    or any(
+                        isinstance(path, str) and path.startswith("docs/")
+                        for path in output.get("paths", [])
+                    )
+                )
+                for output in artifact_outputs
+            )
+            if not has_docs_explanation:
+                errors.append(
+                    f"{skill}: broad docs/ write scope needs artifact_outputs "
+                    "or operational_scope metadata"
+                )
         for section in ("harness", "skill"):
             for path in read_set.get(section, []):
                 if not (root / path).exists():
@@ -573,6 +1145,21 @@ def validate_contract_files(root: Path) -> list[str]:
             errors.append(
                 f"{skill}: missing skill file: {skill_file.relative_to(root)}"
             )
+    contracts_by_skill = {
+        str(contract.get("skill")): contract for contract in load_contracts(root)
+    }
+    for owner, patterns in GUARDRAIL_PATH_OWNERS.items():
+        contract = contracts_by_skill.get(owner)
+        if contract is None:
+            errors.append(f"{owner}: guardrail owner contract is missing")
+            continue
+        allowed_paths = contract_write_scope_paths(contract)
+        for pattern in patterns:
+            if not path_pattern_covered_by(pattern, allowed_paths):
+                errors.append(
+                    f"{owner}: guardrail path {pattern} is not covered by "
+                    "write_scope.allowed_paths"
+                )
     return errors
 
 
@@ -1081,8 +1668,16 @@ def is_mutating_tool_event(event: dict[str, Any], root: Path | None = None) -> b
         and (
             looks_mutating_bash(command)
             or bool(external_review_output_paths(workspace, command))
+            or bool(tool_owned_output_paths(workspace, command))
         )
     )
+
+
+def tool_owned_output_paths(root: Path, command: str) -> list[str]:
+    script = python_script_from_command(root, command)
+    if not script:
+        return []
+    return list(TOOL_OWNED_OUTPUT_PATHS_BY_SCRIPT.get(script, []))
 
 
 def mutating_event_paths(root: Path, event: dict[str, Any]) -> list[str]:
@@ -1102,8 +1697,13 @@ def mutating_event_paths(root: Path, event: dict[str, Any]) -> list[str]:
                 paths.append(rel_path(value, root))
     elif name == "Bash":
         wrapper_outputs = external_review_output_paths(root, command)
+        tool_outputs = tool_owned_output_paths(root, command)
         if wrapper_outputs:
             paths.extend(wrapper_outputs)
+            if looks_mutating_bash(command):
+                paths.append("<bash mutation>")
+        elif tool_outputs:
+            paths.extend(tool_outputs)
             if looks_mutating_bash(command):
                 paths.append("<bash mutation>")
         elif looks_mutating_bash(command):
@@ -1163,6 +1763,19 @@ def path_matches_any(path: str, patterns: list[str]) -> bool:
     return False
 
 
+def path_pattern_covered_by(pattern: str, allowed_paths: list[str]) -> bool:
+    if path_matches_any(pattern.rstrip("/"), allowed_paths):
+        return True
+    if not pattern.endswith("/"):
+        return False
+    for allowed in allowed_paths:
+        if allowed.endswith("/") and pattern.startswith(allowed):
+            return True
+        if allowed == pattern.rstrip("/"):
+            return True
+    return False
+
+
 def is_synthetic_mutation_path(path: str) -> bool:
     return path.startswith("<") and path.endswith(">")
 
@@ -1174,6 +1787,74 @@ def contract_write_scope_paths(contract: dict[str, Any]) -> list[str]:
         if isinstance(paths, list):
             return [str(path) for path in paths]
     return []
+
+
+def guardrail_owner_skills_for_paths(root: Path, paths: list[str]) -> set[str]:
+    owners: set[str] = set()
+    for skill, patterns in GUARDRAIL_PATH_OWNERS.items():
+        for path in paths:
+            if not is_synthetic_mutation_path(path) and path_matches_any(
+                path,
+                patterns,
+            ):
+                owners.add(skill)
+    return owners
+
+
+def command_mentions_guardrail_path(command: str) -> set[str]:
+    owners: set[str] = set()
+    for skill, patterns in GUARDRAIL_PATH_OWNERS.items():
+        for pattern in patterns:
+            token = pattern.rstrip("/")
+            if token and token in command:
+                owners.add(skill)
+    return owners
+
+
+def workflow_owner_skills_for_paths(root: Path, paths: list[str]) -> set[str]:
+    owners: set[str] = set()
+    for contract in load_contracts(root):
+        skill = str(contract.get("skill", ""))
+        allowed_paths = contract_write_scope_paths(contract)
+        for path in paths:
+            if not is_synthetic_mutation_path(path) and path_matches_any(
+                path,
+                allowed_paths,
+            ):
+                owners.add(skill)
+    return owners
+
+
+def no_contract_write_block_reason(
+    root: Path,
+    event: dict[str, Any],
+    paths: list[str],
+) -> str | None:
+    command = tool_text(event)
+    guardrail_owners = guardrail_owner_skills_for_paths(root, paths)
+    if normalize_tool_name(tool_name(event)) == "Bash":
+        guardrail_owners.update(command_mentions_guardrail_path(command))
+    if guardrail_owners:
+        owners = ", ".join(f"`{owner}`" for owner in sorted(guardrail_owners))
+        shown = "\n".join(f"- {p}" for p in paths[:12]) or "- <bash mutation>"
+        return (
+            "Blocked by Harness policy: this write targets guardrail-sensitive "
+            "paths and requires an explicit hard Skill Contract before retrying. "
+            f"Activate {owners}, complete its Read Contract, then retry.\n"
+            f"Attempted paths:\n{shown}"
+        )
+
+    workflow_owners = workflow_owner_skills_for_paths(root, paths)
+    if workflow_owners:
+        owners = ", ".join(f"`{owner}`" for owner in sorted(workflow_owners)[:8])
+        shown = "\n".join(f"- {p}" for p in paths[:12])
+        return (
+            "Blocked by Harness policy: this path is owned by a workflow "
+            "Skill Contract, but no hard active skill is selected. Activate the "
+            "correct Skill/Stage and complete required reads before writing.\n"
+            f"Possible owners: {owners}\nAttempted paths:\n{shown}"
+        )
+    return None
 
 
 def write_scope_violations(
@@ -1305,8 +1986,9 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
         if any(path in command for path in DIRECT_TOOL_OWNED_PATHS):
             if is_untrusted_tool_owned_path_command(command, root):
                 return (
-                    "Blocked by Harness policy: .evidence/** and "
-                    ".auto_iterate/** are tool/controller-owned paths."
+                    "Blocked by Harness policy: .evidence/**, "
+                    ".auto_iterate/**, docs/_views/**, and docs/_site/** "
+                    "are tool/controller-owned paths."
                 )
 
     if name == "apply_patch":
@@ -1319,7 +2001,8 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
         ):
             return (
                 "Blocked by Harness policy: do not manually patch "
-                ".evidence/** or .auto_iterate/**."
+                ".evidence/**, .auto_iterate/**, docs/_views/**, or "
+                "docs/_site/**."
             )
 
     if name in {"Edit", "Write"}:
@@ -1332,22 +2015,46 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
             shown = "\n".join(f"- {p}" for p in tool_owned_paths[:12])
             return (
                 "Blocked by Harness policy: do not manually edit or write "
-                ".evidence/** or .auto_iterate/**.\n"
+                ".evidence/**, .auto_iterate/**, docs/_views/**, or "
+                "docs/_site/**.\n"
                 f"{shown}"
             )
 
     contract = active_contract(root, event)
     is_mutating_tool = is_mutating_tool_event(event, root)
     if contract and is_mutating_tool:
-        missing = missing_reads(root, contract, event)
-        if missing:
-            shown = "\n".join(f"- {p}" for p in missing[:12])
-            return (
-                "Required read set is incomplete before write actions for "
-                f"`{contract['skill']}`:\n{shown}"
-            )
+        session = load_session_for_event(root, event)
+        mode = session.get("enforcement_mode") or ENFORCEMENT_ACTIVE_WRITE
+        paths = mutating_event_paths(root, event)
+        if mode == ENFORCEMENT_ACTIVE_READ:
+            if contract.get("skill") == "code-review" and paths and all(
+                path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS) for path in paths
+            ):
+                missing = missing_reads(root, contract, event)
+                if missing:
+                    shown = "\n".join(f"- {p}" for p in missing[:12])
+                    return (
+                        "Required read set is incomplete before read-mode "
+                        f"artifact writes for `{contract['skill']}`:\n{shown}"
+                    )
+            else:
+                shown = "\n".join(f"- {p}" for p in paths[:12]) or "- <write>"
+                return (
+                    "Blocked by Harness policy: the active "
+                    f"`{contract['skill']}` contract is in active_read mode. "
+                    "Read-only/status sessions may only write declared "
+                    "read-mode artifacts.\n"
+                    f"Attempted paths:\n{shown}"
+                )
+        else:
+            missing = missing_reads(root, contract, event)
+            if missing:
+                shown = "\n".join(f"- {p}" for p in missing[:12])
+                return (
+                    "Required read set is incomplete before write actions for "
+                    f"`{contract['skill']}`:\n{shown}"
+                )
         if contract.get("skill") == "code-review":
-            paths = mutating_event_paths(root, event)
             disallowed = [
                 p for p in paths if not path_matches_any(p, REVIEW_WRITE_ALLOWED_PATHS)
             ]
@@ -1370,6 +2077,25 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                 f"`{contract['skill']}` stage write scope.\n"
                 f"Attempted paths:\n{shown}\nAllowed paths:\n{allowed}"
             )
+    elif is_mutating_tool:
+        if name == "Bash" and is_tool_owned_write_tool_command(command, root):
+            paths = mutating_event_paths(root, event)
+            if any(
+                path_matches_any(path, ["docs/_views/", "docs/_site/"])
+                for path in paths
+            ):
+                shown = "\n".join(f"- {p}" for p in paths[:12])
+                return (
+                    "Blocked by Harness policy: docs-site renderer output "
+                    "requires an active `$docs-site` or owning stage Skill "
+                    "Contract with completed required reads.\n"
+                    f"Attempted paths:\n{shown}"
+                )
+            return None
+        paths = mutating_event_paths(root, event)
+        reason = no_contract_write_block_reason(root, event, paths)
+        if reason:
+            return reason
     return None
 
 
@@ -1451,6 +2177,8 @@ def additional_context_for_contract(
     return (
         f"Harness active skill contract: {contract['skill']}\n"
         + detection
+        + "Enforcement mode: "
+        + f"{match.get('enforcement_mode') if match else 'unknown'}.\n"
         + "Required read set before write actions:\n"
         + "\n".join(f"- {p}" for p in required)
         + "\nRequired actions:\n"
@@ -1458,6 +2186,34 @@ def additional_context_for_contract(
         + "\nForbidden actions:\n"
         + "\n".join(f"- {a}" for a in forbidden)
         + "\nReport a Gate ledger when contract conditions require one."
+    )
+
+
+def additional_context_for_candidate(
+    contract: dict[str, Any],
+    match: dict[str, Any] | None = None,
+) -> str:
+    reason = ""
+    if match and match.get("candidate_reason"):
+        reason = f"Reason: {match.get('candidate_reason')}.\n"
+    trigger = ""
+    if match:
+        trigger_type = match.get("candidate_trigger_type") or match.get(
+            "trigger_type"
+        )
+        trigger_value = match.get("candidate_trigger") or match.get("trigger")
+        trigger = (
+            f"Detection: advisory {trigger_type} "
+            f"trigger `{trigger_value}`; "
+            f"intent={match.get('intent_class')}.\n"
+        )
+    return (
+        f"Harness advisory skill context: {contract['skill']}\n"
+        + trigger
+        + reason
+        + "This is context only. It does not grant Write Scope. "
+        "Use an explicit hard Skill Contract before writing guardrail or "
+        "workflow paths."
     )
 
 

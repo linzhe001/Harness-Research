@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Harness skill contract",
+  "title": "Harness skill contracts",
   "type": "object",
   "required": ["schema_version", "contracts"],
   "properties": {
@@ -18,7 +18,8 @@
           "required_actions",
           "forbidden_actions",
           "gate_ledger_required_when",
-          "write_scope"
+          "write_scope",
+          "artifact_outputs"
         ],
         "properties": {
           "skill": {
@@ -81,6 +82,51 @@
               }
             },
             "additionalProperties": false
+          },
+          "artifact_outputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "paths",
+                "owner",
+                "is_final",
+                "requires_tool"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "current_doc",
+                    "approved_contract",
+                    "fact_doc",
+                    "conclusion_evidence",
+                    "generated_view",
+                    "canonical_state",
+                    "tool_trace",
+                    "review_trace",
+                    "implementation",
+                    "guidance",
+                    "release_package",
+                    "legacy_compat",
+                    "operational_scope"
+                  ]
+                },
+                "paths": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 1
+                },
+                "owner": { "type": "string" },
+                "is_final": { "type": "boolean" },
+                "requires_tool": { "type": "boolean" },
+                "replacement": { "type": "string" },
+                "notes": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
           }
         },
         "additionalProperties": false

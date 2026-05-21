@@ -9,13 +9,14 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "codex_hooks"))
 
 import check_contracts  # noqa: E402
 import generate_stage_cards  # noqa: E402
 import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
+    CONTRACTS_PATH,
     READ_LEDGER_PATH,
     RUNTIME_DIR,
     SLICED_COMMIT_RULE_PATH,
@@ -47,6 +48,7 @@ from harness_contracts import (  # noqa: E402
     save_read_ledger_for_event,
     save_session,
     stop_decision,
+    tool_owned_output_paths,
     validate_contract_files,
 )
 from hook_status import (  # noqa: E402
@@ -70,7 +72,7 @@ def _clean_runtime() -> None:
 
 
 def _write_contracts(root: Path, contracts: list[dict[str, object]]) -> None:
-    contracts_path = root / ".agents" / "skill-contracts" / "contracts.json"
+    contracts_path = root / CONTRACTS_PATH
     contracts_path.parent.mkdir(parents=True, exist_ok=True)
     contracts_path.write_text(
         json.dumps({"schema_version": "0.1", "contracts": contracts}) + "\n",
@@ -97,6 +99,7 @@ def test_skill_contract_files_are_valid() -> None:
     assert available_skills.issubset(skills)
     for contract in load_contracts(REPO_ROOT):
         assert contract.get("write_scope", {}).get("allowed_paths"), contract["skill"]
+        assert contract.get("artifact_outputs"), contract["skill"]
 
 
 def test_iterate_contract_covers_eval_iteration_reports() -> None:
@@ -113,7 +116,7 @@ def test_code_debug_contract_excludes_harness_maintenance_paths() -> None:
 
     allowed = contract["write_scope"]["allowed_paths"]
     assert "tooling/codex_hooks/" not in allowed
-    assert ".agents/skill-contracts/" not in allowed
+    assert "schemas/" not in allowed
     assert ".agents/skills/" not in allowed
 
 
@@ -123,10 +126,14 @@ def test_harness_maintenance_contract_covers_guardrail_paths() -> None:
 
     allowed = contract["write_scope"]["allowed_paths"]
     assert "tooling/codex_hooks/" in allowed
-    assert ".agents/skill-contracts/" in allowed
+    assert "schemas/" in allowed
     assert ".agents/skills/" in allowed
+    assert ".claude/Workflow_Guide.md" in allowed
     assert ".claude/skills/" in allowed
+    assert ".claude/rules/" in allowed
     assert "docs/" in allowed
+    assert "workflow_handbook/" in allowed
+    assert "templates/" in allowed
     assert ".gitignore" in allowed
     assert "AGENTS.md.template" in allowed
     assert "CLAUDE.md.template" in allowed
@@ -134,6 +141,107 @@ def test_harness_maintenance_contract_covers_guardrail_paths() -> None:
         ".agents/references/ubiquitous-language.md"
         in contract["required_read_set"]["harness"]
     )
+
+
+def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
+    contracts = {contract["skill"]: contract for contract in load_contracts(REPO_ROOT)}
+
+    for contract in contracts.values():
+        for output in contract["artifact_outputs"]:
+            if any(path.startswith(".evidence/") for path in output["paths"]):
+                assert output["requires_tool"] is True
+            if any(path.startswith("docs/_views/") for path in output["paths"]):
+                assert output["requires_tool"] is True
+            if any(path.startswith("docs/_site/") for path in output["paths"]):
+                assert output["requires_tool"] is True
+            if output["kind"] == "legacy_compat":
+                assert output.get("replacement")
+
+    iterate_outputs = contracts["iterate"]["artifact_outputs"]
+    assert any(
+        output["kind"] == "current_doc" and "docs/40_iterations/" in output["paths"]
+        for output in iterate_outputs
+    )
+    assert any(
+        output["kind"] == "legacy_compat"
+        and "docs/iterations/" in output["paths"]
+        and output["replacement"] == "docs/40_iterations/"
+        for output in iterate_outputs
+    )
+    assert not any(
+        path.startswith(".auto_iterate/")
+        for contract in contracts.values()
+        for output in contract["artifact_outputs"]
+        for path in output["paths"]
+    )
+
+
+def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
+    skills = [
+        "doc-compiler",
+        "review-packet",
+        "protocol-compiler",
+        "protocol-drift-check",
+        "survey-idea",
+        "idea-debate",
+        "refine-idea",
+        "data-prep",
+        "baseline-repro",
+        "refine-arch",
+        "deep-check",
+        "evaluate",
+        "init-project",
+        "build-plan",
+        "code-expert",
+        "code-debug",
+        "validate-run",
+        "iterate",
+        "auto-iterate-goal",
+        "final-exp",
+        "release",
+    ]
+
+    for skill in skills:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert "docs_site_render_or_NOT_RUN" in contract["required_actions"]
+        assert "docs_site_render" in contract["gate_ledger_required_when"]
+        assert "docs/_views/" in contract["write_scope"]["allowed_paths"]
+        assert "docs/_site/" in contract["write_scope"]["allowed_paths"]
+        assert any(
+            output["kind"] == "generated_view"
+            and output["owner"] == "docs-site"
+            and output["requires_tool"] is True
+            and output["paths"] == ["docs/_views/", "docs/_site/"]
+            for output in contract["artifact_outputs"]
+        )
+
+
+def test_docs_site_contract_only_writes_generated_views() -> None:
+    contract = contract_by_skill(REPO_ROOT, "docs-site")
+    assert contract is not None
+
+    assert contract["write_scope"]["allowed_paths"] == ["docs/_views/", "docs/_site/"]
+    assert "build_evidence_preview_index_or_NOT_RUN" in contract["required_actions"]
+    assert "build_docs_site_or_NOT_RUN" in contract["required_actions"]
+    assert "validate_docs_site_or_NOT_RUN" in contract["required_actions"]
+    assert "edit_source_markdown_during_render" in contract["forbidden_actions"]
+    assert "html_as_source_of_truth" in contract["forbidden_actions"]
+    assert "docs_site_render" in contract["gate_ledger_required_when"]
+    assert "docs/20_facts/Codebase_Map.md" in contract["required_read_set"][
+        "project_when_present"
+    ]
+
+    agents_skill = (REPO_ROOT / ".agents/skills/docs-site/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    claude_skill = (REPO_ROOT / ".claude/skills/docs-site/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    for text in [agents_skill, claude_skill]:
+        assert "Do not run this skill after every temporary Markdown edit" in text
+        assert "Markdown as source of truth" in text
+        assert "docs/_site/**" in text
 
 
 def test_stage_specific_coding_contracts_require_glossary_when_present() -> None:
@@ -180,6 +288,69 @@ def test_refine_arch_and_build_plan_own_project_glossary_writes() -> None:
         assert "project_glossary_write" in contract["gate_ledger_required_when"]
 
 
+def test_post_survey_stages_can_update_conclusion_evidence_tables() -> None:
+    expectations = {
+        "data-prep": "docs/30_evidence/Dataset_Table.md",
+        "baseline-repro": "docs/30_evidence/Baseline_Table.md",
+        "validate-run": "docs/30_evidence/Validation_Table.md",
+    }
+
+    for skill, path in expectations.items():
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+
+        assert path in contract["sensitive_paths"]
+        assert path in contract["write_scope"]["allowed_paths"]
+        assert "evidence_table_write" in contract["gate_ledger_required_when"]
+        assert any(
+            output["kind"] == "conclusion_evidence" and path in output["paths"]
+            for output in contract["artifact_outputs"]
+        )
+
+
+def test_codebase_map_is_created_and_synced_with_stable_code_contracts() -> None:
+    codebase_map = "docs/20_facts/Codebase_Map.md"
+
+    build_plan = contract_by_skill(REPO_ROOT, "build-plan")
+    assert build_plan is not None
+    assert codebase_map in build_plan["required_read_set"]["project_when_present"]
+    assert codebase_map in build_plan["sensitive_paths"]
+    assert codebase_map in build_plan["write_scope"]["allowed_paths"]
+    assert "codebase_map_write" in build_plan["gate_ledger_required_when"]
+    assert any(
+        output["kind"] == "fact_doc" and codebase_map in output["paths"]
+        for output in build_plan["artifact_outputs"]
+    )
+
+    for skill in ["baseline-repro", "code-expert", "code-debug"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert codebase_map in contract["required_read_set"]["project_when_present"]
+        assert codebase_map in contract["sensitive_paths"]
+        assert codebase_map in contract["write_scope"]["allowed_paths"]
+        assert "codebase_map_write" in contract["gate_ledger_required_when"]
+
+    for skill in ["code-expert", "code-debug"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert "compile_doc_or_NOT_RUN" in contract["required_actions"]
+        assert "codebase_map_docchain" in contract["gate_ledger_required_when"]
+        assert ".evidence/chains/" in contract["write_scope"]["allowed_paths"]
+        assert ".evidence/index.json" in contract["write_scope"]["allowed_paths"]
+        assert any(
+            output["kind"] == "tool_trace"
+            and output["owner"] == "evidence-tooling"
+            and output["requires_tool"] is True
+            and ".evidence/chains/" in output["paths"]
+            and ".evidence/index.json" in output["paths"]
+            for output in contract["artifact_outputs"]
+        )
+
+    validate_run = contract_by_skill(REPO_ROOT, "validate-run")
+    assert validate_run is not None
+    assert codebase_map in validate_run["required_read_set"]["project_when_present"]
+
+
 def test_validate_run_contract_reads_slice_plan_when_present() -> None:
     contract = contract_by_skill(REPO_ROOT, "validate-run")
     assert contract is not None
@@ -196,9 +367,13 @@ def test_stage_card_generator_renders_core_skill_boundaries() -> None:
     assert "## code-debug" in rendered
     assert "## harness-maintenance" in rendered
     assert "Can write:" in rendered
+    assert "Final outputs:" in rendered
+    assert "Tool-owned outputs:" in rendered
+    assert "`conclusion_evidence: docs/30_evidence/Dataset_Table.md`" in rendered
     assert "`src/`" in rendered
     assert "`tooling/codex_hooks/`" in rendered
     assert "`docs/`" in rendered
+    assert "--output docs/Workflow_Stage_Cards.md" not in rendered
 
 
 def test_stage_card_generator_writes_output(tmp_path: Path) -> None:
@@ -224,6 +399,16 @@ def test_stage_card_generator_writes_output(tmp_path: Path) -> None:
     text = output.read_text(encoding="utf-8")
     assert "## harness-maintenance" in text
     assert "Gate ledger" in text
+    assert "--output docs/Workflow_Stage_Cards.md" not in text
+
+
+def test_workflow_handbook_stage_cards_match_generated_output() -> None:
+    output = REPO_ROOT / "workflow_handbook" / "Workflow_Stage_Cards.md"
+
+    expected = generate_stage_cards.render_stage_cards(REPO_ROOT)
+
+    assert output.exists()
+    assert output.read_text(encoding="utf-8") == expected
 
 
 def test_hooks_json_references_existing_scripts() -> None:
@@ -330,8 +515,8 @@ def test_hook_status_accepts_workspace_only_install(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     (root / ".git").mkdir()
-    (root / ".agents/skill-contracts").mkdir(parents=True)
-    (root / ".agents/skill-contracts/contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"contracts":[]}\n', encoding="utf-8"
     )
     (root / ".codex").mkdir()
@@ -584,7 +769,7 @@ def _fake_check_contracts_status(
         "hook_trust_error": None,
         "hook_install_ready": True,
         "harness_workspace": True,
-        "contract_path": str(root / ".agents/skill-contracts/contracts.json"),
+        "contract_path": str(root / CONTRACTS_PATH),
         "workspace_root": str(root),
         "workspace_policy_effect": "active",
         "codex_home": str(Path.home() / ".codex"),
@@ -699,8 +884,8 @@ def test_daily_context_lists_repo_guidance_files(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     (root / ".git").mkdir()
-    (root / ".agents/skill-contracts").mkdir(parents=True)
-    (root / ".agents/skill-contracts/contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"contracts":[]}\n', encoding="utf-8"
     )
     (root / "AGENTS.md").write_text("# Agent guidance\n", encoding="utf-8")
@@ -786,10 +971,115 @@ def test_detection_maps_wf0_bootstrap_to_init_project() -> None:
     assert match["read_contract_stop_required"] is True
 
 
+def test_detection_maps_init_alias_to_init_project() -> None:
+    match = detect_skill_match(REPO_ROOT, "请运行 $init init")
+
+    assert match is not None
+    assert match["skill"] == "init-project"
+    assert match["trigger"] == "$init"
+    assert match["trigger_type"] == "explicit"
+
+
 def test_detection_ignores_trigger_words_inside_file_paths() -> None:
     prompt = "Harness_Workflow_Implementation_Review.md 这个文件在哪？"
     assert classify_prompt_intent(prompt) == "code_search"
     assert detect_skill_match(REPO_ROOT, prompt) is None
+
+
+def test_detection_treats_workflow_mapping_question_as_question() -> None:
+    match = detect_skill_match(REPO_ROOT, "WF8 -> WF10 这个正确吗？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "orchestrator"
+    assert match["intent_class"] == "workflow_question"
+    assert match["enforcement_mode"] == "context_only"
+
+
+def test_detection_treats_hook_design_question_as_context_only() -> None:
+    match = detect_skill_match(REPO_ROOT, "hook 的意图判断怎么完善？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+    assert match["enforcement_mode"] == "context_only"
+    assert match["read_contract_stop_required"] is False
+
+
+def test_detection_does_not_let_llm_design_question_activate_write_scope() -> None:
+    match = detect_skill_match(REPO_ROOT, "是否可以由 LLM 先判断意图然后选择 hook？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+
+
+def test_detection_question_markers_beat_write_verbs() -> None:
+    assert classify_prompt_intent("这个方案应该怎么修改？") == "design_discussion"
+    match = detect_skill_match(REPO_ROOT, "这个方案应该怎么修改？")
+    assert match is None
+
+
+def test_detection_action_gates_bare_workflow_ids() -> None:
+    match = detect_skill_match(REPO_ROOT, "这里提到 WF10 是否合适？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["intent_class"] == "workflow_question"
+
+
+def test_detection_action_gates_iterate_decision_vocabulary() -> None:
+    match = detect_skill_match(REPO_ROOT, "NEXT_ROUND 是不是只能在 WF10 eval 后使用？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "iterate"
+    assert match["intent_class"] == "decision_question"
+
+
+def test_detection_decision_questions_do_not_trigger_code_debug() -> None:
+    match = detect_skill_match(REPO_ROOT, "DEBUG 和 PIVOT 的区别是什么？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "iterate"
+    assert match["intent_class"] == "decision_question"
+
+
+def test_detection_exact_continue_decision_is_not_continuation() -> None:
+    assert not detect_skill_match(REPO_ROOT, "continue")
+    match = detect_skill_match(REPO_ROOT, "这里写 CONTINUE 是否合适？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["intent_class"] == "decision_question"
+
+
+def test_detection_routes_stage_lifecycle_to_orchestrator() -> None:
+    match = detect_skill_match(REPO_ROOT, "进入 WF10")
+
+    assert match is not None
+    assert match["skill"] == "orchestrator"
+    assert match["intent_class"] == "workflow_action"
+    assert match["enforcement_mode"] == "active_read"
+
+
+def test_detection_keeps_explicit_iterate_trigger_hard() -> None:
+    status = detect_skill_match(REPO_ROOT, "/iterate status")
+    plan = detect_skill_match(REPO_ROOT, '$iterate plan "try smaller lr"')
+    decision = detect_skill_match(REPO_ROOT, "$iterate eval CONTINUE")
+
+    assert status is not None
+    assert status["skill"] == "iterate"
+    assert status["enforcement_mode"] == "active_read"
+    assert plan is not None
+    assert plan["skill"] == "iterate"
+    assert plan["enforcement_mode"] == "active_write"
+    assert decision is not None
+    assert decision["skill"] == "iterate"
+    assert decision["enforcement_mode"] == "active_write"
 
 
 def test_detection_infers_code_debug_for_ordinary_code_modification() -> None:
@@ -848,20 +1138,35 @@ def test_detection_prefers_harness_maintenance_for_prompt_routing_terms() -> Non
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
-    assert match["trigger"] == "inferred_harness_maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+    assert match["enforcement_mode"] == "context_only"
     assert match["trigger_type"] == "inferred"
 
 
-def test_detection_infers_harness_maintenance_for_mixed_workflow_trigger() -> None:
+def test_detection_keeps_mixed_workflow_question_context_only() -> None:
     match = detect_skill_match(
         REPO_ROOT,
         "帮我看下 prompt routing 和 workflow 触发规则怎么修改",
     )
 
     assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+
+
+def test_detection_keeps_imperative_workflow_trigger_hard() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "帮我修改 prompt routing 和 workflow 触发规则",
+    )
+
+    assert match is not None
     assert match["skill"] == "harness-maintenance"
     assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "active_write"
 
 
 def test_detection_infers_code_expert_for_new_implementation_request() -> None:
@@ -1089,6 +1394,85 @@ def test_user_prompt_continuation_does_not_cross_session_boundary(
     _clean_runtime()
 
 
+def test_user_prompt_context_only_writes_candidate_skill_not_active_skill(
+    monkeypatch,
+    capsys,
+) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "hook 的意图判断怎么完善？",
+                    "session_id": "session-context",
+                    "turn_id": "turn-1",
+                }
+            )
+        ),
+    )
+
+    assert user_prompt_submit_main() == 0
+    output = capsys.readouterr().out
+
+    session = load_session(REPO_ROOT)
+    assert session["active_skill"] is None
+    assert session["candidate_skill"] == "harness-maintenance"
+    assert session["enforcement_mode"] == "context_only"
+    assert "Harness advisory skill context: harness-maintenance" in output
+    assert "does not grant Write Scope" in output
+    _clean_runtime()
+
+
+def test_user_prompt_context_only_continuation_does_not_silently_promote(
+    monkeypatch,
+    capsys,
+) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "hook 的意图判断怎么完善？",
+                    "session_id": "session-context",
+                    "turn_id": "turn-1",
+                }
+            )
+        ),
+    )
+    assert user_prompt_submit_main() == 0
+    capsys.readouterr()
+
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "那就按这个方案改",
+                    "session_id": "session-context",
+                    "turn_id": "turn-2",
+                }
+            )
+        ),
+    )
+    assert user_prompt_submit_main() == 0
+    capsys.readouterr()
+
+    session = load_session(REPO_ROOT)
+    assert session["active_skill"] is None
+    assert session["candidate_skill"] == "harness-maintenance"
+    assert session["pending_candidate_activation"] is True
+    assert session["enforcement_mode"] == "context_only"
+    _clean_runtime()
+
+
 def test_user_prompt_continuation_requires_current_session_id(
     monkeypatch, capsys
 ) -> None:
@@ -1189,8 +1573,8 @@ def test_pre_tool_blocks_interpreter_write_to_tool_owned_path() -> None:
 
 def test_pre_tool_blocks_manual_tool_owned_patch_delete(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
-    (root / ".agents" / "skill-contracts").mkdir(parents=True)
-    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"schema_version":"0.1","contracts":[]}\n',
         encoding="utf-8",
     )
@@ -1214,8 +1598,8 @@ def test_pre_tool_blocks_manual_tool_owned_patch_delete(tmp_path: Path) -> None:
 
 def test_pre_tool_blocks_manual_tool_owned_write_tool(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
-    (root / ".agents" / "skill-contracts").mkdir(parents=True)
-    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"schema_version":"0.1","contracts":[]}\n',
         encoding="utf-8",
     )
@@ -1231,10 +1615,36 @@ def test_pre_tool_blocks_manual_tool_owned_write_tool(tmp_path: Path) -> None:
     assert ".evidence/chains/wf9/evidence_chain.json" in reason
 
 
+def test_pre_tool_blocks_manual_generated_view_patch(tmp_path: Path) -> None:
+    root = tmp_path / "workspace"
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
+        '{"schema_version":"0.1","contracts":[]}\n',
+        encoding="utf-8",
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": (
+                "*** Begin Patch\n"
+                "*** Add File: docs/"
+                "_site/index.html\n"
+                "+<html></html>\n"
+                "*** End Patch\n"
+            )
+        },
+    }
+
+    reason = block_pre_tool(root, event)
+
+    assert reason is not None
+    assert "docs/_site/**" in reason
+
+
 def test_pre_tool_blocks_manual_auto_iterate_edit_tool(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
-    (root / ".agents" / "skill-contracts").mkdir(parents=True)
-    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"schema_version":"0.1","contracts":[]}\n',
         encoding="utf-8",
     )
@@ -1262,6 +1672,63 @@ def test_pre_tool_allows_primary_evidence_tool_mutation() -> None:
     }
 
     assert block_pre_tool(REPO_ROOT, event) is None
+
+
+def test_docs_site_renderer_outputs_are_stage_scoped_tool_outputs() -> None:
+    command = "python tooling/evidence/build_docs_site.py --workspace-root ."
+    event = {"tool_name": "Bash", "tool_input": {"command": command}}
+
+    assert tool_owned_output_paths(REPO_ROOT, command) == [
+        "docs/_views/",
+        "docs/_site/",
+    ]
+    assert mutating_event_paths(REPO_ROOT, event) == [
+        "docs/_views/",
+        "docs/_site/",
+    ]
+
+
+def test_pre_tool_blocks_docs_site_renderer_without_active_contract() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": "python tooling/evidence/build_docs_site.py --workspace-root ."
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "requires an active `$docs-site`" in reason
+    assert "docs/_site/" in reason
+    _clean_runtime()
+
+
+def test_code_debug_can_run_docs_site_renderer_after_required_reads() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "code-debug")
+    assert contract is not None
+    save_session(REPO_ROOT, {"active_skill": "code-debug"})
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": "python tooling/evidence/build_docs_site.py --workspace-root ."
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
 
 
 def test_approve_contract_python_variants_are_mutating() -> None:
@@ -1564,6 +2031,126 @@ def test_pre_tool_allows_write_inside_active_stage_scope() -> None:
     }
 
     assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
+def test_pre_tool_blocks_active_read_subject_write_even_inside_write_scope() -> None:
+    _clean_runtime()
+    contract = contract_by_skill(REPO_ROOT, "iterate")
+    assert contract is not None
+    save_session(
+        REPO_ROOT,
+        {"active_skill": "iterate", "enforcement_mode": "active_read"},
+    )
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: iteration_log.json\n"
+            "@@\n-{}\n+{}\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "active_read mode" in reason
+    assert "iteration_log.json" in reason
+    _clean_runtime()
+
+
+def test_pre_tool_blocks_guardrail_write_without_active_contract() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: tooling/codex_hooks/harness_contracts.py\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "guardrail-sensitive" in reason
+    assert "`harness-maintenance`" in reason
+    assert load_session(REPO_ROOT).get("active_skill") is None
+    _clean_runtime()
+
+
+def test_pre_tool_blocks_contract_owned_write_without_active_contract() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Update File: docs/Validate_Run_Report.md\n"
+            "@@\n-test\n+test\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "no hard active skill is selected" in reason
+    assert "validate-run" in reason
+    assert load_session(REPO_ROOT).get("active_skill") is None
+    _clean_runtime()
+
+
+def test_pre_tool_asks_explicit_stage_for_ambiguous_docs_write() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
+    event = {
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "command": "*** Begin Patch\n"
+            "*** Add File: docs/Some_New_Report.md\n"
+            "+# Some New Report\n"
+            "*** End Patch\n"
+        },
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "no hard active skill is selected" in reason
+    assert "Possible owners" in reason
+    assert "harness-maintenance" in reason
+    assert "init-project" in reason
+    assert "release" in reason
+    assert load_session(REPO_ROOT).get("active_skill") is None
+    _clean_runtime()
+
+
+def test_pre_tool_blocks_guardrail_bash_token_without_active_contract() -> None:
+    _clean_runtime()
+    save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "echo test > tooling/codex_hooks/tmp.txt"},
+    }
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "guardrail-sensitive" in reason
+    assert "`harness-maintenance`" in reason
     _clean_runtime()
 
 
@@ -2073,8 +2660,8 @@ def test_mark_pending_includes_untracked_sensitive_paths(tmp_path: Path) -> None
     root = tmp_path / "workspace"
     root.mkdir()
     subprocess.run(["git", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
-    (root / ".agents" / "skill-contracts").mkdir(parents=True)
-    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"schema_version":"0.1","contracts":[]}\n',
         encoding="utf-8",
     )
@@ -2091,8 +2678,8 @@ def test_mark_pending_includes_staged_sensitive_paths(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     subprocess.run(["git", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
-    (root / ".agents" / "skill-contracts").mkdir(parents=True)
-    (root / ".agents" / "skill-contracts" / "contracts.json").write_text(
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
         '{"schema_version":"0.1","contracts":[]}\n',
         encoding="utf-8",
     )

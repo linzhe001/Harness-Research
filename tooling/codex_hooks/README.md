@@ -137,6 +137,41 @@ PostToolUse marks sensitive writes for Gate ledger
 Stop requires final read-set and Gate ledger evidence
 ```
 
+Prompt routing is intentionally lower privilege than tool-time enforcement:
+
+```text
+prompt
+  -> classify intent
+  -> either select a hard active skill or store advisory context
+  -> mutating tool attempts enforce Read Contract, Write Scope, and path owners
+```
+
+`active_skill` means a hard Skill Contract is selected. `candidate_skill` is
+only advisory context for questions and design discussion; it never grants
+Write Scope. `enforcement_mode` records the runtime state:
+
+| Mode | Meaning |
+| --- | --- |
+| `none` | no workflow skill selected |
+| `context_only` | advisory context only, no Read Contract or Write Scope elevation |
+| `active_read` | hard contract for status/review/read-mode work; only declared read-mode artifacts may be written |
+| `active_write` | hard contract for requested file or workflow-state changes |
+
+Bare `WF<N>` and Decision vocabulary such as `DEBUG`, `PIVOT`, and
+`CONTINUE` are action-gated. Questions like `WF8 -> WF10 这个正确吗？` and
+`DEBUG 和 PIVOT 的区别是什么？` stay `context_only`. Stage lifecycle prompts
+such as `进入 WF10` route to `$orchestrator` in `active_read` mode until a
+state-changing action is explicit. WF10 loop actions such as `$iterate plan`,
+`$iterate eval DEBUG`, or `将本轮决策记录为 PIVOT` route to `$iterate` in
+`active_write` mode.
+
+When no hard contract is active, path-aware writes to guardrail-sensitive or
+contract-owned workflow paths fail closed. The hook asks for the explicit
+Skill/Stage and required reads instead of silently inferring permissions from
+the path. Mutating Bash that mentions guardrail path tokens such as
+`tooling/codex_hooks/` or `schemas/skill_contracts.json` is blocked without a
+hard contract; opaque `<bash mutation>` is not treated as Write Scope proof.
+
 The docs layer is not the permission entry point. The active stage is the entry
 point; docs paths are only part of that stage's write surface.
 For enforcement, every repository contract declares `write_scope.allowed_paths`;
@@ -148,6 +183,11 @@ contract error and path-aware writes fail closed instead of falling back to
 Complex Bash mutations that do not expose a reliable path are not treated as
 proof of strict scoping; they still remain subject to tool-owned path blocks and
 Gate ledger checks.
+Generated view paths (`docs/_views/**` and `docs/_site/**`) are tool-owned like
+`.evidence/**`: stage skills may declare them so the docs-site renderer can run
+after finalized Markdown, but manual edits to those paths are still blocked.
+Renderer commands for these paths still require an active owning Skill Contract,
+such as `$docs-site` or a stage skill that declares generated-view output.
 
 | Stage / skill | Permission elevation | Must remain gated |
 | --- | --- | --- |
@@ -155,24 +195,26 @@ Gate ledger checks.
 | `survey-idea` / WF1 | `docs/30_evidence/**`, `docs/Feasibility_Report.md`, `docs/35_protocol/**` | protocol draft is not an approved contract |
 | `idea-debate` / WF2 | `docs/Idea_Debate.md`, `docs/35_protocol/**` | reviewer independence and protocol drift checks |
 | `refine-idea` / WF3 | `docs/Refined_Idea.md`, `docs/35_protocol/**` | no premature architecture decision |
-| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts must come from artifacts and reproducible commands |
-| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/10_contract/**`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic context gates, human approval for contracts |
+| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `docs/30_evidence/Dataset_Table.md`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts must come from artifacts and reproducible commands |
+| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/30_evidence/Baseline_Table.md`, `docs/10_contract/**`, `docs/20_facts/Codebase_Map.md`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic context gates, codebase map sync when baseline layout changes, human approval for contracts |
 | `refine-arch` / WF6 | `docs/Technical_Spec.md`, `docs/20_facts/Project_Glossary.md`, `docs/35_protocol/**` | architecture must respect approved contracts and protocol drift |
-| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`, `project_map.json`, `PROJECT_STATE.json` | project map must not become stale |
-| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map sync |
-| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `PROJECT_STATE.json` | no PASS without semantic review and smoke evidence |
-| `iterate` / WF10 | `iteration_log.json`, `docs/iterations/**`, `docs/40_iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
+| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`, `docs/20_facts/Codebase_Map.md`, `project_map.json`, `PROJECT_STATE.json` | project map and codebase map must not become stale |
+| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, Codebase Map docchain traces, docs-site generated views, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map and codebase map sync; generated views/tool traces must come from tooling |
+| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `docs/30_evidence/Validation_Table.md`, `PROJECT_STATE.json` | no PASS without semantic review and smoke evidence |
+| `iterate` / WF10 | `iteration_log.json`, `docs/40_iterations/**`, legacy `docs/iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
 | `auto-iterate-goal` | `docs/auto_iterate_goal.md`; controller owns `.auto_iterate/**` | goal validation before unattended controller runs |
 | `final-exp` / WF11 | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | approved contracts and claim boundary |
 | `release` / WF12 | `submission/**`, `docs/**`, `PROJECT_STATE.json` | release claims stay inside `Claim_Boundary.md` |
+| `docs-site` | `docs/_views/**`, `docs/_site/**` | generated HTML is a view; Markdown and Evidence Chains remain source of truth |
 | `code-review` | `.agents/state/review_traces/code-review/**` only | code fixes route through `code-debug`; guardrail fixes route through `harness-maintenance` |
-| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json` | ordinary implementation code only; hooks/skills/contracts stay out of scope |
-| `harness-maintenance` | `tooling/codex_hooks/**`, `.agents/skill-contracts/**`, `.agents/skills/**`, `.claude/skills/**`, `.claude/shared/**`, `tooling/model_api/**`, `tests/**`, `schemas/**`, core framework docs | hook, skill, routing, permission, and trust behavior require focused tests and Gate ledger |
+| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, Codebase Map docchain traces, docs-site generated views | ordinary implementation code only; hooks/skills/contracts stay out of scope; generated views/tool traces must come from tooling |
+| `harness-maintenance` | `tooling/codex_hooks/**`, `schemas/**`, `.agents/skills/**`, `.agents/references/**`, `.claude/Workflow_Guide.md`, `.claude/skills/**`, `.claude/rules/**`, `.claude/shared/**`, `tooling/model_api/**`, `tooling/.tests/**`, `templates/**`, `docs/**`, `workflow_handbook/**`, core framework docs | hook, skill, routing, permission, and trust behavior require focused tests and Gate ledger |
 | `review-packet` | `.evidence/review_packets/<stage>/<build_id>/**`, related contract/state approval records | packet is not approval; explicit human approval is required |
 
-Direct `Edit`, `Write`, or manual `apply_patch` calls into `.evidence/**` and
-`.auto_iterate/**` are blocked. Skills that produce artifacts there should use
-the owning tooling, such as `tooling/evidence/*` or the auto-iterate controller.
+Direct `Edit`, `Write`, or manual `apply_patch` calls into `.evidence/**`,
+`.auto_iterate/**`, `docs/_views/**`, or `docs/_site/**` are blocked. Skills
+that produce artifacts there should use the owning tooling, such as
+`tooling/evidence/*`, `$docs-site`, or the auto-iterate controller.
 
 This keeps the operator-facing rule easy to read:
 
@@ -184,12 +226,23 @@ stage permission      = has this stage earned the right to write this path now?
 For operator-facing summaries, generate Stage Cards from the contract source:
 
 ```bash
-python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output docs/Workflow_Stage_Cards.md
+python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md
 ```
 
-Stage Cards are reading aids. `.agents/skill-contracts/contracts.json` remains
+Stage Cards are reading aids. Keep the versioned operator snapshot under
+`workflow_handbook/`; `schemas/skill_contracts.json` remains
 the source of truth for required reads, write scopes, required actions, and
 forbidden actions.
+
+Skill Contracts also declare `artifact_outputs`. This metadata explains where
+durable results should land, without granting permission. `Write Scope` answers
+"where may this active Skill write right now"; `Artifact Output` answers
+"where should final docs, canonical state, tool traces, review traces,
+implementation files, guidance, generated views, or release packages land."
+Tool-owned outputs such as `.evidence/**`, `docs/_views/**`, and
+`docs/_site/**` must set `requires_tool=true`, and direct manual writes to
+`.evidence/**`, `.auto_iterate/**`, `docs/_views/**`, and `docs/_site/**`
+remain blocked.
 
 ## Optional: User-Level Install
 
@@ -244,7 +297,7 @@ Hooks are active when all of these are true:
 Workspace-local hooks apply only to that workspace/config layer. User-level
 hooks are loaded for all Codex sessions that use that `CODEX_HOME`. Harness
 policy is only active in workspaces that include
-`.agents/skill-contracts/contracts.json`; other workspaces pass through with no
+`schemas/skill_contracts.json`; other workspaces pass through with no
 Harness-specific block.
 
 Restart the Codex session after changing hook config or copied runtime scripts.
@@ -349,8 +402,8 @@ continues only when the active skill is `code-review` and the intent is
 The skill contracts live in:
 
 ```text
-.agents/skill-contracts/contracts.json
-.agents/skill-contracts/schema.json
+schemas/skill_contracts.json
+schemas/skill_contracts.schema.json
 ```
 
 Run:

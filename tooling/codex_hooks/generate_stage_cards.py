@@ -49,6 +49,39 @@ def _write_paths(contract: dict[str, Any]) -> list[str]:
     return [str(value) for value in values]
 
 
+def _artifact_outputs(
+    contract: dict[str, Any],
+    *,
+    final: bool | None = None,
+    requires_tool: bool | None = None,
+) -> list[str]:
+    values = contract.get("artifact_outputs", [])
+    if not isinstance(values, list):
+        return []
+    rendered: list[str] = []
+    for output in values:
+        if not isinstance(output, dict):
+            continue
+        if final is not None and bool(output.get("is_final")) is not final:
+            continue
+        if (
+            requires_tool is not None
+            and bool(output.get("requires_tool")) is not requires_tool
+        ):
+            continue
+        kind = output.get("kind", "unknown")
+        paths = output.get("paths", [])
+        if not isinstance(paths, list):
+            continue
+        suffix = ""
+        replacement = output.get("replacement")
+        if replacement:
+            suffix = f" -> `{replacement}`"
+        for path in paths:
+            rendered.append(f"{kind}: {path}{suffix}")
+    return rendered
+
+
 def _first_values(values: list[Any], limit: int = 8) -> list[str]:
     return [str(value) for value in values[:limit]]
 
@@ -59,7 +92,7 @@ def render_stage_cards(root: Path) -> str:
         "# Harness Workflow Stage Cards",
         "",
         (
-            "本文件由 `.agents/skill-contracts/contracts.json` 生成, "
+            "本文件由 `schemas/skill_contracts.json` 生成, "
             "用作 operator 快速阅读入口。"
         ),
         "contract 仍是权限和 gate 的 source of truth。",
@@ -69,7 +102,7 @@ def render_stage_cards(root: Path) -> str:
         "```bash",
         (
             "python tooling/codex_hooks/generate_stage_cards.py "
-            "--workspace-root . --output docs/Workflow_Stage_Cards.md"
+            "--workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md"
         ),
         "```",
         "",
@@ -106,6 +139,12 @@ def render_stage_cards(root: Path) -> str:
                 "",
                 "Can write:",
                 _list_items(_write_paths(contract)),
+                "",
+                "Final outputs:",
+                _list_items(_artifact_outputs(contract, final=True)),
+                "",
+                "Tool-owned outputs:",
+                _list_items(_artifact_outputs(contract, requires_tool=True)),
                 "",
                 "Must read:",
                 _list_items(_read_paths(contract)),
