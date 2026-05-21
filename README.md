@@ -140,7 +140,7 @@ read project_map and glossary
 
 ### 4. 用分片代码规划生成更可信代码
 
-Harness 的 coding discipline 参考 [workflow_handbook/AI_Coding_Methods_Workflow.md](workflow_handbook/AI_Coding_Methods_Workflow.md)。关键原则是：AI 可以加速代码生成，但必须被软件工程约束住。
+Harness 的 coding discipline 收敛在 [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md)。关键原则是：AI 可以加速代码生成，但必须被软件工程约束住。
 
 核心方法：
 
@@ -216,9 +216,8 @@ $iterate eval
 | `templates/**` | Files copied into target research workspaces. |
 | `schemas/**` | JSON schemas for evidence and framework artifacts. |
 | `tooling/.tests/**` | Framework regression tests. |
-| `workflow_handbook/Workflow_Operator_Handbook.md` | Low-load operator guide. |
-| `workflow_handbook/AI_Coding_Methods_Workflow.md` | AI coding methods integrated into Harness WF0-WF12. |
-| `workflow_handbook/Workflow_Stage_Cards.md` | Operator-facing generated Skill Contract snapshot. |
+| `workflow_handbook/Workflow_Operator_Handbook.md` | Detailed human workflow handbook, including workflow model, evidence/approval boundaries, hooks, auto-iterate, and AI coding discipline. |
+| `workflow_handbook/Workflow_Stage_Cards.md` | Daily Stage / Skill lookup generated from Skill Contracts. |
 
 ## Dynamic Context Tools
 
@@ -353,7 +352,7 @@ AI agent 在 setup、同步、维护、更新 Harness 时，应该按任务读�
 | --- | --- |
 | Repository orientation | `AGENTS.md`, `CLAUDE.md`, `README.md` |
 | Bootstrap or refresh workspace setup | [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md), `templates/**`, [tooling/auto_iterate/docs/cli_control_guide.md](tooling/auto_iterate/docs/cli_control_guide.md), [tooling/auto_iterate/docs/auto_iterate_goal_template.md](tooling/auto_iterate/docs/auto_iterate_goal_template.md) |
-| Workflow docs or operator guidance update | [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md), [workflow_handbook/AI_Coding_Methods_Workflow.md](workflow_handbook/AI_Coding_Methods_Workflow.md), `.agents/references/ubiquitous-language.md` |
+| Workflow docs or operator guidance update | [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md), [workflow_handbook/Workflow_Stage_Cards.md](workflow_handbook/Workflow_Stage_Cards.md), `.agents/references/ubiquitous-language.md` |
 | Skill, routing, or contract update | relevant `.agents/skills/*/SKILL.md`, relevant `.claude/skills/*/SKILL.md`, `schemas/skill_contracts.json` |
 | Hook or permission boundary update | [tooling/codex_hooks/README.md](tooling/codex_hooks/README.md), `schemas/skill_contracts.json`, `tooling/.tests/test_codex_hooks_contracts.py` |
 | Dynamic context, protocol, or review packet update | `tooling/evidence/**`, `schemas/**`, `.agents/skills/protocol-compiler/SKILL.md`, `.agents/skills/protocol-drift-check/SKILL.md`, `.agents/skills/review-packet/SKILL.md` |

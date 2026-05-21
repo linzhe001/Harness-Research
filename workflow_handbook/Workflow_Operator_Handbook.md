@@ -63,7 +63,6 @@ tooling/codex_hooks/*.py
   -> UserPromptSubmit / PreToolUse / PostToolUse / Stop guardrails
       |
       v
-docs/Workflow_Stage_Cards.md
 workflow_handbook/Workflow_Stage_Cards.md
 workflow_handbook/Workflow_Operator_Handbook.md
   -> operator reading aids, not source of truth
@@ -423,7 +422,130 @@ git commit -m "<semantic message>"
 
 不要把可分离改动打成一个 `all changes` commit。不要 stage 用户的无关改动。
 
-## 9. Skill Routing
+## 9. AI Coding Discipline In Harness
+
+Harness 允许 AI 快速生成和修改代码，但 workflow 的目标不是“让 AI 多写代码”，而是让代码从意图、证据、边界、测试和 human decision 中自然长出来。
+
+专业化 AI coding 回路:
+
+```text
+Grill only where intent is unclear
+  -> stabilize language
+  -> choose one vertical slice
+  -> define feedback first
+  -> keep module boundaries deep and narrow
+  -> run gates / tests / review
+  -> record Gate Evidence and next human decision
+```
+
+### 9.1 Grill Me 只放在 Explore 和 Contract 窄门
+
+完整追问不应该散落在所有 Stage。推荐三个点:
+
+| Point | Stage | Purpose | Output |
+| --- | --- | --- | --- |
+| Explore Intake Grill | WF1 开始 | 问清用户目的、原始动机、目标任务、成功形态、非目标、资源约束。 | WF1 search keywords、risk seeds、open questions。 |
+| Explore Synthesis Grill | WF1 后半段到 WF3 | 基于 Conclusion Evidence 追问取舍、baseline、metric、Claim Boundary、pivot 条件。 | `Idea_Debate.md`, `Refined_Idea.md`, protocol assumptions。 |
+| Contract Handoff Grill | WF5-WF7 前，仅当关键边界仍不清 | 只追问会影响 Evaluation Contract、Baseline Contract、Claim Boundary、architecture 或 first slice 的问题。 | contract review inputs, WF6/WF7 constraints。 |
+
+WF8-WF10 默认不做完整 Grill。实现或实验暴露根本意图漂移时，回到 Explore/Contract 的相应窄门，而不是在代码阶段重新发散。
+
+### 9.2 稳定语言分两层
+
+```text
+Workflow Skill Language
+  -> Stage, Skill, Contract, Gate, Evidence, Claim
+  -> source: .agents/references/ubiquitous-language.md
+
+Application Codebase Language
+  -> project domain terms, code terms, datasets, metrics, run names
+  -> source: docs/20_facts/Project_Glossary.md
+
+Stable Codebase Structure
+  -> files, responsibilities, public interfaces, entry points, dependencies
+  -> machine source: project_map.json
+  -> human source: docs/20_facts/Codebase_Map.md
+```
+
+WF6 seeds `Project_Glossary.md`; WF7 turns it into implementation language.
+WF7 also creates `project_map.json` and `Codebase_Map.md`; WF8/WF9/WF10 must
+keep them synchronized when stable files, public interfaces, responsibilities,
+entry points, or dependency direction changes.
+
+### 9.3 Vertical Slice 是默认实现单位
+
+每个 build task 应该能回答:
+
+```text
+Slice:
+  hypothesis:
+  user-visible or experiment-visible outcome:
+  planned files:
+  public interfaces:
+  tests / smoke command:
+  acceptance command:
+  rollback boundary:
+```
+
+Trace chain:
+
+```text
+WF6 Technical_Spec.md
+  -> why this path exists and which hypothesis it serves
+
+WF7 Implementation_Roadmap.md
+  -> slice_id, planned files, public interfaces, tests, acceptance command
+
+project_map.json / Codebase_Map.md
+  -> stable structure and operator-readable codebase map
+
+WF8 / code-debug
+  -> implement one Commit Slice at a time
+
+WF9 Validate_Run_Report.md
+  -> semantic review, smoke commands, raw logs, verdict
+
+WF10 iteration_log.json
+  -> run, metrics, observation, lesson, decision
+```
+
+### 9.4 Feedback Before Expansion
+
+Preferred order:
+
+```text
+read contracts / roadmap / maps
+  -> write or name the smallest test or smoke command
+  -> implement the minimum behavior
+  -> run py_compile / ruff / focused tests or report NOT_RUN
+  -> update maps/docs only when stable structure changed
+  -> commit one validated slice
+```
+
+TDD is not mandatory for every throwaway experiment, but every durable code path needs some feedback: unit test, smoke script, shape check, config parse check, semantic review, training dry run, or explicit `NOT_RUN` reason.
+
+### 9.5 深模块、边界和复杂度预算
+
+AI tends to broaden surfaces. Harness constrains that with:
+
+- small public APIs;
+- clear module responsibilities;
+- stable config schemas;
+- explicit dependency direction;
+- `project_map.json` for machine-readable stable structure;
+- `Codebase_Map.md` for human-readable stable structure;
+- review of whether a change made future work easier or harder.
+
+Complexity warning signs:
+
+- many unrelated files touched for one behavior;
+- new terms not in `Project_Glossary.md`;
+- public APIs widened without a caller need;
+- helper modules that only wrap one call and hide state;
+- broad fallback behavior that masks bad config, missing data, failed imports, or shape errors;
+- `NOT_RUN` gates reported as if they passed.
+
+## 10. Skill Routing
 
 | Task | Skill |
 | --- | --- |
@@ -453,7 +575,7 @@ git commit -m "<semantic message>"
 | WF12 release | `$release` |
 | environment refresh | `$env-setup` |
 
-## 10. Skill I/O 和 Hook 边界矩阵
+## 11. Skill I/O 和 Hook 边界矩阵
 
 表中 `Can write` 是 active skill 的 `write_scope.allowed_paths` 简写。
 `.evidence/**` 和 `.auto_iterate/**` 即使出现在 logical output 中, 也应由 owning tooling/controller 生成。
@@ -486,7 +608,7 @@ git commit -m "<semantic message>"
 | `$final-exp` | best iteration, reports, approved contracts, Claim Boundary, state | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | respect Evaluation Contract and Claim Boundary; dynamic context or `NOT_RUN`; Gate ledger | no final experiment outside Claim Boundary; no WF11 readiness without approved contracts in dynamic projects |
 | `$release` | state, iteration log, guidance, final outputs, release checklist/manifest, contracts, Claim Boundary | `submission/`, `docs/`, `PROJECT_STATE.json` | WF12 dynamic context or `NOT_RUN`; manifest validation; claim boundary check; Gate ledger | no claim outside Claim Boundary; no submit without explicit user request; no overwrite without confirmation |
 
-## 11. WF10 Manual 和 Auto
+## 12. WF10 Manual 和 Auto
 
 Manual WF10:
 
@@ -557,9 +679,9 @@ Risk flags requiring explicit operator acceptance:
 - `--allow-review-required`
 - `--skip-dynamic-preflight --skip-dynamic-preflight-reason "<reason>"`
 
-## 12. 使用例子
+## 13. 使用例子
 
-### 12.1 WF0 初始化
+### 13.1 WF0 初始化
 
 ```text
 $orchestrator init
@@ -580,7 +702,7 @@ $orchestrator init
   -> Gate ledger reports context/workflow-state gates
 ```
 
-### 12.2 Contract approval
+### 13.2 Contract approval
 
 ```text
 $review-packet wf10
@@ -604,7 +726,7 @@ review packet exists -> mark contract approved
 
 Reason: packet is decision input, not Approval Evidence。
 
-### 12.3 WF9 PASS 到 auto WF10
+### 13.3 WF9 PASS 到 auto WF10
 
 ```text
 $validate-run configs/smoke.yaml
@@ -634,7 +756,7 @@ explicit run-specific acceptance -> start --allow-draft-contract
 
 This is not permanent contract approval。
 
-### 12.4 Manual WF10
+### 13.4 Manual WF10
 
 ```text
 $iterate plan "try lower learning rate with stronger regularization"
@@ -659,7 +781,7 @@ $iterate eval experiments/iter12/
 
 `DEBUG` means stay in WF10 and plan a debug-oriented next round。
 
-### 12.5 Hook block: wrong write scope
+### 13.5 Hook block: wrong write scope
 
 If active skill is `$code-debug` and a tool tries to edit
 `tooling/codex_hooks/harness_contracts.py`, PreToolUse should deny:
@@ -685,7 +807,7 @@ $harness-maintenance
   -> Gate ledger
 ```
 
-### 12.6 Hook block: direct Evidence Chain edit
+### 13.6 Hook block: direct Evidence Chain edit
 
 Bad:
 
@@ -711,7 +833,7 @@ python tooling/evidence/validate_docchain.py .evidence/chains/<doc_id>/<build_id
 python tooling/evidence/check_docchain_gates.py --workspace-root .
 ```
 
-### 12.7 Release packaging
+### 13.7 Release packaging
 
 ```text
 $release validate
@@ -734,7 +856,7 @@ Bad claim unless Claim Boundary and Conclusion Evidence support it:
 "This method is state of the art on all scenes."
 ```
 
-## 13. Operator Checklist
+## 14. Operator Checklist
 
 Before a stage:
 
@@ -757,21 +879,29 @@ Before closing a stage:
 - [ ] stable code/interface 改动已同步 `project_map.json` 和现有 `docs/20_facts/Codebase_Map.md`, 或报告 `NOT_RUN`。
 - [ ] commit 已按 Commit Slice staged and validated。
 
-## 14. 什么时候读深文档
+## 15. Handbook 和 Stage Cards 的分工
 
-| 情况 | 读什么 |
+`workflow_handbook/` 只保留两个 human-facing files:
+
+| File | Use |
 | --- | --- |
-| 完整 workflow | `.agents/references/workflow-guide.md` 或 `.claude/Workflow_Guide.md` |
-| 机器合同 | `schemas/skill_contracts.json` |
-| 快速 skill 边界 | `workflow_handbook/Workflow_Stage_Cards.md`；`docs/Workflow_Stage_Cards.md` 是同一生成内容的 versioned contract snapshot |
-| hooks、permission、routing | `tooling/codex_hooks/README.md` |
-| Stage 权限提升 | `tooling/codex_hooks/Stage_Permission_Elevation_Guide.md` |
-| workflow 术语 | `.agents/references/ubiquitous-language.md` |
+| `Workflow_Operator_Handbook.md` | 详细解释整个 workflow、状态所有权、Conclusion Evidence / Gate Evidence / Approval Evidence、Hook runtime、auto-iterate、AI coding discipline 和操作例子。人想理解系统时读它。 |
+| `Workflow_Stage_Cards.md` | 从 `schemas/skill_contracts.json` 生成的 Stage / Skill 查询卡。日常只想查某个 skill 要读什么、能写什么、必须证明什么时读它。 |
+
+不要再在 `workflow_handbook/` 下新增平行叙事文档。新解释应进入本 handbook；Stage I/O 事实应进入 Skill Contracts 并重新生成 Stage Cards。
+
+Source-of-truth 仍然是:
+
+| Question | Source |
+| --- | --- |
+| 完整 workflow contract | `schemas/skill_contracts.json`, `.agents/references/workflow-guide.md`, `.claude/Workflow_Guide.md` |
+| hook / permission / routing | `tooling/codex_hooks/README.md`, `tooling/codex_hooks/*.py` |
+| workflow language | `.agents/references/ubiquitous-language.md`, `.claude/shared/ubiquitous-language.md` |
 | Commit Slice | `.agents/references/sliced-commit-rule.md` |
 | auto-iterate | `tooling/auto_iterate/docs/cli_control_guide.md` |
 | dual-repo bootstrap | `AI_AGENT_SETUP.md` |
 
-## 15. 维护手册
+## 16. 维护手册
 
 ```text
 read source artifacts

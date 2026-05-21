@@ -411,6 +411,22 @@ def test_workflow_handbook_stage_cards_match_generated_output() -> None:
     assert output.read_text(encoding="utf-8") == expected
 
 
+def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
+    handbook_dir = REPO_ROOT / "workflow_handbook"
+    files = sorted(path.name for path in handbook_dir.glob("*.md"))
+
+    assert files == [
+        "Workflow_Operator_Handbook.md",
+        "Workflow_Stage_Cards.md",
+    ]
+    handbook = (handbook_dir / "Workflow_Operator_Handbook.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Handbook 和 Stage Cards 的分工" in handbook
+    assert "AI Coding Discipline In Harness" in handbook
+    assert "不要再在 `workflow_handbook/` 下新增平行叙事文档" in handbook
+
+
 def test_hooks_json_references_existing_scripts() -> None:
     hooks = json.loads(
         (REPO_ROOT / "tooling/codex_hooks/hooks.json").read_text(encoding="utf-8")
