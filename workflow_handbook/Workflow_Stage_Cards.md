@@ -1,12 +1,12 @@
 # Harness Workflow Stage Cards
 
-本文件由 `.agents/skill-contracts/contracts.json` 生成, 用作 operator 快速阅读入口。
+本文件由 `schemas/skill_contracts.json` 生成, 用作 operator 快速阅读入口。
 contract 仍是权限和 gate 的 source of truth。
 
 生成命令:
 
 ```bash
-python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output docs/Workflow_Stage_Cards.md
+python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md
 ```
 
 通用读法:
@@ -32,6 +32,14 @@ Can write:
 - `PROJECT_STATE.json`
 - `iteration_log.json`
 - `project_map.json`
+
+Final outputs:
+- `canonical_state: PROJECT_STATE.json`
+- `canonical_state: iteration_log.json`
+- `canonical_state: project_map.json`
+
+Tool-owned outputs:
+- none
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -85,6 +93,19 @@ Can write:
 - `docs/35_protocol/`
 - `.evidence/chains/`
 - `.evidence/index.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `approved_contract: docs/10_contract/`
+- `fact_doc: docs/20_facts/`
+- `current_doc: docs/35_protocol/`
+
+Tool-owned outputs:
+- `tool_trace: .evidence/chains/`
+- `tool_trace: .evidence/index.json`
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/evidence-chain-rule.md`
@@ -102,13 +123,79 @@ Must prove:
 - `compile_doc_or_NOT_RUN`
 - `check_docchain_gates_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `current_doc_write`
 - `contract_doc_write`
 - `protocol_doc_write`
+- `docs_site_render`
 
 Cannot do:
 - `manual_edit_evidence_chain`
 - `current_doc_without_docchain`
+
+Exit condition:
+- Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+
+## docs-site
+
+Purpose: Render source Markdown project docs into human-readable HTML under docs/_site, with Evidence Chain hover previews from docs/_views/evidence_preview_index.json. Use after stable Markdown docs are finalized, before human review or handoff, or when explicitly rebuilding the human docs site.
+
+Inputs / triggers:
+- `$docs-site`
+- `/docs-site`
+- `docs-site`
+- `docs site`
+- `render docs`
+- `HTML docs`
+- `human docs`
+- `rebuild docs site`
+
+Can write:
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- none
+
+Tool-owned outputs:
+- `generated_view: docs/_site/`
+- `tool_trace: docs/_views/evidence_preview_index.json`
+- `tool_trace: docs/_site/manifest.json`
+
+Must read:
+- `.agents/references/evidence-chain-rule.md`
+- `.agents/references/documentation-style.md`
+- `.agents/references/language-policy.md`
+- `.agents/references/ubiquitous-language.md`
+- `.agents/skills/docs-site/SKILL.md`
+- `AGENTS.md`
+- `.evidence/index.json`
+- `docs/10_contract/Project_Contract.md`
+- `docs/20_facts/Codebase_Map.md`
+- `docs/20_facts/Project_Glossary.md`
+- `docs/Technical_Spec.md`
+- `docs/Implementation_Roadmap.md`
+- `docs/Validate_Run_Report.md`
+- `docs/30_evidence/Validation_Table.md`
+- `PROJECT_STATE.json`
+- `project_map.json`
+- `docs/_views/evidence_preview_index.json`
+- `docs/_site/manifest.json`
+
+Must prove:
+- `build_evidence_preview_index_or_NOT_RUN`
+- `build_docs_site_or_NOT_RUN`
+- `validate_docs_site_or_NOT_RUN`
+- `gate_ledger`
+- `docs_site_render`
+- `human_doc_html_write`
+- `preview_index_write`
+
+Cannot do:
+- `manual_edit_evidence_chain`
+- `direct_edit_evidence`
+- `edit_source_markdown_during_render`
+- `html_as_source_of_truth`
 
 Exit condition:
 - Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
@@ -128,6 +215,16 @@ Can write:
 - `.evidence/review_packets/`
 - `docs/10_contract/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `approved_contract: docs/10_contract/`
+
+Tool-owned outputs:
+- `tool_trace: .evidence/review_packets/`
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/contract-gating-rule.md`
@@ -147,11 +244,13 @@ Must prove:
 - `build_review_packet_or_NOT_RUN`
 - `approval_tool_only_after_explicit_human_approval`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `contract_approval`
 - `review_packet_build`
 - `WF10_readiness`
 - `WF11_readiness`
 - `WF12_readiness`
+- `docs_site_render`
 
 Cannot do:
 - `approve_without_explicit_human_approval`
@@ -173,6 +272,16 @@ Inputs / triggers:
 Can write:
 - `.evidence/protocol_compiler/`
 - `docs/35_protocol/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/35_protocol/`
+
+Tool-owned outputs:
+- `tool_trace: .evidence/protocol_compiler/`
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/evidence-chain-rule.md`
@@ -191,9 +300,11 @@ Must prove:
 - `protocol_review_or_NOT_RUN`
 - `docchain_gate_when_current_docs_change`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `protocol_apply`
 - `protocol_doc_write`
 - `contract_readiness`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -215,6 +326,16 @@ Inputs / triggers:
 Can write:
 - `docs/35_protocol/`
 - `docs/10_contract/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/35_protocol/`
+- `approved_contract: docs/10_contract/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/evidence-chain-rule.md`
@@ -232,10 +353,12 @@ Must prove:
 - `check_protocol_drift_or_NOT_RUN`
 - `docchain_gate_when_current_docs_change`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `protocol_readiness`
 - `WF10_readiness`
 - `WF11_readiness`
 - `WF12_readiness`
+- `docs_site_render`
 
 Cannot do:
 - `ignore_unresolved_protocol_drift`
@@ -260,6 +383,17 @@ Can write:
 - `docs/30_evidence/`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Feasibility_Report.md`
+- `current_doc: docs/30_evidence/`
+- `current_doc: docs/35_protocol/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -282,9 +416,11 @@ Must prove:
 - `compile_protocol_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `evidence_table_write`
 - `feasibility_report_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -308,6 +444,16 @@ Can write:
 - `docs/Idea_Debate.md`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Idea_Debate.md`
+- `current_doc: docs/35_protocol/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -333,9 +479,11 @@ Must prove:
 - `check_protocol_drift_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `idea_debate_report_write`
 - `protocol_doc_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -359,6 +507,16 @@ Can write:
 - `docs/Refined_Idea.md`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Refined_Idea.md`
+- `current_doc: docs/35_protocol/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -384,9 +542,11 @@ Must prove:
 - `check_protocol_drift_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `refined_idea_write`
 - `protocol_assumption_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -409,11 +569,23 @@ Inputs / triggers:
 Can write:
 - `docs/Dataset_Stats.md`
 - `docs/20_facts/`
+- `docs/30_evidence/Dataset_Table.md`
 - `PROJECT_STATE.json`
 - `CLAUDE.md`
 - `AGENTS.md`
 - `configs/`
 - `src/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Dataset_Stats.md`
+- `conclusion_evidence: docs/30_evidence/Dataset_Table.md`
+- `fact_doc: docs/20_facts/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -435,10 +607,13 @@ Must prove:
 - `compile_doc_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `dataset_stats_write`
+- `evidence_table_write`
 - `dataset_config_write`
 - `canonical_state_edit`
 - `CLAUDE_dataset_sync`
+- `docs_site_render`
 
 Cannot do:
 - `direct_edit_evidence`
@@ -460,7 +635,9 @@ Inputs / triggers:
 
 Can write:
 - `docs/Baseline_Report.md`
+- `docs/30_evidence/Baseline_Table.md`
 - `docs/10_contract/`
+- `docs/20_facts/Codebase_Map.md`
 - `PROJECT_STATE.json`
 - `project_map.json`
 - `CLAUDE.md`
@@ -468,6 +645,17 @@ Can write:
 - `configs/`
 - `scripts/`
 - `src/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Baseline_Report.md`
+- `conclusion_evidence: docs/30_evidence/Baseline_Table.md`
+- `approved_contract: docs/10_contract/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -484,6 +672,7 @@ Must read:
 - `PROJECT_STATE.json`
 - `CLAUDE.md`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `project_map.json`
 - `docs/Refined_Idea.md`
 - `docs/Dataset_Stats.md`
@@ -496,13 +685,18 @@ Must prove:
 - `check_protocol_drift_or_NOT_RUN`
 - `check_dynamic_context_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
+- `codebase_map_sync_when_baseline_layout_changes`
 - `semantic_commit_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `baseline_report_write`
+- `evidence_table_write`
+- `codebase_map_write`
 - `baseline_contract_readiness`
 - `evaluation_contract_readiness`
 - `canonical_state_edit`
 - `stable_code_change`
+- `docs_site_render`
 
 Cannot do:
 - `training_without_semantic_commit`
@@ -529,6 +723,17 @@ Can write:
 - `docs/20_facts/Project_Glossary.md`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Technical_Spec.md`
+- `current_doc: docs/35_protocol/`
+- `fact_doc: docs/20_facts/Project_Glossary.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -557,10 +762,12 @@ Must prove:
 - `check_protocol_drift_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `technical_spec_write`
 - `contract_conflict`
 - `project_glossary_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -585,6 +792,17 @@ Can write:
 - `docs/Sanity_Check_Log.md`
 - `docs/35_protocol/`
 - `docs/10_contract/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Sanity_Check_Log.md`
+- `current_doc: docs/35_protocol/`
+- `approved_contract: docs/10_contract/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -612,9 +830,11 @@ Must prove:
 - `external_model_review_or_NOT_RUN`
 - `check_protocol_drift_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `sanity_check_write`
 - `review_trace_write`
 - `contract_conflict`
+- `docs_site_render`
 
 Cannot do:
 - `protocol_as_approved_contract`
@@ -636,11 +856,22 @@ Inputs / triggers:
 
 Can write:
 - `iteration_log.json`
-- `docs/iterations/`
 - `docs/40_iterations/`
+- `docs/iterations/`
 - `docs/50_memory/`
 - `MEMORY.md`
 - `docs/Stage_Report.md`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/40_iterations/`
+- `current_doc: docs/50_memory/`
+- `current_doc: docs/Stage_Report.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -666,10 +897,12 @@ Must prove:
 - `lesson_quality_check_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `stage_report_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `iteration_log_write`
+- `docs_site_render`
 
 Cannot do:
 - `stage_transition_from_iterate`
@@ -684,14 +917,14 @@ Exit condition:
 Purpose: WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.
 
 Inputs / triggers:
+- `$init`
 - `$init-project`
+- `/init`
 - `/init-project`
 - `init-project`
 - `init project`
 - `WF0`
 - `bootstrap init`
-- `operator context init`
-- `update CLAUDE`
 
 Can write:
 - `CLAUDE.md`
@@ -700,6 +933,18 @@ Can write:
 - `PROJECT_STATE.json`
 - `docs/`
 - `.evidence/`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `guidance: CLAUDE.md`
+- `guidance: AGENTS.md`
+- `guidance: OPERATOR_CONTEXT.md`
+
+Tool-owned outputs:
+- `tool_trace: .evidence/`
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/context-layering-policy.md`
@@ -723,10 +968,12 @@ Must prove:
 - `context_gate_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `dynamic_context_init`
 - `CLAUDE_write`
 - `operator_context_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `direct_edit_evidence`
@@ -756,6 +1003,17 @@ Can write:
 - `pyproject.toml`
 - `scripts/`
 - `configs/`
+
+Final outputs:
+- `guidance: CLAUDE.md`
+- `operational_scope: requirements.txt`
+- `operational_scope: requirements-dev.txt`
+- `operational_scope: environment.yml`
+- `operational_scope: environment.yaml`
+- `operational_scope: pyproject.toml`
+
+Tool-owned outputs:
+- none
 
 Must read:
 - `.agents/references/deps-update-rule.md`
@@ -790,7 +1048,7 @@ Exit condition:
 
 ## build-plan
 
-Purpose: Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md` and `project_map.json` built from the technical spec, baseline evidence, templates, and schemas.
+Purpose: Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas.
 
 Inputs / triggers:
 - `$build-plan`
@@ -803,7 +1061,19 @@ Can write:
 - `project_map.json`
 - `PROJECT_STATE.json`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `docs/Implementation_Roadmap.md`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Implementation_Roadmap.md`
+- `fact_doc: docs/20_facts/Project_Glossary.md`
+- `fact_doc: docs/20_facts/Codebase_Map.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -820,6 +1090,7 @@ Must read:
 - `PROJECT_STATE.json`
 - `project_map.json`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `docs/Technical_Spec.md`
 - `docs/Baseline_Report.md`
 - `docs/10_contract/Evaluation_Contract.md`
@@ -830,9 +1101,12 @@ Must prove:
 - `update_project_map`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `project_map_write`
 - `project_glossary_write`
+- `codebase_map_write`
 - `canonical_state_edit`
+- `docs_site_render`
 
 Cannot do:
 - `architecture_decision_in_build_plan`
@@ -843,7 +1117,7 @@ Exit condition:
 
 ## code-expert
 
-Purpose: Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, the roadmap, and the original Claude skill contract.
+Purpose: Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract.
 
 Inputs / triggers:
 - `$code-expert`
@@ -857,7 +1131,23 @@ Can write:
 - `scripts/`
 - `configs/`
 - `project_map.json`
+- `docs/20_facts/Codebase_Map.md`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+- `.evidence/chains/`
+- `.evidence/index.json`
+
+Final outputs:
+- `implementation: src/`
+- `implementation: scripts/`
+- `implementation: configs/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
+- `tool_trace: .evidence/chains/`
+- `tool_trace: .evidence/index.json`
 
 Must read:
 - `.agents/references/code-style.md`
@@ -874,6 +1164,7 @@ Must read:
 - `project_map.json`
 - `CLAUDE.md`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `docs/Implementation_Roadmap.md`
 - `docs/10_contract/Evaluation_Contract.md`
 - `docs/10_contract/Baseline_Contract.md`
@@ -885,9 +1176,14 @@ Must prove:
 - `semantic_commit_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
+- `compile_doc_or_NOT_RUN`
 - `stable_code_change`
 - `project_map_write`
+- `codebase_map_write`
 - `canonical_state_edit`
+- `docs_site_render`
+- `codebase_map_docchain`
 
 Cannot do:
 - `stable_code_without_project_map_read`
@@ -899,7 +1195,7 @@ Exit condition:
 
 ## code-debug
 
-Purpose: Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, or project_map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those.
+Purpose: Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, project_map, or Codebase_Map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those.
 
 Inputs / triggers:
 - `$code-debug`
@@ -913,6 +1209,22 @@ Can write:
 - `scripts/`
 - `configs/`
 - `project_map.json`
+- `docs/20_facts/Codebase_Map.md`
+- `docs/_views/`
+- `docs/_site/`
+- `.evidence/chains/`
+- `.evidence/index.json`
+
+Final outputs:
+- `implementation: src/`
+- `implementation: scripts/`
+- `implementation: configs/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
+- `tool_trace: .evidence/chains/`
+- `tool_trace: .evidence/index.json`
 
 Must read:
 - `.agents/references/code-style.md`
@@ -927,6 +1239,7 @@ Must read:
 - `project_map.json`
 - `CLAUDE.md`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `docs/Validate_Run_Report.md`
 - `iteration_log.json`
 
@@ -936,8 +1249,13 @@ Must prove:
 - `ruff_or_NOT_RUN`
 - `semantic_commit_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
+- `compile_doc_or_NOT_RUN`
 - `stable_code_change`
 - `project_map_write`
+- `codebase_map_write`
+- `docs_site_render`
+- `codebase_map_docchain`
 
 Cannot do:
 - `stable_code_without_project_map_read`
@@ -949,7 +1267,7 @@ Exit condition:
 
 ## harness-maintenance
 
-Purpose: Maintain Harness framework guardrails: Codex hooks, skill contracts, skill routing/triggers, permission policy docs, schema/tests, and .agents/.claude skill alignment. Use when modifying tooling/codex_hooks, .agents/skill-contracts, .agents/skills, .claude/skills, hook detection, hook trust/status, or permission boundaries.
+Purpose: Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries.
 
 Inputs / triggers:
 - `$harness-maintenance`
@@ -962,16 +1280,20 @@ Inputs / triggers:
 - `hook routing`
 
 Can write:
-- `.agents/skill-contracts/`
 - `.agents/skills/`
 - `.agents/references/`
+- `.claude/Workflow_Guide.md`
 - `.claude/skills/`
+- `.claude/rules/`
 - `.claude/shared/`
 - `tooling/codex_hooks/`
+- `tooling/evidence/`
 - `tooling/model_api/`
-- `tests/`
+- `tooling/.tests/`
+- `templates/`
 - `schemas/`
 - `docs/`
+- `workflow_handbook/`
 - `.gitignore`
 - `AGENTS.md`
 - `AGENTS.md.template`
@@ -980,13 +1302,35 @@ Can write:
 - `README.md`
 - `AI_AGENT_SETUP.md`
 
+Final outputs:
+- `current_doc: tooling/codex_hooks/README.md`
+- `current_doc: tooling/codex_hooks/Stage_Permission_Elevation_Guide.md`
+- `current_doc: workflow_handbook/`
+- `current_doc: README.md`
+- `current_doc: AI_AGENT_SETUP.md`
+- `guidance: AGENTS.md`
+- `guidance: AGENTS.md.template`
+- `guidance: CLAUDE.md`
+- `guidance: CLAUDE.md.template`
+- `guidance: .agents/skills/`
+- `guidance: .agents/references/`
+- `guidance: .claude/Workflow_Guide.md`
+- `guidance: .claude/skills/`
+- `guidance: .claude/rules/`
+- `guidance: .claude/shared/`
+- `guidance: templates/`
+
+Tool-owned outputs:
+- none
+
 Must read:
 - `.agents/references/code-style.md`
 - `.agents/references/language-policy.md`
 - `.agents/references/ubiquitous-language.md`
 - `tooling/codex_hooks/README.md`
-- `.agents/skill-contracts/contracts.json`
-- `tests/test_codex_hooks_contracts.py`
+- `schemas/skill_contracts.json`
+- `schemas/skill_contracts.schema.json`
+- `tooling/.tests/test_codex_hooks_contracts.py`
 - `.agents/skills/harness-maintenance/SKILL.md`
 - `AGENTS.md`
 - `CLAUDE.md`
@@ -1030,6 +1374,12 @@ Inputs / triggers:
 
 Can write:
 - `.agents/state/review_traces/code-review/`
+
+Final outputs:
+- `review_trace: .agents/state/review_traces/code-review/`
+
+Tool-owned outputs:
+- none
 
 Must read:
 - `.agents/references/code-style.md`
@@ -1084,7 +1434,18 @@ Inputs / triggers:
 
 Can write:
 - `docs/Validate_Run_Report.md`
+- `docs/30_evidence/Validation_Table.md`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Validate_Run_Report.md`
+- `conclusion_evidence: docs/30_evidence/Validation_Table.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -1103,8 +1464,10 @@ Must read:
 - `CLAUDE.md`
 - `docs/Implementation_Roadmap.md`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/20_facts/Codebase_Map.md`
 - `docs/Technical_Spec.md`
 - `docs/Baseline_Report.md`
+- `docs/30_evidence/Validation_Table.md`
 - `docs/10_contract/Evaluation_Contract.md`
 - `docs/10_contract/Baseline_Contract.md`
 
@@ -1114,8 +1477,11 @@ Must prove:
 - `write_validate_report`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `WF10_readiness`
 - `validate_report_write`
+- `evidence_table_write`
+- `docs_site_render`
 
 Cannot do:
 - `WF9_PASS_without_semantic_review`
@@ -1140,10 +1506,20 @@ Inputs / triggers:
 
 Can write:
 - `iteration_log.json`
-- `docs/iterations/`
 - `docs/40_iterations/`
+- `docs/iterations/`
 - `docs/50_memory/`
 - `MEMORY.md`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/40_iterations/`
+- `current_doc: docs/50_memory/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -1172,10 +1548,12 @@ Must prove:
 - `decision_vocabulary`
 - `lesson_quality_check_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `WF11_handoff`
+- `docs_site_render`
 
 Cannot do:
 - `auto_observation_direct_to_MEMORY`
@@ -1198,6 +1576,15 @@ Inputs / triggers:
 
 Can write:
 - `docs/auto_iterate_goal.md`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/auto_iterate_goal.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -1220,8 +1607,10 @@ Must prove:
 - `goal_validate_or_init`
 - `context_gate_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `WF10_auto_readiness`
 - `goal_write`
+- `docs_site_render`
 
 Cannot do:
 - `start_auto_iterate_without_goal_validation`
@@ -1243,6 +1632,15 @@ Inputs / triggers:
 Can write:
 - `docs/Final_Experiment_Matrix.md`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `current_doc: docs/Final_Experiment_Matrix.md`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -1265,8 +1663,10 @@ Must prove:
 - `respect_claim_boundary`
 - `check_dynamic_context_or_NOT_RUN`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `WF11_readiness`
 - `final_experiment_matrix_write`
+- `docs_site_render`
 
 Cannot do:
 - `final_exp_outside_claim_boundary`
@@ -1291,6 +1691,16 @@ Can write:
 - `submission/`
 - `docs/`
 - `PROJECT_STATE.json`
+- `docs/_views/`
+- `docs/_site/`
+
+Final outputs:
+- `release_package: submission/`
+- `current_doc: docs/60_release/`
+
+Tool-owned outputs:
+- `generated_view: docs/_views/`
+- `generated_view: docs/_site/`
 
 Must read:
 - `.agents/references/workflow-guide.md`
@@ -1316,9 +1726,11 @@ Must prove:
 - `release_manifest_validation`
 - `claim_boundary_check`
 - `gate_ledger`
+- `docs_site_render_or_NOT_RUN`
 - `WF12_readiness`
 - `release_claim`
 - `submission_package_write`
+- `docs_site_render`
 
 Cannot do:
 - `release_claim_outside_claim_boundary`

@@ -1,95 +1,233 @@
-<p align="center">
-  <img src="media/harness_simple_banner.jpeg" alt="Harness Research banner inspired by The Defect from Slay the Spire 2". width="100%" />
-</p>
+# Harness Research
 
-<p align="center">
-  The visual identity of <strong>Harness Research</strong> is inspired by The Defect from <em>Slay the Spire 2</em>.
-</p>
+Harness Research 是一套面向严肃 AI/ML 科研的 workflow framework。它的目标不是替研究者“想 idea”，而是帮助研究者把来自实践观察的 idea 更快、更可信地验证出来，并在实现、实验和反思中持续迭代自己的想法。
 
-
-<h1><img src="media/harness_icon.png" alt="Harness Research icon inspired by The Defect from Slay the Spire 2." width="56" /> Harness Research</h1>
-
-A domain-neutral, evidence-grounded research workflow framework for AI/ML projects, designed to work with **Claude Code** and **Codex** as AI research assistants.
-
+这套框架把 AI assistant 当作研究工程伙伴使用：用明确的 Stage、Skill、Hook、可溯源文档、代码切片计划和 Ralph-style iteration loop，把科研从“让模型自由发挥”变成“让模型在当前阶段的证据、边界和反馈回路内工作”。
 
 ## What This Is
 
-This repo contains the **framework only** — skills, rules, templates, workflow definitions, document schemas, and the auto-iterate controller. It does **not** contain any research code. Each research project has its own separate git repo; this framework is layered on top via a dual-repo setup (harness `.harness` + research `.git` sharing one worktree).
+这个仓库只包含 Harness framework 本身：
 
-## Dynamic Context Model
+- Codex / Claude Code skills
+- workflow rules and references
+- Codex hook contracts and hook runtime
+- dynamic-context and Evidence Chain tooling
+- bootstrap templates and schemas
+- WF10 auto-iterate controller
+- framework regression tests
 
-Harness does not ship fixed research-track profiles such as CV, LLM, or RL. It
-keeps the core process domain-neutral and lets each project derive its own
-research protocol from current evidence:
+它不包含某个具体科研项目的研究代码。推荐使用 dual-repo layout：Harness 作为 `.harness` framework repo，目标研究项目作为普通 `.git` repo，两者共享同一个 worktree。
+
+## Research Philosophy
+
+Harness 的核心立场：
 
 ```text
-operator context -> research evidence -> dynamic protocol -> approved contract
-  -> evidence-compiled docs -> reproducible iteration -> promoted lessons
+good research idea
+  -> comes from researcher observation, taste, failure analysis, and domain insight
+  -> not from the workflow itself
 ```
 
-For operators, the workflow should read as a small set of primitives:
+Harness 不承诺提供 idea 的来源，也不把 AI 的 survey 输出当成创造力替代品。它做的是另一件事：
+
+```text
+researcher idea
+  -> clarify intent and constraints
+  -> gather Conclusion Evidence
+  -> derive Protocol Draft
+  -> get human-approved boundaries
+  -> implement in reviewable Commit Slices
+  -> validate with Gate Evidence
+  -> iterate through Ralph-style loop
+  -> keep claims inside approved Claim Boundary
+```
+
+研究者仍然负责判断：这个问题是否值得做、哪些观察重要、哪些 tradeoff 可以接受、最终 claim 能说到什么程度。Harness 负责降低中间过程的摩擦和认知负担。
+
+## Core Workflow
+
+Operator 视角只需要先记住 8 个 primitive：
 
 ```text
 init -> evidence -> protocol -> contract -> code -> validate -> iterate -> release
 ```
 
-The implementation has more files because each primitive has an audit boundary:
-`init` sets up workspace structure and stable preferences, `evidence` records
-what is known, `protocol` proposes a procedure, `contract` records human
-approval, `code` changes implementation, `validate` runs gates, `iterate`
-records experiment loops, and `release` limits claims to supported evidence.
-
-The framework owns the rules, templates, schemas, and skills that control this
-flow. The research project owns the actual context files:
-
-- `OPERATOR_CONTEXT.md` for stable operator preferences, not project facts
-- `docs/20_facts/**` for current factual summaries derived from project artifacts
-- `docs/30_evidence/**` for papers, repos, datasets, benchmarks, metrics, and open questions
-- `docs/35_protocol/**` for the current evidence-derived protocol draft
-- `docs/10_contract/**` for human-approved project, evaluation, baseline, and claim boundaries
-- `.evidence/chains/**` for auditable evidence chains behind current docs
-- `.evidence/index.json` for the latest docchain pointer per compiled doc
-- `docs/50_memory/**` and `MEMORY.md` for promoted lessons and decisions
-
-Harness vocabulary is intentionally explicit. In prose, `Evidence` should not
-be used as a catch-all term:
+对应的 WF0-WF12:
 
 ```text
-Conclusion Evidence -> traceable support for a claim, fact, idea, or protocol choice
-Gate Evidence       -> proof that a command, review, approval check, or gate ran and what it returned
+WF0 init
+  -> WF1 survey-idea
+  -> WF2 idea-debate
+  -> WF3 refine-idea
+  -> WF4 data-prep
+  -> WF5 baseline-repro
+  -> WF6 refine-arch
+  -> WF7 build-plan
+  -> WF8 code-expert
+  -> WF9 validate-run
+  -> WF10 iterate
+  -> WF11 final-exp
+  -> WF12 release
 ```
 
-Workflow terms live in `.agents/references/ubiquitous-language.md` and
-`.claude/shared/ubiquitous-language.md`. Target research workspaces should keep
-project-specific codebase vocabulary in `docs/20_facts/Project_Glossary.md`.
+每个 Stage 都有自己的输入、输出、允许写入面、Gate Evidence 和 human decision 边界。完整操作手册见 [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md)。
 
-For a low-load operator entry point, read `docs/Workflow_Operator_Handbook.md`.
-Generate contract-derived Stage Cards with:
+## How Harness Helps
 
-```bash
-python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output docs/Workflow_Stage_Cards.md
+### 1. 控制每阶段给模型的上下文
+
+Harness 使用 Skill Contract 和 Codex hooks，把每个阶段的 read/write 边界显式化：
+
+```text
+UserPromptSubmit
+  -> detect active Skill
+  -> expose required read set and forbidden actions
+
+PreToolUse
+  -> require reads before writes
+  -> block writes outside active write_scope
+  -> block manual .evidence/** and .auto_iterate/** edits
+
+PostToolUse
+  -> record read/write markers
+  -> mark pending Gate ledger when sensitive paths changed
+
+Stop
+  -> require missing reads or Gate ledger before final response
 ```
 
-Tooling is intentionally layered:
+这不是为了制造仪式感，而是为了减少模型在错误上下文里做大范围修改的概率。一个 WF7 plan 不应该偷偷做架构决策；一个 code review 不应该顺手改 subject files；一个 Protocol Draft 不应该被模型标成 Approved Contract。
 
-- always-on guardrails: `AGENTS.md`, `CLAUDE.md`, skill contracts, and hooks
-- on-demand evidence tools: protocol/doc compilers, review packets, approval
-  tools, and dynamic-context gates
-- controller-owned runtime: `.auto_iterate/**` and WF10 phase logs
+### 2. 用可溯源文档降低认知过载
 
-Older flat docs such as `docs/Feasibility_Report.md`,
-`docs/Technical_Spec.md`, and `docs/Baseline_Report.md` are compatibility
-inputs. Treat their current factual content as fact-layer material to migrate
-into `docs/20_facts/**`; archive superseded snapshots under `docs/90_legacy/`.
-New projects should create the numbered docs directories from `templates/docs/`.
+Harness 区分几类证据：
 
-Useful framework tools:
+| Term | Meaning |
+| --- | --- |
+| `Conclusion Evidence` | 支持 claim、fact、idea、protocol choice 或 research conclusion 的 Source Artifact。 |
+| `Evidence Chain` | 从 Source Artifact 到 current doc/claim 的结构化链。 |
+| `Gate Evidence` | 证明命令、测试、review、approval check 或 workflow gate 是否执行以及结果。 |
+| `Approval Evidence` | explicit human approval，来自当前对话或可审计 artifact。 |
+
+目标是让 researcher 不必重新读完整上下文，而是优先读可信的 current docs、Review Packets、Gate Ledger 和 Evidence Chain，再决定下一步该让 AI 做什么。
+
+动态上下文链路：
+
+```text
+OPERATOR_CONTEXT.md
+  -> docs/30_evidence/** Conclusion Evidence tables
+  -> docs/35_protocol/** Protocol Draft
+  -> docs/10_contract/** draft/approved contracts
+  -> .evidence/chains/**
+  -> Review Packet
+  -> explicit Human Approval
+```
+
+### 3. 用多轮代码库搜索和审查生成更可信代码
+
+Harness 不鼓励让 AI 在不了解代码库的情况下直接生成大补丁。稳定实现前，相关 Skill 会读取 `project_map.json`、已存在的 `docs/20_facts/Codebase_Map.md`、roadmap、glossary、contracts 和当前代码路径；实现后再通过 `$code-review`、`$validate-run`、测试命令和 Gate Ledger 把风险显式化。
+
+```text
+read project_map and glossary
+  -> inspect existing modules, configs, tests, and entry scripts
+  -> implement one bounded slice
+  -> run py_compile / ruff / focused tests or report NOT_RUN
+  -> review changed lines and module boundaries
+  -> record Gate Evidence
+```
+
+在高风险场景下，`$code-review heavy` 可以通过受控 wrapper 调用外部模型 reviewer。外部 reviewer 的输出仍然不是事实，必须由本地文件、diff、line references 和人类判断复核。
+
+### 4. 用分片代码规划生成更可信代码
+
+Harness 的 coding discipline 参考 [workflow_handbook/AI_Coding_Methods_Workflow.md](workflow_handbook/AI_Coding_Methods_Workflow.md)。关键原则是：AI 可以加速代码生成，但必须被软件工程约束住。
+
+核心方法：
+
+- `Project_Glossary.md`: 统一系统语言，减少命名漂移。
+- vertical slice: 每次只打通一条可运行、可验证的端到端路径。
+- TDD / smoke feedback: 先定义最小反馈，再实现。
+- deep modules and module boundaries: 控制 public API 和依赖方向。
+- complexity budget: 防止 AI 大面积铺代码、扩大边界、制造系统熵增。
+
+切片追踪链：
+
+```text
+WF6 Technical_Spec.md
+  -> why this path exists and which hypothesis it serves
+
+WF7 Implementation_Roadmap.md
+  -> slice_id, planned files, public interfaces, tests, acceptance command
+
+project_map.json
+  -> stable file ownership and maintenance entry points
+
+WF8 code / code-debug
+  -> implement one Commit Slice at a time
+
+WF9 Validate_Run_Report.md
+  -> semantic review, smoke commands, raw logs, verdict
+
+WF10 iteration_log.json / docs/40_iterations/** (legacy mirror: docs/iterations/**)
+  -> run, metrics, observation, lesson, decision
+```
+
+这使得代码生成不再是“生成一堆文件后让人猜是否正确”，而是每个切片都有来源、边界、验收命令和后续实验记录。
+
+### 5. 用 Ralph-style loop 承担繁重迭代
+
+WF10 是 Harness 的核心实验循环：
+
+```text
+$iterate plan
+  -> hypothesis and config_diff
+  |
+  v
+$iterate code
+  -> implementation through $code-debug
+  -> semantic Commit Slice
+  |
+  v
+$iterate run
+  -> train/eval or register manual run
+  -> metrics and run_manifest
+  |
+  v
+$iterate eval
+  -> NEXT_ROUND | DEBUG | CONTINUE | PIVOT | ABORT
+```
+
+对于调参、微调模型结构、反复实验这种繁重操作，可以使用 Codex auto-iterate controller 运行 Ralph-style multi-round loop。控制器可以减少手动摩擦，但不会替代 Human Approval：合同、Claim Boundary、release readiness 和高风险转向仍然需要人确认。
+
+## Main Artifacts
+
+| Path | Purpose |
+| --- | --- |
+| `AGENTS.md` | Codex/native agent guidance for this framework workspace. |
+| `CLAUDE.md` | Claude Code-compatible guidance for this framework workspace. |
+| `.agents/skills/**` | Codex-facing Skill definitions. |
+| `schemas/skill_contracts.json` | Machine-readable high-risk Skill Contracts. |
+| `.agents/references/**` | Shared workflow rules and terminology. |
+| `.claude/skills/**` | Claude Code-facing skills. |
+| `tooling/codex_hooks/**` | Codex hook runtime, install/status, and simulation tools. |
+| `tooling/evidence/**` | Protocol, docchain, Review Packet, approval, and gate tooling. |
+| `tooling/auto_iterate/**` | WF10 auto-iterate controller and runtime adapter. |
+| `tooling/model_api/**` | External model reviewer helpers. |
+| `templates/**` | Files copied into target research workspaces. |
+| `schemas/**` | JSON schemas for evidence and framework artifacts. |
+| `tooling/.tests/**` | Framework regression tests. |
+| `workflow_handbook/Workflow_Operator_Handbook.md` | Low-load operator guide. |
+| `workflow_handbook/AI_Coding_Methods_Workflow.md` | AI coding methods integrated into Harness WF0-WF12. |
+| `workflow_handbook/Workflow_Stage_Cards.md` | Operator-facing generated Skill Contract snapshot. |
+
+## Dynamic Context Tools
+
+Common commands:
 
 ```bash
 python tooling/evidence/init_context.py --workspace-root . --set-state
 python tooling/evidence/compile_protocol.py --workspace-root .
 python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet
-python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto
 python tooling/evidence/check_protocol_drift.py --workspace-root . --stage wf10
 python tooling/evidence/build_review_packet.py --workspace-root . --stage wf10
 python tooling/evidence/approve_contract.py --workspace-root . --contract evaluation_contract --approved-by "<human reviewer>" --approval-source ".evidence/review_packets/wf10/<build_id>/review_packet.md"
@@ -97,184 +235,134 @@ python tooling/evidence/compile_doc.py --workspace-root . --doc docs/10_contract
 python tooling/evidence/validate_docchain.py .evidence/chains/<doc_id>/<build_id>
 python tooling/evidence/check_docchain_gates.py --workspace-root .
 python tooling/evidence/check_workflow_state.py --workspace-root .
-python tooling/evidence/migrate_legacy_docs.py --workspace-root .
 ```
 
-Reviewer cross-checks can use OpenAI-compatible external model APIs through
-`tooling/model_api/external_chat.py`. DeepSeek is available as a built-in
-provider when `DEEPSEEK_API_KEY` is set; other providers can be added through
-`tooling/model_api/providers.example.yaml`.
+Important boundaries:
 
-`init_context.py` never overwrites existing docs unless `--overwrite` is passed,
-and it does not create or infer `OPERATOR_CONTEXT.md`.
-`compile_protocol.py` compiles evidence tables into a reviewable draft packet
-under `.evidence/protocol_compiler/`; use `--apply --overwrite` only after
-review.
-`check_dynamic_context.py` runs the context, protocol-drift, docchain, and
-workflow-state gates from one command, with optional review-packet generation.
-`check_context_gates.py` keeps legacy projects compatible while enforcing
-Evaluation Contract readiness for dynamic-context auto-iteration.
-`check_protocol_drift.py` detects explicit protocol-review blockers such as
-blocking open questions, due assumptions, negative results, or pivot decisions.
-`build_review_packet.py` writes a concise human review packet under
-`.evidence/review_packets/` for approval, revision, or rejection decisions.
-`approve_contract.py` records explicit human approval in both the contract
-Markdown and `PROJECT_STATE.json`; run it only after the current conversation or
-review record contains that approval, then rerun the dynamic-context gate.
-`compile_doc.py` v0 records explicit sources and markers into docchain JSON; it
-also refreshes the Markdown evidence headers and `.evidence/index.json`.
-It does not replace agent or human judgment about semantic support.
-Rerun it whenever the Markdown, explicit source artifacts, fact markers,
-confidence, or support relation changes. Old `.evidence/chains/<doc>/<build>/`
-directories are audit history; the current Markdown headers and
-`.evidence/index.json` point to the latest build.
-`check_docchain_gates.py` scans current contract/fact/protocol docs and fails
-when their evidence chain is missing, invalid, stale, or violates clean/patch
-git-context requirements.
-`check_workflow_state.py` checks `PROJECT_STATE.json`, `iteration_log.json`,
-`project_map.json`, `.auto_iterate/state.json`, lesson candidates, and
-cross-file consistency when those files exist.
-`migrate_legacy_docs.py` is a default dry-run helper for moving old
-`docs/legacy/**` files into the canonical `docs/90_legacy/<date>/` archive.
+- `compile_protocol.py` produces Protocol Drafts, not Approved Contracts.
+- `build_review_packet.py` produces Review Packets, not Approval Evidence.
+- `approve_contract.py` should run only after explicit Human Approval.
+- `docs/30_evidence/**` stores operator-readable Conclusion Evidence tables.
+- `.evidence/**` is tool-owned; do not hand-edit Evidence Chains.
 
-## Gate Evidence Model
+## Hooks And Contracts
 
-Harness has several kinds of restrictions, and they are not equally strong:
+Workspace-local Codex hooks are optional but recommended:
+
+```bash
+python tooling/codex_hooks/install_hooks.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status
+python tooling/codex_hooks/check_contracts.py --workspace-root .
+```
+
+The hook model:
 
 ```text
-skill/reference instruction
-  -> Python gate or test
-  -> auto-iterate controller preflight/postcondition
-  -> Codex runtime guard (sandbox, approval, execpolicy, hooks)
-  -> explicit human approval record
+Codex sandbox
+  -> coarse filesystem/network boundary
+
+Harness hooks
+  -> stage-aware read sets
+  -> write_scope.allowed_paths
+  -> tool-owned path blocks
+  -> Gate Ledger requirement
 ```
 
-The rule of thumb is simple: a skill instruction says what should happen; a
-gate result or approval record is the auditable evidence that it happened. The
-gate ledger format lives in `.agents/references/workflow-guide.md` and
-`.claude/Workflow_Guide.md`; contract and readiness gates are detailed in
-`.agents/references/contract-gating-rule.md` and
-`.claude/shared/contract-gating-rule.md`.
+Hooks are runtime guardrails, not proof that a research gate passed. Readiness still depends on tooling outputs, tests, Review Packets, Gate Ledger, and explicit Human Approval.
 
-High-risk Codex workflow skills also have machine-readable contracts in
-`.agents/skill-contracts/contracts.json`. The optional Codex hooks in
-`tooling/codex_hooks/` use those contracts to remind or block around missing
-read sets, sensitive writes, and missing Gate ledgers.
-Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` after
-editing contracts or hook scripts.
-Install workspace-local Codex hooks with
-`python tooling/codex_hooks/install_hooks.py --workspace-root .` and inspect the
-effective config with `python tooling/codex_hooks/hook_status.py --workspace-root .`.
-Use `python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status`
-to confirm Codex `/hooks` trust review is complete.
-This keeps `.codex/` thin: only `.codex/config.toml` and `.codex/hooks.json`
-are installed, while hook logic remains in `tooling/codex_hooks/`.
+Generate operator Stage Cards:
 
-Set `PROJECT_STATE.json.workflow_mode` explicitly for new projects:
-`dynamic_context` for numbered context docs, `standard` for new projects without
-numbered context docs, and `compatibility` only for older imported projects that
-predate mandatory WF2/dynamic gates.
-
-## Practical Bootstrap Order (WF0)
-
-WF0 is the setup layer before research stages begin. It chooses the real target
-workspace, creates or refreshes compact guidance, optionally records explicit
-operator preferences, and prepares dynamic-context directories when requested.
-
-When you initialize a new project, identify the three roles first:
-
-- **target workspace**: the new repo that will actually run harness
-- **framework source**: this repo (`Harness-Research/`), used as the bootstrap source
-- **baseline/reference repo**: an optional old project used only for comparison
-
-Only the **target workspace** should receive the harness bootstrap. In the Aegis
-bring-up, that meant:
-
-- `Aegis/` was the real workspace root
-- `MARS/` was only a baseline reference
-- `Harness-Research/` was only the framework source tree
-
-Recommended order:
-
-1. choose the real workspace root
-2. move the framework git history to `.harness`
-3. initialize or reuse the normal research `.git`
-4. create `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, and `docs/auto_iterate_goal.md`
-5. optionally create `OPERATOR_CONTEXT.md` from explicit stable preferences, plus numbered docs directories and `.evidence/`
-6. create auto-iterate local configs in the workspace
-7. verify `auto_iterate_ctl.sh` and the focused Harness checks
-
-For the full bootstrap checklist, see [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md).
-
-## Common Bootstrap Gotchas
-
-- A sibling repo such as `MARS/` can be a baseline, but it should not be turned
-  into the live harness workspace unless that is the intended project root.
-- In dual-repo mode, the shared root `.gitignore` is read by both git histories.
-  If normal `git status` stops showing research files such as `CLAUDE.md`,
-  `AGENTS.md`, `docs/`, or `src/`, move those research-side hide rules into
-  `.harness/info/exclude` instead of leaving them in the root `.gitignore`.
-- Current project docs should stay concise in `docs/`; superseded Markdown
-  snapshots should move under `docs/90_legacy/`.
-
-## Workflow Overview
-
-```
-WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline)
--> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
+```bash
+python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md
 ```
 
-The core iteration loop (WF10) follows four stages per round:
+## Auto-Iterate
 
+Prepare the goal:
+
+```bash
+$auto-iterate-goal check
 ```
-plan (hypothesis) -> code (implement) -> run (train + metrics) -> eval (decision)
+
+Start a controller-assisted WF10 loop from the target research workspace:
+
+```bash
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
+  --tool codex \
+  --goal docs/auto_iterate_goal.md \
+  --config tooling/auto_iterate/config/controller.local.yaml
 ```
 
-Eval produces one of five decisions: **NEXT_ROUND**, **DEBUG**, **CONTINUE** (advance to WF11), **PIVOT** (roll back to WF2 idea debate/refinement), or **ABORT**.
+Useful controller commands:
 
-## Claude Code vs Codex: Division of Labor
+```bash
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh pause
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh resume
+tooling/auto_iterate/scripts/auto_iterate_ctl.sh stop
+```
 
-Both agents share the same iteration schema (`iteration_log.json`), the same skill interfaces (`plan`/`code`/`run`/`eval`), and the same state ownership model. They differ in execution mode and skill authoring style:
+Risk flags such as `--allow-draft-contract`, `--allow-review-required`, and `--skip-dynamic-preflight` require explicit operator acceptance for that run. They are not permanent approval.
+
+## Bootstrap
+
+For full setup, read [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md). The short version:
+
+```text
+target workspace
+  -> normal research .git
+
+Harness framework
+  -> .harness
+
+shared worktree
+  -> CLAUDE.md, AGENTS.md, PROJECT_STATE.json, iteration_log.json,
+     project_map.json, docs/**, src/**, configs/**, scripts/**
+```
+
+Recommended WF0 order:
+
+1. Choose the real target workspace root.
+2. Move framework git history to `.harness`.
+3. Initialize or reuse the normal research `.git`.
+4. Create `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, and `docs/auto_iterate_goal.md`.
+5. Optionally initialize dynamic context docs and `.evidence/` with tooling.
+6. Configure local auto-iterate YAML.
+7. Verify hooks, contracts, and controller plumbing.
+
+## Claude Code And Codex
+
+Both agents share the same workflow state, iteration schema, and decision vocabulary.
 
 | | Claude Code (`.claude/`) | Codex (`.agents/`) |
-|---|---|---|
-| **Execution mode** | Interactive — user drives each `/iterate` subcommand | Batch — controller auto-schedules `$iterate` phases |
-| **Auto-iterate** | Manual loop only (V1) | Full controller support via `tooling/auto_iterate/` |
-| **Skill style** | Thick instructions — self-contained step-by-step in each SKILL.md | Thin wrappers — SKILL.md references shared constraints in `references/` |
-| **Safety net** | User reviews each step in real time | Controller postcondition validation + budget/patience tracking |
-| **Best for** | Exploratory iteration, debugging, one-off experiments | Overnight batch runs, multi-round automated search |
+| --- | --- | --- |
+| Execution mode | Interactive | Batch/controller-friendly |
+| Best for | exploratory work, debugging, human-steered sessions | unattended multi-round WF10 optimization |
+| Auto-iterate | manual loop only | full controller support |
+| Safety net | human reviews each step | controller postconditions + hooks + contracts |
 
-**Shared invariants** (both agents):
+In practice: use Claude Code for interactive research sessions and Codex for controller-driven WF10 loops.
 
-- `iteration_log.json` is the single experiment source of truth, owned exclusively by the iterate skill
-- `PROJECT_STATE.json` is owned by the orchestrator, read-only from iterate
-- Ordinary implementation code changes go through `code-debug`; hook, skill,
-  contract, routing, and permission-policy changes go through
-  `harness-maintenance`; experiment analysis goes through `evaluate`
-- Identical iteration log schema, decision vocabulary, and context-passing protocol
+## AI Read To Setup And Update
 
-**Style trade-offs**:
+AI agent 在 setup、同步、维护、更新 Harness 时，应该按任务读取内部资料。不要要求 researcher 逐一阅读这些文件；AI 应该把结论压缩成可判断的 Review Packet、Gate Ledger 或明确的下一步选择。
 
-- Thick instructions (Claude Code) give higher determinism and easier debugging, but carry duplication risk when the schema evolves
-- Thin wrappers (Codex) are DRY and low-maintenance, but depend on the model correctly interpreting the reference chain
+| Task | AI should read |
+| --- | --- |
+| Repository orientation | `AGENTS.md`, `CLAUDE.md`, `README.md` |
+| Bootstrap or refresh workspace setup | [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md), `templates/**`, [tooling/auto_iterate/docs/cli_control_guide.md](tooling/auto_iterate/docs/cli_control_guide.md), [tooling/auto_iterate/docs/auto_iterate_goal_template.md](tooling/auto_iterate/docs/auto_iterate_goal_template.md) |
+| Workflow docs or operator guidance update | [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md), [workflow_handbook/AI_Coding_Methods_Workflow.md](workflow_handbook/AI_Coding_Methods_Workflow.md), `.agents/references/ubiquitous-language.md` |
+| Skill, routing, or contract update | relevant `.agents/skills/*/SKILL.md`, relevant `.claude/skills/*/SKILL.md`, `schemas/skill_contracts.json` |
+| Hook or permission boundary update | [tooling/codex_hooks/README.md](tooling/codex_hooks/README.md), `schemas/skill_contracts.json`, `tooling/.tests/test_codex_hooks_contracts.py` |
+| Dynamic context, protocol, or review packet update | `tooling/evidence/**`, `schemas/**`, `.agents/skills/protocol-compiler/SKILL.md`, `.agents/skills/protocol-drift-check/SKILL.md`, `.agents/skills/review-packet/SKILL.md` |
+| WF10 auto-iterate update | `.agents/skills/iterate/SKILL.md`, `.agents/skills/auto-iterate-goal/SKILL.md`, `tooling/auto_iterate/**`, `tooling/.tests/test_auto_iterate*.py` |
 
-In practice: use **Claude Code** for interactive research sessions, use **Codex** via the auto-iterate controller for unattended multi-round optimization.
+## Human Read
 
-## Codex Accounts
+The human-facing entry point is [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md).
 
-WF10 auto-iterate now defaults to external current-auth mode. Windows Cockpit
-owns Codex account switching; in WSL, `~/.codex/auth.json` should point at the
-Cockpit-managed Windows auth file. The controller starts a fresh `codex exec`
-process for each phase and, after quota/auth failures, retries the current
-phase so the new process reads the updated auth file.
+## Acknowledgment
 
-The controller-owned per-account pool and account override path have been
-removed. The controller always resolves auth from `CODEX_HOME`, or `~/.codex`
-when `CODEX_HOME` is unset.
-
-## For AI Agents
-
-- **At project setup**: read [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) for bootstrap instructions, framework contents, file ownership, and dual-repo layout.
-- **At framework update**: read local-only `Harness_Update_Guide.md` if present for pull/push workflows, conflict recovery, and post-pull template sync. This file is intentionally ignored and must not be added to git.
-
-Some code is based on [ralph](https://github.com/snarktank/ralph).
+Some controller ideas are based on [ralph](https://github.com/snarktank/ralph).

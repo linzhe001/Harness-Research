@@ -40,10 +40,10 @@
 | `.agents/references/ubiquitous-language.md` | Codex 侧只定义 Workflow Skill Language 和 Evidence 命名规则。 |
 | `.claude/shared/ubiquitous-language.md` | Claude 侧的对应 workflow 术语规则，用来保持 `.agents/` 和 `.claude/` 语义对齐。 |
 | `.agents/skills/refine-arch/SKILL.md` / `.claude/skills/refine-arch/SKILL.md` | WF6 生成或刷新 `docs/20_facts/Project_Glossary.md` 的初始 codebase 词汇种子。 |
-| `.agents/skills/build-plan/SKILL.md` / `.claude/skills/build-plan/SKILL.md` | WF7 根据稳定 file tree、接口、配置、metric、测试和错误名完善 `Project_Glossary.md`。 |
+| `.agents/skills/build-plan/SKILL.md` / `.claude/skills/build-plan/SKILL.md` | WF7 根据稳定 file tree、接口、配置、metric、测试和错误名完善 `Project_Glossary.md` 和 `docs/20_facts/Codebase_Map.md`。 |
 | `README.md` / `CLAUDE.md` | 明确 workflow 术语跟随 ubiquitous-language 规则；目标研究工作区的项目词汇由 WF6/WF7 维护。 |
 | `.agents/skills/init-project/references/claude-md-template.md` | 在生成的项目指导里加入 `Global Rule: Ubiquitous Language`，只要求使用 Harness workflow 术语，并指向 WF6/WF7 的 glossary 职责。 |
-| `tests/test_codex_hooks_contracts.py` | 检查 `harness-maintenance` Contract 覆盖 `.agents/references/ubiquitous-language.md`，保证修改 workflow 术语时必须读这份规则。 |
+| `tooling/.tests/test_codex_hooks_contracts.py` | 检查 `harness-maintenance` Contract 覆盖 `.agents/references/ubiquitous-language.md`，保证修改 workflow 术语时必须读这份规则。 |
 
 也就是说，当前代码库有两层语言模型，但不把它们写在同一份共享 reference 里：
 
@@ -61,7 +61,7 @@ Application Codebase Language
 - 没有强制检查代码 identifier 是否全部来自 glossary 的 lint。
 - 对目标项目 glossary 的执行主要依赖 WF6/WF7 的 stage instruction、skill 读集、文档模板和人工/agent review。
 
-因此本文件建议的“统一系统语言”应理解为：把 `Project_Glossary.md` 作为目标项目的稳定 Source Artifact，由 WF6 生成初稿、WF7 完善为实现语言，并在 WF8/WF9/WF10 中读取和审查。
+因此本文件建议的“统一系统语言”应理解为：把 `Project_Glossary.md` 作为目标项目的稳定 Source Artifact，由 WF6 生成初稿、WF7 完善为实现语言，并在 WF8/WF9/WF10 中读取和审查。稳定代码库结构则由 `project_map.json` 提供机器可读索引，并由 `docs/20_facts/Codebase_Map.md` 提供 operator 可读说明；WF7 生成或刷新，WF8/WF9 之后只要稳定文件、接口、入口或依赖方向变化就同步。
 
 ## 一条专业化 AI Coding 回路
 
@@ -339,13 +339,16 @@ WF7 Implementation_Roadmap.md
 project_map.json
   -> 记录稳定文件、责任、接口和后续维护入口
 
+docs/20_facts/Codebase_Map.md
+  -> 用 operator 可读语言说明当前代码结构、入口、public interfaces 和维护 owner
+
 WF8 code / code-debug
   -> 实现对应 slice，Gate ledger 记录命令、结果、原因、artifacts
 
 WF9 Validate_Run_Report.md
   -> 记录 evidence sources、review trace、smoke commands、smoke results 和 verdict
 
-WF10 iteration_log.json / docs/iterations/**
+WF10 iteration_log.json / docs/40_iterations/** (legacy mirror: docs/iterations/**)
   -> 如果该 slice 进入实验循环，记录 run、Observation、Lesson 和 Decision
 ```
 
@@ -368,11 +371,12 @@ WF10 iteration_log.json / docs/iterations/**
 当前代码库已经有可追溯文档机制，但覆盖面要分清：
 
 - `docs/Technical_Spec.md` 和 `docs/Implementation_Roadmap.md` 模板都有 `evidence_sources`，能记录设计和计划的来源。
+- `project_map.json` 是机器可读的稳定代码库索引；`docs/20_facts/Codebase_Map.md` 是实施计划落地后给 operator 看的当前代码库说明，两者需要在同一个稳定代码改动切片里保持一致。
 - `docs/Validate_Run_Report.md` 模板记录 semantic review、review trace、smoke commands、smoke results 和 verdict。
 - `tooling/evidence/compile_doc.py` 可以为当前 contract/fact/protocol 文档生成 `.evidence/chains/**` 下的 Evidence Chain。
 - `tooling/evidence/check_docchain_gates.py` 默认检查 `docs/10_contract/**`、`docs/20_facts/**`、`docs/35_protocol/**`。它不是对所有 flat docs 自动生效。
 
-因此，普通实现切片的主追踪链是 `Technical_Spec.md -> Implementation_Roadmap.md -> project_map.json -> Validate_Run_Report.md -> iteration_log.json/docs/iterations/**`。如果切片改变了 Current Facts、Protocol Draft、Approved Contract 或 Claim Boundary，再用 docchain 工具为对应 current docs 生成 Evidence Chain；不要手动编辑 `.evidence/**`。
+因此，普通实现切片的主追踪链是 `Technical_Spec.md -> Implementation_Roadmap.md -> project_map.json / Codebase_Map.md -> Validate_Run_Report.md -> iteration_log.json/docs/40_iterations/**`，只有兼容旧报告路径时才镜像 `docs/iterations/**`。如果切片改变了 Current Facts、Protocol Draft、Approved Contract 或 Claim Boundary，再用 docchain 工具为对应 current docs 生成 Evidence Chain；不要手动编辑 `.evidence/**`。
 
 ## 方法 4：TDD 测试驱动开发
 
@@ -609,9 +613,9 @@ AI 是复杂度放大器，不是复杂度清洁工。
 | 节奏 | 动作 |
 | --- | --- |
 | 每个切片前 | 检查 glossary、模块边界、测试入口。 |
-| 每个切片后 | 删除无用代码，统一命名，更新文档。 |
+| 每个切片后 | 删除无用代码，统一命名，更新受影响文档；稳定代码结构变化时同步 `project_map.json` 和 `docs/20_facts/Codebase_Map.md`。 |
 | 每轮 WF10 eval | 记录 Observation 和 Lesson，判断是否需要重构切片。 |
-| 每次架构变更 | 更新边界、project map、测试策略。 |
+| 每次架构变更 | 更新边界、`project_map.json`、`docs/20_facts/Codebase_Map.md` 和测试策略。 |
 | 每次 release 前 | 检查 Claim Boundary、文档、指标、语言是否一致。 |
 
 复杂度预算：
@@ -730,10 +734,10 @@ Feedback: 用什么命令、测试或审查证明结果？
 | WF2 idea-debate | 复杂度管理、失败模式 | 消费 Grill 结果，比较方案假设、失败模式、语言冲突；不重新做大范围 Grill。 |
 | WF3 refine-idea | Explore Synthesis 输出、验收标准 | 把 Grill 结果和 debate 结果固化成目标、非目标、success criteria、kill criteria、pivot triggers。 |
 | WF4 data-prep | 通用语言、反馈回路 | 固化 Dataset、Split、Sample、Metric 等词和数据验证命令；只补问阻塞性数据问题。 |
-| WF5 baseline-repro | TDD、反馈回路 | baseline smoke、metric check、Evaluation Contract 准备。 |
+| WF5 baseline-repro | TDD、反馈回路 | baseline smoke、metric check、`Baseline_Table.md` 和 Evaluation Contract 准备。 |
 | WF6 arch | 深模块、模块边界、可溯源切片 | 模块责任、public API、依赖方向、复杂度风险；把关键路径锚定到 `Technical_Spec.md`。 |
-| WF7 build-plan | 垂直切片、TDD、trace block | roadmap 按切片组织，每片有 `slice_id`、测试、验收命令和 downstream validation doc。 |
-| WF8 code | TDD、深模块、边界 | 小步实现，不让 AI 大面积铺开；更新 project map 条件满足时同步。 |
+| WF7 build-plan | 垂直切片、TDD、trace block | roadmap 按切片组织，每片有 `slice_id`、测试、验收命令和 downstream validation doc，并生成或刷新 `project_map.json` / `Codebase_Map.md`。 |
+| WF8 code | TDD、深模块、边界 | 小步实现，不让 AI 大面积铺开；更新 `project_map.json` 时同步 `Codebase_Map.md`。 |
 | WF9 validate | 反馈回路、Gate Evidence | 测试、smoke、review、`NOT_RUN` 项清楚记录。 |
 | WF10 iterate | 反馈回路、复杂度控制 | 默认不做完整 Grill；按 Slice -> Test -> Code -> Run -> Eval 执行，只有意图漂移时回到 Explore/Contract 补问。 |
 | WF11 final-exp | 反馈回路、复杂度控制 | 固化最终实验矩阵，避免临时漂移。 |
