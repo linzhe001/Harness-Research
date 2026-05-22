@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "codex_hooks"))
 
 import check_contracts  # noqa: E402
 import generate_stage_cards  # noqa: E402
+import harness_contracts  # noqa: E402
 import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
     CONTRACTS_PATH,
@@ -1150,6 +1151,123 @@ def test_detection_infers_harness_maintenance_over_generic_fix() -> None:
     assert match["skill"] == "harness-maintenance"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
+
+
+def test_detection_treats_explicit_harness_maintenance_fix_as_write() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "$harness-maintenance 修复 AI_AGENT_SETUP.md 的临时源目录清理说明",
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger_type"] == "explicit"
+    assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "active_write"
+
+
+def test_detection_routes_ai_agent_setup_writes_to_harness_maintenance() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "现在这个 AI_AGENT_SETUP.md 有问题，"
+        "将文件复制出去之后没有引导 LLM 删除临时目录",
+    )
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger_type"] == "inferred"
+    assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "active_write"
+
+
+def test_detection_keeps_ai_agent_setup_question_context_only() -> None:
+    match = detect_skill_match(REPO_ROOT, "AI_AGENT_SETUP.md 应该怎么修改？")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+    assert match["enforcement_mode"] == "context_only"
+
+
+def test_detection_infers_single_owner_for_commit_prompt(monkeypatch) -> None:
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "tooling/.tests/test_codex_hooks_contracts.py",
+            "tooling/codex_hooks/harness_contracts.py",
+        ],
+    )
+
+    match = detect_skill_match(REPO_ROOT, "帮我把这次的 git 提交了把")
+
+    assert match is not None
+    assert match["skill"] == "harness-maintenance"
+    assert match["trigger"] == "changed_paths_single_owner"
+    assert match["trigger_type"] == "inferred"
+    assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "active_write"
+
+
+def test_detection_keeps_mixed_owner_commit_prompt_inactive(monkeypatch) -> None:
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "src/pipeline.py",
+        ],
+    )
+
+    match = detect_skill_match(REPO_ROOT, "帮我把这次的 git 提交了把")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] is None
+    assert match["trigger"] == "changed_paths_mixed_owner"
+    assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "none"
+    assert "Possible owners" in match["candidate_reason"]
+
+
+def test_user_prompt_commit_single_owner_enters_active_write(
+    monkeypatch,
+    capsys,
+) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "tooling/codex_hooks/harness_contracts.py",
+        ],
+    )
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "帮我把这次的 git 提交了把",
+                    "session_id": "commit-session",
+                    "turn_id": "commit-turn",
+                }
+            )
+        ),
+    )
+
+    assert user_prompt_submit_main() == 0
+    capsys.readouterr()
+
+    session = load_session(REPO_ROOT)
+    assert session["active_skill"] == "harness-maintenance"
+    assert session["skill_trigger"] == "changed_paths_single_owner"
+    assert session["enforcement_mode"] == "active_write"
+    _clean_runtime()
 
 
 def test_detection_infers_harness_maintenance_for_workflow_language() -> None:
@@ -2461,6 +2579,79 @@ def test_pre_tool_allows_harness_maintenance_guardrail_write() -> None:
     }
 
     assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
+def test_pre_tool_allows_single_owner_git_add_for_active_owner(monkeypatch) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "tooling/codex_hooks/harness_contracts.py",
+        ],
+    )
+    contract = contract_by_skill(REPO_ROOT, "harness-maintenance")
+    assert contract is not None
+    save_session(
+        REPO_ROOT,
+        {
+            "active_skill": "harness-maintenance",
+            "enforcement_mode": "active_write",
+        },
+    )
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {"tool_name": "Bash", "tool_input": {"command": "git add -A"}}
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+    _clean_runtime()
+
+
+def test_pre_tool_blocks_mixed_owner_git_add_for_active_owner(monkeypatch) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "src/pipeline.py",
+        ],
+    )
+    contract = contract_by_skill(REPO_ROOT, "harness-maintenance")
+    assert contract is not None
+    save_session(
+        REPO_ROOT,
+        {
+            "active_skill": "harness-maintenance",
+            "enforcement_mode": "active_write",
+        },
+    )
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(REPO_ROOT, contract)
+            }
+        },
+    )
+    event = {"tool_name": "Bash", "tool_input": {"command": "git add -A"}}
+
+    reason = block_pre_tool(REPO_ROOT, event)
+
+    assert reason is not None
+    assert "one owner-aligned Commit Slice" in reason
+    assert "`harness-maintenance`" in reason
+    assert "`code-debug`" in reason
     _clean_runtime()
 
 

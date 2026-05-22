@@ -56,6 +56,16 @@ GUARDRAIL_PATH_OWNERS = {
         "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md",
     ]
 }
+CHANGED_PATH_OWNER_PATTERNS = {
+    "harness-maintenance": GUARDRAIL_PATH_OWNERS["harness-maintenance"],
+    "code-debug": [
+        "src/",
+        "scripts/",
+        "configs/",
+        "project_map.json",
+        "docs/20_facts/Codebase_Map.md",
+    ],
+}
 
 ENFORCEMENT_NONE = "none"
 ENFORCEMENT_CONTEXT_ONLY = "context_only"
@@ -269,6 +279,8 @@ DECISION_QUESTION_RE = re.compile(
     re.IGNORECASE,
 )
 STRONG_WRITE_REQUEST_RE = re.compile(
+    r"(?:[$/][A-Za-z0-9_-]+).{0,32}"
+    r"(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|迁移|补|添加|创建|写)|"
     r"(?:帮我|请|直接|开始|继续|现在|按.*方案|根据).{0,32}"
     r"(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|迁移|补|添加|创建|写)|"
     r"(?:apply|implement|modify|edit|patch|write|create|add|fix|refactor|delete|"
@@ -288,6 +300,15 @@ CODE_WRITE_RE = re.compile(
     r"\b(implement|create|add|write|generate|scaffold|fix|debug|modify|edit|change|update|"
     r"refactor|adjust|improve|remove|delete|patch)\b|"
     r"(实现|创建|新增|添加|写|生成|修复|修改|调整|完善|优化|更新|重构|删除|改一下|改成)",
+    re.IGNORECASE,
+)
+CURRENT_CHANGE_COMMIT_PROMPT_RE = re.compile(
+    r"\b(?:commit|stage|submit|git\s+add|git\s+commit)\b|(?:提交|暂存)",
+    re.IGNORECASE,
+)
+CURRENT_CHANGE_OWNER_PROMPT_RE = re.compile(
+    r"\b(?:commit|stage|submit|git\s+add|git\s+commit|fix|repair)\b|"
+    r"(?:提交|暂存|修复|修正|修一下|修好)",
     re.IGNORECASE,
 )
 CODE_CREATE_RE = re.compile(
@@ -316,7 +337,8 @@ HARNESS_MAINTENANCE_RE = re.compile(
     r"stage[- ]?card[- ]?generator|workflow[- ]?(?:vocabulary|terms|language)|"
     r"project_glossary)|"
     r"permission[- ]?(?:policy|boundary|elevation|scope|model)|"
-    r"tooling/codex_hooks|schemas/skill_contracts(?:\.schema)?\.json|\.agents/skills|"
+    r"tooling/codex_hooks|AI_AGENT_SETUP\.md|"
+    r"schemas/skill_contracts(?:\.schema)?\.json|\.agents/skills|"
     r"hook_intent_detection_improvement_plan|hook_intent_detection|intent_detection|"
     r"\.claude/skills)(?![A-Za-z0-9_])|"
     r"hook\s*的?\s*(?:判断|触发|路由|信任|状态)|"
@@ -754,7 +776,70 @@ def _workflow_action_match(
                 intent,
                 ENFORCEMENT_ACTIVE_READ,
                 True,
+        )
+    return None
+
+
+def _is_current_change_owner_prompt(prompt: str, intent: str) -> bool:
+    if is_question_or_discussion(prompt) and not is_strong_write_request(prompt):
+        return False
+    text = detection_text(prompt)
+    return bool(
+        CURRENT_CHANGE_OWNER_PROMPT_RE.search(text)
+        or (
+            intent == "code_write"
+            and re.search(r"\b(?:fix|repair)\b|(?:修复|修正)", text, re.I)
+        )
+    )
+
+
+def _changed_path_owner_match(
+    root: Path,
+    prompt: str,
+    intent: str,
+    commit_only: bool = False,
+) -> dict[str, Any] | None:
+    if commit_only:
+        if is_question_or_discussion(prompt) and not is_strong_write_request(prompt):
+            return None
+        if not CURRENT_CHANGE_COMMIT_PROMPT_RE.search(detection_text(prompt)):
+            return None
+    elif not _is_current_change_owner_prompt(prompt, intent):
+        return None
+    resolution = changed_path_owner_resolution(root)
+    paths = resolution["paths"]
+    if not paths:
+        return None
+    match_intent = "code_write" if intent == "unknown" else intent
+    skill = resolution.get("skill")
+    if skill:
+        contract = contract_by_skill(root, str(skill))
+        if contract:
+            return _active_match(
+                contract,
+                str(skill),
+                "changed_paths_single_owner",
+                "inferred",
+                match_intent,
+                ENFORCEMENT_ACTIVE_WRITE,
+                False,
             )
+
+    if resolution.get("owner_skills"):
+        owners = ", ".join(f"`{owner}`" for owner in resolution["owner_skills"])
+        shown = "\n".join(f"- {path}" for path in paths[:12])
+        return _candidate_match(
+            None,
+            None,
+            "changed_paths_mixed_owner",
+            "inferred",
+            match_intent,
+            (
+                "Current changed paths do not resolve to one owner; split the "
+                f"Commit Slice or activate the right Skill explicitly.\n"
+                f"Possible owners: {owners}\nChanged paths:\n{shown}"
+            ),
+        )
     return None
 
 
@@ -790,6 +875,15 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     workflow_match = _workflow_action_match(root, prompt, intent)
     if workflow_match:
         return workflow_match
+
+    changed_owner_match = _changed_path_owner_match(
+        root,
+        prompt,
+        intent,
+        commit_only=True,
+    )
+    if changed_owner_match:
+        return changed_owner_match
 
     best: tuple[int, dict[str, Any], str, str] | None = None
     for contract in load_contracts(root):
@@ -875,6 +969,10 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
             mode,
             _read_stop_required(contract, trigger_type, mode),
         )
+
+    changed_owner_match = _changed_path_owner_match(root, prompt, intent)
+    if changed_owner_match:
+        return changed_owner_match
 
     if intent.startswith("code_review_"):
         contract = contract_by_skill(root, "code-review")
@@ -1298,7 +1396,7 @@ def read_tracking_candidates(
     return sorted(dict.fromkeys(existing))
 
 
-def is_git_commit_command(command: str) -> bool:
+def _is_git_subcommand_command(command: str, subcommands: set[str]) -> bool:
     try:
         tokens = _strip_env_assignments(shlex.split(command))
     except ValueError:
@@ -1317,7 +1415,7 @@ def is_git_commit_command(command: str) -> bool:
             value = tokens[cursor]
             if value in SHELL_CONTROL_TOKENS:
                 break
-            if value == "commit":
+            if value in subcommands:
                 return True
             if value in {"-c", "-C", "--git-dir", "--work-tree"}:
                 cursor += 2
@@ -1328,6 +1426,18 @@ def is_git_commit_command(command: str) -> bool:
             break
         index = max(cursor + 1, index + 1)
     return False
+
+
+def is_git_commit_command(command: str) -> bool:
+    return _is_git_subcommand_command(command, {"commit"})
+
+
+def is_git_add_command(command: str) -> bool:
+    return _is_git_subcommand_command(command, {"add"})
+
+
+def is_git_add_or_commit_command(command: str) -> bool:
+    return is_git_add_command(command) or is_git_commit_command(command)
 
 
 def missing_commit_guidance_reads(root: Path, event: dict[str, Any]) -> list[str]:
@@ -1763,6 +1873,55 @@ def path_matches_any(path: str, patterns: list[str]) -> bool:
     return False
 
 
+def changed_path_owner_skills_for_path(path: str) -> set[str]:
+    return {
+        skill
+        for skill, patterns in CHANGED_PATH_OWNER_PATTERNS.items()
+        if path_matches_any(path, patterns)
+    }
+
+
+def changed_path_owner_resolution(
+    root: Path,
+    paths: list[str] | None = None,
+) -> dict[str, Any]:
+    changed = [
+        path
+        for path in (paths if paths is not None else changed_paths(root))
+        if path and not is_synthetic_mutation_path(path)
+    ]
+    owners_by_path: dict[str, str] = {}
+    ambiguous_paths: list[str] = []
+    unowned_paths: list[str] = []
+    owner_skills: set[str] = set()
+
+    for path in changed:
+        owners = changed_path_owner_skills_for_path(path)
+        if len(owners) == 1:
+            owner = next(iter(owners))
+            owners_by_path[path] = owner
+            owner_skills.add(owner)
+        elif owners:
+            ambiguous_paths.append(path)
+            owner_skills.update(owners)
+        else:
+            unowned_paths.append(path)
+
+    single_owner = (
+        next(iter(owner_skills))
+        if len(owner_skills) == 1 and not ambiguous_paths and not unowned_paths
+        else None
+    )
+    return {
+        "skill": single_owner,
+        "paths": changed,
+        "owner_skills": sorted(owner_skills),
+        "ambiguous_paths": ambiguous_paths,
+        "unowned_paths": unowned_paths,
+        "owners_by_path": owners_by_path,
+    }
+
+
 def path_pattern_covered_by(pattern: str, allowed_paths: list[str]) -> bool:
     if path_matches_any(pattern.rstrip("/"), allowed_paths):
         return True
@@ -1869,6 +2028,78 @@ def write_scope_violations(
         if not is_synthetic_mutation_path(path)
         and not path_matches_any(path, allowed_paths)
     ]
+
+
+def _changed_path_owner_block_message(
+    resolution: dict[str, Any],
+    reason: str,
+) -> str:
+    owners = resolution.get("owner_skills", [])
+    owner_text = ", ".join(f"`{owner}`" for owner in owners) or "<none>"
+    shown = "\n".join(f"- {path}" for path in resolution.get("paths", [])[:12])
+    unowned = "\n".join(
+        f"- {path}" for path in resolution.get("unowned_paths", [])[:12]
+    )
+    detail = f"\nUnowned paths:\n{unowned}" if unowned else ""
+    return (
+        "Blocked by Harness policy: `git add`/`git commit` must operate on "
+        "one owner-aligned Commit Slice. "
+        f"{reason}\nPossible owners: {owner_text}\nChanged paths:\n{shown}{detail}"
+    )
+
+
+def git_changed_path_owner_block_reason(
+    root: Path,
+    event: dict[str, Any],
+    contract: dict[str, Any] | None,
+) -> str | None:
+    if normalize_tool_name(tool_name(event)) != "Bash":
+        return None
+    if not is_git_add_or_commit_command(tool_text(event)):
+        return None
+    if contract and contract.get("skill") == "code-review":
+        return None
+
+    session = load_session_for_event(root, event)
+    resolution = changed_path_owner_resolution(root)
+    paths = resolution.get("paths", [])
+    if not paths:
+        return None
+
+    if session.get("skill_trigger") == "changed_paths_mixed_owner":
+        return _changed_path_owner_block_message(
+            resolution,
+            "The prompt matched a commit/fix action, but current changed "
+            "paths did not resolve to a single owner.",
+        )
+
+    if not contract:
+        return None
+
+    owner_skills = set(resolution.get("owner_skills", []))
+    active_skill = str(contract.get("skill", ""))
+    if len(owner_skills) > 1:
+        return _changed_path_owner_block_message(
+            resolution,
+            f"The active `{active_skill}` contract cannot commit mixed owners.",
+        )
+    if owner_skills and active_skill not in owner_skills:
+        return _changed_path_owner_block_message(
+            resolution,
+            f"Current changed paths belong to `{next(iter(owner_skills))}`, "
+            f"not active `{active_skill}`.",
+        )
+
+    violations = write_scope_violations(contract, list(paths))
+    if violations:
+        shown = "\n".join(f"- {path}" for path in violations[:12])
+        allowed = "\n".join(f"- {p}" for p in contract_write_scope_paths(contract)[:12])
+        return (
+            "Blocked by Harness policy: `git add`/`git commit` would include "
+            f"paths outside active `{active_skill}` write scope.\n"
+            f"Attempted paths:\n{shown}\nAllowed paths:\n{allowed}"
+        )
+    return None
 
 
 def is_local_code_review_trace_path(path: str) -> bool:
@@ -2022,6 +2253,9 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
 
     contract = active_contract(root, event)
     is_mutating_tool = is_mutating_tool_event(event, root)
+    git_owner_reason = git_changed_path_owner_block_reason(root, event, contract)
+    if git_owner_reason:
+        return git_owner_reason
     if contract and is_mutating_tool:
         session = load_session_for_event(root, event)
         mode = session.get("enforcement_mode") or ENFORCEMENT_ACTIVE_WRITE
