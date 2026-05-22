@@ -27,6 +27,8 @@ Setup is complete only when all of these are true:
   opts into them
 - the operator can open Codex in the target workspace and run `$init init`
   without needing to manually reconstruct framework paths
+- no temporary `harness-research/` or `Harness-Research/` source checkout is
+  left inside the target research workspace after `.harness` is attached
 
 Do not invent research facts, dataset paths, environment versions, metrics,
 operator preferences, contract approvals, or release claims during setup.
@@ -237,6 +239,36 @@ git --git-dir=.harness --work-tree=. read-tree -mu HEAD
 
 if [ -d "$SETUP_BACKUP" ]; then
   rsync -a "$SETUP_BACKUP"/ ./
+fi
+```
+
+If `HARNESS_SOURCE` was copied inside `TARGET_WORKSPACE` only as a temporary
+setup source, remove that nested source checkout after `.harness` and the
+runtime files are in place. Do not remove an external `HARNESS_SOURCE` clone;
+the operator may use it to update other workspaces.
+
+```bash
+TARGET_REAL=$(realpath "$TARGET_WORKSPACE")
+HARNESS_REAL=$(realpath "$HARNESS_SOURCE")
+HARNESS_BASENAME=$(basename "$HARNESS_REAL")
+
+if [ "$HARNESS_REAL" = "$TARGET_REAL" ]; then
+  echo "HARNESS_SOURCE resolves to TARGET_WORKSPACE itself; inspect setup roots." >&2
+elif [[ "$HARNESS_REAL" == "$TARGET_REAL"/* ]]; then
+  case "$HARNESS_BASENAME" in
+    harness-research|Harness-Research)
+      test -d .harness
+      test -f schemas/skill_contracts.json
+      test -f tooling/codex_hooks/install_hooks.py
+      test -d "$HARNESS_REAL/.git"
+      rm -rf -- "$HARNESS_REAL"
+      ;;
+    *)
+      echo "HARNESS_SOURCE is inside TARGET_WORKSPACE but has an unexpected name; inspect before deleting: $HARNESS_REAL" >&2
+      ;;
+  esac
+else
+  echo "HARNESS_SOURCE is outside TARGET_WORKSPACE; keep external framework clone."
 fi
 ```
 
@@ -564,6 +596,8 @@ Dual-repo checks:
 git --git-dir=.harness --work-tree=. status --short
 git status --short
 git check-ignore -v .agents/ .claude/ tooling/ schemas/ README.md AI_AGENT_SETUP.md
+test ! -d harness-research
+test ! -d Harness-Research
 ```
 
 Expected outcome:
@@ -571,6 +605,7 @@ Expected outcome:
 - `hgit status` shows only intentional framework edits
 - `git status` shows only intentional research files
 - `git check-ignore` confirms research git hides framework paths
+- no nested temporary Harness source checkout remains in the target workspace
 - hook status reports Harness contracts at `schemas/skill_contracts.json`
 - `$init init` maps to `init-project`
 
