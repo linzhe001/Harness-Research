@@ -1,0 +1,1473 @@
+{
+  "schema_version": "0.1",
+  "generated_at": "2026-05-22T04:52:03Z",
+  "source_root": "workflow_handbook",
+  "output_root": "docs/_site/workflow_handbook",
+  "site_title": "Harness Workflow Handbook",
+  "reference_mode": "workflow-handbook",
+  "nav_config_path": "workflow_handbook/config/navigation.json",
+  "pages": [
+    {
+      "doc_id": "Workflow_Operator_Handbook",
+      "doc_kind": "current_doc",
+      "title": "Workflow Operator Handbook",
+      "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+      "html_path": "docs/_site/workflow_handbook/Workflow_Operator_Handbook.html",
+      "status": null,
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": null,
+      "page_kind": null,
+      "source_type": null,
+      "summary": null,
+      "references": []
+    },
+    {
+      "doc_id": "Workflow_Stage_Cards",
+      "doc_kind": "current_doc",
+      "title": "Harness Workflow Stage Cards",
+      "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
+      "html_path": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html",
+      "status": null,
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": null,
+      "page_kind": null,
+      "source_type": null,
+      "summary": null,
+      "references": []
+    },
+    {
+      "doc_id": "pages__04_markdown_to_html_preview_chain",
+      "doc_kind": "concept",
+      "title": "Markdown To HTML Preview Chain",
+      "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+      "html_path": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "markdown_to_html_preview_chain",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Explains how handbook Markdown, framework references, and HTML hover previews stay separated from project Conclusion Evidence.",
+      "references": [
+        "artifact:docs/_views/workflow_handbook_reference_index.json",
+        "artifact:docs/_site/workflow_handbook",
+        "artifact:.evidence/index.json",
+        "skill:docs-site",
+        "source:tooling/evidence/build_docs_site.py",
+        "term:Conclusion Evidence",
+        "term:Evidence Chain",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "pages__auto_iterate_model",
+      "doc_kind": "concept",
+      "title": "Auto-Iterate Model",
+      "source_path": "workflow_handbook/pages/auto_iterate_model.md",
+      "html_path": "docs/_site/workflow_handbook/pages/auto_iterate_model.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "auto_iterate_model",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Explains how the WF10 auto-iterate controller fits into the workflow.",
+      "references": [
+        "stage:WF10",
+        "skill:auto-iterate-goal",
+        "skill:iterate",
+        "term:Human Approval"
+      ]
+    },
+    {
+      "doc_id": "pages__evidence_approval_model",
+      "doc_kind": "concept",
+      "title": "Evidence And Approval Model",
+      "source_path": "workflow_handbook/pages/evidence_approval_model.md",
+      "html_path": "docs/_site/workflow_handbook/pages/evidence_approval_model.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "evidence_approval_model",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Separates Conclusion Evidence, Gate Evidence, Evidence Chains, and approvals.",
+      "references": [
+        "term:Conclusion Evidence",
+        "term:Evidence Chain",
+        "term:Gate Evidence",
+        "term:Human Approval"
+      ]
+    },
+    {
+      "doc_id": "pages__hooks_permissions_model",
+      "doc_kind": "concept",
+      "title": "Hooks And Permissions Model",
+      "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
+      "html_path": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "hooks_permissions_model",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Explains why Harness hooks block missing reads, out-of-scope writes, and missing ledgers.",
+      "references": [
+        "term:Read Contract",
+        "term:Write Scope",
+        "term:Gate Ledger",
+        "source:tooling/evidence/build_docs_site.py"
+      ]
+    },
+    {
+      "doc_id": "pages__layer_build_validate",
+      "doc_kind": "concept",
+      "title": "Build And Validate Layer",
+      "source_path": "workflow_handbook/pages/layer_build_validate.md",
+      "html_path": "docs/_site/workflow_handbook/pages/layer_build_validate.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "layer_build_validate",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How WF8-WF9 implement and validate bounded code slices.",
+      "references": [
+        "stage:WF8",
+        "stage:WF9",
+        "skill:code-debug",
+        "skill:validate-run"
+      ]
+    },
+    {
+      "doc_id": "pages__layer_contract_plan",
+      "doc_kind": "concept",
+      "title": "Contract And Plan Layer",
+      "source_path": "workflow_handbook/pages/layer_contract_plan.md",
+      "html_path": "docs/_site/workflow_handbook/pages/layer_contract_plan.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "layer_contract_plan",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How WF5-WF7 establish baseline, boundaries, architecture, and slices.",
+      "references": [
+        "stage:WF5",
+        "stage:WF6",
+        "stage:WF7",
+        "term:Human Approval"
+      ]
+    },
+    {
+      "doc_id": "pages__layer_explore",
+      "doc_kind": "concept",
+      "title": "Explore Layer",
+      "source_path": "workflow_handbook/pages/layer_explore.md",
+      "html_path": "docs/_site/workflow_handbook/pages/layer_explore.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "layer_explore",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How WF0-WF4 move from idea to data facts.",
+      "references": [
+        "stage:WF0",
+        "stage:WF1",
+        "stage:WF2",
+        "stage:WF3",
+        "stage:WF4"
+      ]
+    },
+    {
+      "doc_id": "pages__layer_iterate_release",
+      "doc_kind": "concept",
+      "title": "Iterate And Release Layer",
+      "source_path": "workflow_handbook/pages/layer_iterate_release.md",
+      "html_path": "docs/_site/workflow_handbook/pages/layer_iterate_release.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "layer_iterate_release",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How WF10-WF12 run iterations, final experiment, and release.",
+      "references": [
+        "stage:WF10",
+        "stage:WF11",
+        "stage:WF12",
+        "skill:iterate"
+      ]
+    },
+    {
+      "doc_id": "pages__skill_reference",
+      "doc_kind": "reference",
+      "title": "Skill Reference",
+      "source_path": "workflow_handbook/pages/skill_reference.md",
+      "html_path": "docs/_site/workflow_handbook/pages/skill_reference.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "skill_reference",
+      "page_kind": "reference",
+      "source_type": "hand_authored",
+      "summary": "Entry point for detailed Skill Contract pages.",
+      "references": [
+        "skill:orchestrator",
+        "skill:docs-site",
+        "skill:iterate",
+        "term:Skill Contract"
+      ]
+    },
+    {
+      "doc_id": "pages__workflow_layers",
+      "doc_kind": "concept",
+      "title": "Workflow Layers",
+      "source_path": "workflow_handbook/pages/workflow_layers.md",
+      "html_path": "docs/_site/workflow_handbook/pages/workflow_layers.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "workflow_layers",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Explains the Intent -> Stage -> Skill -> Gate model.",
+      "references": [
+        "term:Stage",
+        "term:Skill",
+        "term:Skill Contract",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "pages__workflow_terms",
+      "doc_kind": "reference",
+      "title": "Workflow Terms",
+      "source_path": "workflow_handbook/pages/workflow_terms.md",
+      "html_path": "docs/_site/workflow_handbook/pages/workflow_terms.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "workflow_terms",
+      "page_kind": "reference",
+      "source_type": "hand_authored",
+      "summary": "Clickable term targets for handbook references.",
+      "references": [
+        "term:Stage",
+        "term:Skill",
+        "term:Gate Evidence",
+        "term:Human Approval"
+      ]
+    },
+    {
+      "doc_id": "plans__HTML_Rendering_Handbook_Plan",
+      "doc_kind": "current_doc",
+      "title": "Workflow Handbook HTML Rendering Plan",
+      "source_path": "workflow_handbook/plans/HTML_Rendering_Handbook_Plan.md",
+      "html_path": "docs/_site/workflow_handbook/plans/HTML_Rendering_Handbook_Plan.html",
+      "status": "draft implementation plan",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": null,
+      "page_kind": null,
+      "source_type": null,
+      "summary": null,
+      "references": []
+    },
+    {
+      "doc_id": "skills__auto-iterate-goal",
+      "doc_kind": "skill",
+      "title": "auto-iterate-goal",
+      "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
+      "html_path": "docs/_site/workflow_handbook/skills/auto-iterate-goal.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "auto-iterate-goal",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Generate or validate the auto-iterate goal file before launching WF10 auto-iterate",
+      "references": [
+        "skill:auto-iterate-goal",
+        "source:schemas/skill_contracts.json#auto-iterate-goal",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__baseline-repro",
+      "doc_kind": "skill",
+      "title": "baseline-repro",
+      "source_path": "workflow_handbook/skills/baseline-repro.md",
+      "html_path": "docs/_site/workflow_handbook/skills/baseline-repro.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "baseline-repro",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline adaptation, reproduction tracking, and `docs/Baseline_Report.md` following the original workflow contract.",
+      "references": [
+        "skill:baseline-repro",
+        "source:schemas/skill_contracts.json#baseline-repro",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__build-plan",
+      "doc_kind": "skill",
+      "title": "build-plan",
+      "source_path": "workflow_handbook/skills/build-plan.md",
+      "html_path": "docs/_site/workflow_handbook/skills/build-plan.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "build-plan",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas.",
+      "references": [
+        "skill:build-plan",
+        "source:schemas/skill_contracts.json#build-plan",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__code-debug",
+      "doc_kind": "skill",
+      "title": "code-debug",
+      "source_path": "workflow_handbook/skills/code-debug.md",
+      "html_path": "docs/_site/workflow_handbook/skills/code-debug.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "code-debug",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, project_map, or Codebase_Map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those.",
+      "references": [
+        "skill:code-debug",
+        "source:schemas/skill_contracts.json#code-debug",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__code-expert",
+      "doc_kind": "skill",
+      "title": "code-expert",
+      "source_path": "workflow_handbook/skills/code-expert.md",
+      "html_path": "docs/_site/workflow_handbook/skills/code-expert.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "code-expert",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract.",
+      "references": [
+        "skill:code-expert",
+        "source:schemas/skill_contracts.json#code-expert",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__code-review",
+      "doc_kind": "skill",
+      "title": "code-review",
+      "source_path": "workflow_handbook/skills/code-review.md",
+      "html_path": "docs/_site/workflow_handbook/skills/code-review.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "code-review",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report.",
+      "references": [
+        "skill:code-review",
+        "source:schemas/skill_contracts.json#code-review",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__data-prep",
+      "doc_kind": "skill",
+      "title": "data-prep",
+      "source_path": "workflow_handbook/skills/data-prep.md",
+      "html_path": "docs/_site/workflow_handbook/skills/data-prep.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "data-prep",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis, subset strategy selection, and `docs/Dataset_Stats.md` produced according to the original workflow.",
+      "references": [
+        "skill:data-prep",
+        "source:schemas/skill_contracts.json#data-prep",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__deep-check",
+      "doc_kind": "skill",
+      "title": "deep-check",
+      "source_path": "workflow_handbook/skills/deep-check.md",
+      "html_path": "docs/_site/workflow_handbook/skills/deep-check.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "deep-check",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex design-review gate for WF6 architecture decisions. Use when the user wants a skeptical Go/No-Go review of the technical spec before implementation planning or heavy implementation starts.",
+      "references": [
+        "skill:deep-check",
+        "source:schemas/skill_contracts.json#deep-check",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__doc-compiler",
+      "doc_kind": "skill",
+      "title": "doc-compiler",
+      "source_path": "workflow_handbook/skills/doc-compiler.md",
+      "html_path": "docs/_site/workflow_handbook/skills/doc-compiler.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "doc-compiler",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Compile current project documents from explicit evidence chains. Use when refreshing contract, fact, protocol, or release docs that need auditable evidence.",
+      "references": [
+        "skill:doc-compiler",
+        "source:schemas/skill_contracts.json#doc-compiler",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__docs-site",
+      "doc_kind": "skill",
+      "title": "docs-site",
+      "source_path": "workflow_handbook/skills/docs-site.md",
+      "html_path": "docs/_site/workflow_handbook/skills/docs-site.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "docs-site",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Render source Markdown project docs into human-readable HTML under docs/_site, with Evidence Chain hover previews from docs/_views/evidence_preview_index.json. Use after stable Markdown docs are finalized, before human review or handoff, or when explicitly rebuilding the human docs site.",
+      "references": [
+        "skill:docs-site",
+        "source:schemas/skill_contracts.json#docs-site",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__env-setup",
+      "doc_kind": "skill",
+      "title": "env-setup",
+      "source_path": "workflow_handbook/skills/env-setup.md",
+      "html_path": "docs/_site/workflow_handbook/skills/env-setup.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "env-setup",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for environment creation and refresh. Use when the user wants the environment detected, created, or synchronized into the legacy `CLAUDE.md` format.",
+      "references": [
+        "skill:env-setup",
+        "source:schemas/skill_contracts.json#env-setup",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__evaluate",
+      "doc_kind": "skill",
+      "title": "evaluate",
+      "source_path": "workflow_handbook/skills/evaluate.md",
+      "html_path": "docs/_site/workflow_handbook/skills/evaluate.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "evaluate",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a NEXT_ROUND, DEBUG, CONTINUE, PIVOT, or ABORT recommendation.",
+      "references": [
+        "skill:evaluate",
+        "source:schemas/skill_contracts.json#evaluate",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__final-exp",
+      "doc_kind": "skill",
+      "title": "final-exp",
+      "source_path": "workflow_handbook/skills/final-exp.md",
+      "html_path": "docs/_site/workflow_handbook/skills/final-exp.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "final-exp",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.",
+      "references": [
+        "skill:final-exp",
+        "source:schemas/skill_contracts.json#final-exp",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__harness-maintenance",
+      "doc_kind": "skill",
+      "title": "harness-maintenance",
+      "source_path": "workflow_handbook/skills/harness-maintenance.md",
+      "html_path": "docs/_site/workflow_handbook/skills/harness-maintenance.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "harness-maintenance",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries.",
+      "references": [
+        "skill:harness-maintenance",
+        "source:schemas/skill_contracts.json#harness-maintenance",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__idea-debate",
+      "doc_kind": "skill",
+      "title": "idea-debate",
+      "source_path": "workflow_handbook/skills/idea-debate.md",
+      "html_path": "docs/_site/workflow_handbook/skills/idea-debate.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "idea-debate",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design.",
+      "references": [
+        "skill:idea-debate",
+        "source:schemas/skill_contracts.json#idea-debate",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__init-project",
+      "doc_kind": "skill",
+      "title": "init-project",
+      "source_path": "workflow_handbook/skills/init-project.md",
+      "html_path": "docs/_site/workflow_handbook/skills/init-project.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "init-project",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.",
+      "references": [
+        "skill:init-project",
+        "source:schemas/skill_contracts.json#init-project",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__iterate",
+      "doc_kind": "skill",
+      "title": "iterate",
+      "source_path": "workflow_handbook/skills/iterate.md",
+      "html_path": "docs/_site/workflow_handbook/skills/iterate.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "iterate",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.",
+      "references": [
+        "skill:iterate",
+        "source:schemas/skill_contracts.json#iterate",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__orchestrator",
+      "doc_kind": "skill",
+      "title": "orchestrator",
+      "source_path": "workflow_handbook/skills/orchestrator.md",
+      "html_path": "docs/_site/workflow_handbook/skills/orchestrator.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "orchestrator",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for the canonical WF orchestrator. Use when the user wants project initialization, stage status, gate checks, rollback, or decision logging around `PROJECT_STATE.json`.",
+      "references": [
+        "skill:orchestrator",
+        "source:schemas/skill_contracts.json#orchestrator",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__protocol-compiler",
+      "doc_kind": "skill",
+      "title": "protocol-compiler",
+      "source_path": "workflow_handbook/skills/protocol-compiler.md",
+      "html_path": "docs/_site/workflow_handbook/skills/protocol-compiler.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "protocol-compiler",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Compile Dynamic Research Protocol drafts from current evidence tables without using pre-baked research profiles.",
+      "references": [
+        "skill:protocol-compiler",
+        "source:schemas/skill_contracts.json#protocol-compiler",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__protocol-drift-check",
+      "doc_kind": "skill",
+      "title": "protocol-drift-check",
+      "source_path": "workflow_handbook/skills/protocol-drift-check.md",
+      "html_path": "docs/_site/workflow_handbook/skills/protocol-drift-check.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "protocol-drift-check",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Check whether dynamic research protocol drafts are stale before baseline, iteration, final experiment, or release gates.",
+      "references": [
+        "skill:protocol-drift-check",
+        "source:schemas/skill_contracts.json#protocol-drift-check",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__refine-arch",
+      "doc_kind": "skill",
+      "title": "refine-arch",
+      "source_path": "workflow_handbook/skills/refine-arch.md",
+      "html_path": "docs/_site/workflow_handbook/skills/refine-arch.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "refine-arch",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF5 baseline reproduction to convert the refined idea, dataset facts, baseline evidence, and evaluation contract into a technical spec and MVP architecture.",
+      "references": [
+        "skill:refine-arch",
+        "source:schemas/skill_contracts.json#refine-arch",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__refine-idea",
+      "doc_kind": "skill",
+      "title": "refine-idea",
+      "source_path": "workflow_handbook/skills/refine-idea.md",
+      "html_path": "docs/_site/workflow_handbook/skills/refine-idea.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "refine-idea",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF3 idea refinement. Use after WF1 survey and WF2 idea debate to turn the selected direction into a feasible research idea, task framing, success criteria, baseline requirements, and protocol assumptions without designing the architecture.",
+      "references": [
+        "skill:refine-idea",
+        "source:schemas/skill_contracts.json#refine-idea",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__release",
+      "doc_kind": "skill",
+      "title": "release",
+      "source_path": "workflow_handbook/skills/release.md",
+      "html_path": "docs/_site/workflow_handbook/skills/release.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "release",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.",
+      "references": [
+        "skill:release",
+        "source:schemas/skill_contracts.json#release",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__review-packet",
+      "doc_kind": "skill",
+      "title": "review-packet",
+      "source_path": "workflow_handbook/skills/review-packet.md",
+      "html_path": "docs/_site/workflow_handbook/skills/review-packet.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "review-packet",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Build concise human review packets for dynamic-context contracts, protocol readiness, and release gates.",
+      "references": [
+        "skill:review-packet",
+        "source:schemas/skill_contracts.json#review-packet",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__survey-idea",
+      "doc_kind": "skill",
+      "title": "survey-idea",
+      "source_path": "workflow_handbook/skills/survey-idea.md",
+      "html_path": "docs/_site/workflow_handbook/skills/survey-idea.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "survey-idea",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wants literature-backed validation of a new research idea and a `docs/Feasibility_Report.md` outcome.",
+      "references": [
+        "skill:survey-idea",
+        "source:schemas/skill_contracts.json#survey-idea",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__validate-run",
+      "doc_kind": "skill",
+      "title": "validate-run",
+      "source_path": "workflow_handbook/skills/validate-run.md",
+      "html_path": "docs/_site/workflow_handbook/skills/validate-run.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "validate-run",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Codex wrapper for WF9 validation. Use when the user wants the training chain reviewed and smoke-tested before entering WF10.",
+      "references": [
+        "skill:validate-run",
+        "source:schemas/skill_contracts.json#validate-run",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf0_init",
+      "doc_kind": "stage",
+      "title": "WF0 Init",
+      "source_path": "workflow_handbook/stages/wf0_init.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf0_init.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf0_init",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Initialize or refresh the workspace guidance and workflow state.",
+      "references": [
+        "stage:WF0",
+        "skill:init-project",
+        "source:schemas/skill_contracts.json#init-project",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf10_iterate",
+      "doc_kind": "stage",
+      "title": "WF10 Iterate",
+      "source_path": "workflow_handbook/stages/wf10_iterate.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf10_iterate.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf10_iterate",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.",
+      "references": [
+        "stage:WF10",
+        "skill:iterate",
+        "source:schemas/skill_contracts.json#iterate",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf11_final_exp",
+      "doc_kind": "stage",
+      "title": "WF11 Final Exp",
+      "source_path": "workflow_handbook/stages/wf11_final_exp.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf11_final_exp.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf11_final_exp",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Run final experiment checks against approved contracts and claim boundaries.",
+      "references": [
+        "stage:WF11",
+        "skill:final-exp",
+        "source:schemas/skill_contracts.json#final-exp",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf12_release",
+      "doc_kind": "stage",
+      "title": "WF12 Release",
+      "source_path": "workflow_handbook/stages/wf12_release.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf12_release.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf12_release",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Prepare release artifacts while keeping claims inside the approved boundary.",
+      "references": [
+        "stage:WF12",
+        "skill:release",
+        "source:schemas/skill_contracts.json#release",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf1_survey_idea",
+      "doc_kind": "stage",
+      "title": "WF1 Survey Idea",
+      "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf1_survey_idea.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf1_survey_idea",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Collect early Conclusion Evidence and decide whether the idea is worth pursuing.",
+      "references": [
+        "stage:WF1",
+        "skill:survey-idea",
+        "source:schemas/skill_contracts.json#survey-idea",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf2_idea_debate",
+      "doc_kind": "stage",
+      "title": "WF2 Idea Debate",
+      "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf2_idea_debate.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf2_idea_debate",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Compare candidate directions and choose the strongest research path.",
+      "references": [
+        "stage:WF2",
+        "skill:idea-debate",
+        "source:schemas/skill_contracts.json#idea-debate",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf3_refine_idea",
+      "doc_kind": "stage",
+      "title": "WF3 Refine Idea",
+      "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf3_refine_idea.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf3_refine_idea",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Turn the selected idea into a tighter research question and execution target.",
+      "references": [
+        "stage:WF3",
+        "skill:refine-idea",
+        "source:schemas/skill_contracts.json#refine-idea",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf4_data_prep",
+      "doc_kind": "stage",
+      "title": "WF4 Data Prep",
+      "source_path": "workflow_handbook/stages/wf4_data_prep.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf4_data_prep.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf4_data_prep",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Make data facts explicit before baseline or architecture work starts.",
+      "references": [
+        "stage:WF4",
+        "skill:data-prep",
+        "source:schemas/skill_contracts.json#data-prep",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf5_baseline_repro",
+      "doc_kind": "stage",
+      "title": "WF5 Baseline Repro",
+      "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf5_baseline_repro.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf5_baseline_repro",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Reproduce or establish a baseline and prepare approval-facing contracts.",
+      "references": [
+        "stage:WF5",
+        "skill:baseline-repro",
+        "source:schemas/skill_contracts.json#baseline-repro",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf6_refine_arch",
+      "doc_kind": "stage",
+      "title": "WF6 Refine Arch",
+      "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf6_refine_arch.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf6_refine_arch",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Refine the technical architecture within approved boundaries.",
+      "references": [
+        "stage:WF6",
+        "skill:refine-arch",
+        "source:schemas/skill_contracts.json#refine-arch",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf7_build_plan",
+      "doc_kind": "stage",
+      "title": "WF7 Build Plan",
+      "source_path": "workflow_handbook/stages/wf7_build_plan.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf7_build_plan.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf7_build_plan",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Convert the architecture into bounded implementation slices.",
+      "references": [
+        "stage:WF7",
+        "skill:build-plan",
+        "source:schemas/skill_contracts.json#build-plan",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf8_code_expert",
+      "doc_kind": "stage",
+      "title": "WF8 Code Expert",
+      "source_path": "workflow_handbook/stages/wf8_code_expert.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf8_code_expert.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf8_code_expert",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Implement one bounded code slice under the current plan.",
+      "references": [
+        "stage:WF8",
+        "skill:code-expert",
+        "source:schemas/skill_contracts.json#code-expert",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "stages__wf9_validate_run",
+      "doc_kind": "stage",
+      "title": "WF9 Validate Run",
+      "source_path": "workflow_handbook/stages/wf9_validate_run.md",
+      "html_path": "docs/_site/workflow_handbook/stages/wf9_validate_run.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "wf9_validate_run",
+      "page_kind": "stage",
+      "source_type": "generated",
+      "summary": "Validate the implementation before structured iteration.",
+      "references": [
+        "stage:WF9",
+        "skill:validate-run",
+        "source:schemas/skill_contracts.json#validate-run",
+        "term:Gate Evidence"
+      ]
+    }
+  ],
+  "navigation": [
+    {
+      "label": "Start",
+      "pages": [
+        "Workflow_Operator_Handbook"
+      ],
+      "section_id": "start",
+      "items": [
+        {
+          "doc_id": "Workflow_Operator_Handbook",
+          "label": "Operator Handbook",
+          "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "Workflow Details",
+      "pages": [
+        "Workflow_Stage_Cards",
+        "stages__wf0_init",
+        "stages__wf1_survey_idea",
+        "stages__wf2_idea_debate",
+        "stages__wf3_refine_idea",
+        "stages__wf4_data_prep",
+        "stages__wf5_baseline_repro",
+        "stages__wf6_refine_arch",
+        "stages__wf7_build_plan",
+        "stages__wf8_code_expert",
+        "stages__wf9_validate_run",
+        "stages__wf10_iterate",
+        "stages__wf11_final_exp",
+        "stages__wf12_release",
+        "pages__workflow_layers",
+        "pages__layer_explore",
+        "pages__layer_contract_plan",
+        "pages__layer_build_validate",
+        "pages__layer_iterate_release",
+        "pages__evidence_approval_model",
+        "pages__hooks_permissions_model",
+        "pages__auto_iterate_model",
+        "pages__04_markdown_to_html_preview_chain",
+        "pages__workflow_terms",
+        "pages__skill_reference",
+        "skills__orchestrator",
+        "skills__doc-compiler",
+        "skills__docs-site",
+        "skills__review-packet",
+        "skills__protocol-compiler",
+        "skills__protocol-drift-check",
+        "skills__survey-idea",
+        "skills__idea-debate",
+        "skills__refine-idea",
+        "skills__data-prep",
+        "skills__baseline-repro",
+        "skills__refine-arch",
+        "skills__deep-check",
+        "skills__evaluate",
+        "skills__init-project",
+        "skills__env-setup",
+        "skills__build-plan",
+        "skills__code-expert",
+        "skills__code-debug",
+        "skills__harness-maintenance",
+        "skills__code-review",
+        "skills__validate-run",
+        "skills__iterate",
+        "skills__auto-iterate-goal",
+        "skills__final-exp",
+        "skills__release"
+      ],
+      "section_id": "details",
+      "items": [
+        {
+          "doc_id": "Workflow_Stage_Cards",
+          "label": "Stage Details",
+          "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
+          "children": [
+            {
+              "doc_id": "stages__wf0_init",
+              "label": "WF0 Init",
+              "source_path": "workflow_handbook/stages/wf0_init.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf1_survey_idea",
+              "label": "WF1 Survey Idea",
+              "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf2_idea_debate",
+              "label": "WF2 Idea Debate",
+              "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf3_refine_idea",
+              "label": "WF3 Refine Idea",
+              "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf4_data_prep",
+              "label": "WF4 Data Prep",
+              "source_path": "workflow_handbook/stages/wf4_data_prep.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf5_baseline_repro",
+              "label": "WF5 Baseline Repro",
+              "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf6_refine_arch",
+              "label": "WF6 Refine Arch",
+              "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf7_build_plan",
+              "label": "WF7 Build Plan",
+              "source_path": "workflow_handbook/stages/wf7_build_plan.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf8_code_expert",
+              "label": "WF8 Code Expert",
+              "source_path": "workflow_handbook/stages/wf8_code_expert.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf9_validate_run",
+              "label": "WF9 Validate Run",
+              "source_path": "workflow_handbook/stages/wf9_validate_run.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf10_iterate",
+              "label": "WF10 Iterate",
+              "source_path": "workflow_handbook/stages/wf10_iterate.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf11_final_exp",
+              "label": "WF11 Final Exp",
+              "source_path": "workflow_handbook/stages/wf11_final_exp.md",
+              "children": []
+            },
+            {
+              "doc_id": "stages__wf12_release",
+              "label": "WF12 Release",
+              "source_path": "workflow_handbook/stages/wf12_release.md",
+              "children": []
+            }
+          ]
+        },
+        {
+          "doc_id": "pages__workflow_layers",
+          "label": "Workflow Layers",
+          "source_path": "workflow_handbook/pages/workflow_layers.md",
+          "children": [
+            {
+              "doc_id": "pages__layer_explore",
+              "label": "Explore Layer",
+              "source_path": "workflow_handbook/pages/layer_explore.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_contract_plan",
+              "label": "Contract And Plan Layer",
+              "source_path": "workflow_handbook/pages/layer_contract_plan.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_build_validate",
+              "label": "Build And Validate Layer",
+              "source_path": "workflow_handbook/pages/layer_build_validate.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_iterate_release",
+              "label": "Iterate And Release Layer",
+              "source_path": "workflow_handbook/pages/layer_iterate_release.md",
+              "children": []
+            }
+          ]
+        },
+        {
+          "doc_id": "pages__evidence_approval_model",
+          "label": "Evidence And Approval",
+          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__hooks_permissions_model",
+          "label": "Hooks And Permissions",
+          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__auto_iterate_model",
+          "label": "Auto-Iterate",
+          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__04_markdown_to_html_preview_chain",
+          "label": "HTML Preview Chain",
+          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__workflow_terms",
+          "label": "Workflow Terms",
+          "source_path": "workflow_handbook/pages/workflow_terms.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__skill_reference",
+          "label": "Skill Details",
+          "source_path": "workflow_handbook/pages/skill_reference.md",
+          "children": [
+            {
+              "doc_id": "skills__orchestrator",
+              "label": "orchestrator",
+              "source_path": "workflow_handbook/skills/orchestrator.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__doc-compiler",
+              "label": "doc-compiler",
+              "source_path": "workflow_handbook/skills/doc-compiler.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__docs-site",
+              "label": "docs-site",
+              "source_path": "workflow_handbook/skills/docs-site.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__review-packet",
+              "label": "review-packet",
+              "source_path": "workflow_handbook/skills/review-packet.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__protocol-compiler",
+              "label": "protocol-compiler",
+              "source_path": "workflow_handbook/skills/protocol-compiler.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__protocol-drift-check",
+              "label": "protocol-drift-check",
+              "source_path": "workflow_handbook/skills/protocol-drift-check.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__survey-idea",
+              "label": "survey-idea",
+              "source_path": "workflow_handbook/skills/survey-idea.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__idea-debate",
+              "label": "idea-debate",
+              "source_path": "workflow_handbook/skills/idea-debate.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__refine-idea",
+              "label": "refine-idea",
+              "source_path": "workflow_handbook/skills/refine-idea.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__data-prep",
+              "label": "data-prep",
+              "source_path": "workflow_handbook/skills/data-prep.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__baseline-repro",
+              "label": "baseline-repro",
+              "source_path": "workflow_handbook/skills/baseline-repro.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__refine-arch",
+              "label": "refine-arch",
+              "source_path": "workflow_handbook/skills/refine-arch.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__deep-check",
+              "label": "deep-check",
+              "source_path": "workflow_handbook/skills/deep-check.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__evaluate",
+              "label": "evaluate",
+              "source_path": "workflow_handbook/skills/evaluate.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__init-project",
+              "label": "init-project",
+              "source_path": "workflow_handbook/skills/init-project.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__env-setup",
+              "label": "env-setup",
+              "source_path": "workflow_handbook/skills/env-setup.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__build-plan",
+              "label": "build-plan",
+              "source_path": "workflow_handbook/skills/build-plan.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__code-expert",
+              "label": "code-expert",
+              "source_path": "workflow_handbook/skills/code-expert.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__code-debug",
+              "label": "code-debug",
+              "source_path": "workflow_handbook/skills/code-debug.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__harness-maintenance",
+              "label": "harness-maintenance",
+              "source_path": "workflow_handbook/skills/harness-maintenance.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__code-review",
+              "label": "code-review",
+              "source_path": "workflow_handbook/skills/code-review.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__validate-run",
+              "label": "validate-run",
+              "source_path": "workflow_handbook/skills/validate-run.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__iterate",
+              "label": "iterate",
+              "source_path": "workflow_handbook/skills/iterate.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__auto-iterate-goal",
+              "label": "auto-iterate-goal",
+              "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__final-exp",
+              "label": "final-exp",
+              "source_path": "workflow_handbook/skills/final-exp.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__release",
+              "label": "release",
+              "source_path": "workflow_handbook/skills/release.md",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

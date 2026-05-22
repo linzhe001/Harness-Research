@@ -27,6 +27,9 @@ LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 STATUS_RE = re.compile(r"^Status:\s*(.+?)\s*$", re.IGNORECASE)
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
+TERMINAL_CODE_LANGUAGES = {"bash", "console", "sh", "shell", "terminal", "zsh"}
+DIAGRAM_CODE_LANGUAGES = {"plain", "plaintext", "text", "txt"}
+DATA_CODE_LANGUAGES = {"json", "toml", "yaml", "yml"}
 
 STYLE_CSS = """
 :root {
@@ -39,6 +42,9 @@ STYLE_CSS = """
   --accent: #0f766e;
   --accent-soft: #dff4f0;
   --code: #111827;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SFMono-Regular",
+    "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 * { box-sizing: border-box; }
 body {
@@ -155,36 +161,94 @@ article h1 { font-size: 32px; margin-top: 0; }
 article h2 { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 24px; }
 article p, article li { line-height: 1.65; }
 .code-block {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 7px;
   margin: 16px 0;
   overflow: hidden;
 }
 .code-label {
-  background: #eef2f6;
+  align-items: center;
+  background: #f8fafc;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font-size: 12px;
+  display: flex;
+  font-size: 11px;
   font-weight: 700;
-  padding: 7px 12px;
+  gap: 8px;
+  letter-spacing: 0;
+  min-height: 32px;
+  padding: 7px 14px;
   text-transform: uppercase;
 }
-pre {
-  background: var(--code);
-  color: #f9fafb;
+.code-label::before {
+  background: #2563eb;
+  border-radius: 999px;
+  content: "";
+  flex: 0 0 auto;
+  height: 8px;
+  width: 8px;
+}
+.code-block pre {
+  background: #f8fafc;
+  color: #111827;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-ligatures: none;
+  line-height: 1.55;
   margin: 0;
   overflow: auto;
   padding: 16px;
   tab-size: 2;
 }
+.code-block-source .code-label::before { background: #2563eb; }
+.code-block-source pre { background: #f8fafc; color: #111827; }
+.code-block-data .code-label::before { background: #0f766e; }
+.code-block-data pre { background: #f8fffd; color: #12312f; }
+.code-block-diagram {
+  background: #fbfcff;
+}
+.code-block-diagram .code-label {
+  background: #f1f5f9;
+}
+.code-block-diagram .code-label::before { background: #64748b; }
+.code-block-diagram pre {
+  background: #fbfcff;
+  color: #253044;
+  line-height: 1.5;
+  white-space: pre;
+}
+.code-block-terminal {
+  background: #0b1220;
+  border-color: #1f2a44;
+}
+.code-block-terminal .code-label {
+  background: #111827;
+  border-bottom-color: #1f2a44;
+  color: #cbd5e1;
+}
+.code-block-terminal .code-label::before {
+  background: #ef4444;
+  box-shadow: 12px 0 0 #eab308, 24px 0 0 #22c55e;
+  margin-right: 24px;
+}
+.code-block-terminal pre {
+  background: #0b1220;
+  color: #dbeafe;
+}
 code {
   background: #edf0f4;
   border-radius: 4px;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
   padding: 1px 4px;
   overflow-wrap: anywhere;
 }
-pre code { background: transparent; padding: 0; }
+.code-block pre code {
+  background: transparent;
+  overflow-wrap: normal;
+  padding: 0;
+}
 table { border-collapse: collapse; display: block; overflow-x: auto; width: 100%; }
 th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
 th { background: #f1f4f8; text-align: left; }
@@ -372,6 +436,18 @@ def doc_id_for(source_path: Path, source_root: Path) -> str:
 def slugify(text: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9]+", "-", text).strip("-").lower()
     return slug or "section"
+
+
+def code_block_kind(language: str) -> str:
+    language_name = language.strip().split(maxsplit=1)[0] if language.strip() else ""
+    language_key = slugify(language_name or "text")
+    if language_key in TERMINAL_CODE_LANGUAGES:
+        return "terminal"
+    if language_key in DIAGRAM_CODE_LANGUAGES:
+        return "diagram"
+    if language_key in DATA_CODE_LANGUAGES:
+        return "data"
+    return "source"
 
 
 def extract_title(markdown: str, fallback: str) -> str:
@@ -627,14 +703,18 @@ def render_markdown(
             if index < len(lines):
                 index += 1
             language_class = slugify(language)
+            block_kind = code_block_kind(language)
+            block_class = f"code-block code-block-{block_kind}"
+            escaped_language = html.escape(language)
+            escaped_language_class = html.escape(language_class, quote=True)
             class_attr = (
-                f' class="language-{html.escape(language_class, quote=True)}"'
+                f' class="language-{escaped_language_class}"'
                 if language
                 else ""
             )
             rendered.append(
-                '<div class="code-block">'
-                f'<div class="code-label">{html.escape(language)}</div>'
+                f'<div class="{block_class}" data-language="{escaped_language_class}">'
+                f'<div class="code-label">{escaped_language}</div>'
                 f"<pre><code{class_attr}>"
                 f"{html.escape(chr(10).join(code_lines))}</code></pre>"
                 "</div>"

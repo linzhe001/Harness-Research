@@ -40,6 +40,31 @@ def test_workflow_handbook_validator_accepts_current_sources() -> None:
     assert validator.validate_workflow_handbook(REPO_ROOT) == []
 
 
+def test_render_markdown_classifies_code_blocks_by_language() -> None:
+    site_builder = load_evidence_tool("build_docs_site")
+
+    rendered = site_builder.render_markdown(
+        "```text\n"
+        "workflow -> gate\n"
+        "```\n\n"
+        "```bash\n"
+        "python -m pytest\n"
+        "```\n\n"
+        "```json\n"
+        '{"ok": true}\n'
+        "```\n\n"
+        "```python\n"
+        "print('ok')\n"
+        "```\n"
+    )
+
+    assert 'class="code-block code-block-diagram" data-language="text"' in rendered
+    assert 'class="code-block code-block-terminal" data-language="bash"' in rendered
+    assert 'class="code-block code-block-data" data-language="json"' in rendered
+    assert 'class="code-block code-block-source" data-language="python"' in rendered
+    assert 'class="language-python"' in rendered
+
+
 def test_generated_stage_and_skill_pages_match_contracts() -> None:
     expected = {}
     expected.update(generate_stage_cards.render_skill_pages(REPO_ROOT))
@@ -163,6 +188,16 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert ".nav-folder" in css
     assert ".code-block" in css
     assert ".code-label" in css
+    assert ".code-block-diagram" in css
+    assert ".code-block-terminal" in css
+    assert ".code-block-data" in css
+    assert ".code-block-source" in css
+    assert "letter-spacing: 0" in css
+    assert "--font-mono: ui-monospace" in css
+    assert '"Cascadia Mono"' in css
+    assert "font-family: var(--font-mono)" in css
+    assert "font-variant-ligatures: none" in css
+    assert ".code-block pre code" in css
     assert "@media (max-width: 1100px)" in css
     assert "@media (max-width: 860px)" in css
     assert "max-height: 48vh" in css
