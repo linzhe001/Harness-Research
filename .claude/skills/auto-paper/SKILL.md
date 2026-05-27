@@ -29,6 +29,10 @@ tool and you do not invent author evidence.
    equations, environments, macros, and venue wrappers.
 7. Use `USER_GATE` when central claims, boundaries, evidence, or unsupported
    citation decisions need operator confirmation.
+8. Enter optional branches only when requested: `$auto-paper-response` for
+   rebuttal/revision response work, `$auto-paper-data` for availability,
+   ethics, and reproducibility statements, and `$auto-paper-figure` for figure
+   contracts or caption audits.
 </instructions>
 
 <references>

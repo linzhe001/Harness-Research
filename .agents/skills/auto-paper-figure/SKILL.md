@@ -1,0 +1,38 @@
+---
+name: auto-paper-figure
+description: Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit.
+---
+
+# Auto Paper Figure
+
+## Purpose
+
+Create figure contracts and caption audits before any plotting or asset edits.
+This branch is not the default drawing tool; enter it when the operator asks
+for figure work or when harden finds figure/caption risk.
+
+## Required Inputs
+
+- figure assets and source data when available
+- current `claim_register.md`
+- current `citation_support_bank.md`
+- `tex_inventory.json` figure references
+- target venue constraints for resolution, format, panels, and captions
+
+## Outputs
+
+Write under `auto_paper_output/<paper_id>/`:
+
+- `figure_asset_map.md`
+- `figure_contract.md`
+- `caption_claim_map.md`
+- `figure_backend_report.md`
+
+## Rules
+
+- Every quantitative or qualitative caption claim must map to a registered
+  claim, local evidence item, or citation support row.
+- Do not generate new plots from unverified data paths or inferred metrics.
+- Preserve panel labels, file names, and LaTeX graphics references unless the
+  patch plan explicitly changes them.
+- If plotting is requested but inputs are incomplete, return `USER_GATE`.

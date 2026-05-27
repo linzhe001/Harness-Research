@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Figure"
+  short_description: "Auto-paper optional figure branch"
+  default_prompt: "Use $auto-paper-figure to audit figure contracts and captions."

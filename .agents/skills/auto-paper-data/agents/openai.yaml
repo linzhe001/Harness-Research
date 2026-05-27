@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Data"
+  short_description: "Auto-paper optional data branch"
+  default_prompt: "Use $auto-paper-data to draft data and reproducibility statements."

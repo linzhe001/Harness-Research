@@ -60,8 +60,10 @@ phase:
 5. `patch` -> `$auto-paper-patch`
 6. `harden` -> `$auto-paper-harden`
 
-Optional branches are only entered when requested: response handling,
-data/code/ethics statements, and figure/caption work.
+Optional branches are only entered when requested:
+`$auto-paper-response` for rebuttal or revision response work,
+`$auto-paper-data` for availability/ethics/reproducibility statements, and
+`$auto-paper-figure` for figure contracts or caption audits.
 
 ## Standard Artifacts
 
