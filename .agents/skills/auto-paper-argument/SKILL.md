@@ -55,3 +55,9 @@ Write:
 - `claim_register.md`
 - `claims_to_avoid.md`
 - `motivation_surface_map.md`
+
+Run the deterministic claim gate before handing off to citation. This pass
+checks claim schema, author evidence, and scope boundaries; rerun it with
+`--citation-bank` after citation if citation support exists.
+
+- `.agents/skills/auto-paper/scripts/claim_register_check.py auto_paper_output/<paper_id>/claim_register.md`

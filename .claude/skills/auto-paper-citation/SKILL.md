@@ -15,5 +15,6 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 3. Treat `metadata_only` as bibliographic metadata, not claim support.
 4. Write `citation_support_bank.md`, `claim_citation_map.md`, and optional
    `citation_audit_report.md`.
-5. Route weak core-claim support back to citation or argument before patching.
+5. Run `.agents/skills/auto-paper/scripts/citation_bank_check.py auto_paper_output/<paper_id>/citation_support_bank.md`.
+6. Route weak core-claim support back to citation or argument before patching.
 </instructions>

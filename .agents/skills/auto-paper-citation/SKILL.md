@@ -39,6 +39,10 @@ Write:
 - `claim_citation_map.md`
 - optional `citation_audit_report.md`
 
+Run the deterministic support-bank gate when the bank is drafted:
+
+- `.agents/skills/auto-paper/scripts/citation_bank_check.py auto_paper_output/<paper_id>/citation_support_bank.md`
+
 If a core claim has only `background`, `metadata_only`, or `unsupported`
 support, route back to citation or argument instead of adding a weak citation
 during patch.

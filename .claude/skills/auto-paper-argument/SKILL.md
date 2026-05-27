@@ -13,6 +13,8 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
    decisive evidence, implication, boundary, and claims to avoid.
 3. Write `claim_register.md` with claim ID, location, text, evidence source,
    citation need, verb strength, scope limit, and reviewer risk.
-4. Return `USER_GATE` when central claims or boundaries need operator input.
-5. Do not patch LaTeX.
+4. Run `.agents/skills/auto-paper/scripts/claim_register_check.py auto_paper_output/<paper_id>/claim_register.md`;
+   rerun it with `--citation-bank` after citation support exists.
+5. Return `USER_GATE` when central claims or boundaries need operator input.
+6. Do not patch LaTeX.
 </instructions>
