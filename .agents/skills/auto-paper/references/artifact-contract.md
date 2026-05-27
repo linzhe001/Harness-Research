@@ -14,8 +14,23 @@ artifacts, not chat memory.
 | argument | `confirmed_motivation.md`, `claim_register.md`, `claims_to_avoid.md`, `motivation_surface_map.md` |
 | citation | `citation_support_bank.md`, `claim_citation_map.md` |
 | layout | `original_logic_map.md`, `section_blueprints.md`, `writing_rationale_matrix.md`, `citation_plan.md`, `latex_patch_plan.md` |
-| patch | `patch_ledger.md`, guard or compile reports |
+| patch | `latex_patch.diff` or `patches/<unit_id>.diff`, `patch_ledger.md`, guard or compile reports |
 | harden | `audit_report.md`, `compile_report.md`, `citation_audit_report.md`, `revision_audit_report.md`, `logic_transfer_audit.md`, `final_gate_ledger.md` |
+
+## Initialization
+
+Use the bundled templates to create a run scaffold before intake writes the
+first concrete artifact:
+
+```bash
+.agents/skills/auto-paper/scripts/init_artifacts.py \
+  --paper-id <paper_id> \
+  --artifact-dir auto_paper_output/<paper_id> \
+  --workflow <workflow>
+```
+
+Template files are placeholders. A phase postcondition is satisfied only after
+that phase replaces placeholder values with source-backed artifact content.
 
 ## Identifiers
 

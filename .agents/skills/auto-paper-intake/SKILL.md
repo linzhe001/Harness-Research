@@ -36,9 +36,18 @@ a `USER_GATE` question to `intake_report.md`.
 
 ## Discovery
 
+If the artifact directory is empty or missing, initialize the run scaffold
+first:
+
+- `.agents/skills/auto-paper/scripts/init_artifacts.py --paper-id <paper_id> --artifact-dir <artifact_dir> --workflow <workflow>`
+
+Templates are placeholders. Replace `unknown` values during intake and keep
+future-phase templates as scaffolds until their owning phase runs.
+
 Use `rg --files` to find `.tex`, `.bib`, figures, notes, PDFs, CSV/JSON result
 files, and local reports. Prefer deterministic scripts when available:
 
+- `.agents/skills/auto-paper/scripts/init_artifacts.py`
 - `.agents/skills/auto-paper/scripts/reference_inventory.py`
 - `.agents/skills/auto-paper/scripts/tex_inventory.py`
 - `.agents/skills/auto-paper/scripts/latex_guard.py`

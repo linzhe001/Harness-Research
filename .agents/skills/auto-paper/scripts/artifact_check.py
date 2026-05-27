@@ -18,6 +18,7 @@ PHASES = (
     "patch",
     "harden",
 )
+PHASE_INDEX = {phase: index for index, phase in enumerate(PHASES)}
 REQUIRED_BY_PHASE = {
     "intake": (
         "config.yaml",
@@ -177,12 +178,20 @@ def first_markdown_table(path: Path) -> tuple[list[str], list[dict[str, str]]]:
 
 
 def required_for_phase(phase: str) -> list[str]:
+    result: list[str] = []
+    for phase_name in phases_through(phase):
+        result.extend(REQUIRED_BY_PHASE[phase_name])
+    return result
+
+
+def phases_through(phase: str) -> tuple[str, ...]:
     if phase == "all":
-        result: list[str] = []
-        for phase_name in PHASES:
-            result.extend(REQUIRED_BY_PHASE[phase_name])
-        return result
-    return list(REQUIRED_BY_PHASE[phase])
+        return PHASES
+    return PHASES[: PHASE_INDEX[phase] + 1]
+
+
+def phase_reached(selected: str, target: str) -> bool:
+    return target in phases_through(selected)
 
 
 def check_required_files(artifact_dir: Path, phase: str) -> list[Finding]:
@@ -338,26 +347,29 @@ def check_citation_grades(artifact_dir: Path) -> list[Finding]:
 
 def run_checks(artifact_dir: Path, phase: str) -> list[Finding]:
     findings = check_required_files(artifact_dir, phase)
-    findings.extend(
-        check_table_columns(artifact_dir, "claim_register.md", CLAIM_COLUMNS)
-    )
-    findings.extend(
-        check_table_columns(
-            artifact_dir,
-            "citation_support_bank.md",
-            CITATION_COLUMNS,
+    if phase_reached(phase, "argument"):
+        findings.extend(
+            check_table_columns(artifact_dir, "claim_register.md", CLAIM_COLUMNS)
         )
-    )
-    findings.extend(
-        check_table_columns(
-            artifact_dir,
-            "writing_rationale_matrix.md",
-            MATRIX_COLUMNS,
+    if phase_reached(phase, "citation"):
+        findings.extend(
+            check_table_columns(
+                artifact_dir,
+                "citation_support_bank.md",
+                CITATION_COLUMNS,
+            )
         )
-    )
-    findings.extend(check_matrix_depth(artifact_dir))
-    findings.extend(check_citation_grades(artifact_dir))
-    findings.extend(check_cross_refs(artifact_dir))
+        findings.extend(check_citation_grades(artifact_dir))
+    if phase_reached(phase, "layout"):
+        findings.extend(
+            check_table_columns(
+                artifact_dir,
+                "writing_rationale_matrix.md",
+                MATRIX_COLUMNS,
+            )
+        )
+        findings.extend(check_matrix_depth(artifact_dir))
+        findings.extend(check_cross_refs(artifact_dir))
     return findings
 
 
