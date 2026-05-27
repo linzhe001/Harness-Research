@@ -37,6 +37,16 @@ Reviewer-risk audit covers motivation, novelty, evidence, baseline fairness,
 method clarity, result interpretation, limitations, reproducibility,
 ethics/data statements, and template compliance.
 
+Use deterministic scripts where possible:
+
+- `.agents/skills/auto-paper/scripts/artifact_check.py`
+- `.agents/skills/auto-paper/scripts/integrity_audit.py`
+- `.agents/skills/auto-paper/scripts/citation_bank_check.py`
+- `.agents/skills/auto-paper/scripts/claim_register_check.py`
+- `.agents/skills/auto-paper/scripts/revision_audit.py`
+- `.agents/skills/auto-paper/scripts/style_metrics.py`
+- `.agents/skills/auto-paper/scripts/latex_guard.py`
+
 ## Outputs
 
 Write:
