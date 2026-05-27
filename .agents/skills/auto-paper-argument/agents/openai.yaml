@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Argument"
+  short_description: "Auto-paper branch workflow"
+  default_prompt: "Use $auto-paper-argument for its auto-paper phase."

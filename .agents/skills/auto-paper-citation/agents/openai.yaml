@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Citation"
+  short_description: "Auto-paper branch workflow"
+  default_prompt: "Use $auto-paper-citation for its auto-paper phase."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Patch"
+  short_description: "Auto-paper branch workflow"
+  default_prompt: "Use $auto-paper-patch for its auto-paper phase."

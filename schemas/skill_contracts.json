@@ -2855,6 +2855,614 @@
       ]
     },
     {
+      "skill": "auto-paper-intake",
+      "triggers": [
+        "$auto-paper-intake",
+        "/auto-paper-intake",
+        "auto-paper intake",
+        "auto paper intake",
+        "paper intake",
+        "start auto-paper"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-intake/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/auto-iterate-boundary.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "docs/auto_paper_goal.md",
+          "auto_paper_output/"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_intake",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        "docs/auto_paper_goal.md",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/auto_paper_goal.md",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/",
+            "docs/auto_paper_goal.md"
+          ],
+          "owner": "auto-paper-intake",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-research",
+      "triggers": [
+        "$auto-paper-research",
+        "/auto-paper-research",
+        "auto-paper research",
+        "auto paper research",
+        "research dossier",
+        "style profile"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-research/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/auto-paper-loop.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_research",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-research",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-argument",
+      "triggers": [
+        "$auto-paper-argument",
+        "/auto-paper-argument",
+        "auto-paper argument",
+        "auto paper argument",
+        "claim register",
+        "confirmed motivation"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-argument/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/motivation-thread.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/",
+          "docs/10_contract/Claim_Boundary.md"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_argument",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-argument",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-citation",
+      "triggers": [
+        "$auto-paper-citation",
+        "/auto-paper-citation",
+        "auto-paper citation",
+        "auto paper citation",
+        "citation support bank",
+        "claim citation map"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-citation/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/citation-support-bank.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_citation",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-citation",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-layout",
+      "triggers": [
+        "$auto-paper-layout",
+        "/auto-paper-layout",
+        "auto-paper layout",
+        "auto paper layout",
+        "writing rationale matrix",
+        "latex patch plan"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-layout/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/writing-rationale-matrix.md",
+          ".agents/skills/auto-paper/references/latex-source-control.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_layout",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-layout",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-patch",
+      "triggers": [
+        "$auto-paper-patch",
+        "/auto-paper-patch",
+        "auto-paper patch",
+        "auto paper patch",
+        "patch ledger",
+        "latex patch"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-patch/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/writing-rationale-matrix.md",
+          ".agents/skills/auto-paper/references/latex-source-control.md",
+          ".agents/skills/auto-paper/references/citation-support-bank.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_patch",
+        "latex_patch",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-patch",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
+      "skill": "auto-paper-harden",
+      "triggers": [
+        "$auto-paper-harden",
+        "/auto-paper-harden",
+        "auto-paper harden",
+        "auto paper harden",
+        "submission hardening",
+        "final gate ledger"
+      ],
+      "required_read_set": {
+        "harness": [
+          ".agents/references/language-policy.md",
+          ".agents/references/documentation-style.md",
+          ".agents/references/ubiquitous-language.md"
+        ],
+        "skill": [
+          ".agents/skills/auto-paper-harden/SKILL.md",
+          ".agents/skills/auto-paper/SKILL.md",
+          ".agents/skills/auto-paper/references/auto-paper-loop.md",
+          ".agents/skills/auto-paper/references/artifact-contract.md",
+          ".agents/skills/auto-paper/references/citation-support-bank.md",
+          ".agents/skills/auto-paper/references/latex-source-control.md"
+        ],
+        "project_when_present": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "PROJECT_STATE.json",
+          "project_map.json"
+        ],
+        "project_optional": [
+          "auto_paper_output/",
+          "docs/10_contract/Claim_Boundary.md"
+        ]
+      },
+      "required_actions": [
+        "smoke_test_or_NOT_RUN",
+        "gate_ledger",
+        "docs_site_render_or_NOT_RUN"
+      ],
+      "forbidden_actions": [
+        "direct_edit_auto_iterate",
+        "manual_edit_auto_iterate",
+        "direct_edit_evidence",
+        "manual_edit_evidence_chain"
+      ],
+      "gate_ledger_required_when": [
+        "auto_paper_harden",
+        "human_gate",
+        "docs_site_render"
+      ],
+      "sensitive_paths": [
+        "auto_paper_output/",
+        ".auto_paper/",
+        ".auto_iterate/",
+        "iteration_log.json",
+        "docs/_views/",
+        "docs/_site/"
+      ],
+      "write_scope": {
+        "allowed_paths": [
+          "auto_paper_output/",
+          "docs/_views/",
+          "docs/_site/"
+        ]
+      },
+      "artifact_outputs": [
+        {
+          "kind": "current_doc",
+          "paths": [
+            "auto_paper_output/"
+          ],
+          "owner": "auto-paper-harden",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "generated_view",
+          "paths": [
+            "docs/_views/",
+            "docs/_site/"
+          ],
+          "owner": "docs-site",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
+        }
+      ]
+    },
+    {
       "skill": "auto-iterate-goal",
       "triggers": [
         "$auto-iterate-goal",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Paper Harden"
+  short_description: "Auto-paper branch workflow"
+  default_prompt: "Use $auto-paper-harden for its auto-paper phase."
