@@ -77,7 +77,8 @@ Required artifacts by phase:
 - Citation: `citation_support_bank.md`, `claim_citation_map.md`
 - Layout: `original_logic_map.md`, `section_blueprints.md`,
   `writing_rationale_matrix.md`, `citation_plan.md`, `latex_patch_plan.md`
-- Patch: `patch_ledger.md`, guard or compile reports for the patched unit
+- Patch: `latex_patch.diff` or `patches/<unit_id>.diff`, `patch_ledger.md`,
+  guard or compile reports for the patched unit
 - Harden: `audit_report.md`, `compile_report.md`,
   `citation_audit_report.md`, `revision_audit_report.md`,
   `logic_transfer_audit.md`, `final_gate_ledger.md`

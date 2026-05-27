@@ -1,14 +1,16 @@
 ---
 name: auto-paper-patch
-description: Run the auto-paper patch phase. Use as the only branch that may edit LaTeX or bibliography files, applying bounded changes from latex_patch_plan.md and writing patch_ledger.md with guard results.
+description: Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates.
 ---
 
 # Auto Paper Patch
 
 ## Purpose
 
-Apply bounded LaTeX changes from approved artifacts. Do not perform broad
-rewrites from chat memory.
+Produce bounded LaTeX changes from approved artifacts. In a guarded Harness
+workspace, default to writing apply-ready diffs under
+`auto_paper_output/<paper_id>/` instead of directly editing the manuscript
+source. Do not perform broad rewrites from chat memory.
 
 ## Required Inputs
 
@@ -18,9 +20,14 @@ rewrites from chat memory.
 - `citation_support_bank.md`
 - current draft files
 
-## Patch Rules
+## Patch Policy
 
-- Patch one section or contiguous unit group at a time.
+- Generate one section or contiguous unit group at a time.
+- Write `latex_patch.diff` or `patches/<unit_id>.diff` plus `patch_ledger.md`
+  by default.
+- Direct `.tex` or `.bib` edits are allowed only when the operator explicitly
+  authorizes applying a patch and the active workspace write scope permits the
+  target path.
 - Preserve labels, refs, citation keys, graphics paths, tables, equations,
   environments, macros, and venue wrappers unless the patch plan explicitly
   says otherwise.
@@ -30,7 +37,13 @@ rewrites from chat memory.
 
 ## Outputs
 
-Write `patch_ledger.md` rows with:
+Write:
+
+- `latex_patch.diff` or `patches/<unit_id>.diff`
+- `patch_ledger.md`
+- guard or compile reports when the patch was applied in a temporary copy
+
+`patch_ledger.md` rows must include:
 
 - file path
 - line anchor
@@ -39,8 +52,10 @@ Write `patch_ledger.md` rows with:
 - rationale row
 - claim IDs
 - citation IDs
+- patch artifact
 - guard result
 - reviewer-risk delta
 
-After each patch, run `.agents/skills/auto-paper/scripts/latex_guard.py` when
-available and the configured compile command when appropriate.
+Run `.agents/skills/auto-paper/scripts/latex_guard.py` on an applied temporary
+copy when possible. If no temporary apply step is run, record
+`guard_result: NOT_RUN` with the reason.

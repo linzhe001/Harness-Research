@@ -15,9 +15,14 @@ otherwise:
 
 ## Patch Granularity
 
-Patch one section or one contiguous group of `unit_id` rows at a time. Record a
-line anchor, file path, rationale row, affected claim IDs, affected citation
-IDs, and guard result in `patch_ledger.md`.
+Patch one section or one contiguous group of `unit_id` rows at a time. In a
+guarded Harness workspace, default to generating `latex_patch.diff` or
+`patches/<unit_id>.diff` under `auto_paper_output/<paper_id>/`. Direct source
+edits require explicit operator authorization and a write scope that permits
+the target paper path.
+
+Record a line anchor, file path, rationale row, patch artifact, affected claim
+IDs, affected citation IDs, and guard result in `patch_ledger.md`.
 
 ## Bib Policy
 
@@ -27,6 +32,6 @@ must be covered by citation audit.
 
 ## Guard Report
 
-Each patch should run a static LaTeX guard and, when configured, a compile
-command. Report `PASS`, `FAIL`, or `NOT_RUN` with the command, reason, and
-artifact path.
+Each patch should run a static LaTeX guard on an applied temporary copy and,
+when configured, a compile command. Report `PASS`, `FAIL`, or `NOT_RUN` with
+the command, reason, and artifact path.
