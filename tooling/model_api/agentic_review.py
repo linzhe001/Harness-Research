@@ -764,10 +764,10 @@ Harness Research workflow rules to respect:
   with tools instead of asking for a full repository prompt.
 - Skill routing: code-review is read-only; fixes route through code-debug.
 - Hook model:
-  UserPromptSubmit -> detect active skill -> write .harness_hooks/session.json
-  PreToolUse       -> block missing reads or forbidden writes
-  PostToolUse      -> record read/write markers and pending Gate ledger state
-  Stop             -> block missing read set or missing Gate ledger
+  UserPromptSubmit -> infer route hint and workspace capsule
+  PreToolUse       -> warn for missing context; block narrow boundary violations
+  PostToolUse      -> silently record read/write/pending metadata
+  Stop             -> clear compatible pending state; no default read/Gate block
 - Core workflow:
   WF1 survey -> WF2 idea-debate -> WF3 refine-idea -> WF4 data
   -> WF5 baseline -> WF6 arch -> WF7 plan -> WF8 code

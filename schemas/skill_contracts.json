@@ -2279,7 +2279,7 @@
           ".codex/config.toml",
           ".codex/hooks.json",
           ".codex/rules/harness_external_review.rules",
-          "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md"
+          "tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md"
         ]
       },
       "required_actions": [
@@ -2353,7 +2353,7 @@
           "kind": "current_doc",
           "paths": [
             "tooling/codex_hooks/README.md",
-            "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md",
+            "tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md",
             "workflow_handbook/",
             "README.md",
             "AI_AGENT_SETUP.md"

@@ -19,6 +19,7 @@ import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
     CONTRACTS_PATH,
     READ_LEDGER_PATH,
+    READ_LEDGERS_DIR,
     RUNTIME_DIR,
     SLICED_COMMIT_RULE_PATH,
     block_pre_tool,
@@ -34,14 +35,17 @@ from harness_contracts import (  # noqa: E402
     load_contracts,
     load_pending,
     load_read_ledger,
+    load_read_ledger_for_event,
     load_session,
     looks_mutating_bash,
     mark_pending_for_changes,
     mark_tool_activity,
     mutating_event_paths,
+    pre_tool_notice,
     python_script_from_command,
     record_command_reads,
     record_direct_tool_read,
+    record_read,
     required_existing_files,
     reset_read_ledger,
     save_pending,
@@ -82,10 +86,16 @@ def _write_contracts(root: Path, contracts: list[dict[str, object]]) -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_hook_runtime() -> None:
+def clean_hook_runtime(tmp_path: Path) -> None:
+    runtime = REPO_ROOT / RUNTIME_DIR
+    backup = tmp_path / "hook_runtime_backup"
+    if runtime.exists():
+        shutil.copytree(runtime, backup)
     _clean_runtime()
     yield
     _clean_runtime()
+    if backup.exists():
+        shutil.copytree(backup, runtime)
 
 
 def test_skill_contract_files_are_valid() -> None:
@@ -307,6 +317,132 @@ def test_post_survey_stages_can_update_conclusion_evidence_tables() -> None:
             output["kind"] == "conclusion_evidence" and path in output["paths"]
             for output in contract["artifact_outputs"]
         )
+
+
+def test_data_prep_contract_requires_dataset_acquisition_gate() -> None:
+    contract = contract_by_skill(REPO_ROOT, "data-prep")
+    assert contract is not None
+
+    assert "archive_existing_data_docs_or_NOT_RUN" in contract["required_actions"]
+    assert "dataset_acquisition_or_NOT_RUN" in contract["required_actions"]
+    assert (
+        "dataset_acquisition_decision_request_or_NOT_RUN"
+        in contract["required_actions"]
+    )
+    assert "data_doc_archive" in contract["gate_ledger_required_when"]
+    assert "dataset_acquisition" in contract["gate_ledger_required_when"]
+
+    read_set = contract["required_read_set"]
+    for path in [
+        "docs/Refined_Idea.md",
+        "docs/20_facts/Execution_Contract.md",
+        "docs/30_evidence/Dataset_Table.md",
+    ]:
+        assert path in read_set["project_when_present"]
+
+    skill_texts = [
+        (REPO_ROOT / ".agents/skills/data-prep/SKILL.md").read_text(
+            encoding="utf-8"
+        ),
+        (REPO_ROOT / ".claude/skills/data-prep/SKILL.md").read_text(
+            encoding="utf-8"
+        ),
+    ]
+    for text in skill_texts:
+        assert "Remote Repository Selection" in text
+        assert "archive_existing_data_docs_or_NOT_RUN" in text
+        assert "docs/90_legacy/<YYYY-MM-DD>/" in text
+        assert "candidate matrix" in text
+        assert "dataset_acquisition_decision_request_or_NOT_RUN" in text
+        assert "download/mount choice and target directory" in text
+        assert "docs/Refined_Idea.md" in text
+        assert "smoke" in text
+        assert "dehaze" in text
+
+
+def test_data_prep_stop_does_not_block_acquisition_decision_when_root_unresolved(
+    tmp_path: Path,
+) -> None:
+    contract = contract_by_skill(REPO_ROOT, "data-prep")
+    assert contract is not None
+    _write_contracts(tmp_path, [contract])
+    (tmp_path / "PROJECT_STATE.json").write_text(
+        json.dumps(
+            {
+                "dataset_paths": {
+                    "realx3d": {
+                        "remote": "https://huggingface.co/datasets/ToferFish/RealX3D",
+                        "local_root": None,
+                        "local_archive": (
+                            "/mnt/c/Users/Linzhe/Downloads/data4_smoke.tar.gz"
+                        ),
+                        "status": "archive_verified_extraction_pending",
+                    }
+                }
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    save_session(
+        tmp_path,
+        {
+            "active_skill": "data-prep",
+            "intent_class": "unknown",
+            "read_contract_stop_required": False,
+            "mutating_tool_seen": True,
+        },
+    )
+    save_read_ledger(
+        tmp_path,
+        {
+            "reads": {
+                path: {"events": []}
+                for path in required_existing_files(tmp_path, contract)
+            }
+        },
+    )
+    save_pending(
+        tmp_path,
+        {
+            "requires_gate_ledger": True,
+            "reasons": ["sensitive workflow files changed"],
+            "changed_paths": ["docs/Dataset_Stats.md", "PROJECT_STATE.json"],
+        },
+    )
+
+    decision = stop_decision(
+        tmp_path,
+        {
+            "last_assistant_message": (
+                "Gate ledger\n"
+                "- command: not run\n"
+                "- result: NOT_RUN\n"
+                "- reason: dataset root unresolved\n"
+                "- artifacts: docs/Dataset_Stats.md"
+            ),
+            "stop_hook_active": False,
+        },
+    )
+    assert decision is None
+
+    allowed = stop_decision(
+        tmp_path,
+        {
+            "last_assistant_message": (
+                "请确认：使用已有本地 archive 还是重新下载 dataset？"
+                "下载/解压目标目录是哪一个？\n\n"
+                "Gate ledger\n"
+                "- command: not run\n"
+                "- result: NOT_RUN\n"
+                "- reason: waiting for operator download/mount choice "
+                "and target directory\n"
+                "- artifacts: docs/Dataset_Stats.md"
+            ),
+            "stop_hook_active": False,
+        },
+    )
+    assert allowed is None
 
 
 def test_codebase_map_is_created_and_synced_with_stable_code_contracts() -> None:
@@ -925,7 +1061,7 @@ def test_daily_context_lists_repo_guidance_files(tmp_path: Path) -> None:
 
     context = daily_context_for_workspace(root)
 
-    assert "Harness daily workspace context" in context
+    assert "Harness workspace capsule" in context
     assert "AGENTS.md" in context
     assert "CLAUDE.md" in context
 
@@ -948,17 +1084,18 @@ def test_command_reads_track_sliced_commit_rule_without_active_contract() -> Non
     assert SLICED_COMMIT_RULE_PATH in load_read_ledger(REPO_ROOT)["reads"]
 
 
-def test_pre_tool_blocks_git_commit_until_sliced_commit_rule_read() -> None:
+def test_pre_tool_warns_git_commit_until_sliced_commit_rule_read() -> None:
     event = {
         "tool_name": "Bash",
         "tool_input": {"command": "git commit -m 'docs: update workflow'"},
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
+    notice = pre_tool_notice(REPO_ROOT, event)
 
-    assert reason is not None
-    assert "sliced commit guidance" in reason
-    assert SLICED_COMMIT_RULE_PATH in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    assert notice is not None
+    assert "sliced commit guidance" in notice
+    assert SLICED_COMMIT_RULE_PATH in notice
 
 
 def test_git_commit_detection_ignores_search_text() -> None:
@@ -998,18 +1135,47 @@ def test_detection_maps_wf0_bootstrap_to_init_project() -> None:
     match = detect_skill_match(REPO_ROOT, "请执行 WF0 bootstrap init")
 
     assert match is not None
-    assert match["skill"] == "init-project"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "init-project"
     assert match["trigger"] in {"wf0", "bootstrap init"}
-    assert match["read_contract_stop_required"] is True
+    assert match["read_contract_stop_required"] is False
 
 
 def test_detection_maps_init_alias_to_init_project() -> None:
     match = detect_skill_match(REPO_ROOT, "请运行 $init init")
 
     assert match is not None
-    assert match["skill"] == "init-project"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "init-project"
     assert match["trigger"] == "$init"
     assert match["trigger_type"] == "explicit"
+
+
+def test_detection_treats_explicit_init_project_update_as_write() -> None:
+    prompt = "$init-project update"
+
+    assert classify_prompt_intent(prompt) == "code_write"
+    match = detect_skill_match(REPO_ROOT, prompt)
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "init-project"
+    assert match["trigger"] == "$init-project"
+    assert match["trigger_type"] == "explicit"
+    assert match["enforcement_mode"] == "context_only"
+
+
+def test_detection_treats_bare_explicit_stage_skill_as_route_hint() -> None:
+    match = detect_skill_match(REPO_ROOT, "$survey-idea")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "survey-idea"
+    assert match["trigger"] == "$survey-idea"
+    assert match["trigger_type"] == "explicit"
+    assert match["intent_class"] == "unknown"
+    assert match["enforcement_mode"] == "context_only"
+    assert match["read_contract_stop_required"] is False
 
 
 def test_detection_ignores_trigger_words_inside_file_paths() -> None:
@@ -1054,6 +1220,44 @@ def test_detection_question_markers_beat_write_verbs() -> None:
     assert match is None
 
 
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        "$harness-maintenance 帮我修改 hook intent 分类，"
+        "看看怎么让直接写入请求进 code_write",
+        "$harness-maintenance please modify tooling/codex_hooks/harness_contracts.py "
+        "so phrases like 帮我修改 still enter code_write even with 怎么 or 看看",
+        "$harness-maintenance 修改一下各个 skill 权限，有些权限不对吧，"
+        "检查下所有 skill 权限是否正确，然后进行修改",
+    ],
+)
+def test_detection_direct_write_phrases_override_discussion_markers(
+    prompt: str,
+) -> None:
+    assert classify_prompt_intent(prompt) == "code_write"
+    match = detect_skill_match(REPO_ROOT, prompt)
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "code_write"
+    assert match["enforcement_mode"] == "context_only"
+
+
+def test_detection_explicit_harness_design_question_stays_advisory() -> None:
+    prompt = "$harness-maintenance hook 的意图判断怎么完善？"
+
+    assert classify_prompt_intent(prompt) == "design_discussion"
+    match = detect_skill_match(REPO_ROOT, prompt)
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["intent_class"] == "design_discussion"
+    assert match["enforcement_mode"] == "context_only"
+    assert match["read_contract_stop_required"] is False
+
+
 def test_detection_action_gates_bare_workflow_ids() -> None:
     match = detect_skill_match(REPO_ROOT, "这里提到 WF10 是否合适？")
 
@@ -1093,32 +1297,37 @@ def test_detection_routes_stage_lifecycle_to_orchestrator() -> None:
     match = detect_skill_match(REPO_ROOT, "进入 WF10")
 
     assert match is not None
-    assert match["skill"] == "orchestrator"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "orchestrator"
     assert match["intent_class"] == "workflow_action"
-    assert match["enforcement_mode"] == "active_read"
+    assert match["enforcement_mode"] == "context_only"
 
 
-def test_detection_keeps_explicit_iterate_trigger_hard() -> None:
+def test_detection_keeps_explicit_iterate_trigger_advisory() -> None:
     status = detect_skill_match(REPO_ROOT, "/iterate status")
     plan = detect_skill_match(REPO_ROOT, '$iterate plan "try smaller lr"')
     decision = detect_skill_match(REPO_ROOT, "$iterate eval CONTINUE")
 
     assert status is not None
-    assert status["skill"] == "iterate"
-    assert status["enforcement_mode"] == "active_read"
+    assert status["skill"] is None
+    assert status["candidate_skill"] == "iterate"
+    assert status["enforcement_mode"] == "context_only"
     assert plan is not None
-    assert plan["skill"] == "iterate"
-    assert plan["enforcement_mode"] == "active_write"
+    assert plan["skill"] is None
+    assert plan["candidate_skill"] == "iterate"
+    assert plan["enforcement_mode"] == "context_only"
     assert decision is not None
-    assert decision["skill"] == "iterate"
-    assert decision["enforcement_mode"] == "active_write"
+    assert decision["skill"] is None
+    assert decision["candidate_skill"] == "iterate"
+    assert decision["enforcement_mode"] == "context_only"
 
 
 def test_detection_infers_code_debug_for_ordinary_code_modification() -> None:
     match = detect_skill_match(REPO_ROOT, "帮我修改 Python 模块中的数据处理逻辑")
 
     assert match is not None
-    assert match["skill"] == "code-debug"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-debug"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
     assert match["read_contract_stop_required"] is False
@@ -1130,7 +1339,8 @@ def test_detection_infers_harness_maintenance_for_skill_detection() -> None:
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger_type"] in {"implicit", "inferred"}
     assert match["intent_class"] == "code_write"
     assert match["read_contract_stop_required"] is False
@@ -1140,7 +1350,8 @@ def test_detection_infers_harness_maintenance_for_hook_trigger_text() -> None:
     match = detect_skill_match(REPO_ROOT, "帮我修改 hook的判断和触发")
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger_type"] in {"implicit", "inferred"}
 
 
@@ -1148,7 +1359,8 @@ def test_detection_infers_harness_maintenance_over_generic_fix() -> None:
     match = detect_skill_match(REPO_ROOT, "fix hooks trust routing")
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
 
@@ -1160,10 +1372,11 @@ def test_detection_treats_explicit_harness_maintenance_fix_as_write() -> None:
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger_type"] == "explicit"
     assert match["intent_class"] == "code_write"
-    assert match["enforcement_mode"] == "active_write"
+    assert match["enforcement_mode"] == "context_only"
 
 
 def test_detection_routes_ai_agent_setup_writes_to_harness_maintenance() -> None:
@@ -1174,10 +1387,11 @@ def test_detection_routes_ai_agent_setup_writes_to_harness_maintenance() -> None
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
-    assert match["enforcement_mode"] == "active_write"
+    assert match["enforcement_mode"] == "context_only"
 
 
 def test_detection_keeps_ai_agent_setup_question_context_only() -> None:
@@ -1204,11 +1418,12 @@ def test_detection_infers_single_owner_for_commit_prompt(monkeypatch) -> None:
     match = detect_skill_match(REPO_ROOT, "帮我把这次的 git 提交了把")
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["trigger"] == "changed_paths_single_owner"
     assert match["trigger_type"] == "inferred"
     assert match["intent_class"] == "code_write"
-    assert match["enforcement_mode"] == "active_write"
+    assert match["enforcement_mode"] == "context_only"
 
 
 def test_detection_keeps_mixed_owner_commit_prompt_inactive(monkeypatch) -> None:
@@ -1232,7 +1447,7 @@ def test_detection_keeps_mixed_owner_commit_prompt_inactive(monkeypatch) -> None
     assert "Possible owners" in match["candidate_reason"]
 
 
-def test_user_prompt_commit_single_owner_enters_active_write(
+def test_user_prompt_commit_single_owner_enters_candidate_context(
     monkeypatch,
     capsys,
 ) -> None:
@@ -1264,9 +1479,10 @@ def test_user_prompt_commit_single_owner_enters_active_write(
     capsys.readouterr()
 
     session = load_session(REPO_ROOT)
-    assert session["active_skill"] == "harness-maintenance"
+    assert session["active_skill"] is None
+    assert session["candidate_skill"] == "harness-maintenance"
     assert session["skill_trigger"] == "changed_paths_single_owner"
-    assert session["enforcement_mode"] == "active_write"
+    assert session["enforcement_mode"] == "context_only"
     _clean_runtime()
 
 
@@ -1276,8 +1492,30 @@ def test_detection_infers_harness_maintenance_for_workflow_language() -> None:
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["intent_class"] == "code_write"
+
+
+def test_detection_does_not_treat_stage_card_as_commit_prompt(monkeypatch) -> None:
+    monkeypatch.setattr(
+        harness_contracts,
+        "changed_paths",
+        lambda root: [
+            "AI_AGENT_SETUP.md",
+            "src/pipeline.py",
+        ],
+    )
+
+    match = detect_skill_match(
+        REPO_ROOT, "帮我优化 workflow 通用语言、关键概念和 Stage Card generator"
+    )
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["trigger"] == "inferred_harness_maintenance"
+    assert match["enforcement_mode"] == "context_only"
 
 
 def test_detection_prefers_harness_maintenance_for_prompt_routing_terms() -> None:
@@ -1306,22 +1544,24 @@ def test_detection_keeps_mixed_workflow_question_context_only() -> None:
     assert match["intent_class"] == "design_discussion"
 
 
-def test_detection_keeps_imperative_workflow_trigger_hard() -> None:
+def test_detection_keeps_imperative_workflow_trigger_advisory() -> None:
     match = detect_skill_match(
         REPO_ROOT,
         "帮我修改 prompt routing 和 workflow 触发规则",
     )
 
     assert match is not None
-    assert match["skill"] == "harness-maintenance"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "harness-maintenance"
     assert match["intent_class"] == "code_write"
-    assert match["enforcement_mode"] == "active_write"
+    assert match["enforcement_mode"] == "context_only"
 
 
 def test_detection_infers_code_expert_for_new_implementation_request() -> None:
     match = detect_skill_match(REPO_ROOT, "帮我实现一个新的 Python 数据处理模块")
     assert match is not None
-    assert match["skill"] == "code-expert"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-expert"
     assert match["trigger_type"] == "inferred"
 
 
@@ -1330,9 +1570,22 @@ def test_detection_infers_code_review_for_diff_review_request() -> None:
         REPO_ROOT, "帮我对当前 git diff 做 code review，带上行号"
     )
     assert match is not None
-    assert match["skill"] == "code-review"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-review"
     assert match["intent_class"] == "code_review_medium"
-    assert match["read_contract_stop_required"] is True
+    assert match["read_contract_stop_required"] is False
+
+
+def test_detection_keeps_explicit_code_review_review_only() -> None:
+    match = detect_skill_match(REPO_ROOT, "$code-review heavy 当前 diff")
+
+    assert match is not None
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-review"
+    assert match["trigger_type"] == "explicit"
+    assert match["intent_class"] == "code_review_heavy"
+    assert match["enforcement_mode"] == "context_only"
+    assert match["read_contract_stop_required"] is False
 
 
 def test_detection_infers_heavy_code_review_for_docs_evidence() -> None:
@@ -1340,7 +1593,8 @@ def test_detection_infers_heavy_code_review_for_docs_evidence() -> None:
         REPO_ROOT, "对阶段文档和证据链做 heavy code review 交叉验证"
     )
     assert match is not None
-    assert match["skill"] == "code-review"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-review"
     assert match["intent_class"] == "code_review_heavy"
 
 
@@ -1350,7 +1604,8 @@ def test_detection_classifies_cjk_adjacent_hook_review_as_heavy() -> None:
     match = detect_skill_match(REPO_ROOT, prompt)
 
     assert match is not None
-    assert match["skill"] == "code-review"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-review"
     assert match["intent_class"] == "code_review_heavy"
 
 
@@ -1361,7 +1616,8 @@ def test_detection_prefers_plain_code_debug_over_review_phrase() -> None:
     )
 
     assert match is not None
-    assert match["skill"] == "code-debug"
+    assert match["skill"] is None
+    assert match["candidate_skill"] == "code-debug"
     assert match["trigger"] == "code-debug"
 
 
@@ -1408,7 +1664,8 @@ def test_user_prompt_continuation_preserves_heavy_review_session(
     capsys.readouterr()
 
     session = load_session(REPO_ROOT)
-    assert session["active_skill"] == "code-review"
+    assert session["active_skill"] is None
+    assert session["candidate_skill"] == "code-review"
     assert session["intent_class"] == "code_review_heavy"
     assert session["skill_trigger_type"] == "continuation"
     assert session["continued_from_previous_prompt"] is True
@@ -1570,8 +1827,8 @@ def test_user_prompt_context_only_writes_candidate_skill_not_active_skill(
     assert session["active_skill"] is None
     assert session["candidate_skill"] == "harness-maintenance"
     assert session["enforcement_mode"] == "context_only"
-    assert "Harness advisory skill context: harness-maintenance" in output
-    assert "does not grant Write Scope" in output
+    assert "Harness route hint: harness-maintenance" in output
+    assert "Concrete tool calls are checked at tool time" in output
     _clean_runtime()
 
 
@@ -1837,7 +2094,7 @@ def test_docs_site_renderer_outputs_are_stage_scoped_tool_outputs() -> None:
     ]
 
 
-def test_pre_tool_blocks_docs_site_renderer_without_active_contract() -> None:
+def test_pre_tool_allows_docs_site_renderer_without_active_contract() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
     event = {
@@ -1847,11 +2104,7 @@ def test_pre_tool_blocks_docs_site_renderer_without_active_contract() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "requires an active `$docs-site`" in reason
-    assert "docs/_site/" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
     _clean_runtime()
 
 
@@ -2028,7 +2281,7 @@ def test_pre_tool_blocks_external_review_wrapper_output_outside_trace() -> None:
         event["tool_input"]["command"],
     ) == ["README.md"]
     assert reason is not None
-    assert "review-only" in reason
+    assert "external review wrapper outputs" in reason
     _clean_runtime()
 
 
@@ -2100,11 +2353,11 @@ def test_pre_tool_blocks_external_review_wrapper_shell_redirection() -> None:
     reason = block_pre_tool(REPO_ROOT, event)
 
     assert reason is not None
-    assert "review-only" in reason
+    assert "external review wrapper outputs" in reason
     _clean_runtime()
 
 
-def test_pre_tool_blocks_write_before_required_reads() -> None:
+def test_pre_tool_warns_write_before_recommended_reads() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": "validate-run"})
     event = {
@@ -2116,13 +2369,15 @@ def test_pre_tool_blocks_write_before_required_reads() -> None:
             "*** End Patch\n"
         },
     }
-    reason = block_pre_tool(REPO_ROOT, event)
-    assert reason is not None
-    assert "Required read set is incomplete" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "recommended reads are missing" in notice
+    assert "AGENTS.md" in notice
     _clean_runtime()
 
 
-def test_pre_tool_blocks_write_outside_active_stage_scope() -> None:
+def test_pre_tool_allows_write_outside_advisory_stage_scope() -> None:
     _clean_runtime()
     contract = contract_by_skill(REPO_ROOT, "validate-run")
     assert contract is not None
@@ -2146,12 +2401,7 @@ def test_pre_tool_blocks_write_outside_active_stage_scope() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "outside the active `validate-run` stage write scope" in reason
-    assert "README.md" in reason
-    assert "docs/Validate_Run_Report.md" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
     _clean_runtime()
 
 
@@ -2183,13 +2433,13 @@ def test_pre_tool_allows_write_inside_active_stage_scope() -> None:
     _clean_runtime()
 
 
-def test_pre_tool_blocks_active_read_subject_write_even_inside_write_scope() -> None:
+def test_pre_tool_allows_workflow_subject_write_without_read_mode_block() -> None:
     _clean_runtime()
     contract = contract_by_skill(REPO_ROOT, "iterate")
     assert contract is not None
     save_session(
         REPO_ROOT,
-        {"active_skill": "iterate", "enforcement_mode": "active_read"},
+        {"candidate_skill": "iterate", "enforcement_mode": "context_only"},
     )
     save_read_ledger(
         REPO_ROOT,
@@ -2210,15 +2460,11 @@ def test_pre_tool_blocks_active_read_subject_write_even_inside_write_scope() -> 
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "active_read mode" in reason
-    assert "iteration_log.json" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
     _clean_runtime()
 
 
-def test_pre_tool_blocks_guardrail_write_without_active_contract() -> None:
+def test_pre_tool_warns_guardrail_write_without_active_contract() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
     event = {
@@ -2231,16 +2477,16 @@ def test_pre_tool_blocks_guardrail_write_without_active_contract() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "guardrail-sensitive" in reason
-    assert "`harness-maintenance`" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "paths map to Harness workflow ownership" in notice
+    assert "harness-maintenance" in notice
     assert load_session(REPO_ROOT).get("active_skill") is None
     _clean_runtime()
 
 
-def test_pre_tool_blocks_contract_owned_write_without_active_contract() -> None:
+def test_pre_tool_warns_contract_owned_write_without_active_contract() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
     event = {
@@ -2253,16 +2499,16 @@ def test_pre_tool_blocks_contract_owned_write_without_active_contract() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "no hard active skill is selected" in reason
-    assert "validate-run" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "paths map to Harness workflow ownership" in notice
+    assert "validate-run" in notice
     assert load_session(REPO_ROOT).get("active_skill") is None
     _clean_runtime()
 
 
-def test_pre_tool_asks_explicit_stage_for_ambiguous_docs_write() -> None:
+def test_pre_tool_warns_for_ambiguous_docs_write() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
     event = {
@@ -2275,19 +2521,18 @@ def test_pre_tool_asks_explicit_stage_for_ambiguous_docs_write() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "no hard active skill is selected" in reason
-    assert "Possible owners" in reason
-    assert "harness-maintenance" in reason
-    assert "init-project" in reason
-    assert "release" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "paths map to Harness workflow ownership" in notice
+    assert "harness-maintenance" in notice
+    assert "init-project" in notice
+    assert "release" in notice
     assert load_session(REPO_ROOT).get("active_skill") is None
     _clean_runtime()
 
 
-def test_pre_tool_blocks_guardrail_bash_token_without_active_contract() -> None:
+def test_pre_tool_warns_guardrail_bash_token_without_active_contract() -> None:
     _clean_runtime()
     save_session(REPO_ROOT, {"active_skill": None, "enforcement_mode": "none"})
     event = {
@@ -2295,11 +2540,10 @@ def test_pre_tool_blocks_guardrail_bash_token_without_active_contract() -> None:
         "tool_input": {"command": "echo test > tooling/codex_hooks/tmp.txt"},
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "guardrail-sensitive" in reason
-    assert "`harness-maintenance`" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "harness-maintenance" in notice
     _clean_runtime()
 
 
@@ -2343,14 +2587,11 @@ def test_pre_tool_explicit_write_scope_overrides_sensitive_paths(
         },
     }
 
-    reason = block_pre_tool(root, blocked)
-
-    assert reason is not None
-    assert "outside the active `scoped-stage` stage write scope" in reason
+    assert block_pre_tool(root, blocked) is None
     assert block_pre_tool(root, allowed) is None
 
 
-def test_pre_tool_missing_write_scope_fails_closed(tmp_path: Path) -> None:
+def test_pre_tool_missing_write_scope_no_longer_fails_closed(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     _write_contracts(
@@ -2378,10 +2619,7 @@ def test_pre_tool_missing_write_scope_fails_closed(tmp_path: Path) -> None:
         },
     }
 
-    reason = block_pre_tool(root, event)
-
-    assert reason is not None
-    assert "outside the active `legacy-stage` stage write scope" in reason
+    assert block_pre_tool(root, event) is None
 
 
 def test_stop_allows_read_only_implicit_skill_without_writes() -> None:
@@ -2402,7 +2640,7 @@ def test_stop_allows_read_only_implicit_skill_without_writes() -> None:
     _clean_runtime()
 
 
-def test_stop_blocks_explicit_skill_missing_reads() -> None:
+def test_stop_allows_explicit_skill_missing_reads() -> None:
     _clean_runtime()
     save_session(
         REPO_ROOT,
@@ -2414,13 +2652,11 @@ def test_stop_blocks_explicit_skill_missing_reads() -> None:
         },
     )
     decision = stop_decision(REPO_ROOT, {"last_assistant_message": "Done."})
-    assert decision is not None
-    assert decision["decision"] == "block"
-    assert "Read the required files" in decision["reason"]
+    assert decision is None
     _clean_runtime()
 
 
-def test_stop_blocks_implicit_skill_after_mutation_if_reads_missing() -> None:
+def test_stop_allows_implicit_skill_after_mutation_if_reads_missing() -> None:
     _clean_runtime()
     save_session(
         REPO_ROOT,
@@ -2444,12 +2680,11 @@ def test_stop_blocks_implicit_skill_after_mutation_if_reads_missing() -> None:
         },
     )
     decision = stop_decision(REPO_ROOT, {"last_assistant_message": "Done."})
-    assert decision is not None
-    assert "code-debug" in decision["reason"]
+    assert decision is None
     _clean_runtime()
 
 
-def test_stop_blocks_inferred_code_review_missing_reads_even_without_writes() -> None:
+def test_stop_allows_inferred_code_review_missing_reads_without_writes() -> None:
     _clean_runtime()
     save_session(
         REPO_ROOT,
@@ -2461,8 +2696,7 @@ def test_stop_blocks_inferred_code_review_missing_reads_even_without_writes() ->
         },
     )
     decision = stop_decision(REPO_ROOT, {"last_assistant_message": "Done."})
-    assert decision is not None
-    assert "code-review" in decision["reason"]
+    assert decision is None
     _clean_runtime()
 
 
@@ -2523,7 +2757,7 @@ def test_pre_tool_allows_code_review_trace_writes() -> None:
     _clean_runtime()
 
 
-def test_pre_tool_blocks_code_debug_hook_guardrail_write() -> None:
+def test_pre_tool_warns_code_debug_hook_guardrail_write() -> None:
     _clean_runtime()
     contract = contract_by_skill(REPO_ROOT, "code-debug")
     assert contract is not None
@@ -2547,10 +2781,10 @@ def test_pre_tool_blocks_code_debug_hook_guardrail_write() -> None:
         },
     }
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "outside the active `code-debug` stage write scope" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "recommended reads are missing" in notice
     _clean_runtime()
 
 
@@ -2598,7 +2832,7 @@ def test_pre_tool_allows_single_owner_git_add_for_active_owner(monkeypatch) -> N
         REPO_ROOT,
         {
             "active_skill": "harness-maintenance",
-            "enforcement_mode": "active_write",
+            "enforcement_mode": "context_only",
         },
     )
     save_read_ledger(
@@ -2616,7 +2850,7 @@ def test_pre_tool_allows_single_owner_git_add_for_active_owner(monkeypatch) -> N
     _clean_runtime()
 
 
-def test_pre_tool_blocks_mixed_owner_git_add_for_active_owner(monkeypatch) -> None:
+def test_pre_tool_warns_mixed_owner_git_add_for_active_owner(monkeypatch) -> None:
     _clean_runtime()
     monkeypatch.setattr(
         harness_contracts,
@@ -2632,7 +2866,7 @@ def test_pre_tool_blocks_mixed_owner_git_add_for_active_owner(monkeypatch) -> No
         REPO_ROOT,
         {
             "active_skill": "harness-maintenance",
-            "enforcement_mode": "active_write",
+            "enforcement_mode": "context_only",
         },
     )
     save_read_ledger(
@@ -2646,12 +2880,11 @@ def test_pre_tool_blocks_mixed_owner_git_add_for_active_owner(monkeypatch) -> No
     )
     event = {"tool_name": "Bash", "tool_input": {"command": "git add -A"}}
 
-    reason = block_pre_tool(REPO_ROOT, event)
-
-    assert reason is not None
-    assert "one owner-aligned Commit Slice" in reason
-    assert "`harness-maintenance`" in reason
-    assert "`code-debug`" in reason
+    assert block_pre_tool(REPO_ROOT, event) is None
+    notice = pre_tool_notice(REPO_ROOT, event)
+    assert notice is not None
+    assert "one owner" in notice
+    assert "AI_AGENT_SETUP.md" in notice
     _clean_runtime()
 
 
@@ -2787,8 +3020,7 @@ def test_user_prompt_resets_stale_read_ledger(monkeypatch, capsys) -> None:
         REPO_ROOT,
         {"last_assistant_message": "Done.", "stop_hook_active": False},
     )
-    assert decision is not None
-    assert "Read the required files" in decision["reason"]
+    assert decision is None
     _clean_runtime()
 
 
@@ -2799,6 +3031,80 @@ def test_reset_read_ledger_clears_recorded_reads() -> None:
     reset_read_ledger(REPO_ROOT)
 
     assert load_read_ledger(REPO_ROOT) == {"reads": {}}
+    _clean_runtime()
+
+
+def test_event_read_ledger_merges_global_and_session_reads() -> None:
+    _clean_runtime()
+    event = {
+        "hookEventName": "PostToolUse",
+        "session_id": "patch-tool",
+        "turn_id": "turn-test",
+        "toolName": "Read",
+    }
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                "AGENTS.md": {
+                    "sha256": "global",
+                    "events": [{"source": "global"}],
+                }
+            }
+        },
+    )
+    session_ledger = REPO_ROOT / READ_LEDGERS_DIR / "patch-tool.json"
+    session_ledger.parent.mkdir(parents=True, exist_ok=True)
+    session_ledger.write_text(
+        json.dumps(
+            {
+                "reads": {
+                    "CLAUDE.md": {
+                        "sha256": "session",
+                        "events": [{"source": "session"}],
+                    }
+                }
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    ledger = load_read_ledger_for_event(REPO_ROOT, event)
+
+    assert set(ledger["reads"]) == {"AGENTS.md", "CLAUDE.md"}
+    _clean_runtime()
+
+
+def test_record_read_does_not_drop_global_reads_when_session_ledger_exists() -> None:
+    _clean_runtime()
+    event = {
+        "hookEventName": "PostToolUse",
+        "session_id": "patch-tool",
+        "turn_id": "turn-test",
+        "toolName": "Read",
+    }
+    save_read_ledger(
+        REPO_ROOT,
+        {
+            "reads": {
+                "AGENTS.md": {
+                    "sha256": "global",
+                    "events": [{"source": "global"}],
+                }
+            }
+        },
+    )
+    session_ledger = REPO_ROOT / READ_LEDGERS_DIR / "patch-tool.json"
+    session_ledger.parent.mkdir(parents=True, exist_ok=True)
+    session_ledger.write_text('{"reads": {}}\n', encoding="utf-8")
+
+    assert record_read(REPO_ROOT, "CLAUDE.md", event, source="Read") is True
+
+    global_ledger = load_read_ledger(REPO_ROOT)
+    event_ledger = load_read_ledger_for_event(REPO_ROOT, event)
+    assert set(global_ledger["reads"]) == {"AGENTS.md", "CLAUDE.md"}
+    assert set(event_ledger["reads"]) == {"AGENTS.md", "CLAUDE.md"}
     _clean_runtime()
 
 
@@ -2878,7 +3184,7 @@ def test_gate_ledger_notice_is_consumed_once() -> None:
     _clean_runtime()
 
 
-def test_mark_pending_includes_untracked_sensitive_paths(tmp_path: Path) -> None:
+def test_mark_pending_does_not_scan_untracked_sensitive_paths(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     subprocess.run(["git", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
@@ -2892,11 +3198,11 @@ def test_mark_pending_includes_untracked_sensitive_paths(tmp_path: Path) -> None
 
     pending = mark_pending_for_changes(root, {"turn_id": "t"})
 
-    assert pending["requires_gate_ledger"] is True
-    assert pending["changed_paths"] == ["docs/New.md"]
+    assert pending["requires_gate_ledger"] is False
+    assert pending["changed_paths"] == []
 
 
-def test_mark_pending_includes_staged_sensitive_paths(tmp_path: Path) -> None:
+def test_mark_pending_does_not_scan_staged_sensitive_paths(tmp_path: Path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     subprocess.run(["git", "init"], cwd=root, check=True, stdout=subprocess.DEVNULL)
@@ -2916,8 +3222,8 @@ def test_mark_pending_includes_staged_sensitive_paths(tmp_path: Path) -> None:
 
     pending = mark_pending_for_changes(root, {"turn_id": "t"})
 
-    assert pending["requires_gate_ledger"] is True
-    assert pending["changed_paths"] == ["docs/Staged.md"]
+    assert pending["requires_gate_ledger"] is False
+    assert pending["changed_paths"] == []
 
 
 def test_mark_pending_ignores_local_code_review_trace_paths(tmp_path: Path) -> None:
@@ -2997,8 +3303,8 @@ def test_mark_pending_ignores_trace_but_keeps_other_sensitive_paths(
 
     pending = mark_pending_for_changes(root, {"turn_id": "t"})
 
-    assert pending["requires_gate_ledger"] is True
-    assert pending["changed_paths"] == ["docs/Reviewed.md"]
+    assert pending["requires_gate_ledger"] is False
+    assert pending["changed_paths"] == []
 
 
 def test_code_review_audit_write_does_not_inherit_existing_dirty_subject_paths(
@@ -3119,7 +3425,7 @@ def test_non_harness_workspace_noops(tmp_path: Path) -> None:
     assert pending["requires_gate_ledger"] is False
 
 
-def test_stop_blocks_missing_gate_ledger_when_pending() -> None:
+def test_stop_allows_missing_gate_ledger_when_pending() -> None:
     _clean_runtime()
     save_pending(
         REPO_ROOT,
@@ -3136,10 +3442,9 @@ def test_stop_blocks_missing_gate_ledger_when_pending() -> None:
             "stop_hook_active": False,
         },
     )
-    assert decision is not None
-    assert decision["decision"] == "block"
+    assert decision is None
 
-    allowed = stop_decision(
+    cleared = stop_decision(
         REPO_ROOT,
         {
             "last_assistant_message": (
@@ -3152,7 +3457,7 @@ def test_stop_blocks_missing_gate_ledger_when_pending() -> None:
             "stop_hook_active": False,
         },
     )
-    assert allowed is None
+    assert cleared is None
     pending = load_pending(REPO_ROOT)
     assert pending["requires_gate_ledger"] is False
     assert pending["changed_paths"] == []
@@ -3160,7 +3465,7 @@ def test_stop_blocks_missing_gate_ledger_when_pending() -> None:
     _clean_runtime()
 
 
-def test_stop_does_not_accept_gate_ledger_words_without_fields() -> None:
+def test_stop_leaves_pending_when_gate_ledger_fields_are_missing() -> None:
     _clean_runtime()
     save_pending(
         REPO_ROOT,
@@ -3179,6 +3484,7 @@ def test_stop_does_not_accept_gate_ledger_words_without_fields() -> None:
         },
     )
 
-    assert decision is not None
-    assert decision["decision"] == "block"
+    assert decision is None
+    pending = load_pending(REPO_ROOT)
+    assert pending["requires_gate_ledger"] is True
     _clean_runtime()

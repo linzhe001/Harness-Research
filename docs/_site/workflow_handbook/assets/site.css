@@ -224,12 +224,15 @@ th { background: #f1f4f8; text-align: left; }
   border: 1px solid #9bd5cb;
   border-radius: 999px;
   color: #075e55;
-  cursor: help;
+  cursor: pointer;
   display: inline-block;
   font-size: 0.86em;
   margin: 0 2px;
   padding: 0 6px;
+  text-decoration: none;
 }
+.evidence-marker:hover,
+.reference-marker:hover { text-decoration: none; }
 .evidence-popover {
   background: #101820;
   border-radius: 8px;

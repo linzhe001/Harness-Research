@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -7,6 +8,7 @@ import re
 import shlex
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +20,9 @@ SESSION_PATH = RUNTIME_DIR / "session.json"
 SESSIONS_DIR = RUNTIME_DIR / "sessions"
 READ_LEDGER_PATH = RUNTIME_DIR / "read_ledger.json"
 READ_LEDGERS_DIR = RUNTIME_DIR / "read_ledgers"
+READ_LEDGER_LOCK_PATH = RUNTIME_DIR / "read_ledger.lock"
 PENDING_PATH = RUNTIME_DIR / "pending_actions.json"
+NOTICES_PATH = RUNTIME_DIR / "notices.json"
 
 IGNORE_GIT_ADD_PATTERNS = [
     "ref/",
@@ -53,7 +57,7 @@ GUARDRAIL_PATH_OWNERS = {
         "README.md",
         "AI_AGENT_SETUP.md",
         "docs/Hook_Intent_Detection_Improvement_Plan.md",
-        "tooling/codex_hooks/Stage_Permission_Elevation_Guide.md",
+        "tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md",
     ]
 }
 CHANGED_PATH_OWNER_PATTERNS = {
@@ -69,8 +73,6 @@ CHANGED_PATH_OWNER_PATTERNS = {
 
 ENFORCEMENT_NONE = "none"
 ENFORCEMENT_CONTEXT_ONLY = "context_only"
-ENFORCEMENT_ACTIVE_READ = "active_read"
-ENFORCEMENT_ACTIVE_WRITE = "active_write"
 
 KNOWN_REQUIRED_ACTIONS = {
     "approval_tool_only_after_explicit_human_approval",
@@ -291,6 +293,32 @@ STRONG_WRITE_REQUEST_RE = re.compile(
     r"migrate|update|improve)\b",
     re.IGNORECASE,
 )
+DIRECT_WRITE_REQUEST_RE = re.compile(
+    r"(?:帮我|请你?|直接|开始|继续|现在|按.{0,16}方案|根据)"
+    r".{0,32}(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|"
+    r"迁移|补|添加|创建|写)|"
+    r"\b(?:please|help\s+me|go\s+ahead|directly)\b.{0,40}"
+    r"\b(?:implement|modify|edit|patch|write|create|add|fix|refactor|delete|"
+    r"migrate|update|improve)\b",
+    re.IGNORECASE,
+)
+EXPLICIT_SKILL_WRITE_REQUEST_RE = re.compile(
+    r"^\s*[$/][A-Za-z0-9_-]+\s+"
+    r"(?:init|update|deps-changed|refresh|apply|render|rebuild|run|execute)\b|"
+    r"(?:[$/][A-Za-z0-9_-]+).{0,96}"
+    r"(?:修改一下|改一下|修一下|更新一下|"
+    r"进行\s*(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|"
+    r"迁移|补|添加|创建|写)|"
+    r"然后.{0,40}(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|"
+    r"重构|删除|迁移|补|添加|创建|写))",
+    re.IGNORECASE,
+)
+ADVISORY_BEFORE_WRITE_RE = re.compile(
+    r"(?:帮我|请你?|请)\s*(?:看下|看一下|看看|请问|分析|判断|评估|解释|说明)"
+    r".{0,40}(?:实施|落地|实现|修改|改造|完善|优化|修复|更新|重构|删除|"
+    r"迁移|补|添加|创建|写)",
+    re.IGNORECASE,
+)
 WEAK_WRITE_VERB_RE = re.compile(
     r"\b(?:modify|improve|adjust|fix|debug|update|change)\b|"
     r"(完善|优化|调整|修改|改造|改|修复)",
@@ -303,11 +331,13 @@ CODE_WRITE_RE = re.compile(
     re.IGNORECASE,
 )
 CURRENT_CHANGE_COMMIT_PROMPT_RE = re.compile(
-    r"\b(?:commit|stage|submit|git\s+add|git\s+commit)\b|(?:提交|暂存)",
+    r"\b(?:commit|submit|git\s+add|git\s+commit)\b|"
+    r"\bstage\b(?!\s+cards?\b)|(?:提交|暂存)",
     re.IGNORECASE,
 )
 CURRENT_CHANGE_OWNER_PROMPT_RE = re.compile(
-    r"\b(?:commit|stage|submit|git\s+add|git\s+commit|fix|repair)\b|"
+    r"\b(?:commit|submit|git\s+add|git\s+commit|fix|repair)\b|"
+    r"\bstage\b(?!\s+cards?\b)|"
     r"(?:提交|暂存|修复|修正|修一下|修好)",
     re.IGNORECASE,
 )
@@ -484,6 +514,17 @@ def is_design_discussion(prompt: str) -> bool:
     return bool(DESIGN_DISCUSSION_RE.search(text) or WEAK_WRITE_VERB_RE.search(text))
 
 
+def is_direct_write_request(prompt: str) -> bool:
+    text = detection_text(prompt)
+    return bool(
+        (
+            DIRECT_WRITE_REQUEST_RE.search(text)
+            or EXPLICIT_SKILL_WRITE_REQUEST_RE.search(text)
+        )
+        and not ADVISORY_BEFORE_WRITE_RE.search(text)
+    )
+
+
 def is_strong_write_request(prompt: str) -> bool:
     text = detection_text(prompt)
     if is_question_or_discussion(prompt) and not STRONG_WRITE_REQUEST_RE.search(text):
@@ -512,6 +553,8 @@ def classify_prompt_intent(prompt: str) -> str:
         return "decision_question"
     if is_workflow_question(prompt):
         return "workflow_question"
+    if is_direct_write_request(prompt):
+        return "code_write"
     if is_design_discussion(prompt):
         return "design_discussion"
     if is_workflow_action(prompt):
@@ -602,60 +645,6 @@ def _trigger_blocked_by_intent(trigger: str, intent: str) -> bool:
     return False
 
 
-def _is_read_only_prompt(prompt: str) -> bool:
-    text = detection_text(prompt)
-    return bool(
-        re.search(
-            r"\b(status|show|explain|read|inspect|check|list)\b|"
-            r"(状态|查看|看一下|解释|说明|检查|只读)",
-            text,
-            flags=re.IGNORECASE,
-        )
-    )
-
-
-def _is_iterate_write_action(prompt: str) -> bool:
-    text = detection_text(prompt)
-    if DECISION_ACTION_RE.search(text):
-        return True
-    if re.search(r"\biterate\b", text, re.I) and re.search(
-        r"\b(?:run|execute)\b|(?:运行|执行)",
-        text,
-        re.I,
-    ):
-        return True
-    return bool(
-        re.search(
-            r"(?<![A-Za-z0-9_])(?:plan|code|run|eval)(?![A-Za-z0-9_])|"
-            r"(计划|编码|运行|评估|记录为)",
-            text,
-            flags=re.IGNORECASE,
-        )
-    )
-
-
-def _active_match(
-    contract: dict[str, Any],
-    skill: str,
-    trigger: str,
-    trigger_type: str,
-    intent: str,
-    enforcement_mode: str,
-    read_contract_stop_required: bool,
-) -> dict[str, Any]:
-    return {
-        "contract": contract,
-        "skill": skill,
-        "candidate_contract": None,
-        "candidate_skill": None,
-        "trigger": trigger,
-        "trigger_type": trigger_type,
-        "intent_class": intent,
-        "enforcement_mode": enforcement_mode,
-        "read_contract_stop_required": read_contract_stop_required,
-    }
-
-
 def _candidate_match(
     contract: dict[str, Any] | None,
     skill: str | None,
@@ -684,36 +673,6 @@ def _candidate_match(
     }
 
 
-def _enforcement_for_hard_match(skill: str, intent: str, prompt: str) -> str:
-    if intent == "code_write":
-        return ENFORCEMENT_ACTIVE_WRITE
-    if intent == "workflow_action":
-        if skill == "iterate":
-            return (
-                ENFORCEMENT_ACTIVE_WRITE
-                if _is_iterate_write_action(prompt)
-                else ENFORCEMENT_ACTIVE_READ
-            )
-        if skill == "orchestrator":
-            return ENFORCEMENT_ACTIVE_READ
-        return ENFORCEMENT_ACTIVE_WRITE
-    if intent.startswith("code_review_"):
-        return ENFORCEMENT_ACTIVE_READ
-    if _is_read_only_prompt(prompt):
-        return ENFORCEMENT_ACTIVE_READ
-    return ENFORCEMENT_ACTIVE_READ
-
-
-def _read_stop_required(
-    contract: dict[str, Any],
-    trigger_type: str,
-    enforcement_mode: str,
-) -> bool:
-    if enforcement_mode == ENFORCEMENT_ACTIVE_READ:
-        return True
-    return trigger_type == "explicit" or contract.get("skill") == "code-review"
-
-
 def _workflow_action_match(
     root: Path,
     prompt: str,
@@ -725,58 +684,52 @@ def _workflow_action_match(
     if DECISION_ACTION_RE.search(text):
         contract = contract_by_skill(root, "iterate")
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 "iterate",
                 "decision_action",
                 "action_gated",
                 intent,
-                ENFORCEMENT_ACTIVE_WRITE,
-                False,
+                "WF10 decision action detected; tool-time policy will check "
+                "the concrete write before allowing or warning.",
             )
     if re.search(r"\bWF0\b|bootstrap\s+init|operator\s+context\s+init", text, re.I):
         contract = contract_by_skill(root, "init-project")
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 "init-project",
                 "wf0",
                 "explicit",
                 intent,
-                ENFORCEMENT_ACTIVE_WRITE,
-                True,
+                "WF0/init action detected; this is advisory route context.",
             )
     if re.search(r"[$/]iterate\b", text, re.I) or (
         re.search(r"\bWF10\b", text, re.I) and WF10_LOOP_ACTION_RE.search(text)
     ):
         contract = contract_by_skill(root, "iterate")
         if contract:
-            mode = (
-                ENFORCEMENT_ACTIVE_WRITE
-                if _is_iterate_write_action(prompt)
-                else ENFORCEMENT_ACTIVE_READ
-            )
-            return _active_match(
+            return _candidate_match(
                 contract,
                 "iterate",
                 "iterate_action",
                 "action_gated",
                 intent,
-                mode,
-                mode == ENFORCEMENT_ACTIVE_READ,
+                "WF10 iterate action detected; write permissions are checked "
+                "from the concrete tool call.",
             )
     if WORKFLOW_STAGE_RE.search(text):
         contract = contract_by_skill(root, "orchestrator")
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 "orchestrator",
                 "stage_lifecycle",
                 "action_gated",
                 intent,
-                ENFORCEMENT_ACTIVE_READ,
-                True,
-        )
+                "Stage lifecycle language detected; explicit Human Approval "
+                "is still required for real transitions.",
+            )
     return None
 
 
@@ -815,14 +768,14 @@ def _changed_path_owner_match(
     if skill:
         contract = contract_by_skill(root, str(skill))
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 str(skill),
                 "changed_paths_single_owner",
                 "inferred",
                 match_intent,
-                ENFORCEMENT_ACTIVE_WRITE,
-                False,
+                "Current changed paths map to one owner; this is advisory "
+                "routing, not write authorization.",
             )
 
     if resolution.get("owner_skills"):
@@ -861,15 +814,15 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     if explicit_best:
         _, contract, trigger = explicit_best
         skill = str(contract.get("skill"))
-        mode = _enforcement_for_hard_match(skill, intent, prompt)
-        return _active_match(
+        return _candidate_match(
             contract,
             skill,
             trigger,
             "explicit",
             intent,
-            mode,
-            _read_stop_required(contract, "explicit", mode),
+            "Explicit Skill syntax is a route hint in the lightweight hook "
+            "model; permissions are checked from the concrete tool call.",
+            pending_candidate_activation=intent == "code_write",
         )
 
     workflow_match = _workflow_action_match(root, prompt, intent)
@@ -921,22 +874,21 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
                 else trigger,
                 "inferred" if maintenance_contract else trigger_type,
                 intent,
-                "question or discussion prompt; no hard Skill Contract selected",
+                "question or discussion prompt; route hint only",
             )
         if (
             trigger_type != "explicit"
             and contract.get("skill") in {"code-debug", "code-expert"}
             and maintenance_contract is not None
         ):
-            mode = _enforcement_for_hard_match("harness-maintenance", intent, prompt)
-            return _active_match(
+            return _candidate_match(
                 maintenance_contract,
                 "harness-maintenance",
                 "inferred_harness_maintenance",
                 "inferred",
                 intent,
-                mode,
-                _read_stop_required(maintenance_contract, "inferred", mode),
+                "Harness maintenance route inferred; write tools will receive "
+                "advisory read warnings instead of prompt-time elevation.",
             )
         skill = str(contract.get("skill"))
         if (
@@ -944,30 +896,27 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
             and skill == "harness-maintenance"
             and intent == "code_write"
         ):
-            mode = ENFORCEMENT_ACTIVE_WRITE
-            return _active_match(
+            return _candidate_match(
                 contract,
                 skill,
                 "inferred_harness_maintenance",
                 "inferred",
                 intent,
-                mode,
-                _read_stop_required(contract, "inferred", mode),
+                "Harness maintenance route inferred; concrete tool calls "
+                "remain checked at tool time.",
             )
         if trigger_type != "explicit" and intent not in {
             "code_write",
             "workflow_action",
         } and not intent.startswith("code_review_"):
             return None
-        mode = _enforcement_for_hard_match(skill, intent, prompt)
-        return _active_match(
+        return _candidate_match(
             contract,
             skill,
             trigger,
             trigger_type,
             intent,
-            mode,
-            _read_stop_required(contract, trigger_type, mode),
+            "Skill route inferred; permissions are evaluated at tool time.",
         )
 
     changed_owner_match = _changed_path_owner_match(root, prompt, intent)
@@ -977,41 +926,40 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     if intent.startswith("code_review_"):
         contract = contract_by_skill(root, "code-review")
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 "code-review",
                 "inferred_code_review",
                 "inferred",
                 intent,
-                ENFORCEMENT_ACTIVE_READ,
-                True,
+                "Code review route inferred; subject-file writes remain "
+                "blocked by tool-time policy.",
             )
     if intent == "code_write":
         if is_harness_maintenance_prompt(prompt):
             contract = contract_by_skill(root, "harness-maintenance")
             if contract:
-                return _active_match(
+                return _candidate_match(
                     contract,
                     "harness-maintenance",
                     "inferred_harness_maintenance",
                     "inferred",
                     intent,
-                    ENFORCEMENT_ACTIVE_WRITE,
-                    False,
+                    "Harness maintenance route inferred; write tools will warn "
+                    "about recommended reads when needed.",
                 )
         create_score = bool(CODE_CREATE_RE.search(detection_text(prompt)))
         modify_score = bool(CODE_MODIFY_RE.search(detection_text(prompt)))
         skill = "code-expert" if create_score and not modify_score else "code-debug"
         contract = contract_by_skill(root, skill)
         if contract:
-            return _active_match(
+            return _candidate_match(
                 contract,
                 skill,
                 "inferred_code_write",
                 "inferred",
                 intent,
-                ENFORCEMENT_ACTIVE_WRITE,
-                False,
+                "Code write route inferred; this is advisory only.",
             )
     if intent == "design_discussion" and maintenance_contract:
         return _candidate_match(
@@ -1050,7 +998,10 @@ def detect_skill(root: Path, prompt: str) -> dict[str, Any] | None:
     if not match:
         return None
     contract = match.get("contract")
-    return contract if isinstance(contract, dict) else None
+    if isinstance(contract, dict):
+        return contract
+    candidate = match.get("candidate_contract")
+    return candidate if isinstance(candidate, dict) else None
 
 
 def is_continuation_prompt(prompt: str) -> bool:
@@ -1117,11 +1068,13 @@ def daily_context_for_workspace(root: Path) -> str:
     if not files:
         return ""
     return (
-        "Harness daily workspace context:\n"
-        "Repository guidance files are present. Read these before "
-        "repository-specific answers or tool use:\n"
+        "Harness workspace capsule:\n"
+        "- This is the Harness framework repo; current facts must come from "
+        "files, tests, or tool output.\n"
+        "- Before durable repo edits, read the relevant local files. Start with:\n"
         + "\n".join(f"- {path}" for path in files)
-        + "\nThis is ordinary workspace context, not a workflow skill contract."
+        + "\n- Manual writes to .evidence/**, .auto_iterate/**, docs/_views/**, "
+        "and docs/_site/** are blocked; use the owning tools."
     )
 
 
@@ -1229,8 +1182,8 @@ def validate_contract_files(root: Path) -> list[str]:
             )
             if not has_docs_explanation:
                 errors.append(
-                    f"{skill}: broad docs/ write scope needs artifact_outputs "
-                    "or operational_scope metadata"
+                    f"{skill}: broad docs/ declared path ownership needs "
+                    "artifact_outputs or operational_scope metadata"
                 )
         for section in ("harness", "skill"):
             for path in read_set.get(section, []):
@@ -1288,32 +1241,85 @@ def load_session_for_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
     return load_session(root)
 
 
-def load_read_ledger(root: Path) -> dict[str, Any]:
+@contextmanager
+def read_ledger_lock(root: Path):
+    lock_path = root / READ_LEDGER_LOCK_PATH
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _merge_read_ledgers(*ledgers: dict[str, Any] | None) -> dict[str, Any]:
+    merged: dict[str, Any] = {"reads": {}}
+    for ledger in ledgers:
+        if not isinstance(ledger, dict):
+            continue
+        reads = ledger.get("reads", {})
+        if not isinstance(reads, dict):
+            continue
+        for path, entry in reads.items():
+            if not isinstance(path, str) or not isinstance(entry, dict):
+                continue
+            target = merged["reads"].setdefault(path, {"events": []})
+            if entry.get("sha256"):
+                target["sha256"] = entry["sha256"]
+            events = entry.get("events", [])
+            if not isinstance(events, list):
+                continue
+            seen = {
+                json.dumps(event, sort_keys=True, ensure_ascii=False)
+                for event in target.get("events", [])
+                if isinstance(event, dict)
+            }
+            for event in events:
+                if not isinstance(event, dict):
+                    continue
+                key = json.dumps(event, sort_keys=True, ensure_ascii=False)
+                if key in seen:
+                    continue
+                target.setdefault("events", []).append(event)
+                seen.add(key)
+    return merged
+
+
+def _load_read_ledger_unlocked(root: Path) -> dict[str, Any]:
     return load_json(root / READ_LEDGER_PATH, {"reads": {}})
 
 
+def load_read_ledger(root: Path) -> dict[str, Any]:
+    with read_ledger_lock(root):
+        return _load_read_ledger_unlocked(root)
+
+
 def save_read_ledger(root: Path, ledger: dict[str, Any]) -> None:
-    write_json(root / READ_LEDGER_PATH, ledger)
+    with read_ledger_lock(root):
+        write_json(root / READ_LEDGER_PATH, ledger)
 
 
-def load_read_ledger_for_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
+def _load_read_ledger_for_event_unlocked(
+    root: Path, event: dict[str, Any]
+) -> dict[str, Any]:
+    global_ledger = _load_read_ledger_unlocked(root)
     session_id = event.get("session_id")
     if isinstance(session_id, str) and session_id.strip():
-        ledger = load_json(
+        session_ledger = load_json(
             root / READ_LEDGERS_DIR / f"{runtime_key(session_id)}.json",
             None,
         )
-        if isinstance(ledger, dict):
-            return ledger
-    return load_read_ledger(root)
+        return _merge_read_ledgers(global_ledger, session_ledger)
+    return global_ledger
 
 
-def save_read_ledger_for_event(
+def _write_read_ledger_for_event_unlocked(
     root: Path,
     event: dict[str, Any],
     ledger: dict[str, Any],
 ) -> None:
-    save_read_ledger(root, ledger)
+    write_json(root / READ_LEDGER_PATH, ledger)
     session_id = event.get("session_id")
     if isinstance(session_id, str) and session_id.strip():
         write_json(
@@ -1322,16 +1328,25 @@ def save_read_ledger_for_event(
         )
 
 
+def load_read_ledger_for_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
+    with read_ledger_lock(root):
+        return _load_read_ledger_for_event_unlocked(root, event)
+
+
+def save_read_ledger_for_event(
+    root: Path,
+    event: dict[str, Any],
+    ledger: dict[str, Any],
+) -> None:
+    with read_ledger_lock(root):
+        _write_read_ledger_for_event_unlocked(root, event, ledger)
+
+
 def reset_read_ledger(root: Path, event: dict[str, Any] | None = None) -> None:
     if event is None:
         event = {}
-    save_read_ledger(root, {"reads": {}})
-    session_id = event.get("session_id")
-    if isinstance(session_id, str) and session_id.strip():
-        write_json(
-            root / READ_LEDGERS_DIR / f"{runtime_key(session_id)}.json",
-            {"reads": {}},
-        )
+    with read_ledger_lock(root):
+        _write_read_ledger_for_event_unlocked(root, event, {"reads": {}})
 
 
 def load_pending(root: Path) -> dict[str, Any]:
@@ -1371,6 +1386,48 @@ def clear_pending(root: Path) -> None:
             "gate_ledger_notice_emitted": False,
         },
     )
+
+
+def load_notices(root: Path) -> dict[str, Any]:
+    notices = load_json(root / NOTICES_PATH, {"emitted": {}})
+    if not isinstance(notices, dict):
+        return {"emitted": {}}
+    emitted = notices.get("emitted")
+    if not isinstance(emitted, dict):
+        notices["emitted"] = {}
+    return notices
+
+
+def save_notices(root: Path, notices: dict[str, Any]) -> None:
+    write_json(root / NOTICES_PATH, notices)
+
+
+def notice_once(
+    root: Path,
+    event: dict[str, Any],
+    kind: str,
+    parts: list[str],
+    scope: str = "turn",
+) -> bool:
+    session_id = str(event.get("session_id") or "workspace")
+    turn_id = str(event.get("turn_id") or "turn")
+    scope_key = session_id if scope == "session" else f"{session_id}:{turn_id}"
+    payload = json.dumps(parts, ensure_ascii=False, sort_keys=True)
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+    key = f"{scope}:{scope_key}:{kind}:{digest}"
+    notices = load_notices(root)
+    emitted = notices.setdefault("emitted", {})
+    if key in emitted:
+        return False
+    emitted[key] = {
+        "kind": kind,
+        "scope": scope,
+        "session_id": session_id,
+        "turn_id": turn_id,
+        "parts": parts,
+    }
+    save_notices(root, notices)
+    return True
 
 
 def read_tracking_candidates(
@@ -1456,22 +1513,23 @@ def record_read(
     full = root / path
     if not full.exists() or not full.is_file():
         return False
-    ledger = load_read_ledger_for_event(root, event)
-    reads = ledger.setdefault("reads", {})
-    rel = rel_path(full, root)
-    is_new_read = rel not in reads
-    entry = reads.setdefault(rel, {"events": []})
-    entry["sha256"] = file_hash(full)
-    entry["events"].append(
-        {
-            "hook_event_name": event.get("hook_event_name"),
-            "hookEventName": event.get("hookEventName"),
-            "turn_id": event.get("turn_id"),
-            "tool_name": tool_name(event),
-            "source": source,
-        }
-    )
-    save_read_ledger_for_event(root, event, ledger)
+    with read_ledger_lock(root):
+        ledger = _load_read_ledger_for_event_unlocked(root, event)
+        reads = ledger.setdefault("reads", {})
+        rel = rel_path(full, root)
+        is_new_read = rel not in reads
+        entry = reads.setdefault(rel, {"events": []})
+        entry["sha256"] = file_hash(full)
+        entry["events"].append(
+            {
+                "hook_event_name": event.get("hook_event_name"),
+                "hookEventName": event.get("hookEventName"),
+                "turn_id": event.get("turn_id"),
+                "tool_name": tool_name(event),
+                "source": source,
+            }
+        )
+        _write_read_ledger_for_event_unlocked(root, event, ledger)
     return is_new_read
 
 
@@ -1550,11 +1608,7 @@ def _content_read_operands(root: Path, command: str) -> set[str]:
 def record_command_reads(root: Path, command: str, event: dict[str, Any]) -> list[str]:
     if not READ_COMMAND_RE.search(command):
         return []
-    session = load_session_for_event(root, event)
-    skill = session.get("active_skill")
-    contract = None
-    if skill:
-        contract = contract_by_skill(root, skill)
+    contract = session_contract(root, event)
     operands = _content_read_operands(root, command)
     recorded: list[str] = []
     for path in sorted(read_tracking_candidates(root, contract), key=len, reverse=True):
@@ -1574,7 +1628,7 @@ def record_direct_tool_read(root: Path, event: dict[str, Any]) -> list[str]:
         value = payload.get(key)
         if isinstance(value, str):
             candidates.append(value)
-    allowed = set(read_tracking_candidates(root, active_contract(root, event)))
+    allowed = set(read_tracking_candidates(root, session_contract(root, event)))
     recorded: list[str] = []
     for candidate in candidates:
         rel = rel_path(candidate, root)
@@ -1607,6 +1661,23 @@ def active_contract(
     if not skill:
         return None
     return contract_by_skill(root, skill)
+
+
+def session_contract(
+    root: Path,
+    event: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    session = load_session_for_event(root, event or {})
+    skill = session.get("active_skill") or session.get("candidate_skill")
+    if not isinstance(skill, str) or not skill:
+        return None
+    return contract_by_skill(root, skill)
+
+
+def session_skill(root: Path, event: dict[str, Any] | None = None) -> str | None:
+    session = load_session_for_event(root, event or {})
+    skill = session.get("active_skill") or session.get("candidate_skill")
+    return skill if isinstance(skill, str) and skill else None
 
 
 def looks_mutating_bash(command: str) -> bool:
@@ -1763,8 +1834,9 @@ def external_review_session_allowed(
     event: dict[str, Any] | None = None,
 ) -> bool:
     session = load_session_for_event(root, event or {})
+    skill = session.get("active_skill") or session.get("candidate_skill")
     return (
-        session.get("active_skill") == "code-review"
+        skill == "code-review"
         and session.get("intent_class") == "code_review_heavy"
     )
 
@@ -1984,124 +2056,6 @@ def workflow_owner_skills_for_paths(root: Path, paths: list[str]) -> set[str]:
     return owners
 
 
-def no_contract_write_block_reason(
-    root: Path,
-    event: dict[str, Any],
-    paths: list[str],
-) -> str | None:
-    command = tool_text(event)
-    guardrail_owners = guardrail_owner_skills_for_paths(root, paths)
-    if normalize_tool_name(tool_name(event)) == "Bash":
-        guardrail_owners.update(command_mentions_guardrail_path(command))
-    if guardrail_owners:
-        owners = ", ".join(f"`{owner}`" for owner in sorted(guardrail_owners))
-        shown = "\n".join(f"- {p}" for p in paths[:12]) or "- <bash mutation>"
-        return (
-            "Blocked by Harness policy: this write targets guardrail-sensitive "
-            "paths and requires an explicit hard Skill Contract before retrying. "
-            f"Activate {owners}, complete its Read Contract, then retry.\n"
-            f"Attempted paths:\n{shown}"
-        )
-
-    workflow_owners = workflow_owner_skills_for_paths(root, paths)
-    if workflow_owners:
-        owners = ", ".join(f"`{owner}`" for owner in sorted(workflow_owners)[:8])
-        shown = "\n".join(f"- {p}" for p in paths[:12])
-        return (
-            "Blocked by Harness policy: this path is owned by a workflow "
-            "Skill Contract, but no hard active skill is selected. Activate the "
-            "correct Skill/Stage and complete required reads before writing.\n"
-            f"Possible owners: {owners}\nAttempted paths:\n{shown}"
-        )
-    return None
-
-
-def write_scope_violations(
-    contract: dict[str, Any], paths: list[str]
-) -> list[str]:
-    allowed_paths = contract_write_scope_paths(contract)
-    if not allowed_paths:
-        return [path for path in paths if not is_synthetic_mutation_path(path)]
-    return [
-        path
-        for path in paths
-        if not is_synthetic_mutation_path(path)
-        and not path_matches_any(path, allowed_paths)
-    ]
-
-
-def _changed_path_owner_block_message(
-    resolution: dict[str, Any],
-    reason: str,
-) -> str:
-    owners = resolution.get("owner_skills", [])
-    owner_text = ", ".join(f"`{owner}`" for owner in owners) or "<none>"
-    shown = "\n".join(f"- {path}" for path in resolution.get("paths", [])[:12])
-    unowned = "\n".join(
-        f"- {path}" for path in resolution.get("unowned_paths", [])[:12]
-    )
-    detail = f"\nUnowned paths:\n{unowned}" if unowned else ""
-    return (
-        "Blocked by Harness policy: `git add`/`git commit` must operate on "
-        "one owner-aligned Commit Slice. "
-        f"{reason}\nPossible owners: {owner_text}\nChanged paths:\n{shown}{detail}"
-    )
-
-
-def git_changed_path_owner_block_reason(
-    root: Path,
-    event: dict[str, Any],
-    contract: dict[str, Any] | None,
-) -> str | None:
-    if normalize_tool_name(tool_name(event)) != "Bash":
-        return None
-    if not is_git_add_or_commit_command(tool_text(event)):
-        return None
-    if contract and contract.get("skill") == "code-review":
-        return None
-
-    session = load_session_for_event(root, event)
-    resolution = changed_path_owner_resolution(root)
-    paths = resolution.get("paths", [])
-    if not paths:
-        return None
-
-    if session.get("skill_trigger") == "changed_paths_mixed_owner":
-        return _changed_path_owner_block_message(
-            resolution,
-            "The prompt matched a commit/fix action, but current changed "
-            "paths did not resolve to a single owner.",
-        )
-
-    if not contract:
-        return None
-
-    owner_skills = set(resolution.get("owner_skills", []))
-    active_skill = str(contract.get("skill", ""))
-    if len(owner_skills) > 1:
-        return _changed_path_owner_block_message(
-            resolution,
-            f"The active `{active_skill}` contract cannot commit mixed owners.",
-        )
-    if owner_skills and active_skill not in owner_skills:
-        return _changed_path_owner_block_message(
-            resolution,
-            f"Current changed paths belong to `{next(iter(owner_skills))}`, "
-            f"not active `{active_skill}`.",
-        )
-
-    violations = write_scope_violations(contract, list(paths))
-    if violations:
-        shown = "\n".join(f"- {path}" for path in violations[:12])
-        allowed = "\n".join(f"- {p}" for p in contract_write_scope_paths(contract)[:12])
-        return (
-            "Blocked by Harness policy: `git add`/`git commit` would include "
-            f"paths outside active `{active_skill}` write scope.\n"
-            f"Attempted paths:\n{shown}\nAllowed paths:\n{allowed}"
-        )
-    return None
-
-
 def is_local_code_review_trace_path(path: str) -> bool:
     return path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS)
 
@@ -2124,37 +2078,14 @@ def mark_pending_for_changes(root: Path, event: dict[str, Any]) -> dict[str, Any
     if not is_harness_workspace(root):
         return pending
 
-    contract = active_contract(root, event)
+    contract = session_contract(root, event)
     if is_code_review_audit_write_event(root, event, contract):
         save_pending(root, pending)
         return pending
 
-    paths = changed_paths(root)
-    if contract:
-        sensitive = list(contract.get("sensitive_paths", []))
-    else:
-        sensitive = [
-            "PROJECT_STATE.json",
-            "iteration_log.json",
-            "project_map.json",
-            "docs/",
-            "src/",
-            "scripts/",
-            "configs/",
-        ]
-    touched = [
-        p
-        for p in paths
-        if path_matches_any(p, sensitive) and not is_local_code_review_trace_path(p)
-    ]
-    if touched:
-        already_pending = bool(pending.get("requires_gate_ledger"))
-        pending["requires_gate_ledger"] = True
-        if not already_pending:
-            pending["gate_ledger_notice_emitted"] = False
-        pending.setdefault("reasons", []).append("sensitive workflow files changed")
-        pending.setdefault("changed_paths", []).extend(touched)
+    if is_mutating_tool_event(event, root):
         pending["last_turn_id"] = event.get("turn_id")
+        pending["last_paths"] = mutating_event_paths(root, event)
     save_pending(root, pending)
     return pending
 
@@ -2177,6 +2108,205 @@ def has_gate_ledger(message: str) -> bool:
     return all(re.search(rf"\b{field}s?\b", lowered) for field in required)
 
 
+def data_prep_needs_acquisition_decision(root: Path) -> bool:
+    state_path = root / "PROJECT_STATE.json"
+    if not state_path.is_file():
+        return False
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    dataset_paths = state.get("dataset_paths")
+    if not isinstance(dataset_paths, dict):
+        return False
+    for value in dataset_paths.values():
+        if not isinstance(value, dict):
+            continue
+        local_root = value.get("local_root")
+        status = str(value.get("status") or "").lower()
+        source_known = bool(value.get("remote") or value.get("local_archive"))
+        unresolved_status = any(
+            token in status
+            for token in ("unresolved", "pending", "missing", "invalid", "blocked")
+        )
+        if source_known and not local_root and unresolved_status:
+            return True
+    return False
+
+
+def has_data_prep_acquisition_decision_request(message: str) -> bool:
+    ask = re.search(
+        r"\?|？|please|choose|confirm|approve|do you want|would you like|"
+        r"请|选择|确认|批准|同意|要不要|是否|哪(?:里|个)|提供",
+        message,
+        re.IGNORECASE,
+    )
+    source_choice = re.search(
+        r"download|existing\s+(?:mount|path)|mounted\s+path|local\s+archive|"
+        r"use\s+.*(?:mount|path|archive)|下载|挂载|已有(?:路径|数据|archive|压缩包)|"
+        r"本地(?:路径|数据|archive|压缩包)",
+        message,
+        re.IGNORECASE,
+    )
+    target = re.search(
+        r"target|directory|dir\b|path|root|extract|extraction|download\s+to|"
+        r"下载到|解压|目标|目录|路径|local_root",
+        message,
+        re.IGNORECASE,
+    )
+    return bool(ask and source_choice and target)
+
+
+def data_prep_acquisition_decision_block_reason(
+    root: Path,
+    contract: dict[str, Any] | None,
+    message: str,
+) -> str | None:
+    if not contract or contract.get("skill") != "data-prep":
+        return None
+    if not data_prep_needs_acquisition_decision(root):
+        return None
+    if has_data_prep_acquisition_decision_request(message):
+        return None
+    return (
+        "Data Acquisition Gate is unresolved. Ask the operator whether to use "
+        "an existing mount/local archive or download the dataset, and ask for "
+        "the download/extraction target directory before finalizing WF4."
+    )
+
+
+def is_code_review_session(root: Path, event: dict[str, Any] | None = None) -> bool:
+    skill = session_skill(root, event or {})
+    return skill == "code-review"
+
+
+def recommended_read_files_for_event(
+    root: Path,
+    event: dict[str, Any],
+    paths: list[str],
+) -> list[str]:
+    candidates: list[str] = ["AGENTS.md", "CLAUDE.md"]
+    contract = session_contract(root, event)
+    if contract:
+        skill_reads = contract.get("required_read_set", {}).get("skill", [])
+        candidates.extend(str(path) for path in skill_reads[:1])
+
+    command = tool_text(event)
+    guardrail_owners = guardrail_owner_skills_for_paths(root, paths)
+    if normalize_tool_name(tool_name(event)) == "Bash":
+        guardrail_owners.update(command_mentions_guardrail_path(command))
+    if guardrail_owners:
+        candidates.extend(
+            [
+                "tooling/codex_hooks/README.md",
+                "schemas/skill_contracts.json",
+                "tooling/.tests/test_codex_hooks_contracts.py",
+            ]
+        )
+    if any(path_matches_any(path, ["schemas/"]) for path in paths):
+        candidates.append("schemas/skill_contracts.schema.json")
+    if any(path_matches_any(path, ["tooling/codex_hooks/"]) for path in paths):
+        candidates.append("tooling/codex_hooks/README.md")
+
+    existing = [path for path in candidates if (root / path).is_file()]
+    return sorted(dict.fromkeys(existing))
+
+
+def missing_recommended_reads(
+    root: Path,
+    event: dict[str, Any],
+    paths: list[str],
+) -> list[str]:
+    ledger = load_read_ledger_for_event(root, event)
+    read_paths = set(ledger.get("reads", {}).keys())
+    return [
+        path
+        for path in recommended_read_files_for_event(root, event, paths)
+        if path not in read_paths
+    ]
+
+
+def _notice_message(
+    title: str,
+    body: str,
+    items: list[str] | None = None,
+) -> str:
+    message = f"Harness warning: {title}\n{body}"
+    if items:
+        message += "\n" + "\n".join(f"- {item}" for item in items[:12])
+    return message
+
+
+def pre_tool_notice(root: Path, event: dict[str, Any]) -> str | None:
+    if not is_harness_workspace(root):
+        return None
+
+    name = normalize_tool_name(tool_name(event))
+    command = tool_text(event)
+    paths = mutating_event_paths(root, event)
+    notices: list[str] = []
+
+    if name == "Bash" and is_git_commit_command(command):
+        missing = missing_commit_guidance_reads(root, event)
+        if missing and notice_once(root, event, "commit_guidance", missing):
+            notices.append(
+                _notice_message(
+                    "read sliced commit guidance before committing.",
+                    "Continuing is allowed, but one owner-aligned Commit Slice "
+                    "should be committed at a time.",
+                    missing,
+                )
+            )
+
+    if name == "Bash" and is_git_add_or_commit_command(command):
+        resolution = changed_path_owner_resolution(root)
+        owner_skills = resolution.get("owner_skills", [])
+        if len(owner_skills) > 1 or resolution.get("unowned_paths"):
+            parts = list(resolution.get("paths", [])) + list(owner_skills)
+            if notice_once(root, event, "mixed_commit_owner", parts):
+                notices.append(
+                    _notice_message(
+                        "current changed paths do not resolve to one owner.",
+                        "Continuing is allowed, but split the Commit Slice "
+                        "before finalizing a durable commit.",
+                        list(resolution.get("paths", [])),
+                    )
+                )
+
+    if is_mutating_tool_event(event, root):
+        missing = missing_recommended_reads(root, event, paths)
+        if missing and notice_once(root, event, "recommended_reads", missing):
+            notices.append(
+                _notice_message(
+                    "recommended reads are missing for this durable edit.",
+                    "The tool call is allowed. Read these before finalizing "
+                    "if this change remains durable.",
+                    missing,
+                )
+            )
+
+        if paths and not session_contract(root, event):
+            owners = sorted(
+                guardrail_owner_skills_for_paths(root, paths)
+                | workflow_owner_skills_for_paths(root, paths)
+            )
+            if name == "Bash":
+                owners = sorted(set(owners) | command_mentions_guardrail_path(command))
+            if owners:
+                parts = list(paths) + owners
+                if notice_once(root, event, "route_hint_for_paths", parts):
+                    notices.append(
+                        _notice_message(
+                            "paths map to Harness workflow ownership.",
+                            "This is advisory; permission is still checked "
+                            "from the concrete tool call.",
+                            [f"owners: {', '.join(owners)}", *paths],
+                        )
+                    )
+
+    return "\n\n".join(notices) if notices else None
+
+
 def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     if not is_harness_workspace(root):
         return None
@@ -2185,16 +2315,6 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
     command = tool_text(event)
 
     if name == "Bash":
-        if is_git_commit_command(command):
-            missing_commit_reads = missing_commit_guidance_reads(root, event)
-            if missing_commit_reads:
-                shown = "\n".join(f"- {p}" for p in missing_commit_reads[:12])
-                return (
-                    "Blocked by Harness policy: read sliced commit guidance "
-                    "before `git commit`, then identify independent Commit "
-                    "Slices and commit one completed slice at a time.\n"
-                    f"{shown}"
-                )
         if is_direct_external_review_command(root, command):
             return (
                 "Blocked by Harness policy: external model review must run "
@@ -2208,6 +2328,22 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                 "Blocked by Harness policy: the external review wrapper is "
                 "allowed only during an active `$code-review heavy` session."
             )
+        if is_external_review_wrapper_command(root, command):
+            paths = mutating_event_paths(root, event)
+            disallowed = [
+                path
+                for path in paths
+                if is_synthetic_mutation_path(path)
+                or not path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS)
+            ]
+            if disallowed:
+                shown = "\n".join(f"- {p}" for p in disallowed[:12])
+                return (
+                    "Blocked by Harness policy: external review wrapper "
+                    "outputs must stay under "
+                    "`.agents/state/review_traces/code-review/` and avoid "
+                    f"extra shell mutations.\n{shown}"
+                )
         for pattern in IGNORE_GIT_ADD_PATTERNS:
             if re.search(r"\bgit\s+add\b", command) and pattern in command:
                 return (
@@ -2251,85 +2387,23 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                 f"{shown}"
             )
 
-    contract = active_contract(root, event)
     is_mutating_tool = is_mutating_tool_event(event, root)
-    git_owner_reason = git_changed_path_owner_block_reason(root, event, contract)
-    if git_owner_reason:
-        return git_owner_reason
-    if contract and is_mutating_tool:
-        session = load_session_for_event(root, event)
-        mode = session.get("enforcement_mode") or ENFORCEMENT_ACTIVE_WRITE
+    if is_code_review_session(root, event) and is_mutating_tool:
         paths = mutating_event_paths(root, event)
-        if mode == ENFORCEMENT_ACTIVE_READ:
-            if contract.get("skill") == "code-review" and paths and all(
-                path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS) for path in paths
-            ):
-                missing = missing_reads(root, contract, event)
-                if missing:
-                    shown = "\n".join(f"- {p}" for p in missing[:12])
-                    return (
-                        "Required read set is incomplete before read-mode "
-                        f"artifact writes for `{contract['skill']}`:\n{shown}"
-                    )
-            else:
-                shown = "\n".join(f"- {p}" for p in paths[:12]) or "- <write>"
-                return (
-                    "Blocked by Harness policy: the active "
-                    f"`{contract['skill']}` contract is in active_read mode. "
-                    "Read-only/status sessions may only write declared "
-                    "read-mode artifacts.\n"
-                    f"Attempted paths:\n{shown}"
-                )
-        else:
-            missing = missing_reads(root, contract, event)
-            if missing:
-                shown = "\n".join(f"- {p}" for p in missing[:12])
-                return (
-                    "Required read set is incomplete before write actions for "
-                    f"`{contract['skill']}`:\n{shown}"
-                )
-        if contract.get("skill") == "code-review":
-            disallowed = [
-                p for p in paths if not path_matches_any(p, REVIEW_WRITE_ALLOWED_PATHS)
-            ]
-            if disallowed:
-                shown = "\n".join(f"- {p}" for p in disallowed[:12])
-                return (
-                    "Blocked by Harness policy: `code-review` is review-only. "
-                    "Write review artifacts only under "
-                    "`.agents/state/review_traces/code-review/` and route fixes "
-                    f"through `$code-debug` or `$harness-maintenance`.\n{shown}"
-                )
-        violations = write_scope_violations(contract, mutating_event_paths(root, event))
-        if violations:
-            shown = "\n".join(f"- {p}" for p in violations[:12])
-            allowed = "\n".join(
-                f"- {p}" for p in contract_write_scope_paths(contract)[:12]
-            )
+        disallowed = [
+            path
+            for path in paths
+            if is_synthetic_mutation_path(path)
+            or not path_matches_any(path, REVIEW_WRITE_ALLOWED_PATHS)
+        ]
+        if disallowed:
+            shown = "\n".join(f"- {p}" for p in disallowed[:12])
             return (
-                "Blocked by Harness policy: write is outside the active "
-                f"`{contract['skill']}` stage write scope.\n"
-                f"Attempted paths:\n{shown}\nAllowed paths:\n{allowed}"
+                "Blocked by Harness policy: `code-review` is review-only. "
+                "Write review artifacts only under "
+                "`.agents/state/review_traces/code-review/` and route fixes "
+                f"through `$code-debug` or `$harness-maintenance`.\n{shown}"
             )
-    elif is_mutating_tool:
-        if name == "Bash" and is_tool_owned_write_tool_command(command, root):
-            paths = mutating_event_paths(root, event)
-            if any(
-                path_matches_any(path, ["docs/_views/", "docs/_site/"])
-                for path in paths
-            ):
-                shown = "\n".join(f"- {p}" for p in paths[:12])
-                return (
-                    "Blocked by Harness policy: docs-site renderer output "
-                    "requires an active `$docs-site` or owning stage Skill "
-                    "Contract with completed required reads.\n"
-                    f"Attempted paths:\n{shown}"
-                )
-            return None
-        paths = mutating_event_paths(root, event)
-        reason = no_contract_write_block_reason(root, event, paths)
-        if reason:
-            return reason
     return None
 
 
@@ -2358,40 +2432,10 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
     if not is_harness_workspace(root):
         return None
 
-    session = load_session_for_event(root, event)
     pending = load_pending(root)
-    contract = active_contract(root, event)
-    enforce_read_set = bool(
-        contract
-        and (
-            session.get("read_contract_stop_required")
-            or session.get("mutating_tool_seen")
-            or pending.get("requires_gate_ledger")
-        )
-    )
-    if contract and enforce_read_set:
-        missing = missing_reads(root, contract, event)
-        if missing:
-            shown = "\n".join(f"- {p}" for p in missing[:12])
-            return {
-                "decision": "block",
-                "reason": (
-                    "Read the required files before finalizing "
-                    f"`{contract['skill']}`:\n{shown}"
-                ),
-            }
-    if pending.get("requires_gate_ledger"):
-        message = str(event.get("last_assistant_message") or "")
-        if not has_gate_ledger(message):
-            changed = "\n".join(f"- {p}" for p in pending.get("changed_paths", [])[:12])
-            return {
-                "decision": "block",
-                "reason": (
-                    "Sensitive workflow files changed. Add a Gate ledger with "
-                    "command, result, reason, and artifacts before finalizing.\n"
-                    + changed
-                ),
-            }
+    if pending.get("requires_gate_ledger") and has_gate_ledger(
+        str(event.get("last_assistant_message") or "")
+    ):
         clear_pending(root)
     return None
 
@@ -2399,9 +2443,6 @@ def stop_decision(root: Path, event: dict[str, Any]) -> dict[str, Any] | None:
 def additional_context_for_contract(
     contract: dict[str, Any], root: Path, match: dict[str, Any] | None = None
 ) -> str:
-    required = required_existing_files(root, contract)
-    actions = contract.get("required_actions", [])
-    forbidden = contract.get("forbidden_actions", [])
     detection = ""
     if match:
         detection = (
@@ -2409,17 +2450,11 @@ def additional_context_for_contract(
             f"intent={match.get('intent_class')}.\n"
         )
     return (
-        f"Harness active skill contract: {contract['skill']}\n"
+        f"Harness route hint: {contract['skill']}\n"
         + detection
-        + "Enforcement mode: "
-        + f"{match.get('enforcement_mode') if match else 'unknown'}.\n"
-        + "Required read set before write actions:\n"
-        + "\n".join(f"- {p}" for p in required)
-        + "\nRequired actions:\n"
-        + "\n".join(f"- {a}" for a in actions)
-        + "\nForbidden actions:\n"
-        + "\n".join(f"- {a}" for a in forbidden)
-        + "\nReport a Gate ledger when contract conditions require one."
+        + "This is advisory route context. "
+        + "Read relevant local files before durable edits; tool-time policy "
+        + "will warn or block from the concrete tool call."
     )
 
 
@@ -2442,12 +2477,11 @@ def additional_context_for_candidate(
             f"intent={match.get('intent_class')}.\n"
         )
     return (
-        f"Harness advisory skill context: {contract['skill']}\n"
+        f"Harness route hint: {contract['skill']}\n"
         + trigger
         + reason
-        + "This is context only. It does not grant Write Scope. "
-        "Use an explicit hard Skill Contract before writing guardrail or "
-        "workflow paths."
+        + "This is advisory context only. Concrete tool calls are checked "
+        "at tool time."
     )
 
 

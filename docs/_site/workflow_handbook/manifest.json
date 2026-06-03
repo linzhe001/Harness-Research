@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-05-22T04:52:03Z",
+  "generated_at": "2026-06-03T10:55:25Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Harness Workflow Handbook",
@@ -119,10 +119,9 @@
       "page_id": "hooks_permissions_model",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Explains why Harness hooks block missing reads, out-of-scope writes, and missing ledgers.",
+      "summary": "Explains how Harness hooks provide route hints, notices, and narrow boundary blocks.",
       "references": [
         "term:Read Contract",
-        "term:Write Scope",
         "term:Gate Ledger",
         "source:tooling/evidence/build_docs_site.py"
       ]

@@ -11,7 +11,7 @@ status: "generated"
 summary: "Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow."
 nav:
   section: "skills"
-  position: 250
+  position: 360
 canonical_sources:
   - path: "schemas/skill_contracts.json"
     role: "skill_contract"
@@ -98,7 +98,7 @@ Codex wrapper for WF12 release and submission packaging. Use when the user wants
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

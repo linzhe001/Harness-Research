@@ -4,6 +4,7 @@ from harness_contracts import (
     block_pre_tool,
     emit,
     hook_block,
+    pre_tool_notice,
     read_hook_event,
     repo_root,
 )
@@ -15,6 +16,17 @@ def main() -> int:
     reason = block_pre_tool(root, event)
     if reason:
         emit(hook_block("PreToolUse", reason))
+        return 0
+    notice = pre_tool_notice(root, event)
+    if notice:
+        emit(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "additionalContext": notice,
+                }
+            }
+        )
     return 0
 
 

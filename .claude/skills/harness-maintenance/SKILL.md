@@ -14,6 +14,7 @@ debugging into framework-policy work.
 
 <instructions>
 1. Read `AGENTS.md`, `CLAUDE.md`, `tooling/codex_hooks/README.md`,
+   `tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md`,
    `schemas/skill_contracts.json`, `schemas/skill_contracts.schema.json`, and
    `tooling/.tests/test_codex_hooks_contracts.py` before changing hooks or contracts.
 2. Use this skill for Codex hook runtime, hook trust/status scripts, skill

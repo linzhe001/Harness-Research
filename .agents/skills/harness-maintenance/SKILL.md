@@ -17,7 +17,7 @@ Read these first:
 - `../../../.agents/references/code-style.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/ubiquitous-language.md` when workflow terms or operator-facing docs change
-- `../../../tooling/codex_hooks/Stage_Permission_Elevation_Guide.md` when permission behavior is involved and the file exists
+- `../../../tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md` when hook policy behavior is involved and the file exists
 
 ## When To Use
 

@@ -93,7 +93,7 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 ## Final Outputs
 
 - `current_doc: tooling/codex_hooks/README.md`
-- `current_doc: tooling/codex_hooks/Stage_Permission_Elevation_Guide.md`
+- `current_doc: tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md`
 - `current_doc: workflow_handbook/`
 - `current_doc: README.md`
 - `current_doc: AI_AGENT_SETUP.md`
@@ -128,7 +128,7 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 - `.codex/config.toml`
 - `.codex/hooks.json`
 - `.codex/rules/harness_external_review.rules`
-- `tooling/codex_hooks/Stage_Permission_Elevation_Guide.md`
+- `tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md`
 
 ## Must Prove
 
@@ -150,7 +150,7 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

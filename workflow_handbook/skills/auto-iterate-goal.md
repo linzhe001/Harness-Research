@@ -11,7 +11,7 @@ status: "generated"
 summary: "Generate or validate the auto-iterate goal file before launching WF10 auto-iterate"
 nav:
   section: "skills"
-  position: 230
+  position: 340
 canonical_sources:
   - path: "schemas/skill_contracts.json"
     role: "skill_contract"
@@ -89,7 +89,7 @@ Generate or validate the auto-iterate goal file before launching WF10 auto-itera
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

@@ -2,7 +2,7 @@
 
 本文件由 `schemas/skill_contracts.json` 生成，是 operator 的 Stage 速查入口。
 它只回答每个 Stage 怎么启动、完成后得到什么、去哪里读深层细节。
-完整 Read Contract、Write Scope 和 Gate 条件保留在 Stage / Skill 详情页。
+完整推荐读取、声明路径、artifact 输出和 Gate 条件保留在 Stage / Skill 详情页。
 
 生成命令:
 

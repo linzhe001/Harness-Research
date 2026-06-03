@@ -96,7 +96,7 @@ Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test cand
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

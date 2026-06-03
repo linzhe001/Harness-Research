@@ -1,12 +1,23 @@
 # Codex Hooks for Harness
 
-These hooks turn Harness workflow rules into Codex guardrails.
+These hooks turn Harness workflow rules into lightweight Codex guardrails.
 
-They enforce three contracts:
+The default policy is advisory: prompt routing supplies compact context, and
+tool-time checks warn before risky work instead of stopping ordinary progress.
+Hard blocks are reserved for boundaries where a tool call would create
+unrecoverable or misleading state.
 
-- Read Contract: high-risk skills must read their declared skill/reference/project files before write actions.
-- Action Contract: sensitive workflow changes require a final Gate ledger.
-- Boundary Contract: direct edits to tool-owned paths and known local-only artifacts are blocked.
+The hooks provide five layers:
+
+- Route Context: infer a `candidate_skill` and inject one compact hint for the
+  current turn.
+- Workspace Capsule: inject stable repository guidance once per session.
+- Tool Notices: warn once per turn for missing recommended reads, mixed owner
+  writes, commit hygiene, or likely skill routing mismatches.
+- Boundary Blocks: block direct edits to tool-owned paths and local-only
+  artifacts.
+- External Review Guard: require `$code-review heavy` route context before
+  provider-backed review calls.
 
 ## Default: Workspace-Local Install
 
@@ -62,9 +73,9 @@ network escalation without prompting only for:
 python tooling/model_api/harness_external_review.py ...
 ```
 
-The wrapper and PreToolUse hook still require an active `$code-review heavy`
-session before a provider-backed external review script can run. Restart Codex
-after changing hooks or rules.
+The wrapper and PreToolUse hook still require `$code-review heavy` route context
+before a provider-backed external review script can run. Restart Codex after
+changing hooks or rules.
 
 Current Codex versions require human review before newly installed hook commands
 run. After installing or changing `.codex/hooks.json`, open `/hooks` in the
@@ -93,7 +104,7 @@ Codex sandbox
   -> coarse filesystem / network boundary
 
 Harness hooks
-  -> stage-aware read sets, sensitive path checks, Gate ledger, approval checks
+  -> lightweight route hints, one-time notices, and narrow hard boundary checks
 ```
 
 Recommended default:
@@ -113,114 +124,66 @@ hooks = true
 Use `workspace-write` for normal workflow work. Add a path to
 `sandbox_workspace_write.writable_roots` or use `--add-dir` only when the work
 must write outside the repo root. Avoid `danger-full-access` unless the
-environment is already isolated and you explicitly want hooks to be the only
-remaining boundary.
+environment is already isolated and you explicitly want the Codex sandbox to
+provide less protection.
 
-Stage-specific writes are best modeled as temporary permission elevations:
-
-```text
-base session
-  |
-  v
-UserPromptSubmit detects stage / skill
-  |
-  v
-active contract grants a narrow write surface for that stage
-  |
-  v
-PreToolUse checks required reads and forbidden writes
-  |
-  v
-PostToolUse marks sensitive writes for Gate ledger
-  |
-  v
-Stop requires final read-set and Gate ledger evidence
-```
-
-Prompt routing is intentionally lower privilege than tool-time enforcement:
+The new hook model keeps prompt routing lightweight:
 
 ```text
-prompt
-  -> classify intent
-  -> either select a hard active skill or store advisory context
-  -> mutating tool attempts enforce Read Contract, Write Scope, and path owners
+UserPromptSubmit
+  -> infer candidate_skill and intent
+  -> inject one route hint plus an optional workspace capsule
+
+PreToolUse
+  -> hard-block only narrow boundary violations
+  -> otherwise emit one-time notices for risky or under-contextualized actions
+
+PostToolUse
+  -> silently record reads, writes, and pending metadata
+
+Stop
+  -> clear pending metadata when a full Gate ledger is present
+  -> do not block ordinary final responses by default
 ```
 
-`active_skill` means a hard Skill Contract is selected. `candidate_skill` is
-only advisory context for questions and design discussion; it never grants
-Write Scope. `enforcement_mode` records the runtime state:
+`candidate_skill` is the normal route hint. It tells the model which Harness
+skill or stage is likely relevant, but it is advisory only. The legacy
+`active_skill` field may still appear for old session compatibility and for
+external-review tests; new prompt detection should not rely on it as a
+permission state.
 
-| Mode | Meaning |
-| --- | --- |
-| `none` | no workflow skill selected |
-| `context_only` | advisory context only, no Read Contract or Write Scope elevation |
-| `active_read` | hard contract for status/review/read-mode work; only declared read-mode artifacts may be written |
-| `active_write` | hard contract for requested file or workflow-state changes |
+`schemas/skill_contracts.json` remains the source of truth for required reads,
+declared writable paths, artifact outputs, forbidden actions, and human
+approval metadata. Hooks use that data to produce targeted notices and stage
+cards. Prompt inference does not open a broad stage write surface.
 
-Bare `WF<N>` and Decision vocabulary such as `DEBUG`, `PIVOT`, and
-`CONTINUE` are action-gated. Questions like `WF8 -> WF10 这个正确吗？` and
-`DEBUG 和 PIVOT 的区别是什么？` stay `context_only`. Stage lifecycle prompts
-such as `进入 WF10` route to `$orchestrator` in `active_read` mode until a
-state-changing action is explicit. WF10 loop actions such as `$iterate plan`,
-`$iterate eval DEBUG`, or `将本轮决策记录为 PIVOT` route to `$iterate` in
-`active_write` mode.
+Tool-time policy is intentionally concrete:
 
-When no hard contract is active, path-aware writes to guardrail-sensitive or
-contract-owned workflow paths fail closed. The hook asks for the explicit
-Skill/Stage and required reads instead of silently inferring permissions from
-the path. Mutating Bash that mentions guardrail path tokens such as
-`tooling/codex_hooks/` or `schemas/skill_contracts.json` is blocked without a
-hard contract; opaque `<bash mutation>` is not treated as Write Scope proof.
+- Missing recommended reads produce a notice, not a block.
+- Mixed-owner writes or commits produce a notice, not a block.
+- `git commit` produces a notice when
+  `.agents/references/sliced-commit-rule.md` has not been read in the turn.
+- Mutations that mention guardrail paths produce a route hint notice.
+- Manual writes to `.evidence/**`, `.auto_iterate/**`, `docs/_views/**`, and
+  `docs/_site/**` are blocked; use the owning tools.
+- Known local-only and reference-only files are blocked from `git add`.
+- Direct external review scripts are blocked; provider-backed review must use
+  `tooling/model_api/harness_external_review.py`.
+- External review output must stay under
+  `.agents/state/review_traces/code-review/**`.
 
-The docs layer is not the permission entry point. The active stage is the entry
-point; docs paths are only part of that stage's write surface.
-For enforcement, every repository contract declares `write_scope.allowed_paths`;
-that field is the stage write surface. The check is path-aware: `apply_patch`,
-`Edit`, `Write`, and parsed tool output paths are denied when they fall outside
-the active stage scope. Missing `write_scope.allowed_paths` is treated as a
-contract error and path-aware writes fail closed instead of falling back to
-`sensitive_paths`.
-Complex Bash mutations that do not expose a reliable path are not treated as
-proof of strict scoping; they still remain subject to tool-owned path blocks and
-Gate ledger checks.
 Generated view paths (`docs/_views/**` and `docs/_site/**`) are tool-owned like
-`.evidence/**`: stage skills may declare them so the docs-site renderer can run
-after finalized Markdown, but manual edits to those paths are still blocked.
-Renderer commands for these paths still require an active owning Skill Contract,
-such as `$docs-site` or a stage skill that declares generated-view output.
+`.evidence/**`. Stage skills may declare those outputs for documentation and
+stage cards, but manual edits remain blocked. Renderer commands may run without
+prompt-time activation; the tool-owned path block still prevents
+manual tampering with generated views.
 
-| Stage / skill | Permission elevation | Must remain gated |
-| --- | --- | --- |
-| `init-project` | `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, `PROJECT_STATE.json`, `docs/**`, `.evidence/**` scaffold | no inferred operator preferences; use evidence tooling for `.evidence/**` |
-| `survey-idea` / WF1 | `docs/30_evidence/**`, `docs/Feasibility_Report.md`, `docs/35_protocol/**` | protocol draft is not an approved contract |
-| `idea-debate` / WF2 | `docs/Idea_Debate.md`, `docs/35_protocol/**` | reviewer independence and protocol drift checks |
-| `refine-idea` / WF3 | `docs/Refined_Idea.md`, `docs/35_protocol/**` | no premature architecture decision |
-| `data-prep` / WF4 | `docs/Dataset_Stats.md`, `docs/20_facts/**`, `docs/30_evidence/Dataset_Table.md`, `configs/**`, `src/**`, `CLAUDE.md`, `AGENTS.md` | dataset facts must come from artifacts and reproducible commands |
-| `baseline-repro` / WF5 | `docs/Baseline_Report.md`, `docs/30_evidence/Baseline_Table.md`, `docs/10_contract/**`, `docs/20_facts/Codebase_Map.md`, `baselines/**`, `configs/**`, `scripts/**`, `src/**` | semantic commit, dynamic context gates, codebase map sync when baseline layout changes, human approval for contracts |
-| `refine-arch` / WF6 | `docs/Technical_Spec.md`, `docs/20_facts/Project_Glossary.md`, `docs/35_protocol/**` | architecture must respect approved contracts and protocol drift |
-| `build-plan` / WF7 | `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`, `docs/20_facts/Codebase_Map.md`, `project_map.json`, `PROJECT_STATE.json` | project map and codebase map must not become stale |
-| `code-expert` / WF8 | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, Codebase Map docchain traces, docs-site generated views, `PROJECT_STATE.json` | required reads, py_compile/ruff, project map and codebase map sync; generated views/tool traces must come from tooling |
-| `validate-run` / WF9 | `docs/Validate_Run_Report.md`, `docs/30_evidence/Validation_Table.md`, `PROJECT_STATE.json` | no PASS without semantic review and smoke evidence |
-| `iterate` / WF10 | `iteration_log.json`, `docs/40_iterations/**`, legacy `docs/iterations/**`, `docs/50_memory/**`, `MEMORY.md` | decision vocabulary, lesson quality, WF11 handoff |
-| `auto-iterate-goal` | `docs/auto_iterate_goal.md`; controller owns `.auto_iterate/**` | goal validation before unattended controller runs |
-| `final-exp` / WF11 | `docs/Final_Experiment_Matrix.md`, `PROJECT_STATE.json` | approved contracts and claim boundary |
-| `release` / WF12 | `submission/**`, `docs/**`, `PROJECT_STATE.json` | release claims stay inside `Claim_Boundary.md` |
-| `docs-site` | `docs/_views/**`, `docs/_site/**` | generated HTML is a view; Markdown and Evidence Chains remain source of truth |
-| `code-review` | `.agents/state/review_traces/code-review/**` only | code fixes route through `code-debug`; guardrail fixes route through `harness-maintenance` |
-| `code-debug` | `src/**`, `scripts/**`, `configs/**`, `project_map.json`, `docs/20_facts/Codebase_Map.md`, Codebase Map docchain traces, docs-site generated views | ordinary implementation code only; hooks/skills/contracts stay out of scope; generated views/tool traces must come from tooling |
-| `harness-maintenance` | `tooling/codex_hooks/**`, `schemas/**`, `.agents/skills/**`, `.agents/references/**`, `.claude/Workflow_Guide.md`, `.claude/skills/**`, `.claude/rules/**`, `.claude/shared/**`, `tooling/model_api/**`, `tooling/.tests/**`, `templates/**`, `docs/**`, `workflow_handbook/**`, core framework docs | hook, skill, routing, permission, and trust behavior require focused tests and Gate ledger |
-| `review-packet` | `.evidence/review_packets/<stage>/<build_id>/**`, related contract/state approval records | packet is not approval; explicit human approval is required |
-
-Direct `Edit`, `Write`, or manual `apply_patch` calls into `.evidence/**`,
-`.auto_iterate/**`, `docs/_views/**`, or `docs/_site/**` are blocked. Skills
-that produce artifacts there should use the owning tooling, such as
-`tooling/evidence/*`, `$docs-site`, or the auto-iterate controller.
-
-This keeps the operator-facing rule easy to read:
+This keeps the operator-facing rule simple:
 
 ```text
-filesystem permission = can this directory be written?
-stage permission      = has this stage earned the right to write this path now?
+Codex sandbox       = can this process write here?
+Harness hook block  = would this tool call corrupt controlled state?
+Harness hook notice = what context or route should the model consider first?
 ```
 
 For operator-facing summaries, generate Stage Cards from the contract source:
@@ -231,13 +194,13 @@ python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output w
 
 Stage Cards are reading aids. Keep the versioned operator snapshot under
 `workflow_handbook/`; `schemas/skill_contracts.json` remains
-the source of truth for required reads, write scopes, required actions, and
+the source of truth for required reads, declared writable paths, required actions, and
 forbidden actions.
 
 Skill Contracts also declare `artifact_outputs`. This metadata explains where
-durable results should land, without granting permission. `Write Scope` answers
-"where may this active Skill write right now"; `Artifact Output` answers
-"where should final docs, canonical state, tool traces, review traces,
+durable results should land, without granting permission. Declared writable
+paths answer "which paths belong to this stage or skill"; `Artifact Output`
+answers "where should final docs, canonical state, tool traces, review traces,
 implementation files, guidance, generated views, or release packages land."
 Tool-owned outputs such as `.evidence/**`, `docs/_views/**`, and
 `docs/_site/**` must set `requires_tool=true`, and direct manual writes to
@@ -303,30 +266,32 @@ Harness-specific block.
 Restart the Codex session after changing hook config or copied runtime scripts.
 Do not rely on a running Codex process to hot-reload hook changes.
 
-Read-ledger proof depends on observable tool events in the current prompt turn.
-Shell reads such as `cat`, `sed`, `nl`, `rg`, and `git show` are recorded when
-they mention tracked read-set or daily context files. Direct read-tool aliases
-such as `Read`, `View`, and `Open` are recorded only when the target path is part
-of the tracked file set for the active contract or daily workspace context.
-Reads that are not exposed to hooks cannot be treated as audited proof.
+Read-ledger tracking depends on observable tool events in the current prompt
+turn. Shell reads such as `cat`, `sed`, `nl`, `rg`, and `git show` are recorded
+when they mention tracked read-set or workspace capsule files. Direct read-tool
+aliases such as `Read`, `View`, and `Open` are recorded only when the target
+path is part of the recommended file set for the current route context.
 
-`git commit` has an additional always-on read requirement in Harness
-workspaces. Before an agent can run `git commit`, the current prompt turn must
-read `.agents/references/sliced-commit-rule.md`. The PreToolUse hook blocks the
-commit until that file is recorded, then the agent must identify independent
-Commit Slices, stage only the current slice, validate or record `NOT_RUN`, and
-commit one completed slice at a time.
+`git commit` has an always-on sliced-commit notice in Harness workspaces. If the
+current prompt turn has not read `.agents/references/sliced-commit-rule.md`,
+the PreToolUse hook reminds the agent to identify independent Commit Slices,
+stage only the current slice, validate or record `NOT_RUN`, and commit one
+completed slice at a time. The notice does not block the commit.
 
 ## Detection Policy
 
 Skill detection is intentionally stricter than substring matching:
 
 - Ordinary Harness workspace prompts that do not match a workflow skill still
-  receive daily workspace context when `AGENTS.md` or `CLAUDE.md` exists, asking
-  Codex to read those repository guidance files before repository-specific
-  answers or tool use.
-- Explicit triggers such as `$code-expert`, `/validate-run`, and `WF10` select
-  the matching skill and make the Stop hook enforce the required read set.
+  receive the workspace capsule once per session when `AGENTS.md` or
+  `CLAUDE.md` exists.
+- Explicit skill syntax such as `$code-expert` and `/validate-run` records the
+  matching skill as route context. Bare `WF<N>` and Decision vocabulary remain
+  action-gated hints; questions stay advisory.
+- Explicit skill prompts such as `$init-project`, `/validate-run`,
+  `$survey-idea`, `$iterate status`, or `$docs-site render` do not unlock a
+  prompt-time write surface. They make the intended route explicit so
+  PreToolUse can offer targeted read and owner notices.
 - Path-like text and filenames are ignored for generic trigger matching, so a
   filename such as `Harness_Workflow_Implementation_Review.md` does not trigger
   `implement`.
@@ -342,26 +307,17 @@ Skill detection is intentionally stricter than substring matching:
   diffs, changed files, or code-backed docs. The intent records a mode:
   `code_review_light`, `code_review_medium`, or `code_review_heavy`.
 - Short continuation prompts such as `继续`, `continue`, or `resume` keep the
-  previous active skill session only when both the previous and current hook
-  events have the same non-empty Codex `session_id`. This prevents follow-up
-  turns from clearing a still-active review or workflow contract without
-  allowing stale workspace-local sessions to cross a missing or different
-  session boundary.
+  previous route context only when both the previous and current hook events
+  have the same non-empty Codex `session_id`. This prevents stale
+  workspace-local sessions from leaking across independent conversations.
 - Code-search and read-only prompts, such as asking where a file/function lives
-  or asking for an explanation, do not trigger workflow Stop blocking.
+  or asking for an explanation, receive context only; they do not create Stop
+  requirements.
 
-The required read set is always enforced before write tools when a skill is
-active. The Stop hook enforces missing reads only when the user explicitly
-invoked a workflow skill, a mutating tool ran, or a sensitive write created a
-pending Gate ledger requirement. `code-review` is stricter than ordinary
-read-only search: review prompts require the review read set before finalizing,
-because the report format, reviewer independence protocol, and tracing rules are
-part of the review evidence.
-
-When `code-review` is active, mutating tools are allowed only for local review
-artifacts under `.agents/state/review_traces/code-review/`; source fixes must be
-routed through `code-debug`, while hook/skill/permission fixes must be routed
-through `harness-maintenance`.
+When the route context is `code-review`, mutating tools are allowed only for
+local review artifacts under `.agents/state/review_traces/code-review/`; source
+fixes should route through `code-debug`, while hook/skill/permission fixes
+should route through `harness-maintenance`.
 Pure local writes under `.agents/state/review_traces/code-review/` do not create
 a pending Gate ledger requirement or approval requirement, even when the
 working tree already has unrelated dirty source, docs, tests, config, or other
@@ -372,14 +328,21 @@ paths during `code-review`, the normal review-only boundary still blocks it.
 
 Hooks write local state under `.harness_hooks/`:
 
-- `session.json` records the active skill inferred from the user prompt.
+- `session.json` records route context inferred from the user prompt.
+- `notices.json` records notice fingerprints so the same advisory message is
+  not repeated within a turn or session.
 - `read_ledger.json` records tracked files observed during the current prompt turn.
-- `pending_actions.json` records whether a Gate ledger is required before final response and whether the one-time reminder has already been emitted.
+- `read_ledgers/` stores session-scoped read ledgers; checks merge these with
+  `read_ledger.json` so parallel tool reads cannot hide files already recorded
+  in the same prompt turn.
+- `pending_actions.json` records the last observed mutating tool metadata. Stop
+  clears compatible pending state when a full Gate ledger is present, but does
+  not block final responses by default.
 
-Continuation prompts preserve the previous `session.json` contract and
-`read_ledger.json` so a multi-turn review can continue without losing the
-active Harness context. Non-continuation prompts still start a fresh session and
-reset the read ledger.
+Continuation prompts preserve the previous `session.json` route context and
+`read_ledger.json` so a multi-turn review can continue without losing Harness
+context. Non-continuation prompts still start a fresh session and reset the read
+ledger.
 
 These files are runtime state and must not be committed.
 
@@ -394,7 +357,7 @@ python tooling/model_api/harness_external_review.py agentic --provider deepseek 
 Direct calls to `tooling/model_api/agentic_review.py` or
 `tooling/model_api/external_chat.py` are blocked by the Harness PreToolUse hook
 in Harness workspaces. The wrapper checks `.harness_hooks/session.json` and
-continues only when the active skill is `code-review` and the intent is
+continues only when the route context is `code-review` and the intent is
 `code_review_heavy`.
 
 ## Contract Source

@@ -55,7 +55,7 @@ def main() -> int:
     parser.add_argument(
         "--check-read-ledger",
         action="store_true",
-        help="Check current active skill read ledger.",
+        help="Check the current route-context read ledger.",
     )
     parser.add_argument(
         "--hook-status",

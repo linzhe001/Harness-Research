@@ -51,7 +51,7 @@ Intent
 ## Boundaries
 
 - Stage 决定工作性质，不等于权限自动放开。
-- Skill Contract 决定 required reads、write scope 和 required actions。
+- Skill Contract 决定 recommended reads、declared paths 和 required actions。
 - Gate ledger 只报告命令和结果，不替代 Human Approval。
 
 ## Common Confusions

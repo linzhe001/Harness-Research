@@ -76,24 +76,23 @@ WF0 init
 
 ### 1. 控制每阶段给模型的上下文
 
-Harness 使用 Skill Contract 和 Codex hooks，把每个阶段的 read/write 边界显式化：
+Harness 使用 Skill Contract 和 Codex hooks，把每个阶段的上下文和受控路径显式化：
 
 ```text
 UserPromptSubmit
-  -> detect active Skill
-  -> expose required read set and forbidden actions
+  -> infer route hint
+  -> expose compact workspace context
 
 PreToolUse
-  -> require reads before writes
-  -> block writes outside active write_scope
-  -> block manual .evidence/** and .auto_iterate/** edits
+  -> warn for missing recommended reads or mixed owner writes
+  -> block manual edits to controlled tool-owned paths
 
 PostToolUse
-  -> record read/write markers
-  -> mark pending Gate ledger when sensitive paths changed
+  -> record read/write/pending metadata
 
 Stop
-  -> require missing reads or Gate ledger before final response
+  -> clear compatible pending metadata when a Gate ledger is present
+  -> do not block final responses by default
 ```
 
 这不是为了制造仪式感，而是为了减少模型在错误上下文里做大范围修改的概率。一个 WF7 plan 不应该偷偷做架构决策；一个 code review 不应该顺手改 subject files；一个 Protocol Draft 不应该被模型标成 Approved Contract。
@@ -262,10 +261,10 @@ Codex sandbox
   -> coarse filesystem/network boundary
 
 Harness hooks
-  -> stage-aware read sets
-  -> write_scope.allowed_paths
+  -> route hints and workspace capsule
+  -> one-time advisory notices
   -> tool-owned path blocks
-  -> Gate Ledger requirement
+  -> external review guard
 ```
 
 Hooks are runtime guardrails, not proof that a research gate passed. Readiness still depends on tooling outputs, tests, Review Packets, Gate Ledger, and explicit Human Approval.

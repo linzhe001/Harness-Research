@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate external model review calls through the active Harness review session."""
+"""Gate external model review calls through Harness review route context."""
 
 from __future__ import annotations
 
@@ -55,14 +55,14 @@ def load_session(root: Path) -> dict[str, object]:
 
 
 def validate_review_session(root: Path) -> dict[str, object]:
-    """Require an active `$code-review heavy` Harness session."""
+    """Require a `$code-review heavy` Harness route hint."""
     session = load_session(root)
-    skill = session.get("active_skill")
+    skill = session.get("candidate_skill") or session.get("active_skill")
     intent = session.get("intent_class")
     if skill != REQUIRED_SKILL or intent != REQUIRED_INTENT:
         raise HarnessExternalReviewError(
-            "external model review requires an active `$code-review heavy` "
-            f"session; got active_skill={skill!r}, intent_class={intent!r}"
+            "external model review requires `$code-review heavy` route "
+            f"context; got skill={skill!r}, intent_class={intent!r}"
         )
     return session
 

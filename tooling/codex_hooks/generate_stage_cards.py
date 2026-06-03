@@ -358,7 +358,10 @@ def render_stage_cards(root: Path) -> str:
         "",
         "本文件由 `schemas/skill_contracts.json` 生成，是 operator 的 Stage 速查入口。",
         "它只回答每个 Stage 怎么启动、完成后得到什么、去哪里读深层细节。",
-        "完整 Read Contract、Write Scope 和 Gate 条件保留在 Stage / Skill 详情页。",
+        (
+            "完整推荐读取、声明路径、artifact 输出和 Gate 条件保留在 "
+            "Stage / Skill 详情页。"
+        ),
         "",
         "生成命令:",
         "",
@@ -480,9 +483,10 @@ def render_skill_page(root: Path, contract: dict[str, Any], position: int) -> st
         "## Exit Condition",
         "",
         (
-            "Required reads are complete before writes; writes stay inside "
-            "`write_scope.allowed_paths`; Gate ledger reports command, result, "
-            "reason, and artifacts when gate conditions are touched."
+            "Recommended reads have been considered; durable writes stay "
+            "aligned with declared path ownership; Gate ledger reports "
+            "command, result, reason, and artifacts when gate conditions are "
+            "touched."
         ),
         "",
         "## Related References",

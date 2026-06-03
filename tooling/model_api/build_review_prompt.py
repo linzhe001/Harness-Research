@@ -296,10 +296,10 @@ Review goals:
 Codex hook model to account for:
 
 ```text
-UserPromptSubmit -> detect active skill -> write .harness_hooks/session.json
-PreToolUse       -> block missing reads or forbidden writes
-PostToolUse      -> record read/write markers and pending Gate ledger state
-Stop             -> block missing read set or missing Gate ledger
+UserPromptSubmit -> infer route hint and workspace capsule
+PreToolUse       -> warn for missing context; block narrow boundary violations
+PostToolUse      -> silently record read/write/pending metadata
+Stop             -> clear compatible pending state; no default read/Gate block
 ```
 
 Harness workflow to account for:

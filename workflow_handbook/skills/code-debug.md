@@ -105,7 +105,7 @@ Codex wrapper for post-WF8 repository implementation code modification and debug
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

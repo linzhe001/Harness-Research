@@ -13,6 +13,7 @@ from harness_contracts import (
     is_continuation_prompt,
     is_harness_workspace,
     load_session_for_event,
+    notice_once,
     read_hook_event,
     repo_root,
     reset_read_ledger,
@@ -75,11 +76,12 @@ def continuation_match(root, prompt: str, event: dict) -> dict | None:
         "candidate_trigger": previous.get("candidate_trigger"),
         "candidate_trigger_type": previous.get("candidate_trigger_type"),
         "candidate_reason": (
-            "continued advisory context; hard activation required before writes"
+            "continued advisory context; tool-time policy checks concrete writes"
         ),
         "trigger": "candidate_continuation",
         "trigger_type": "continuation",
-        "intent_class": classify_prompt_intent(prompt),
+        "intent_class": previous.get("intent_class")
+        or classify_prompt_intent(prompt),
         "enforcement_mode": ENFORCEMENT_CONTEXT_ONLY,
         "read_contract_stop_required": False,
         "continued_from_previous_prompt": True,
@@ -161,24 +163,47 @@ def main() -> int:
     if is_harness_workspace(root) and not continued:
         reset_read_ledger(root, event)
     daily_context = daily_context_for_workspace(root)
+    contexts = []
     if not contract:
         if candidate_contract:
-            additional_context = additional_context_for_candidate(
-                candidate_contract,
-                match,
-            )
-            if daily_context:
-                additional_context = additional_context + "\n\n" + daily_context
-            emit(
-                {
-                    "hookSpecificOutput": {
-                        "hookEventName": "UserPromptSubmit",
-                        "additionalContext": additional_context,
+            if notice_once(
+                root,
+                event,
+                "candidate_context",
+                [
+                    str(match.get("candidate_skill")),
+                    str(match.get("candidate_trigger")),
+                    str(match.get("intent_class")),
+                ],
+            ):
+                contexts.append(
+                    additional_context_for_candidate(candidate_contract, match)
+                )
+            if daily_context and notice_once(
+                root,
+                event,
+                "workspace_capsule",
+                ["AGENTS.md", "CLAUDE.md"],
+                scope="session",
+            ):
+                contexts.append(daily_context)
+            if contexts:
+                emit(
+                    {
+                        "hookSpecificOutput": {
+                            "hookEventName": "UserPromptSubmit",
+                            "additionalContext": "\n\n".join(contexts),
+                        }
                     }
-                }
-            )
+                )
             return 0
-        if daily_context:
+        if daily_context and notice_once(
+            root,
+            event,
+            "workspace_capsule",
+            ["AGENTS.md", "CLAUDE.md"],
+            scope="session",
+        ):
             emit(
                 {
                     "hookSpecificOutput": {
@@ -188,17 +213,30 @@ def main() -> int:
                 }
             )
         return 0
-    additional_context = additional_context_for_contract(contract, root, match)
-    if daily_context:
-        additional_context = additional_context + "\n\n" + daily_context
-    emit(
-        {
-            "hookSpecificOutput": {
-                "hookEventName": "UserPromptSubmit",
-                "additionalContext": additional_context,
+    if notice_once(
+        root,
+        event,
+        "contract_context",
+        [str(contract.get("skill")), str(match.get("trigger") if match else "")],
+    ):
+        contexts.append(additional_context_for_contract(contract, root, match))
+    if daily_context and notice_once(
+        root,
+        event,
+        "workspace_capsule",
+        ["AGENTS.md", "CLAUDE.md"],
+        scope="session",
+    ):
+        contexts.append(daily_context)
+    if contexts:
+        emit(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "UserPromptSubmit",
+                    "additionalContext": "\n\n".join(contexts),
+                }
             }
-        }
-    )
+        )
     return 0
 
 

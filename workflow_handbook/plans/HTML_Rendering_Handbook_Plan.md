@@ -1066,7 +1066,7 @@ Build steps:
 2. Generate `skill:*` entries:
    - `summary` from skill frontmatter description when present;
    - `source_paths` from contract and `.agents/skills/<skill>/SKILL.md`;
-   - `preview.body` from purpose, write scope, required actions, forbidden
+   - `preview.body` from purpose, declared paths, required actions, forbidden
      actions, and generated-view boundaries.
 3. Generate `stage:*` entries:
    - canonical WF stage id;

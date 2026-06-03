@@ -33,8 +33,8 @@ Avoid bare `evidence` in prose when the meaning could be unclear.
 | `Skill Contract` | Machine-readable rule set in `schemas/skill_contracts.json`. |
 | `Read Contract` | Files that must be read before writes for a skill. |
 | `Action Contract` | Required actions and forbidden actions for a skill. |
-| `Boundary Contract` | Write scope, sensitive paths, and tool-owned path restrictions. |
-| `Write Scope` | Temporary path surface an active skill may write. |
+| `Boundary Contract` | Declared path ownership, sensitive paths, and tool-owned path restrictions. |
+| `Declared Paths` | Paths a Skill Contract owns for notices, Stage Cards, and artifact planning; not prompt-time write authorization. |
 | `Sensitive Path` | Path whose change may require Gate ledger evidence. |
 | `Claim` | Statement about project facts, methods, results, readiness, or release. |
 | `Source Artifact` | Concrete source such as paper, code, dataset record, config, log, metric, review report, or approval record. |

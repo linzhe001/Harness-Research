@@ -11,7 +11,7 @@ status: "generated"
 summary: "Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template."
 nav:
   section: "skills"
-  position: 240
+  position: 350
 canonical_sources:
   - path: "schemas/skill_contracts.json"
     role: "skill_contract"
@@ -89,7 +89,7 @@ Codex wrapper for WF11 final experiment planning. Use when the user wants ablati
 
 ## Exit Condition
 
-Required reads are complete before writes; writes stay inside `write_scope.allowed_paths`; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
+Recommended reads have been considered; durable writes stay aligned with declared path ownership; Gate ledger reports command, result, reason, and artifacts when gate conditions are touched.
 
 ## Related References
 

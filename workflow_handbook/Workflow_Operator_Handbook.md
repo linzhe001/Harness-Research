@@ -3,7 +3,7 @@
 这是 Harness workflow 的人类入口页。它只保留日常操作需要先知道的内容：
 现在处在哪个 Stage、应该启动哪个 Skill、完成后应看到什么产物、什么时候必须停下来让人决策。
 
-深层 contract、hook、read/write scope、Evidence Chain 和 generated HTML 细节都放在链接页里。
+深层 contract、hook、declared paths、Evidence Chain 和 generated HTML 细节都放在链接页里。
 Markdown source 仍是 source of truth，`docs/_site/workflow_handbook/**` 只是渲染视图。
 
 ## Start Here
@@ -42,9 +42,9 @@ Intent
 
 ```text
 operator request
-  -> pick active Stage / Skill
-  -> read required source artifacts
-  -> write only inside active write scope
+  -> infer Stage / Skill route
+  -> read relevant source artifacts
+  -> keep durable writes aligned with declared path ownership
   -> run narrow validation or report NOT_RUN
   -> report Gate ledger when a gate was touched
   -> ask for Human Approval only when the workflow requires it
@@ -62,7 +62,7 @@ operator request
 - Build & Validate: WF8-WF9，完成代码切片并验证。
 - Iterate & Release: WF10-WF12，运行实验循环、final experiment、release。
 
-每个 Stage 只给一句话、启动方式、完成效果和详情链接。具体 read/write scope、
+每个 Stage 只给一句话、启动方式、完成效果和详情链接。具体 recommended reads、declared paths、
 required actions 和 Gate 条件在左侧 `Workflow Details` -> `Stage Details` 的子页面里。
 
 ## Gate And Approval

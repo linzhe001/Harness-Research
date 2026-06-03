@@ -108,6 +108,25 @@ def test_external_review_wrapper_accepts_heavy_code_review_session(
     assert session["active_skill"] == "code-review"
 
 
+def test_external_review_wrapper_accepts_heavy_code_review_candidate(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".harness_hooks").mkdir()
+    (tmp_path / ".harness_hooks" / "session.json").write_text(
+        json.dumps({
+            "active_skill": None,
+            "candidate_skill": "code-review",
+            "intent_class": "code_review_heavy",
+        }),
+        encoding="utf-8",
+    )
+
+    session = harness_external_review.validate_review_session(tmp_path)
+
+    assert session["candidate_skill"] == "code-review"
+
+
 def test_external_review_wrapper_blocks_base_url_override() -> None:
     with pytest.raises(
         harness_external_review.HarnessExternalReviewError,
