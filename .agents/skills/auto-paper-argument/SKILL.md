@@ -61,3 +61,8 @@ checks claim schema, author evidence, and scope boundaries; rerun it with
 `--citation-bank` after citation if citation support exists.
 
 - `.agents/skills/auto-paper/scripts/claim_register_check.py auto_paper_output/<paper_id>/claim_register.md`
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, claim-gate
+result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before handoff.

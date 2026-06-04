@@ -118,6 +118,17 @@
             { "page_id": "validate-run", "label": "validate-run", "source_path": "workflow_handbook/skills/validate-run.md", "generated": true },
             { "page_id": "iterate", "label": "iterate", "source_path": "workflow_handbook/skills/iterate.md", "generated": true },
             { "page_id": "auto-iterate-goal", "label": "auto-iterate-goal", "source_path": "workflow_handbook/skills/auto-iterate-goal.md", "generated": true },
+            { "page_id": "auto-paper", "label": "auto-paper", "source_path": "workflow_handbook/skills/auto-paper.md", "generated": true },
+            { "page_id": "auto-paper-intake", "label": "auto-paper-intake", "source_path": "workflow_handbook/skills/auto-paper-intake.md", "generated": true },
+            { "page_id": "auto-paper-research", "label": "auto-paper-research", "source_path": "workflow_handbook/skills/auto-paper-research.md", "generated": true },
+            { "page_id": "auto-paper-argument", "label": "auto-paper-argument", "source_path": "workflow_handbook/skills/auto-paper-argument.md", "generated": true },
+            { "page_id": "auto-paper-citation", "label": "auto-paper-citation", "source_path": "workflow_handbook/skills/auto-paper-citation.md", "generated": true },
+            { "page_id": "auto-paper-layout", "label": "auto-paper-layout", "source_path": "workflow_handbook/skills/auto-paper-layout.md", "generated": true },
+            { "page_id": "auto-paper-patch", "label": "auto-paper-patch", "source_path": "workflow_handbook/skills/auto-paper-patch.md", "generated": true },
+            { "page_id": "auto-paper-harden", "label": "auto-paper-harden", "source_path": "workflow_handbook/skills/auto-paper-harden.md", "generated": true },
+            { "page_id": "auto-paper-response", "label": "auto-paper-response", "source_path": "workflow_handbook/skills/auto-paper-response.md", "generated": true },
+            { "page_id": "auto-paper-data", "label": "auto-paper-data", "source_path": "workflow_handbook/skills/auto-paper-data.md", "generated": true },
+            { "page_id": "auto-paper-figure", "label": "auto-paper-figure", "source_path": "workflow_handbook/skills/auto-paper-figure.md", "generated": true },
             { "page_id": "final-exp", "label": "final-exp", "source_path": "workflow_handbook/skills/final-exp.md", "generated": true },
             { "page_id": "release", "label": "release", "source_path": "workflow_handbook/skills/release.md", "generated": true }
           ]

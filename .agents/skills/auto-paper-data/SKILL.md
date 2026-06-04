@@ -36,3 +36,9 @@ Write under `auto_paper_output/<paper_id>/`:
 - Do not state that data or code is public unless the artifact or operator
   approval proves it.
 - Route new evidence claims back to argument, citation, or harden.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, unresolved
+availability or ethics facts, any `USER_GATE` or `NOT_RUN` reason, and the next
+owner before handoff.

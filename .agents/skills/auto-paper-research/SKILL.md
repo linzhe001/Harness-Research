@@ -42,3 +42,9 @@ Write:
 
 Every fact that may support later claims must carry provenance to local source,
 TeX, bibliography, or the user brief.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, unresolved
+source gaps, any `USER_GATE` or `NOT_RUN` reason, and the next owner before
+handoff.

@@ -65,3 +65,8 @@ Write under `auto_paper_output/<paper_id>/`:
 - `intake_report.md`
 
 Do not write `.auto_paper/` or `.auto_iterate/` manually.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, any
+`USER_GATE` or `NOT_RUN` reason, and the next owner before handoff.

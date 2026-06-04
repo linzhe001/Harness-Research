@@ -46,3 +46,9 @@ Run the deterministic support-bank gate when the bank is drafted:
 If a core claim has only `background`, `metadata_only`, or `unsupported`
 support, route back to citation or argument instead of adding a weak citation
 during patch.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, support-bank
+gate result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before
+handoff.

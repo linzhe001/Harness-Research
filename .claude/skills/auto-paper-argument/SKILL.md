@@ -17,4 +17,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
    rerun it with `--citation-bank` after citation support exists.
 5. Return `USER_GATE` when central claims or boundaries need operator input.
 6. Do not patch LaTeX.
+7. Report a Gate ledger entry with commands run, artifacts written, claim-gate
+   result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before
+   handoff.
 </instructions>

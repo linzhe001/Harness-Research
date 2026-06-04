@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-03T10:55:25Z",
+  "generated_at": "2026-06-04T07:37:02Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -2055,6 +2055,292 @@
       "preview": {
         "title": "auto-iterate-goal",
         "body": "auto-iterate-goal: Generate or validate the auto-iterate goal file before launching WF10 auto-iterate",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper": {
+      "ref": "page:auto-paper",
+      "kind": "page",
+      "title": "auto-paper",
+      "summary": "Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use when Codex is asked to run an auto-paper loop, rewrite or restructure a paper section, produce citation-supported manuscript edits, harden a submission, audit reviewer risk, or coordinate research to argument to citation to layout to patch to harden writing phases.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper",
+        "body": "auto-paper: Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use when Codex is asked to run an auto-paper loop, rewrite or restructure a paper section, produce citation-supported manuscript edits, harden a submission, audit reviewer risk, or coordinate...",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": true
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-argument": {
+      "ref": "page:auto-paper-argument",
+      "kind": "page",
+      "title": "auto-paper-argument",
+      "summary": "Run the auto-paper argument phase. Use to define central tension, core contribution, allowed novelty, claim boundaries, claim register, claims to avoid, and motivation surface map before citation or layout work.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-argument.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-argument",
+        "body": "auto-paper-argument: Run the auto-paper argument phase. Use to define central tension, core contribution, allowed novelty, claim boundaries, claim register, claims to avoid, and motivation surface map before citation or layout work.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-citation": {
+      "ref": "page:auto-paper-citation",
+      "kind": "page",
+      "title": "auto-paper-citation",
+      "summary": "Run the auto-paper citation phase. Use to segment manuscript claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims before LaTeX patching.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-citation.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-citation",
+        "body": "auto-paper-citation: Run the auto-paper citation phase. Use to segment manuscript claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims before LaTeX patching.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-data": {
+      "ref": "page:auto-paper-data",
+      "kind": "page",
+      "title": "auto-paper-data",
+      "summary": "Run the optional auto-paper data, code, ethics, and reproducibility branch. Use when Codex needs to draft or audit data availability, code availability, ethics boundaries, FAIR metadata, or reproducibility statements for a manuscript.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-data.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-data",
+        "body": "auto-paper-data: Run the optional auto-paper data, code, ethics, and reproducibility branch. Use when Codex needs to draft or audit data availability, code availability, ethics boundaries, FAIR metadata, or reproducibility statements for a manuscript.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-figure": {
+      "ref": "page:auto-paper-figure",
+      "kind": "page",
+      "title": "auto-paper-figure",
+      "summary": "Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-figure.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-figure",
+        "body": "auto-paper-figure: Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-harden": {
+      "ref": "page:auto-paper-harden",
+      "kind": "page",
+      "title": "auto-paper-harden",
+      "summary": "Run the auto-paper harden phase. Use for final manuscript audit, artifact completeness, claim support, logic transfer, revision quality, LaTeX guard, compile report, and reviewer-risk gate routing.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-harden.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-harden",
+        "body": "auto-paper-harden: Run the auto-paper harden phase. Use for final manuscript audit, artifact completeness, claim support, logic transfer, revision quality, LaTeX guard, compile report, and reviewer-risk gate routing.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-intake": {
+      "ref": "page:auto-paper-intake",
+      "kind": "page",
+      "title": "auto-paper-intake",
+      "summary": "Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a paper directory, draft path, materials, references, target venue, or asks to start auto-paper intake before research, argument, citation, layout, patch, or harden phases.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-intake.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-intake",
+        "body": "auto-paper-intake: Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a paper directory, draft path, materials, references, target venue, or asks to start auto-paper intake before research, argument, citation, layout, patch, or harden phases.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-layout": {
+      "ref": "page:auto-paper-layout",
+      "kind": "page",
+      "title": "auto-paper-layout",
+      "summary": "Run the auto-paper layout phase. Use to map current TeX logic, design section and paragraph blueprints, create a writing rationale matrix, citation plan, and LaTeX patch plan before any manuscript edits.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-layout.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-layout",
+        "body": "auto-paper-layout: Run the auto-paper layout phase. Use to map current TeX logic, design section and paragraph blueprints, create a writing rationale matrix, citation plan, and LaTeX patch plan before any manuscript edits.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-patch": {
+      "ref": "page:auto-paper-patch",
+      "kind": "page",
+      "title": "auto-paper-patch",
+      "summary": "Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-patch.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-patch",
+        "body": "auto-paper-patch: Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-research": {
+      "ref": "page:auto-paper-research",
+      "kind": "page",
+      "title": "auto-paper-research",
+      "summary": "Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, summarize author evidence, learn exemplar structure and style, map SOTA gaps, and prepare research artifacts without editing the manuscript.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-research.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-research",
+        "body": "auto-paper-research: Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, summarize author evidence, learn exemplar structure and style, map SOTA gaps, and prepare research artifacts without editing the manuscript.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:auto-paper-response": {
+      "ref": "page:auto-paper-response",
+      "kind": "page",
+      "title": "auto-paper-response",
+      "summary": "Run the optional auto-paper reviewer-response branch. Use when Codex needs to handle rebuttal writing, revision response letters, reviewer comment maps, response strategy, or revision commitment registers for an academic manuscript.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/auto-paper-response.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "auto-paper-response",
+        "body": "auto-paper-response: Run the optional auto-paper reviewer-response branch. Use when Codex needs to handle rebuttal writing, revision response letters, reviewer comment maps, response strategy, or revision commitment registers for an academic manuscript.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7760,6 +8046,292 @@
         "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
         "marker": "[[term:Gate Evidence]]",
         "line": 98,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-argument.md": [
+      {
+        "ref": "skill:auto-paper-argument",
+        "source_path": "workflow_handbook/skills/auto-paper-argument.md",
+        "marker": "[[skill:auto-paper-argument]]",
+        "line": 95,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-argument.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-argument",
+        "source_path": "workflow_handbook/skills/auto-paper-argument.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-argument]]",
+        "line": 96,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-argument.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 97,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-citation.md": [
+      {
+        "ref": "skill:auto-paper-citation",
+        "source_path": "workflow_handbook/skills/auto-paper-citation.md",
+        "marker": "[[skill:auto-paper-citation]]",
+        "line": 94,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-citation.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-citation",
+        "source_path": "workflow_handbook/skills/auto-paper-citation.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-citation]]",
+        "line": 95,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-citation.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 96,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-data.md": [
+      {
+        "ref": "skill:auto-paper-data",
+        "source_path": "workflow_handbook/skills/auto-paper-data.md",
+        "marker": "[[skill:auto-paper-data]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-data.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-data",
+        "source_path": "workflow_handbook/skills/auto-paper-data.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-data]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-data.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 100,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-figure.md": [
+      {
+        "ref": "skill:auto-paper-figure",
+        "source_path": "workflow_handbook/skills/auto-paper-figure.md",
+        "marker": "[[skill:auto-paper-figure]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-figure.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-figure",
+        "source_path": "workflow_handbook/skills/auto-paper-figure.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-figure]]",
+        "line": 100,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-figure.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 101,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-harden.md": [
+      {
+        "ref": "skill:auto-paper-harden",
+        "source_path": "workflow_handbook/skills/auto-paper-harden.md",
+        "marker": "[[skill:auto-paper-harden]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-harden.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-harden",
+        "source_path": "workflow_handbook/skills/auto-paper-harden.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-harden]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-harden.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 100,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-intake.md": [
+      {
+        "ref": "skill:auto-paper-intake",
+        "source_path": "workflow_handbook/skills/auto-paper-intake.md",
+        "marker": "[[skill:auto-paper-intake]]",
+        "line": 97,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-intake.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-intake",
+        "source_path": "workflow_handbook/skills/auto-paper-intake.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-intake]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-intake.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-layout.md": [
+      {
+        "ref": "skill:auto-paper-layout",
+        "source_path": "workflow_handbook/skills/auto-paper-layout.md",
+        "marker": "[[skill:auto-paper-layout]]",
+        "line": 95,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-layout.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-layout",
+        "source_path": "workflow_handbook/skills/auto-paper-layout.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-layout]]",
+        "line": 96,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-layout.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 97,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-patch.md": [
+      {
+        "ref": "skill:auto-paper-patch",
+        "source_path": "workflow_handbook/skills/auto-paper-patch.md",
+        "marker": "[[skill:auto-paper-patch]]",
+        "line": 97,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-patch.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-patch",
+        "source_path": "workflow_handbook/skills/auto-paper-patch.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-patch]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-patch.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-research.md": [
+      {
+        "ref": "skill:auto-paper-research",
+        "source_path": "workflow_handbook/skills/auto-paper-research.md",
+        "marker": "[[skill:auto-paper-research]]",
+        "line": 94,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-research.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-research",
+        "source_path": "workflow_handbook/skills/auto-paper-research.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-research]]",
+        "line": 95,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-research.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 96,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper-response.md": [
+      {
+        "ref": "skill:auto-paper-response",
+        "source_path": "workflow_handbook/skills/auto-paper-response.md",
+        "marker": "[[skill:auto-paper-response]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper-response.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper-response",
+        "source_path": "workflow_handbook/skills/auto-paper-response.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper-response]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper-response.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 100,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/auto-paper.md": [
+      {
+        "ref": "skill:auto-paper",
+        "source_path": "workflow_handbook/skills/auto-paper.md",
+        "marker": "[[skill:auto-paper]]",
+        "line": 109,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/auto-paper.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#auto-paper",
+        "source_path": "workflow_handbook/skills/auto-paper.md",
+        "marker": "[[source:schemas/skill_contracts.json#auto-paper]]",
+        "line": 110,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/auto-paper.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 111,
         "status": "resolved",
         "target_html": null
       }

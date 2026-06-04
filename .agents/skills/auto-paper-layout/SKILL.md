@@ -37,3 +37,8 @@ command, and compile expectation for each unit.
 Reject shallow rows such as `improve clarity`, `make concise`, or `add
 citation` unless they are expanded into reader question, evidence, risk, and
 done definition.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, layout-gate
+result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before handoff.

@@ -19,4 +19,6 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 5. Treat future-phase template files as scaffolds until their owning phase runs.
 6. Do not write manuscript prose, `.auto_paper/`, `.auto_iterate/`, or
    `iteration_log.json`.
+7. Report a Gate ledger entry with commands run, artifacts written, any
+   `USER_GATE` or `NOT_RUN` reason, and the next owner before handoff.
 </instructions>

@@ -17,4 +17,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
    or citation support.
 4. Do not generate plots from unverified data paths or inferred metrics.
 5. Return `USER_GATE` when plotting or caption claims lack source evidence.
+6. Report a Gate ledger entry with commands run, artifacts written,
+   figure/caption gate result, any `USER_GATE` or `NOT_RUN` reason, and the
+   next owner before handoff.
 </instructions>

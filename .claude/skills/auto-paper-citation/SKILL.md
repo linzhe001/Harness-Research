@@ -17,4 +17,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
    `citation_audit_report.md`.
 5. Run `.agents/skills/auto-paper/scripts/citation_bank_check.py auto_paper_output/<paper_id>/citation_support_bank.md`.
 6. Route weak core-claim support back to citation or argument before patching.
+7. Report a Gate ledger entry with commands run, artifacts written,
+   support-bank gate result, any `USER_GATE` or `NOT_RUN` reason, and the next
+   owner before handoff.
 </instructions>

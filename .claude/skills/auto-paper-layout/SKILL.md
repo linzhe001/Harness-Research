@@ -17,4 +17,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
    done definition.
 4. Reject shallow rows like `improve clarity` without specific rationale.
 5. Do not edit LaTeX.
+6. Report a Gate ledger entry with commands run, artifacts written, layout-gate
+   result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before
+   handoff.
 </instructions>

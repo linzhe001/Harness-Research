@@ -36,3 +36,9 @@ Write under `auto_paper_output/<paper_id>/`:
 - Preserve panel labels, file names, and LaTeX graphics references unless the
   patch plan explicitly changes them.
 - If plotting is requested but inputs are incomplete, return `USER_GATE`.
+
+## Gate Ledger
+
+Report a Gate ledger entry with commands run, artifacts written, figure/caption
+gate result, any `USER_GATE` or `NOT_RUN` reason, and the next owner before
+handoff.
