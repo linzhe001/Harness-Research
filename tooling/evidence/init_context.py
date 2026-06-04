@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 CONTEXT_MODEL_VERSION = "dynamic-protocol-v1"
 
 REQUIRED_DIRS = [
@@ -29,7 +28,7 @@ REQUIRED_DIRS = [
     "docs/50_memory",
     ".evidence",
     ".evidence/chains",
-    ".evidence/schemas",
+    "schemas",
 ]
 
 
@@ -67,13 +66,17 @@ def copy_tree_no_overwrite(
     dry_run: bool,
 ) -> list[dict[str, str]]:
     actions: list[dict[str, str]] = []
+    if source_root.resolve() == destination_root.resolve():
+        return [{"action": "skip_same_tree", "path": str(destination_root)}]
     for source in iter_files(source_root):
         relative = source.relative_to(source_root)
         destination = destination_root / relative
         if destination.exists() and not overwrite:
             actions.append({"action": "skip_exists", "path": str(destination)})
             continue
-        actions.append({"action": "copy", "path": str(destination), "source": str(source)})
+        actions.append(
+            {"action": "copy", "path": str(destination), "source": str(source)}
+        )
         if not dry_run:
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
@@ -93,6 +96,38 @@ def ensure_dirs(workspace_root: Path, *, dry_run: bool) -> list[dict[str, str]]:
     return actions
 
 
+def remove_legacy_schema_mirror(
+    workspace_root: Path, *, dry_run: bool
+) -> list[dict[str, str]]:
+    legacy_root = workspace_root / ".evidence" / "schemas"
+    if not legacy_root.exists():
+        return []
+    if not legacy_root.is_dir():
+        raise ValueError(f"legacy schema mirror is not a directory: {legacy_root}")
+
+    schema_root = workspace_root / "schemas"
+    if not schema_root.is_dir():
+        raise FileNotFoundError(f"root schema directory not found: {schema_root}")
+
+    for legacy_path in sorted(
+        path for path in legacy_root.rglob("*") if path.is_file()
+    ):
+        relative = legacy_path.relative_to(legacy_root)
+        schema_path = schema_root / relative
+        if not schema_path.is_file():
+            raise ValueError(
+                f"legacy schema mirror has no root schema counterpart: {legacy_path}"
+            )
+        if legacy_path.read_bytes() != schema_path.read_bytes():
+            raise ValueError(
+                f"legacy schema mirror differs from root schema: {legacy_path}"
+            )
+
+    if not dry_run:
+        shutil.rmtree(legacy_root)
+    return [{"action": "remove_legacy_schema_mirror", "path": str(legacy_root)}]
+
+
 def contract_status(path: Path) -> str:
     if not path.exists():
         return "missing"
@@ -107,7 +142,9 @@ def contract_status(path: Path) -> str:
     return "draft"
 
 
-def update_project_state(workspace_root: Path, *, dry_run: bool) -> list[dict[str, str]]:
+def update_project_state(
+    workspace_root: Path, *, dry_run: bool
+) -> list[dict[str, str]]:
     state_path = workspace_root / "PROJECT_STATE.json"
     if not state_path.exists():
         return [{"action": "skip_missing_state", "path": str(state_path)}]
@@ -158,11 +195,12 @@ def initialize_context(
     actions.extend(
         copy_tree_no_overwrite(
             framework / "schemas",
-            workspace / ".evidence" / "schemas",
+            workspace / "schemas",
             overwrite=overwrite,
             dry_run=dry_run,
         )
     )
+    actions.extend(remove_legacy_schema_mirror(workspace, dry_run=dry_run))
     if set_state:
         actions.extend(update_project_state(workspace, dry_run=dry_run))
 
@@ -175,13 +213,30 @@ def initialize_context(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Initialize Harness dynamic context docs in a workspace.")
+    parser = argparse.ArgumentParser(
+        description="Initialize Harness dynamic context docs in a workspace."
+    )
     parser.add_argument("--workspace-root", type=Path, default=Path.cwd())
     parser.add_argument("--framework-root", type=Path, default=repo_root_from_tool())
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing copied template/schema files.")
-    parser.add_argument("--set-state", action="store_true", help="Set PROJECT_STATE.json context_model_version and contract paths when PROJECT_STATE.json exists.")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing copied template/schema files.",
+    )
+    parser.add_argument(
+        "--set-state",
+        action="store_true",
+        help=(
+            "Set PROJECT_STATE.json context_model_version and contract paths "
+            "when PROJECT_STATE.json exists."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--json", action="store_true", help="Print the full action summary as JSON.")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the full action summary as JSON.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -200,9 +255,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(summary, indent=2, ensure_ascii=False))
     else:
         copied = sum(1 for action in summary["actions"] if action["action"] == "copy")
-        skipped = sum(1 for action in summary["actions"] if action["action"] == "skip_exists")
-        made_dirs = sum(1 for action in summary["actions"] if action["action"] == "mkdir")
-        print(f"Initialized dynamic context layout: dirs={made_dirs}, copied={copied}, skipped={skipped}")
+        skipped = sum(
+            1 for action in summary["actions"] if action["action"] == "skip_exists"
+        )
+        made_dirs = sum(
+            1 for action in summary["actions"] if action["action"] == "mkdir"
+        )
+        print(
+            "Initialized dynamic context layout: "
+            f"dirs={made_dirs}, copied={copied}, skipped={skipped}"
+        )
     return 0
 
 

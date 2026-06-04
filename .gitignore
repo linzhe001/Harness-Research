@@ -6,6 +6,13 @@
 /baselines/
 /experiments/
 /docs/*
+!/docs/_site/
+/docs/_site/*
+!/docs/_site/index.html
+!/docs/_site/workflow_handbook/
+!/docs/_site/workflow_handbook/**
+!/docs/_views/
+!/docs/_views/**
 !/docs/legacy/
 !/docs/legacy/.gitkeep
 !/docs/90_legacy/
@@ -22,8 +29,6 @@
 !/.evidence/index.json
 !/.evidence/chains/
 !/.evidence/chains/**
-!/.evidence/schemas/
-!/.evidence/schemas/**
 /.evidence/protocol_compiler/
 /.evidence/review_packets/
 /Reference_tool_repo/

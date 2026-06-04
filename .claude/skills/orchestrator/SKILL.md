@@ -102,8 +102,8 @@ Execute the corresponding command based on $ARGUMENTS.
    │   ├── 40_iterations/   # current per-iteration reports
    │   └── 50_memory/       # decisions, negative results, lesson candidates
    ├── .evidence/
-   │   ├── chains/
-   │   └── schemas/
+   │   └── chains/
+   ├── schemas/
    ├── src/
    ├── baselines/
    ├── configs/

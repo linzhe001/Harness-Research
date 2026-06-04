@@ -54,7 +54,7 @@ Interpret natural-language requests as one of these canonical intents:
 
 1. Gather project name, idea summary, target venue, deadline, codebase path, and dataset name.
 2. Create the standard workflow directories if missing.
-   - For dynamic-context projects, also create `docs/10_contract`, `docs/20_facts`, `docs/30_evidence`, `docs/35_protocol`, `docs/40_iterations/auto`, `docs/50_memory`, `.evidence/chains`, and `.evidence/schemas`.
+   - For dynamic-context projects, also create `docs/10_contract`, `docs/20_facts`, `docs/30_evidence`, `docs/35_protocol`, `docs/40_iterations/auto`, `docs/50_memory`, `.evidence/chains`, and root `schemas`.
    - Prefer running `python tooling/evidence/init_context.py --workspace-root . --set-state` for this layout.
 3. If the operator explicitly provides stable preferences or local constraints, create or update `OPERATOR_CONTEXT.md`. Do not infer preferences from behavior or project facts.
 4. Call `$init-project` in `init` mode to generate the minimal `CLAUDE.md`.

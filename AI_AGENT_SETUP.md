@@ -482,7 +482,7 @@ docs/35_protocol/**
 docs/40_iterations/**
 docs/50_memory/**
 .evidence/chains/
-.evidence/schemas/
+schemas/
 ```
 
 It does not fabricate evidence and it does not create `OPERATOR_CONTEXT.md`.

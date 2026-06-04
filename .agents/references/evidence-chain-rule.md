@@ -55,7 +55,7 @@ instead of hand-writing files under `.evidence/**`.
 
 | Workflow Point | Required Python Tool | Output Used Later |
 |---|---|---|
-| Dynamic-context project init | `init_context.py --set-state` | Numbered docs dirs, `.evidence/schemas/**`, `PROJECT_STATE.json` dynamic markers |
+| Dynamic-context project init | `init_context.py --set-state` | Numbered docs dirs, root `schemas/**`, `PROJECT_STATE.json` dynamic markers |
 | Evidence tables changed | `compile_protocol.py` | Draft protocol packet under `.evidence/protocol_compiler/**`; optionally applied to `docs/35_protocol/**` after review |
 | Current contract/fact/protocol/release doc changed | `compile_doc.py --doc ... --source ...` | `.evidence/chains/**`, Markdown evidence headers, `.evidence/index.json` latest pointer |
 | WF5 contract readiness | `check_dynamic_context.py --stage wf5 --review-packet` | Gate result and review packet for Evaluation Contract approval/revision |

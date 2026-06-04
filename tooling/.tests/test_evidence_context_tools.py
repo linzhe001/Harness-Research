@@ -62,20 +62,39 @@ def test_init_context_copies_templates_without_overwrite(tmp_path: Path) -> None
     assert (tmp_path / "docs" / "30_evidence" / "Validation_Table.md").exists()
     assert (tmp_path / "docs" / "20_facts" / "Project_Glossary.md").exists()
     assert (tmp_path / "docs" / "20_facts" / "Codebase_Map.md").exists()
-    assert (tmp_path / ".evidence" / "schemas" / "evidence_chain.schema.json").exists()
-    assert (tmp_path / ".evidence" / "schemas" / "review_packet.schema.json").exists()
-    assert (tmp_path / ".evidence" / "schemas" / "project_state.schema.json").exists()
-    assert (
-        tmp_path / ".evidence" / "schemas" / "docs_site_manifest.schema.json"
-    ).exists()
-    assert (
-        tmp_path / ".evidence" / "schemas" / "evidence_preview_index.schema.json"
-    ).exists()
+    assert (tmp_path / "schemas" / "evidence_chain.schema.json").exists()
+    assert (tmp_path / "schemas" / "review_packet.schema.json").exists()
+    assert (tmp_path / "schemas" / "project_state.schema.json").exists()
+    assert (tmp_path / "schemas" / "docs_site_manifest.schema.json").exists()
+    assert (tmp_path / "schemas" / "evidence_preview_index.schema.json").exists()
+    assert not (tmp_path / ".evidence" / "schemas").exists()
     assert not (tmp_path / "OPERATOR_CONTEXT.md").exists()
     assert existing.read_text(encoding="utf-8") == "custom contract\n"
     assert any(
         action["action"] == "skip_exists"
         and action["path"].endswith("Project_Contract.md")
+        for action in summary["actions"]
+    )
+
+
+def test_init_context_removes_legacy_evidence_schema_mirror(tmp_path: Path) -> None:
+    init_context = load_tool("init_context")
+    legacy = tmp_path / ".evidence" / "schemas"
+    legacy.mkdir(parents=True)
+    legacy_schema = legacy / "evidence_chain.schema.json"
+    legacy_schema.write_text(
+        (REPO_ROOT / "schemas" / "evidence_chain.schema.json").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+
+    summary = init_context.initialize_context(tmp_path, framework_root=REPO_ROOT)
+
+    assert not legacy.exists()
+    assert any(
+        action["action"] == "remove_legacy_schema_mirror"
+        and action["path"].endswith(".evidence/schemas")
         for action in summary["actions"]
     )
 
