@@ -77,11 +77,14 @@ def fact_previews(
     fact: dict[str, Any],
     evidence_spans: dict[str, Any],
 ) -> tuple[list[str], list[dict[str, Any]]]:
-    refs: list[str] = []
-    previews: list[dict[str, Any]] = []
+    source_refs: list[str] = []
+    source_previews: list[dict[str, Any]] = []
     edges = fact.get("support_edges", [])
     if not isinstance(edges, list):
-        return refs, previews
+        return source_refs, source_previews
+    doc_path = str(fact.get("doc_path", ""))
+    doc_previews: list[dict[str, Any]] = []
+    doc_refs: list[str] = []
     for edge in edges:
         if not isinstance(edge, dict):
             continue
@@ -91,11 +94,43 @@ def fact_previews(
         span = evidence_spans.get(preview_ref)
         if not isinstance(span, dict):
             continue
-        refs.append(preview_ref)
-        previews.append(
-            preview_entry(span, support_relation=edge.get("support_relation"))
-        )
+        entry = preview_entry(span, support_relation=edge.get("support_relation"))
+        if entry["path"] == doc_path:
+            doc_refs.append(preview_ref)
+            doc_previews.append(entry)
+        else:
+            source_refs.append(preview_ref)
+            source_previews.append(entry)
+    refs = [*doc_refs, *source_refs]
+    previews = [*doc_previews, *source_previews]
     return refs, previews
+
+
+def target_path_for_previews(
+    previews: list[dict[str, Any]],
+    *,
+    doc_path: str,
+) -> str:
+    for preview in previews:
+        path = str(preview.get("path") or "")
+        if path and path != doc_path:
+            return path
+    if previews:
+        return str(previews[0].get("path") or "")
+    return ""
+
+
+def unresolved_marker_previews(
+    doc_path: str,
+    evidence_source: dict[str, Any],
+) -> list[dict[str, Any]]:
+    previews: list[dict[str, Any]] = []
+    for span in evidence_source.values():
+        if not isinstance(span, dict):
+            continue
+        if str(span.get("path", "")) == doc_path:
+            previews.append(preview_entry(span))
+    return previews
 
 
 def build_preview_index(
@@ -143,10 +178,14 @@ def build_preview_index(
             "doc_anchors": fact.get("doc_anchors", []),
             "evidence_refs": refs,
             "previews": previews,
+            "target_path": target_path_for_previews(
+                previews,
+                doc_path=str(fact.get("doc_path", "")),
+            ),
         }
 
     markers: dict[str, Any] = {}
-    for marker_items in markers_source.values():
+    for doc_path, marker_items in markers_source.items():
         if not isinstance(marker_items, list):
             continue
         for marker in marker_items:
@@ -161,6 +200,13 @@ def build_preview_index(
                 if isinstance(fact_id, str)
                 else []
             )
+            if not previews and marker_type == "U" and isinstance(doc_path, str):
+                previews = unresolved_marker_previews(doc_path, evidence_source)
+            target_path = ""
+            if isinstance(fact_id, str):
+                target_path = str(facts.get(fact_id, {}).get("target_path") or "")
+            if not target_path and isinstance(doc_path, str):
+                target_path = target_path_for_previews(previews, doc_path=doc_path)
             markers[key] = {
                 "marker": str(marker.get("marker", "")),
                 "marker_type": marker_type,
@@ -168,6 +214,7 @@ def build_preview_index(
                 "fact_id": fact_id,
                 "question_id": marker.get("question_id"),
                 "previews": previews,
+                "target_path": target_path,
             }
 
     result = {

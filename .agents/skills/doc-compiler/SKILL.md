@@ -40,6 +40,11 @@ this compiler when their claims become contract or release material.
    path separators with `__` and dropping the `.md` suffix.
 2. Freeze source git context before generated header/docchain writes: commit,
    branch, dirty status, and patch path when dirty.
+   Dirty-source snapshots must be limited to the target Markdown file and the
+   explicit `--source` read set. Do not snapshot generated/tool-owned runtime
+   directories such as `.evidence/**`, `docs/_site/**`, `docs/_views/**`,
+   `.auto_iterate/**`, caches, or prior docchain output back into a new
+   Evidence Chain.
 3. Build a read plan and re-read the current source artifacts from disk.
 4. Compile or refresh concise Markdown using fact markers such as `[F:id]` and
    `[U:id]`; the tool should update `Evidence chain`, `Evidence audit`, and
@@ -63,6 +68,10 @@ semantic support automatically.
 Use `python tooling/evidence/check_docchain_gates.py --workspace-root .` before
 declaring current contract/fact/protocol docs ready.
 Report the compile, validation, and docchain-gate commands in a gate ledger.
+If a generated Evidence Chain contains nested paths such as
+`untracked/.evidence/chains/...`, stop and fix the snapshot filter before
+running more docchain compiles; recursive Evidence Chain snapshots are invalid
+Gate Evidence.
 
 ## Docs Site Handoff
 

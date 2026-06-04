@@ -19,6 +19,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -46,11 +47,20 @@ TEXT_PREVIEW_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+GENERATED_UNTRACKED_PREFIXES = (
+    ".auto_iterate/",
+    ".evidence/",
+    ".harness_hooks/",
+    ".pytest_cache/",
+    "__pycache__/",
+    "docs/_site/",
+    "docs/_views/",
+)
 
 
 def atomic_write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     with tmp.open("w", encoding="utf-8") as handle:
         json.dump(data, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
@@ -59,7 +69,7 @@ def atomic_write_json(path: Path, data: dict[str, Any]) -> None:
 
 def atomic_write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     tmp.write_text(text, encoding="utf-8")
     tmp.replace(path)
 
@@ -190,11 +200,49 @@ def run_git_bytes(workspace_root: Path, args: list[str]) -> bytes | None:
     return result.stdout
 
 
-def git_untracked_files(workspace_root: Path) -> list[str]:
+def is_generated_untracked_path(relative: str) -> bool:
+    normalized = relative.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return any(
+        normalized == prefix.rstrip("/") or normalized.startswith(prefix)
+        for prefix in GENERATED_UNTRACKED_PREFIXES
+    )
+
+
+def source_status_summary(status: str | None) -> str:
+    if not status:
+        return ""
+    kept: list[str] = []
+    for line in status.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("?? "):
+            relative = stripped[3:].strip()
+            if is_generated_untracked_path(relative):
+                continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def git_untracked_files(
+    workspace_root: Path,
+    snapshot_allowlist: set[str] | None = None,
+) -> list[str]:
     output = run_git(workspace_root, ["ls-files", "--others", "--exclude-standard"])
     if not output:
         return []
-    return [line.strip() for line in output.splitlines() if line.strip()]
+    untracked = [line.strip() for line in output.splitlines() if line.strip()]
+    result: list[str] = []
+    for relative in untracked:
+        normalized = relative.replace("\\", "/")
+        while normalized.startswith("./"):
+            normalized = normalized[2:]
+        if is_generated_untracked_path(normalized):
+            continue
+        if snapshot_allowlist is not None and normalized not in snapshot_allowlist:
+            continue
+        result.append(normalized)
+    return result
 
 
 def snapshot_untracked_files(
@@ -267,26 +315,52 @@ def write_dirty_patch(
     return relpath(patch_path, workspace_root), digest, untracked_snapshots
 
 
-def git_context(workspace_root: Path, chain_dir: Path | None = None) -> dict[str, Any]:
+def snapshot_allowlist_for(paths: list[Path], workspace_root: Path) -> set[str]:
+    allowlist: set[str] = set()
+    workspace = workspace_root.resolve()
+    for path in paths:
+        try:
+            relative = path.resolve().relative_to(workspace).as_posix()
+        except ValueError:
+            continue
+        if not is_generated_untracked_path(relative):
+            allowlist.add(relative)
+    return allowlist
+
+
+def git_context(
+    workspace_root: Path,
+    chain_dir: Path | None = None,
+    snapshot_paths: list[Path] | None = None,
+) -> dict[str, Any]:
     commit = run_git(workspace_root, ["rev-parse", "HEAD"])
     branch = run_git(workspace_root, ["branch", "--show-current"])
-    status = run_git(workspace_root, ["status", "--short", "--untracked-files=all"])
+    raw_status = run_git(workspace_root, ["status", "--short", "--untracked-files=all"])
+    status = source_status_summary(raw_status)
     is_dirty = bool(status)
     diff_path = None
     diff_hash = None
     untracked_snapshots: list[dict[str, str]] = []
     if is_dirty and chain_dir is not None:
+        snapshot_allowlist = (
+            snapshot_allowlist_for(snapshot_paths, workspace_root)
+            if snapshot_paths is not None
+            else None
+        )
         diff_path, diff_hash, untracked_snapshots = write_dirty_patch(
             workspace_root,
             chain_dir,
             status or "",
-            git_untracked_files(workspace_root),
+            git_untracked_files(workspace_root, snapshot_allowlist),
         )
     return {
         "commit": commit,
         "branch": branch,
         "is_dirty": is_dirty,
         "status_summary": status or "",
+        "raw_status_summary": raw_status or "",
+        "generated_untracked_prefixes": list(GENERATED_UNTRACKED_PREFIXES),
+        "untracked_snapshot_policy": "explicit_doc_and_sources_only",
         "diff_path": diff_path,
         "diff_hash": diff_hash,
         "untracked_snapshots": untracked_snapshots,
@@ -482,8 +556,9 @@ def compile_document(
     manifest_path = chain_dir / "source_manifest.json"
     audit_path = chain_dir / "doc_audit.json"
     audit_result = "PASS" if resolved_sources else "DRAFT_ONLY"
+    read_paths = [doc, *resolved_sources]
+    source_git_context = git_context(workspace, chain_dir, snapshot_paths=read_paths)
 
-    source_git_context = git_context(workspace, chain_dir)
     doc_text_before = doc.read_text(encoding="utf-8")
     header_values = {
         "Evidence chain": relpath(chain_path, workspace),
@@ -498,7 +573,6 @@ def compile_document(
         atomic_write_text(doc, doc_text)
 
     markers = extract_markers(doc_text)
-    read_paths = [doc, *resolved_sources]
     read_set, evidence = source_entries(
         read_paths,
         workspace,

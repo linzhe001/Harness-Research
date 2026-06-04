@@ -212,6 +212,7 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
         "The project scope is draft"
         in preview["markers"]["F:project.scope"]["previews"][0]["excerpt"]
     )
+    assert preview["markers"]["F:project.scope"]["target_path"] == "PROJECT_STATE.json"
     assert preview_path.exists()
     assert validator.validate_evidence_preview_index(preview_path) == []
 
@@ -228,6 +229,7 @@ def test_compile_doc_generates_valid_docchain(tmp_path: Path) -> None:
     )
     assert validator.validate_docs_site_manifest(manifest_path) == []
     assert 'data-marker="F:project.scope"' in html_text
+    assert 'href="../../../PROJECT_STATE.json"' in html_text
     assert "The project scope is draft" in html_text
 
     stale_html = tmp_path / "docs" / "_site" / "stale.html"

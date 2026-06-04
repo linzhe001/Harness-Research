@@ -42,6 +42,10 @@ the Markdown is still a draft in progress, leave the HTML stale and report
 2. If the Markdown is claim-bearing and the required Evidence Chain was not
    compiled, stop or report `compile_doc_or_NOT_RUN`; do not render unsupported
    claims as if they were ready.
+   Evidence marker preview cards are available only for markers recorded in
+   `.evidence/index.json`; claim-bearing docs that contain `[F:*]`, `[U:*]`,
+   `[D:*]`, `[L:*]`, or `[E:*]` markers should be compiled first when the
+   operator expects hover previews or click-through source links.
 3. If `.evidence/index.json` exists, run:
    `python tooling/evidence/build_evidence_preview_index.py --workspace-root .`
 4. Render the human docs site with:
@@ -49,6 +53,8 @@ the Markdown is still a draft in progress, leave the HTML stale and report
 5. Validate generated JSON artifacts when present:
    - `docs/_views/evidence_preview_index.json` against `schemas/evidence_preview_index.schema.json`
    - `docs/_site/manifest.json` against `schemas/docs_site_manifest.schema.json`
+   Then inspect at least one rendered marker for a preview card and a non-empty
+   click target when the source marker has Evidence Chain preview data.
 6. Report a Gate ledger with the preview-index command, render command,
    validation result, reason, and artifacts.
 

@@ -21,7 +21,7 @@ DEFAULT_SOURCE_ROOT = Path("docs")
 DEFAULT_OUTPUT_ROOT = Path("docs/_site")
 DEFAULT_PREVIEW_INDEX = Path("docs/_views/evidence_preview_index.json")
 MANIFEST_NAME = "manifest.json"
-MARKER_RE = re.compile(r"\[(F|U|E):([A-Za-z0-9_.:-]+)\]")
+MARKER_RE = re.compile(r"\[(F|U|D|L|E):([A-Za-z0-9_.:-]+)\]")
 WIKI_REF_RE = re.compile(r"\[\[([A-Za-z][A-Za-z0-9_-]*:[^\]|]+)(?:\|([^\]]+))?\]\]")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
@@ -258,12 +258,15 @@ th { background: #f1f4f8; text-align: left; }
   border: 1px solid #9bd5cb;
   border-radius: 999px;
   color: #075e55;
-  cursor: help;
+  cursor: pointer;
   display: inline-block;
   font-size: 0.86em;
   margin: 0 2px;
   padding: 0 6px;
+  text-decoration: none;
 }
+.evidence-marker:hover,
+.reference-marker:hover { text-decoration: none; }
 .evidence-popover {
   background: #101820;
   border-radius: 8px;
@@ -558,6 +561,90 @@ def workflow_ref_target(
     return href_between(current_html, workspace_root / target)
 
 
+def marker_preview_for(
+    marker: str,
+    preview_data: dict[str, Any],
+) -> dict[str, Any] | None:
+    item = (preview_data.get("markers") or {}).get(marker)
+    if isinstance(item, dict):
+        previews = item.get("previews")
+        if isinstance(previews, list) and previews and isinstance(previews[0], dict):
+            return previews[0]
+    evidence = (preview_data.get("evidence") or {}).get(marker)
+    return evidence if isinstance(evidence, dict) else None
+
+
+def marker_target_path(
+    marker: str,
+    preview_data: dict[str, Any],
+) -> str:
+    item = (preview_data.get("markers") or {}).get(marker)
+    if isinstance(item, dict):
+        target_path = item.get("target_path")
+        if isinstance(target_path, str) and target_path.strip():
+            return target_path.strip()
+    preview = marker_preview_for(marker, preview_data)
+    if preview is None:
+        return ""
+    return str(preview.get("path", ""))
+
+
+def html_target_for_source_path(
+    source_path: str,
+    *,
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> str | None:
+    if current_html is None or workspace_root is None or not source_path:
+        return None
+    normalized = source_path.replace("\\", "/").split("#", 1)[0]
+    if normalized.startswith("docs/") and normalized.endswith(".md"):
+        relative_doc = Path(normalized).relative_to("docs")
+        target = workspace_root / "docs" / "_site" / relative_doc.with_suffix(".html")
+        return href_between(current_html, target)
+    return href_between(current_html, workspace_root / normalized)
+
+
+def marker_href(
+    marker: str,
+    *,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> str:
+    source_path = marker_target_path(marker, preview_data)
+    if not source_path:
+        return "#"
+    href = html_target_for_source_path(
+        source_path,
+        current_html=current_html,
+        workspace_root=workspace_root,
+    )
+    return href or "#"
+
+
+def render_evidence_marker(
+    match: re.Match[str],
+    *,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> str:
+    marker = f"{match.group(1)}:{match.group(2)}"
+    href = marker_href(
+        marker,
+        preview_data=preview_data,
+        current_html=current_html,
+        workspace_root=workspace_root,
+    )
+    return (
+        '<a class="evidence-marker" tabindex="0" '
+        f'data-marker="{html.escape(marker, quote=True)}" '
+        f'href="{html.escape(href, quote=True)}">'
+        f"{match.group(0)}</a>"
+    )
+
+
 def render_inline(
     text: str,
     *,
@@ -581,10 +668,11 @@ def render_inline(
             escaped,
         )
         escaped = MARKER_RE.sub(
-            lambda match: (
-                '<span class="evidence-marker" tabindex="0" '
-                f'data-marker="{match.group(1)}:{match.group(2)}">'
-                f"{match.group(0)}</span>"
+            lambda match: render_evidence_marker(
+                match,
+                preview_data=preview_data,
+                current_html=current_html,
+                workspace_root=workspace_root,
             ),
             escaped,
         )
