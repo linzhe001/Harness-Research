@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness execution readiness candidate inputs",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "inputs"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "updated_at": { "type": "string" },
+    "source": { "type": "string" },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "kind", "verification_status"],
+        "properties": {
+          "key": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "path",
+              "command",
+              "budget",
+              "approval_source",
+              "local_value",
+              "open_question"
+            ]
+          },
+          "value": { "type": ["string", "number", "boolean", "null"] },
+          "redacted_value": { "type": ["string", "null"] },
+          "verification_status": {
+            "type": "string",
+            "enum": ["candidate", "verified", "rejected", "stale"]
+          },
+          "verified_at": { "type": ["string", "null"] },
+          "verification_command": { "type": ["string", "null"] },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
