@@ -38,8 +38,10 @@ Canonical definitions live in `.agents/references/ubiquitous-language.md`. This 
 
 ### Entrypoint
 
-The human-facing way to start workflow work, such as a Stage Skill, Grill,
-execution supervisor segment, or Change Intake.
+One of the two human-facing ways to start workflow work: Grill or Execution
+Supervisor. Supervisor actions such as prepare, build, iterate, release, and
+change are scoped actions under Execution Supervisor, not extra top-level
+entrypoints.
 
 ### Stage
 

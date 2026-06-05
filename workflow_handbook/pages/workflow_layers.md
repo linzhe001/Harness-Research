@@ -32,22 +32,22 @@ html:
 
 ## Purpose
 
-这页解释 operator 如何把一句自然语言请求落到正确的 Entrypoint 和 Gate。
+这页解释 operator 如何把一句自然语言请求落到正确的顶层入口和 Gate。
 WF0-WF12 nodes 和 Skill 是内部执行参考，不是第一层用户界面。
 
 ## Model
 
 ```text
 Intent
-  -> Entrypoint
+  -> Grill or Execution Supervisor
   -> Runtime / Skill worker / Evidence tooling
   -> Gate Evidence / Pending Request / Human Approval
   -> Next safe action
 ```
 
 - Intent 是人的目标，例如“验证这次实现”。
-- Entrypoint 是执行入口，例如 `$grill`、`$workflow-supervisor`、
-  `$change-intake` 或直接 Stage Skill。
+- 顶层入口只有 Grill 和 Execution Supervisor。`prepare/build/iterate/release/change`
+  是 Execution Supervisor actions，不是额外的第一层入口。
 - Runtime / worker / tooling 是执行层，例如 supervisor、auto-iterate、
   evidence tooling 或某个 Skill worker。
 - Gate 是继续前必须能报告的检查，例如 [[term:Gate Evidence]]、Pending
@@ -57,7 +57,7 @@ Intent
 
 ## Boundaries
 
-- Entrypoint 只决定运行语义，不替代 Stage artifact、Gate Evidence 或
+- 顶层入口只决定运行语义，不替代 Stage artifact、Gate Evidence 或
   Human Approval。
 - Stage 决定内部 artifact map，不等于用户必须先选择 Stage。
 - Skill Contract 决定 recommended reads、declared paths 和 required actions。

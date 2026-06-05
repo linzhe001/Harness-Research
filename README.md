@@ -48,21 +48,27 @@ researcher idea
 
 ## Core Workflow
 
-Operator 视角先记住 6 个入口：
+Operator 视角先记住 2 个顶层入口：
 
 ```text
-grill -> prepare -> build -> iterate -> release
-change -> route mature-codebase deltas
+grill -> clarify rough research intent
+execution supervisor -> prepare | build | iterate | release | change
 ```
 
-| Entrypoint | Use when | First status surface |
+| Top-level mode | Use when | First status surface |
 | --- | --- | --- |
 | `harness grill` | idea 还不清楚，需要追问和收敛 Research Intent | Research Intent Draft / Grill Round Log |
-| `harness prepare` | intent 已有，需要 readiness、Review Packet、approval plumbing | `workflow_ctl status --json` |
-| `harness build` | 在边界内推进 build / validate | worker result JSON / Gate ledger |
-| `harness iterate` | 进入多轮实验 loop | `auto_iterate_ctl.sh status --json` / `iteration_log.json` |
-| `harness release` | 检查 release claim 或 package/submit action | WF12 Review Packet / Claim Boundary |
-| `harness change` | 成熟代码库收到新需求、新 idea 或 config/code delta | Change Request JSON / route confidence |
+| `harness <action>` / `$workflow-supervisor` | intent 已经能进入执行、验证、迭代、release，或成熟代码库出现新需求 | `workflow_ctl status --json`、worker result JSON、Gate ledger |
+
+Execution Supervisor 下面再选择具体 action：
+
+| Action | Use when | First status surface |
+| --- | --- | --- |
+| `prepare` | intent 已有，需要 readiness、Review Packet、approval plumbing | pending request JSON / Review Packet |
+| `build` | 在边界内推进 build / validate | worker result JSON / Gate ledger |
+| `iterate` | 进入多轮实验 loop | `auto_iterate_ctl.sh status --json` / `iteration_log.json` |
+| `release` | 检查 release claim 或 package/submit action | WF12 Review Packet / Claim Boundary |
+| `change` | 成熟代码库收到新需求、新 idea 或 config/code delta | Change Request JSON / route confidence |
 
 内部 WF0-WF12 参考仍然存在，但它主要服务 artifact ownership、Skill
 Contract、Gate 条件和失败排查，不是普通用户的第一层入口。日常操作先读
@@ -216,7 +222,7 @@ $iterate eval
 | `schemas/**` | JSON schemas for evidence and framework artifacts. |
 | `tooling/.tests/**` | Framework regression tests. |
 | `workflow_handbook/Workflow_Operator_Handbook.md` | Human-facing workflow entrypoint and operating model. |
-| `workflow_handbook/pages/operator_task_index.md` | Task-first index for choosing an entrypoint, status surface, and stop condition. |
+| `workflow_handbook/pages/operator_task_index.md` | Task-first index for choosing a top-level mode, supervisor action, status surface, and stop condition. |
 | `workflow_handbook/Workflow_Stage_Cards.md` | Detailed internal artifact and gate reference generated from Skill Contracts. |
 
 ## Dynamic Context Tools
@@ -246,12 +252,12 @@ Important boundaries:
 
 ## Grill And Workflow Supervisor
 
-V0 adds optional supervised entrypoints without changing the default manual
+V0 adds two optional top-level modes without changing the default manual
 Skill workflow:
 
 ```text
-grill -> prepare -> build -> iterate -> release
-change -> route a mature-codebase delta
+grill -> draft early research intent
+execution supervisor -> prepare | build | iterate | release | change
 ```
 
 `$grill` writes draft intent/readiness artifacts only; it does not complete

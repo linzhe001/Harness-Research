@@ -17,9 +17,10 @@ dynamic-context evidence tooling、Review Packet tooling、Codex hooks、以及 
 auto-iterate controller。计划的核心不是删除现有 workflow，而是增加一个可恢复的
 supervisor layer，让现有 Skills 成为可编排节点。
 
-用户文档必须 entrypoint-first：先说明 `grill / prepare / build / iterate /
-release / change` 怎么用、看什么状态、何时暂停；WF0-WF12 只作为 detailed
-reference、compatibility 和 postcondition 语言出现。
+用户文档必须 top-level entrypoint first：先说明只有 `grill` 和
+`execution supervisor` 两个第一层入口；`prepare/build/iterate/release/change`
+只是 Execution Supervisor actions，用来说明怎么运行、看什么状态、何时暂停。
+WF0-WF12 只作为 detailed reference、compatibility 和 postcondition 语言出现。
 
 ## Document Boundary
 
@@ -113,7 +114,7 @@ slice 重新分叉。冻结决策见下一节。
 | Grill implementation shape | Add a `grill` Skill plus lightweight `tooling/grill/**` helpers; optional CLI wrapper may call the Skill, but v0 does not implement Grill as a supervisor subgraph. | Keeps early human discussion separate from execution automation. |
 | Node registry | Add `schemas/workflow_supervisor_nodes.schema.json` and `tooling/workflow_supervisor/config/default_nodes.json`; do not modify `schemas/skill_contracts.json` in the first runtime slice. | Avoids destabilizing hook/contract behavior before the registry contract is tested. |
 | Human interface | Use CLI + Markdown/Review Packet payloads; no dashboard in v0. | Matches local research workspace usage and keeps implementation auditable. |
-| Change intake entrypoint | Add explicit `harness change` / `workflow_ctl start --segment change`; later `build` or `iterate` may internally route to it only after classifier tests pass. | Prevents post-codebase requests from silently becoming code edits. |
+| Change intake action | Add explicit `harness change` / `workflow_ctl start --segment change` as an Execution Supervisor action; later `build` or `iterate` may internally route to it only after classifier tests pass. | Prevents post-codebase requests from silently becoming code edits while keeping only two top-level entrypoints. |
 | Default enablement | Manual Skill workflow remains default until the final default-enablement gate passes. | Preserves existing Harness behavior during rollout. |
 
 ## Operator Documentation Contract
@@ -122,7 +123,9 @@ slice 重新分叉。冻结决策见下一节。
 
 ```text
 what you want
-  -> command / entrypoint
+  -> top-level entrypoint
+  -> supervisor action, when applicable
+  -> command
   -> required input
   -> status surface
   -> output artifact
@@ -134,10 +137,10 @@ Required index surfaces:
 
 - `workflow_handbook/Workflow_Operator_Handbook.md`: short mental model and
   quick task index.
-- `workflow_handbook/pages/operator_task_index.md`: complete task-to-entrypoint
+- `workflow_handbook/pages/operator_task_index.md`: complete task-to-mode/action
   index.
-- `workflow_handbook/pages/workflow_supervisor_model.md`: entrypoint behavior,
-  status surfaces, HITL boundary.
+- `workflow_handbook/pages/workflow_supervisor_model.md`: two top-level modes,
+  supervisor actions, status surfaces, HITL boundary.
 - `workflow_handbook/Workflow_Stage_Cards.md`: detailed internal reference
   generated from Skill Contracts.
 - `README.md`: repository-level overview that links to the operator index
@@ -638,7 +641,9 @@ Every execution supervisor run should write:
   "base_git_commit": "...",
   "base_git_dirty": true,
   "goal": "...",
-  "entrypoint": "harness prepare",
+  "top_level_mode": "execution_supervisor",
+  "supervisor_action": "prepare",
+  "command": "harness prepare",
   "policy": {
     "max_llm_calls": 50,
     "max_node_attempts": 2,
@@ -1297,8 +1302,9 @@ Codex hooks should recognize supervisor prompts and runtime paths.
 
 Add hook behavior:
 
-- route hints for `harness grill`, `harness prepare`, `harness build`,
-  `harness change`, `harness release`;
+- route hints for `harness grill` and Execution Supervisor action commands
+  such as `harness prepare`, `harness build`, `harness change`, and
+  `harness release`;
 - warn when worker attempts to ask user directly in `auto_mode`;
 - block manual writes to `.workflow_supervisor/**` except through supervisor tooling;
 - continue blocking manual writes to `.evidence/**` and `.auto_iterate/**`;
@@ -1549,7 +1555,8 @@ Update:
 - `.gitignore` and hook policy docs for `.workflow_supervisor/**` runtime ownership.
 - `AI_AGENT_SETUP.md` for bootstrap instructions and `.workflow_supervisor/` ignore rules.
 - `templates/**` to include optional Grill / supervisor docs.
-- `README.md` to describe `grill -> prepare -> build -> iterate -> release -> change`.
+- `README.md` to describe two top-level modes: `grill` and Execution Supervisor
+  actions (`prepare/build/iterate/release/change`).
 - `AGENTS.md` and `CLAUDE.md` to add concise routing rules.
 - `workflow_handbook/Workflow_Operator_Handbook.md` for operator-facing flows.
 - `workflow_handbook/pages/workflow_supervisor_model.md` and navigation.

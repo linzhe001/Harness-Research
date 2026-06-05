@@ -11,7 +11,8 @@
 
 ```text
 rough idea or request
-  -> grill | prepare | build | iterate | release | change
+  -> grill | execution supervisor
+  -> supervisor action, when applicable
   -> status / output / pending request
   -> Human Approval or next safe action
 ```
@@ -152,12 +153,12 @@ Harness 名称和 artifact 类型，以便解释机制边界。
   `workflow_supervisor_nodes.json` 引用 Skill Contracts？
 - `Execution Readiness Packet` 应写成 root `docs/*.md`、JSON state，还是同时写
   human-readable Markdown 和 machine-readable JSON？
-- codebase 建成后的 `change intake` 是否应是独立 entrypoint，还是由
-  `harness build` / `harness iterate` 内部自动路由？
+- codebase 建成后的 `change intake` 是否应是显式 supervisor action，还是由
+  `build` / `iterate` actions 内部自动路由？
 
 V0 implementation should not leave these choices ambiguous. The implementation
 plan freezes the first runtime namespace, artifact layout, node registry shape,
-human interface, and change-intake entrypoint; later versions may revisit those
+human interface, and change-intake action; later versions may revisit those
 choices after tests and fixture runs prove the baseline.
 
 ## 设计目的
@@ -226,11 +227,12 @@ workflow friction problem
 | --- | --- | --- | --- | --- |
 | `grill` | WF1-WF3 idea clarification、debate、claim discipline | 低自动化，高对话 | Co-designer / decision maker | 人类接受 Research Intent Draft，或 pivot / abandon |
 | `execution_supervisor` | WF4-WF12 data、baseline、build、validate、iterate、release | postconditions 强的地方自动继续 | Approver / information provider / steering authority | segment 完成、HITL interrupt、gate failure 或 fatal error |
-| `change_intake` | post-WF8/WF9 mature codebase 上的新需求、新 idea、config/code delta | 先分类，低风险自动路由，高风险进入 delta grill | Intent clarifier / steering authority | change route 明确，或进入 STEER / approval gate |
+| `change_intake` action | post-WF8/WF9 mature codebase 上的新需求、新 idea、config/code delta | Execution Supervisor 内部先分类，低风险自动路由，高风险进入 delta grill | Intent clarifier / steering authority | change route 明确，或进入 STEER / approval gate |
 
 ## Segment Model
 
-这套机制建议暴露多个 human-facing entrypoint，而不是一个巨大命令：
+这套机制只暴露两个第一层 human-facing entrypoint：`grill` 和
+`execution supervisor`。Execution Supervisor 再暴露 scoped actions：
 
 ```text
 harness grill
@@ -238,27 +240,31 @@ harness grill
   -> produces Research Intent Draft
   -> requires explicit exit decision
 
-harness prepare
+harness <action>
+  -> execution supervisor
+  -> action is one of prepare / build / iterate / release / change
+
+prepare
   -> WF4-WF5
   -> data, baseline, protocol, review packet
   -> pauses for dataset input and Evaluation Contract approval
 
-harness build
+build
   -> WF6-WF9
   -> architecture, plan, implementation, validation
   -> pauses for architecture tradeoffs and high-risk scope changes
 
-harness iterate
+iterate
   -> WF10
   -> existing auto-iterate controller
   -> pauses for manual_action_required, PIVOT, ABORT, budget, or goal changes
 
-harness release
+release
   -> WF11-WF12
   -> final experiment, claim boundary, release package
   -> pauses for Claim Boundary and release/submission approval
 
-harness change
+change
   -> after WF8/WF9 or after a mature codebase exists
   -> classify a new request as bugfix / experiment_delta / stable_code_delta /
      architecture_delta / evaluation_delta / claim_boundary_delta /
@@ -266,7 +272,7 @@ harness change
   -> route to code-debug / iterate / build_delta / review-packet / delta grill
 ```
 
-这些入口不是简单 alias。它们代表不同人类参与语义：
+这些 actions 不是新的顶层入口。它们代表 Execution Supervisor 内部不同的人类参与语义：
 
 - `grill`: human input 本身就是主要工作。
 - `prepare`: human input 解决缺失事实和 contract risk。

@@ -1,9 +1,8 @@
 # Detailed Workflow Stage Reference
 
 本文件由 `schemas/skill_contracts.json` 生成，是 detailed reference，不是
-operator 的第一层入口。日常操作先从 `harness grill`、`harness prepare`、
-`harness build`、`harness iterate`、`harness release` 或 `harness change`
-选择 Entrypoint。
+operator 的第一层入口。日常操作先从 Grill 或 Execution Supervisor
+选择顶层入口；`prepare/build/iterate/release/change` 是 supervisor actions。
 
 只有当你需要追踪内部 WF artifact、定位某个 Skill Contract、或排查
 Gate/postcondition 失败时，才使用本页。完整推荐读取、声明路径、

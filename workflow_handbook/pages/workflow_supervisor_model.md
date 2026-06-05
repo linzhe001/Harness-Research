@@ -8,7 +8,7 @@ source_type: "hand_authored"
 source_path: "workflow_handbook/pages/workflow_supervisor_model.md"
 source_of_truth: true
 status: "current"
-summary: "How Grill, execution supervisor, and change intake form the user-facing workflow entrypoints without replacing Gate Evidence or Human Approval."
+summary: "How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval."
 nav:
   section: "operate"
   position: 10
@@ -31,7 +31,7 @@ html:
 ## Purpose
 
 The supervisor layer reduces workflow friction without changing the authority
-model. Operators choose a human-facing Entrypoint first. Existing Skill-owned
+model. Operators choose one of two human-facing top-level modes first. Existing Skill-owned
 artifact producers remain the internal execution map. Evidence tooling still
 owns Evidence Chains and Review Packets. Human Approval is still required for
 contracts, claim boundaries, high-risk transitions, and release decisions.
@@ -40,17 +40,23 @@ contracts, claim boundaries, high-risk transitions, and release decisions.
 
 ```text
 Intent
-  -> Entrypoint
-  -> Supervisor segment / Grill / Change Intake
+  -> Grill or Execution Supervisor
+  -> Supervisor action, when applicable
   -> Gate Evidence or typed HITL interrupt
   -> Next safe action
 ```
 
-Entrypoints define the operator surface:
+Top-level modes define the operator surface:
 
-| Entrypoint | 什么时候用 | 主要状态面 |
+| Top-level mode | 什么时候用 | 主要状态面 |
 | --- | --- | --- |
 | `grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
+| `execution supervisor` | intent 已经能进入执行、验证、迭代、release，或成熟代码库出现新请求 | pending request、worker result JSON、Gate ledger、controller status |
+
+Execution Supervisor actions are scoped commands under the second mode:
+
+| Supervisor action | 什么时候用 | 主要状态面 |
+| --- | --- | --- |
 | `prepare` | intent 已存在，需要检查 readiness / approval plumbing | Review Packet 和 pending request JSON |
 | `build` | 需要推进 bounded implementation 或 validation segment | worker result JSON 和 postcondition validation |
 | `iterate` | 需要把 WF10 委托给 auto-iterate | `auto_iterate_ctl.sh status --json` 和 `iteration_log.json` |

@@ -35,7 +35,7 @@ Avoid bare `evidence` when the meaning could be unclear:
 | Term | Definition |
 | --- | --- |
 | `Workflow` | End-to-end Harness control process from initialization through release. |
-| `Entrypoint` | Human-facing way to start workflow work, such as a Stage Skill, Grill, execution supervisor segment, or Change Intake. It sets routing semantics, not approval or Stage completion. |
+| `Entrypoint` | One of the two human-facing ways to start workflow work: Grill or Execution Supervisor. Supervisor actions such as `prepare`, `build`, `iterate`, `release`, and `change` are scoped actions under Execution Supervisor, not extra top-level entrypoints. |
 | `Stage` | Named workflow phase such as WF5, WF10, or `release`. |
 | `Skill` | Agent behavior contract for a stage or bounded task. |
 | `Skill Contract` | Machine-readable rule set in `schemas/skill_contracts.json`. |

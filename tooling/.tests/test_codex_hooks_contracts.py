@@ -545,7 +545,8 @@ def test_stage_card_generator_renders_core_skill_boundaries() -> None:
 
     assert "# Detailed Workflow Stage Reference" in rendered
     assert "不是\noperator 的第一层入口" in rendered
-    assert "`harness grill`" in rendered
+    assert "Grill 或 Execution Supervisor" in rendered
+    assert "`prepare/build/iterate/release/change` 是 supervisor actions" in rendered
     assert "## Explore" in rendered
     assert "## Contract & Plan" in rendered
     assert "## Build & Validate" in rendered
@@ -613,14 +614,15 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
     )
     assert "Start Here" in handbook
     assert "Quick Task Index" in handbook
-    assert "Human Entrypoints" in handbook
+    assert "Top-Level Modes" in handbook
     assert "内部执行细节不属于第一层界面" in handbook
     assert (
         "Intent\n"
-        "  -> Entrypoint\n"
-        "  -> typed request / worker result / Gate ledger\n"
+        "  -> Grill or Execution Supervisor\n"
+        "  -> supervisor action / typed request / worker result / Gate ledger\n"
         "  -> Human Approval or next safe action"
     ) in handbook
+    assert "`prepare`、`build`、`iterate`、`release`、`change` actions" in handbook
     assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
     assert "[[page:operator_task_index|Operator Task Index]]" in handbook
     assert "Daily Run Shape" in handbook

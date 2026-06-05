@@ -5,11 +5,11 @@ workflow system built on Claude Code Skills. The system drives an AI/ML research
 project from idea to release or paper-ready state while keeping evidence,
 protocols, contracts, runtime state, and lessons separated.
 
-User-facing docs should start from the six entrypoints:
+User-facing docs should start from two top-level entrypoints:
 
 ```text
-grill -> prepare -> build -> iterate -> release
-change -> route mature-codebase deltas
+grill -> clarify rough research intent
+execution supervisor -> prepare | build | iterate | release | change
 ```
 
 Use this document as a detailed internal reference for Stage, Skill, state,
@@ -35,11 +35,12 @@ The system uses Claude Code's three-layer configuration mechanism, layered by lo
 ### 1.1.1 Detailed Primitive Model
 
 The user-facing model stays smaller than the implementation surface:
-`grill`, `prepare`, `build`, `iterate`, `release`, and `change`. The eight
-primitives below are a maintainer reference for explaining how detailed Stage
-Skills, tools, and gates fit under those entrypoints:
+`grill` and `execution supervisor`. The supervisor owns scoped actions such as
+`prepare`, `build`, `iterate`, `release`, and `change`. The eight primitives
+below are a maintainer reference for explaining how detailed Stage Skills,
+tools, and gates fit under those top-level entrypoints:
 
-| Primitive | Human question | Main entrypoints | Boundary |
+| Primitive | Human question | Main route or action | Boundary |
 |------|------|------|------|
 | `init` | Where is the workspace and what context exists? | `/orchestrator init`, `/init-project init`, `init_context.py` | Sets up structure and stable context; does not prove research facts. |
 | `evidence` | What do we actually know? | fact docs, evidence tables, `compile_doc.py` | Evidence must come from source artifacts, logs, metrics, or explicit records. |
