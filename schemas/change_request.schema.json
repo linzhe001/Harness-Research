@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness change intake request",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "change_type",
+    "route",
+    "confidence",
+    "uncertainty_reasons",
+    "affected_contracts",
+    "affected_paths",
+    "validation_plan",
+    "human_stop_points",
+    "gate_evidence_plan"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "request_id": { "type": "string", "pattern": "^chg_[A-Za-z0-9_:-]+$" },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "bugfix",
+        "experiment_delta",
+        "stable_code_delta",
+        "architecture_delta",
+        "evaluation_delta",
+        "claim_boundary_delta",
+        "new_research_direction",
+        "harness_guardrail_delta",
+        "unknown"
+      ]
+    },
+    "route": {
+      "type": "string",
+      "enum": [
+        "code-debug",
+        "iterate",
+        "build_delta",
+        "delta_grill",
+        "review_packet",
+        "claim_boundary_review",
+        "harness-maintenance",
+        "steer"
+      ]
+    },
+    "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+    "uncertainty_reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "affected_contracts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "affected_paths": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation_plan": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_stop_points": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gate_evidence_plan": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

@@ -54,6 +54,7 @@
 
 # === Controller runtime state (never commit in real projects) ===
 /.auto_iterate/
+/.workflow_supervisor/
 
 # === Runtime / Generated ===
 __pycache__/

@@ -1,0 +1,804 @@
+{
+  "schema_version": 1,
+  "nodes": [
+    {
+      "node_id": "prepare_readiness_preflight",
+      "skill": "workflow-supervisor",
+      "segment": "prepare",
+      "stage": "WF5",
+      "order": 10,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 120,
+      "preconditions": [],
+      "postconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": ".workflow_supervisor/readiness_preflight.json",
+          "schema": "schemas/execution_readiness.schema.json"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "missing_required_input",
+          "type": "ASK_INPUT",
+          "reason": "execution_readiness_input_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "resume_with_answer",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/"
+      ],
+      "tool_owned_output_refs": [
+        ".workflow_supervisor/readiness_preflight.json"
+      ]
+    },
+    {
+      "node_id": "prepare_review_packet",
+      "skill": "review-packet",
+      "segment": "prepare",
+      "stage": "WF5",
+      "order": 40,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 2,
+      "timeout_seconds": 600,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Execution_Readiness_Packet.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "review_packet_exists",
+          "kind": "dynamic_context",
+          "stage": "wf5"
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "approval_required",
+          "type": "APPROVE_ACTION",
+          "reason": "evaluation_contract_approval_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf5 --review-packet",
+          "outputs": [
+            ".evidence/review_packets/"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/review_packets/"
+      ]
+    },
+    {
+      "node_id": "prepare_protocol_compiler",
+      "skill": "protocol-compiler",
+      "segment": "prepare",
+      "stage": "WF5",
+      "order": 35,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 300,
+      "preconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": ".workflow_supervisor/readiness_preflight.json",
+          "schema": "schemas/execution_readiness.schema.json"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": ".evidence/protocol_compiler/<run_id>/docs/35_protocol/Research_Protocol.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "protocol_compile_failed",
+          "type": "STEER",
+          "reason": "protocol_compiler_failed"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/compile_protocol.py --workspace-root . --build-id <run_id> --json",
+          "outputs": [
+            ".evidence/protocol_compiler/"
+          ]
+        }
+      ],
+      "resume_strategy": "manual_recover",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/30_evidence/"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/protocol_compiler/"
+      ]
+    },
+    {
+      "node_id": "prepare_data_prep",
+      "skill": "data-prep",
+      "segment": "prepare",
+      "stage": "WF4",
+      "order": 20,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 900,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Execution_Readiness_Packet.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Dataset_Stats.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "dataset_input_missing",
+          "type": "ASK_INPUT",
+          "reason": "dataset_input_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "resume_with_answer",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/Dataset_Stats.md",
+        "docs/20_facts/",
+        "docs/30_evidence/Dataset_Table.md",
+        "PROJECT_STATE.json",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "configs/",
+        "src/"
+      ],
+      "tool_owned_output_refs": [
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "prepare_baseline_repro",
+      "skill": "baseline-repro",
+      "segment": "prepare",
+      "stage": "WF5",
+      "order": 30,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 1800,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Dataset_Stats.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Baseline_Report.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "baseline_repro_failed",
+          "type": "STEER",
+          "reason": "baseline_reproduction_decision_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/Baseline_Report.md",
+        "docs/30_evidence/Baseline_Table.md",
+        "docs/10_contract/",
+        "docs/20_facts/Codebase_Map.md",
+        "PROJECT_STATE.json",
+        "project_map.json",
+        "CLAUDE.md",
+        "baselines/",
+        "configs/",
+        "scripts/",
+        "src/"
+      ],
+      "tool_owned_output_refs": [
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "build_refine_arch",
+      "skill": "refine-arch",
+      "segment": "build",
+      "stage": "WF6",
+      "order": 10,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 900,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Baseline_Report.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Technical_Spec.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "architecture_tradeoff_required",
+          "type": "STEER",
+          "reason": "architecture_tradeoff_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/Technical_Spec.md",
+        "docs/20_facts/Project_Glossary.md",
+        "docs/35_protocol/",
+        "PROJECT_STATE.json"
+      ],
+      "tool_owned_output_refs": [
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "build_plan",
+      "skill": "build-plan",
+      "segment": "build",
+      "stage": "WF7",
+      "order": 20,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 900,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Technical_Spec.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Implementation_Roadmap.md"
+        },
+        {
+          "type": "artifact_exists",
+          "path": "project_map.json"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "roadmap_scope_unclear",
+          "type": "STEER",
+          "reason": "implementation_scope_decision_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "project_map.json",
+        "PROJECT_STATE.json",
+        "docs/20_facts/Project_Glossary.md",
+        "docs/20_facts/Codebase_Map.md",
+        "docs/Implementation_Roadmap.md"
+      ],
+      "tool_owned_output_refs": [
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "build_code_expert",
+      "skill": "code-expert",
+      "segment": "build",
+      "stage": "WF8",
+      "order": 30,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 1800,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Implementation_Roadmap.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "project_map.json"
+        },
+        {
+          "type": "docchain_gate_passes",
+          "doc_path": "docs/20_facts/Codebase_Map.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "implementation_scope_change",
+          "type": "STEER",
+          "reason": "implementation_scope_change_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/compile_doc.py --workspace-root . --doc docs/20_facts/Codebase_Map.md --source project_map.json",
+          "outputs": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "src/",
+        "scripts/",
+        "configs/",
+        "project_map.json",
+        "docs/20_facts/Codebase_Map.md",
+        "PROJECT_STATE.json"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/chains/",
+        ".evidence/index.json",
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "build_code_debug",
+      "skill": "code-debug",
+      "segment": "build",
+      "stage": "WF8",
+      "order": 35,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 2,
+      "timeout_seconds": 1800,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Implementation_Roadmap.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "project_map.json"
+        },
+        {
+          "type": "docchain_gate_passes",
+          "doc_path": "docs/20_facts/Codebase_Map.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "debug_scope_unclear",
+          "type": "STEER",
+          "reason": "debug_scope_decision_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/compile_doc.py --workspace-root . --doc docs/20_facts/Codebase_Map.md --source project_map.json",
+          "outputs": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "src/",
+        "scripts/",
+        "configs/",
+        "project_map.json",
+        "docs/20_facts/Codebase_Map.md"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/chains/",
+        ".evidence/index.json",
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "build_validate_run",
+      "skill": "validate-run",
+      "segment": "build",
+      "stage": "WF9",
+      "order": 40,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 1200,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "project_map.json"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Validate_Run_Report.md"
+        },
+        {
+          "type": "dynamic_context_gate_passes",
+          "stage": "wf10"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "validation_failed",
+          "type": "STEER",
+          "reason": "validation_decision_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet",
+          "outputs": [
+            ".evidence/review_packets/"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/Validate_Run_Report.md",
+        "docs/30_evidence/Validation_Table.md",
+        "PROJECT_STATE.json"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/review_packets/",
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "iterate_delegate_auto_iterate",
+      "skill": "workflow-supervisor",
+      "segment": "iterate",
+      "stage": "WF10",
+      "order": 10,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 300,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/auto_iterate_goal.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "auto_iterate_status",
+          "allowed_statuses": [
+            "running",
+            "paused",
+            "completed",
+            "failed"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "manual_action_required",
+          "type": "STEER",
+          "reason": "auto_iterate_manual_action_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet",
+          "outputs": [
+            ".evidence/review_packets/"
+          ]
+        }
+      ],
+      "resume_strategy": "manual_recover",
+      "failure_strategy": "manual_recover",
+      "allowed_worker_write_patterns": [
+        "docs/"
+      ],
+      "tool_owned_output_refs": [
+        ".auto_iterate/",
+        ".evidence/review_packets/"
+      ]
+    },
+    {
+      "node_id": "change_classify_request",
+      "skill": "change-intake",
+      "segment": "change",
+      "stage": null,
+      "order": 10,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 120,
+      "preconditions": [],
+      "postconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": ".workflow_supervisor/runs/<run_id>/runtime/change_request.json",
+          "schema": "schemas/change_request.schema.json"
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "classifier_uncertain",
+          "type": "STEER",
+          "reason": "change_route_uncertain"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "resume_with_answer",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/"
+      ],
+      "tool_owned_output_refs": [
+        ".workflow_supervisor/runs/"
+      ]
+    },
+    {
+      "node_id": "release_final_exp_matrix",
+      "skill": "final-exp",
+      "segment": "release",
+      "stage": "WF11",
+      "order": 10,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 1200,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "iteration_log.json"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Final_Experiment_Matrix.md"
+        },
+        {
+          "type": "dynamic_context_gate_passes",
+          "stage": "wf11"
+        },
+        {
+          "type": "docchain_gate_passes",
+          "doc_path": "docs/Final_Experiment_Matrix.md"
+        },
+        {
+          "type": "no_forbidden_writes",
+          "patterns": [
+            ".evidence/",
+            ".auto_iterate/",
+            ".workflow_supervisor/",
+            "docs/_views/",
+            "docs/_site/"
+          ]
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "claim_boundary_missing_or_unapproved",
+          "type": "STEER",
+          "reason": "release_claim_boundary_required"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf11 --review-packet",
+          "outputs": [
+            ".evidence/review_packets/"
+          ]
+        },
+        {
+          "command": "python tooling/evidence/compile_doc.py --workspace-root . --doc docs/Final_Experiment_Matrix.md --source iteration_log.json docs/10_contract/Claim_Boundary.md",
+          "outputs": [
+            ".evidence/chains/",
+            ".evidence/index.json"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/Final_Experiment_Matrix.md",
+        "PROJECT_STATE.json"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/review_packets/",
+        ".evidence/chains/",
+        ".evidence/index.json",
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    },
+    {
+      "node_id": "release_claim_approval",
+      "skill": "release",
+      "segment": "release",
+      "stage": "WF12",
+      "order": 20,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 900,
+      "preconditions": [
+        {
+          "type": "artifact_exists",
+          "path": "docs/Final_Experiment_Matrix.md"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "review_packet_exists",
+          "kind": "dynamic_context",
+          "stage": "wf12"
+        },
+        {
+          "type": "dynamic_context_gate_passes",
+          "stage": "wf12"
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "release_or_submission_approval_required",
+          "type": "APPROVE_ACTION",
+          "reason": "release_submission_approval_required"
+        },
+        {
+          "when": "release_gate_failed",
+          "type": "STEER",
+          "reason": "release_gate_failed"
+        }
+      ],
+      "evidence_tools": [
+        {
+          "command": "python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf12 --review-packet",
+          "outputs": [
+            ".evidence/review_packets/"
+          ]
+        }
+      ],
+      "resume_strategy": "adopt_if_postconditions_pass_else_rerun",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [
+        "docs/60_release/",
+        "submission/",
+        "PROJECT_STATE.json"
+      ],
+      "tool_owned_output_refs": [
+        ".evidence/review_packets/",
+        "docs/_views/",
+        "docs/_site/"
+      ]
+    }
+  ]
+}

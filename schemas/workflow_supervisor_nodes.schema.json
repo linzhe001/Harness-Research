@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness workflow supervisor node registry",
+  "type": "object",
+  "required": ["schema_version", "nodes"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "node_id",
+          "skill",
+          "segment",
+          "stage",
+          "order",
+          "auto_allowed",
+          "manual_only",
+          "max_attempts",
+          "timeout_seconds",
+          "preconditions",
+          "postconditions",
+          "interrupts",
+          "evidence_tools",
+          "resume_strategy",
+          "failure_strategy",
+          "allowed_worker_write_patterns",
+          "tool_owned_output_refs"
+        ],
+        "properties": {
+          "node_id": { "type": "string", "minLength": 1 },
+          "skill": { "type": "string", "minLength": 1 },
+          "segment": {
+            "type": "string",
+            "enum": ["grill", "prepare", "build", "iterate", "release", "change"]
+          },
+          "stage": { "type": ["string", "null"] },
+          "order": { "type": "integer", "minimum": 0 },
+          "auto_allowed": { "type": "boolean" },
+          "manual_only": { "type": "boolean" },
+          "max_attempts": { "type": "integer", "minimum": 1 },
+          "timeout_seconds": { "type": "integer", "minimum": 1 },
+          "preconditions": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/condition" }
+          },
+          "postconditions": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/condition" }
+          },
+          "interrupts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["when", "type", "reason"],
+              "properties": {
+                "when": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "ASK_INPUT",
+                    "APPROVE_ACTION",
+                    "STEER",
+                    "REVIEW_EDIT",
+                    "ESCALATE"
+                  ]
+                },
+                "reason": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "evidence_tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["command", "outputs"],
+              "properties": {
+                "command": { "type": "string" },
+                "outputs": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "resume_strategy": {
+            "type": "string",
+            "enum": [
+              "adopt_if_postconditions_pass_else_rerun",
+              "rerun_idempotent",
+              "resume_with_answer",
+              "manual_recover",
+              "fail_closed"
+            ]
+          },
+          "failure_strategy": {
+            "type": "string",
+            "enum": ["pause_on_gate_fail", "fail_closed", "manual_recover"]
+          },
+          "allowed_worker_write_patterns": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "tool_owned_output_refs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "artifact_exists",
+            "artifact_matches_schema",
+            "command_passes",
+            "docchain_gate_passes",
+            "dynamic_context_gate_passes",
+            "review_packet_exists",
+            "approval_recorded",
+            "auto_iterate_status",
+            "no_forbidden_writes"
+          ]
+        },
+        "path": { "type": "string" },
+        "schema": { "type": "string" },
+        "command": { "type": "string" },
+        "doc_path": { "type": "string" },
+        "stage": { "type": "string" },
+        "kind": { "type": "string" },
+        "contract": { "type": "string" },
+        "claim_scope": { "type": "string" },
+        "allowed_statuses": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

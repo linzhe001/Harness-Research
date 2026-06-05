@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness workflow supervisor human interrupt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "run_id",
+    "node_id",
+    "type",
+    "reason",
+    "question",
+    "allowed_responses",
+    "exact_action",
+    "evidence_refs",
+    "diff_refs",
+    "gate_status_refs",
+    "risk_summary",
+    "rollback_plan",
+    "escalation_policy",
+    "request_snapshot_hash",
+    "resume_strategy",
+    "created_at",
+    "expires_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "request_id": { "type": "string", "pattern": "^req_[A-Za-z0-9_:-]+$" },
+    "run_id": { "type": "string", "pattern": "^sup_[A-Za-z0-9_:-]+$" },
+    "node_id": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "ASK_INPUT",
+        "APPROVE_ACTION",
+        "STEER",
+        "REVIEW_EDIT",
+        "ESCALATE"
+      ]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "allowed_responses": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "exact_action": {
+      "type": ["object", "null"],
+      "properties": {
+        "command": { "type": "string" },
+        "contract": { "type": "string" },
+        "approval_source": { "type": "string" },
+        "action_hash": { "type": "string", "pattern": "^sha256:" }
+      },
+      "additionalProperties": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "kind": { "type": "string" },
+              "path": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "diff_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gate_status_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risk_summary": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rollback_plan": { "type": ["string", "null", "object"] },
+    "escalation_policy": {
+      "type": "object",
+      "required": ["expires_at", "on_expire"],
+      "properties": {
+        "expires_at": { "type": ["string", "null"] },
+        "on_expire": {
+          "type": "string",
+          "enum": ["fail_closed", "manual_recover", "escalate"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "request_snapshot_hash": { "type": "string", "pattern": "^sha256:" },
+    "resume_strategy": {
+      "type": "string",
+      "enum": [
+        "adopt_if_postconditions_pass_else_rerun",
+        "rerun_idempotent",
+        "resume_with_answer",
+        "manual_recover",
+        "fail_closed"
+      ]
+    },
+    "created_at": { "type": "string" },
+    "expires_at": { "type": ["string", "null"] },
+    "answer_record": { "type": "object" }
+  },
+  "additionalProperties": false
+}

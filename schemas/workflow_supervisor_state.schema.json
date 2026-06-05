@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness workflow supervisor state",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "active_run_id",
+    "status",
+    "segment",
+    "current_attempt",
+    "pending_request_id",
+    "last_event_seq",
+    "completed_nodes",
+    "failed_nodes",
+    "recovery_strategy",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "active_run_id": { "type": ["string", "null"] },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "running",
+        "paused",
+        "failed",
+        "completed",
+        "stopped",
+        "recovering"
+      ]
+    },
+    "segment": {
+      "type": ["string", "null"],
+      "enum": [
+        "grill",
+        "prepare",
+        "build",
+        "iterate",
+        "release",
+        "change",
+        null
+      ]
+    },
+    "segment_status": { "type": ["string", "null"] },
+    "current_node_id": { "type": ["string", "null"] },
+    "current_attempt": { "type": "integer", "minimum": 0 },
+    "pending_request_id": { "type": ["string", "null"] },
+    "last_event_seq": { "type": "integer", "minimum": 0 },
+    "completed_nodes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "failed_nodes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "resolved_inputs_ref": { "type": ["string", "null"] },
+    "last_failure": { "type": ["object", "null"] },
+    "recovery_strategy": {
+      "type": "string",
+      "enum": [
+        "adopt_if_postconditions_pass_else_rerun",
+        "rerun_idempotent",
+        "resume_with_answer",
+        "manual_recover",
+        "fail_closed"
+      ]
+    },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

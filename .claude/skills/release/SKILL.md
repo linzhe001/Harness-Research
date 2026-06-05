@@ -98,3 +98,20 @@ Update PROJECT_STATE.json:
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Supervisor CLI
+
+For a recorded WF12 approval gate, use:
+
+```bash
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh approve --request-id <id> --decision approve --approved-by "<human>"
+tooling/workflow_supervisor/scripts/workflow_ctl.sh resume --request-id <id> --json
+```
+
+The supervisor requires an explicit `validate`, `package`, or `submit` action,
+runs `check_dynamic_context.py --stage wf12 --review-packet`, and only then
+creates an exact scoped `APPROVE_ACTION` when dynamic context is active and
+Project Contract, Evaluation Contract, and Claim Boundary approvals are
+confirmed. It records approval and reruns the gate; it does not package or
+submit by itself.
