@@ -306,7 +306,11 @@ def normalize_owner(owner: str) -> str:
 def artifact_truth_status(path: str) -> str:
     if path.startswith("docs/_site/") or path.startswith("docs/_views/"):
         return "generated_view"
-    if path.startswith(".evidence/") or path.startswith(".auto_iterate/"):
+    if (
+        path.startswith(".evidence/")
+        or path.startswith(".auto_iterate/")
+        or path.startswith(".workflow_supervisor/")
+    ):
         return "runtime_state"
     return "source_of_truth"
 

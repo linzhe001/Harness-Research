@@ -16,9 +16,11 @@ canonical_sources:
   - path: ".agents/references/ubiquitous-language.md"
     role: "framework_rule"
 references:
+  - "term:Entrypoint"
   - "term:Stage"
   - "term:Skill"
   - "term:Gate Evidence"
+  - "term:Pending Request"
   - "term:Human Approval"
 html:
   render: true
@@ -33,6 +35,11 @@ html:
 Canonical definitions live in `.agents/references/ubiquitous-language.md`. This page provides stable HTML anchors for handbook links.
 
 ## Fields Or Paths
+
+### Entrypoint
+
+The human-facing way to start workflow work, such as a Stage Skill, Grill,
+execution supervisor segment, or Change Intake.
 
 ### Stage
 
@@ -70,13 +77,20 @@ Explicit operator approval in the current conversation or auditable artifact.
 
 Human decision input. It is not approval.
 
+### Pending Request
+
+A typed supervisor-owned request for human input, approval, steering, review
+edit, or escalation.
+
 ## Validation
 
 If a term changes, update `.agents/references/ubiquitous-language.md`, rebuild the reference index, and rerender the handbook site.
 
 ## Related References
 
+- [[term:Entrypoint]]
 - [[term:Stage]]
 - [[term:Skill]]
 - [[term:Gate Evidence]]
+- [[term:Pending Request]]
 - [[term:Human Approval]]

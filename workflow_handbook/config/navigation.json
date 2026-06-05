@@ -77,6 +77,12 @@
           "generated": false
         },
         {
+          "page_id": "workflow_supervisor_model",
+          "label": "Workflow Supervisor",
+          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+          "generated": false
+        },
+        {
           "page_id": "markdown_to_html_preview_chain",
           "label": "HTML Preview Chain",
           "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
@@ -115,6 +121,9 @@
             { "page_id": "code-debug", "label": "code-debug", "source_path": "workflow_handbook/skills/code-debug.md", "generated": true },
             { "page_id": "harness-maintenance", "label": "harness-maintenance", "source_path": "workflow_handbook/skills/harness-maintenance.md", "generated": true },
             { "page_id": "code-review", "label": "code-review", "source_path": "workflow_handbook/skills/code-review.md", "generated": true },
+            { "page_id": "grill", "label": "grill", "source_path": "workflow_handbook/skills/grill.md", "generated": true },
+            { "page_id": "workflow-supervisor", "label": "workflow-supervisor", "source_path": "workflow_handbook/skills/workflow-supervisor.md", "generated": true },
+            { "page_id": "change-intake", "label": "change-intake", "source_path": "workflow_handbook/skills/change-intake.md", "generated": true },
             { "page_id": "validate-run", "label": "validate-run", "source_path": "workflow_handbook/skills/validate-run.md", "generated": true },
             { "page_id": "iterate", "label": "iterate", "source_path": "workflow_handbook/skills/iterate.md", "generated": true },
             { "page_id": "auto-iterate-goal", "label": "auto-iterate-goal", "source_path": "workflow_handbook/skills/auto-iterate-goal.md", "generated": true },

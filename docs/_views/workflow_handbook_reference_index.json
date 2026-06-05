@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-04T07:37:02Z",
+  "generated_at": "2026-06-05T09:22:56Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -339,6 +339,84 @@
       "preview": {
         "title": ".gitignore",
         "body": "Framework maintenance surface; use narrower current-doc outputs when possible.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:.workflow_supervisor/": {
+      "ref": "artifact:.workflow_supervisor/",
+      "kind": "artifact",
+      "title": ".workflow_supervisor/",
+      "summary": "Controller-owned runtime state; inspect for recovery but do not hand-edit.",
+      "truth_status": "runtime_state",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "workflow-supervisor",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": ".workflow_supervisor/",
+        "body": "Controller-owned runtime state; inspect for recovery but do not hand-edit.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:.workflow_supervisor/readiness.json": {
+      "ref": "artifact:.workflow_supervisor/readiness.json",
+      "kind": "artifact",
+      "title": ".workflow_supervisor/readiness.json",
+      "summary": "Exact local/private candidate inputs; use tooling and verify before promotion.",
+      "truth_status": "runtime_state",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": ".workflow_supervisor/readiness.json",
+        "body": "Exact local/private candidate inputs; use tooling and verify before promotion.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:.workflow_supervisor/runs/": {
+      "ref": "artifact:.workflow_supervisor/runs/",
+      "kind": "artifact",
+      "title": ".workflow_supervisor/runs/",
+      "summary": "Machine-readable Change Request JSON belongs to supervisor runtime.",
+      "truth_status": "runtime_state",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "change-intake",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": ".workflow_supervisor/runs/",
+        "body": "Machine-readable Change Request JSON belongs to supervisor runtime.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -1049,6 +1127,32 @@
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "artifact:docs/Change_Request.md": {
+      "ref": "artifact:docs/Change_Request.md",
+      "kind": "artifact",
+      "title": "docs/Change_Request.md",
+      "summary": "Operator-readable change classification when a Markdown copy is useful.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "change-intake",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "docs/Change_Request.md",
+        "body": "Operator-readable change classification when a Markdown copy is useful.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "artifact:docs/Dataset_Stats.md": {
       "ref": "artifact:docs/Dataset_Stats.md",
       "kind": "artifact",
@@ -1067,6 +1171,32 @@
       "preview": {
         "title": "docs/Dataset_Stats.md",
         "body": "docs/Dataset_Stats.md is declared by data-prep.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:docs/Execution_Readiness_Packet.md": {
+      "ref": "artifact:docs/Execution_Readiness_Packet.md",
+      "kind": "artifact",
+      "title": "docs/Execution_Readiness_Packet.md",
+      "summary": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "docs/Execution_Readiness_Packet.md",
+        "body": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -1119,6 +1249,32 @@
       "preview": {
         "title": "docs/Final_Experiment_Matrix.md",
         "body": "docs/Final_Experiment_Matrix.md is declared by final-exp.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:docs/Grill_Round_Log.md": {
+      "ref": "artifact:docs/Grill_Round_Log.md",
+      "kind": "artifact",
+      "title": "docs/Grill_Round_Log.md",
+      "summary": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "docs/Grill_Round_Log.md",
+        "body": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -1197,6 +1353,32 @@
       "preview": {
         "title": "docs/Refined_Idea.md",
         "body": "docs/Refined_Idea.md is declared by refine-idea.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:docs/Research_Intent_Draft.md": {
+      "ref": "artifact:docs/Research_Intent_Draft.md",
+      "kind": "artifact",
+      "title": "docs/Research_Intent_Draft.md",
+      "summary": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "docs/Research_Intent_Draft.md",
+        "body": "Draft-only Grill artifacts; not Approved Contracts and not WF1-WF3 completion evidence by themselves.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -1985,6 +2167,32 @@
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "artifact:tooling/grill/": {
+      "ref": "artifact:tooling/grill/",
+      "kind": "artifact",
+      "title": "tooling/grill/",
+      "summary": "Grill helper tooling for readiness artifacts.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "harness-maintenance",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "tooling/grill/",
+        "body": "Grill helper tooling for readiness artifacts.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "artifact:tooling/model_api/": {
       "ref": "artifact:tooling/model_api/",
       "kind": "artifact",
@@ -2003,6 +2211,32 @@
       "preview": {
         "title": "tooling/model_api/",
         "body": "tooling/model_api/ is declared by harness-maintenance.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "artifact:tooling/workflow_supervisor/": {
+      "ref": "artifact:tooling/workflow_supervisor/",
+      "kind": "artifact",
+      "title": "tooling/workflow_supervisor/",
+      "summary": "Workflow supervisor framework tooling and CLI.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "harness-maintenance",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "tooling/workflow_supervisor/",
+        "body": "Workflow supervisor framework tooling and CLI.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2427,6 +2661,32 @@
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "page:change-intake": {
+      "ref": "page:change-intake",
+      "kind": "page",
+      "title": "change-intake",
+      "summary": "Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/change-intake.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "change-intake",
+        "body": "change-intake: Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "page:code-debug": {
       "ref": "page:code-debug",
       "kind": "page",
@@ -2705,6 +2965,32 @@
       "preview": {
         "title": "final-exp",
         "body": "final-exp: Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:grill": {
+      "ref": "page:grill",
+      "kind": "page",
+      "title": "grill",
+      "summary": "Clarify early research intent through hard questions and produce draft-only Research Intent, Grill Round Log, and Execution Readiness Packet artifacts. Does not approve contracts or complete WF1-WF3 by itself.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/grill.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "grill",
+        "body": "grill: Clarify early research intent through hard questions and produce draft-only Research Intent, Grill Round Log, and Execution Readiness Packet artifacts. Does not approve contracts or complete WF1-WF3 by itself.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3623,11 +3909,37 @@
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "page:workflow-supervisor": {
+      "ref": "page:workflow-supervisor",
+      "kind": "page",
+      "title": "workflow-supervisor",
+      "summary": "Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/skills/workflow-supervisor.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "workflow-supervisor",
+        "body": "workflow-supervisor: Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "page:workflow_layers": {
       "ref": "page:workflow_layers",
       "kind": "page",
       "title": "Workflow Layers",
-      "summary": "Explains the Intent -> Stage -> Skill -> Gate model.",
+      "summary": "Explains the Intent -> Entrypoint -> Stage -> Skill -> Gate model.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3640,7 +3952,33 @@
       ],
       "preview": {
         "title": "Workflow Layers",
-        "body": "Workflow Layers: Explains the Intent -> Stage -> Skill -> Gate model.",
+        "body": "Workflow Layers: Explains the Intent -> Entrypoint -> Stage -> Skill -> Gate model.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:workflow_supervisor_model": {
+      "ref": "page:workflow_supervisor_model",
+      "kind": "page",
+      "title": "Workflow Supervisor Model",
+      "summary": "How Grill, execution supervisor, and change intake sit above existing Stage Skills without replacing Gate Evidence or Human Approval.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/pages/workflow_supervisor_model.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "Workflow Supervisor Model",
+        "body": "Workflow Supervisor Model: How Grill, execution supervisor, and change intake sit above existing Stage Skills without replacing Gate Evidence or Human Approval.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4151,6 +4489,40 @@
       ],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "skill:change-intake": {
+      "ref": "skill:change-intake",
+      "kind": "skill",
+      "title": "change-intake",
+      "summary": "Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "change-intake",
+          "line": null,
+          "role": "skill_contract"
+        },
+        {
+          "path": ".agents/skills/change-intake/SKILL.md",
+          "anchor": null,
+          "line": null,
+          "role": "skill_source"
+        }
+      ],
+      "preview": {
+        "title": "change-intake",
+        "body": "Reads 20 declared paths; writes docs/Change_Request.md; must prove workflow_state_gate_or_NOT_RUN, gate_ledger.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "term:Gate Evidence"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "skill:code-debug": {
       "ref": "skill:code-debug",
       "kind": "skill",
@@ -4481,6 +4853,40 @@
       "preview": {
         "title": "final-exp",
         "body": "Reads 14 declared paths; writes docs/Final_Experiment_Matrix.md, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove respect_evaluation_contract, respect_claim_boundary, check_dynamic_context_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "term:Gate Evidence"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "skill:grill": {
+      "ref": "skill:grill",
+      "kind": "skill",
+      "title": "grill",
+      "summary": "Clarify early research intent through hard questions and produce draft-only Research Intent, Grill Round Log, and Execution Readiness Packet artifacts. Does not approve contracts or complete WF1-WF3 by itself.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        },
+        {
+          "path": ".agents/skills/grill/SKILL.md",
+          "anchor": null,
+          "line": null,
+          "role": "skill_source"
+        }
+      ],
+      "preview": {
+        "title": "grill",
+        "body": "Reads 20 declared paths; writes docs/Research_Intent_Draft.md, docs/Grill_Round_Log.md, docs/Execution_Readiness_Packet.md, docs/_views/, docs/_site/; must prove gate_ledger, docs_site_render_or_NOT_RUN.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4933,6 +5339,40 @@
       ],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "skill:workflow-supervisor": {
+      "ref": "skill:workflow-supervisor",
+      "kind": "skill",
+      "title": "workflow-supervisor",
+      "summary": "Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation.",
+      "truth_status": "source_of_truth",
+      "owner": "skill",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "workflow-supervisor",
+          "line": null,
+          "role": "skill_contract"
+        },
+        {
+          "path": ".agents/skills/workflow-supervisor/SKILL.md",
+          "anchor": null,
+          "line": null,
+          "role": "skill_source"
+        }
+      ],
+      "preview": {
+        "title": "workflow-supervisor",
+        "body": "Reads 20 declared paths; writes .workflow_supervisor/; must prove workflow_state_gate_or_NOT_RUN, build_review_packet_or_NOT_RUN, gate_ledger.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "term:Gate Evidence"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "source:schemas/skill_contracts.json": {
       "ref": "source:schemas/skill_contracts.json",
       "kind": "source",
@@ -5351,6 +5791,34 @@
       ],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "source:schemas/skill_contracts.json#change-intake": {
+      "ref": "source:schemas/skill_contracts.json#change-intake",
+      "kind": "source",
+      "title": "Skill Contract: change-intake",
+      "summary": "Machine-readable Skill Contract entry for change-intake.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "change-intake",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "Skill Contract: change-intake",
+        "body": "Machine-readable Skill Contract entry for change-intake.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "skill:change-intake"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "source:schemas/skill_contracts.json#code-debug": {
       "ref": "source:schemas/skill_contracts.json#code-debug",
       "kind": "source",
@@ -5628,6 +6096,34 @@
       },
       "related_refs": [
         "skill:final-exp"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "source:schemas/skill_contracts.json#grill": {
+      "ref": "source:schemas/skill_contracts.json#grill",
+      "kind": "source",
+      "title": "Skill Contract: grill",
+      "summary": "Machine-readable Skill Contract entry for grill.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "grill",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "Skill Contract: grill",
+        "body": "Machine-readable Skill Contract entry for grill.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "skill:grill"
       ],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
@@ -5992,6 +6488,34 @@
       },
       "related_refs": [
         "skill:validate-run"
+      ],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "source:schemas/skill_contracts.json#workflow-supervisor": {
+      "ref": "source:schemas/skill_contracts.json#workflow-supervisor",
+      "kind": "source",
+      "title": "Skill Contract: workflow-supervisor",
+      "summary": "Machine-readable Skill Contract entry for workflow-supervisor.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "schemas/skill_contracts.json",
+          "anchor": "workflow-supervisor",
+          "line": null,
+          "role": "skill_contract"
+        }
+      ],
+      "preview": {
+        "title": "Skill Contract: workflow-supervisor",
+        "body": "Machine-readable Skill Contract entry for workflow-supervisor.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [
+        "skill:workflow-supervisor"
       ],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
@@ -6539,7 +7063,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Action Contract",
-          "line": 42,
+          "line": 43,
           "role": "shared_rule"
         }
       ],
@@ -6565,7 +7089,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Approved Contract",
-          "line": 58,
+          "line": 60,
           "role": "shared_rule"
         }
       ],
@@ -6591,7 +7115,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Boundary Contract",
-          "line": 43,
+          "line": 44,
           "role": "shared_rule"
         }
       ],
@@ -6617,7 +7141,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Claim",
-          "line": 46,
+          "line": 47,
           "role": "shared_rule"
         }
       ],
@@ -6643,7 +7167,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Claim Boundary",
-          "line": 59,
+          "line": 61,
           "role": "shared_rule"
         }
       ],
@@ -6669,7 +7193,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Codebase Map",
-          "line": 56,
+          "line": 58,
           "role": "shared_rule"
         }
       ],
@@ -6695,7 +7219,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Commit Slice",
-          "line": 60,
+          "line": 62,
           "role": "shared_rule"
         }
       ],
@@ -6721,7 +7245,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Conclusion Evidence",
-          "line": 48,
+          "line": 49,
           "role": "shared_rule"
         }
       ],
@@ -6747,7 +7271,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Current Facts",
-          "line": 55,
+          "line": 57,
           "role": "shared_rule"
         }
       ],
@@ -6773,7 +7297,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Decision",
-          "line": 62,
+          "line": 64,
           "role": "shared_rule"
         }
       ],
@@ -6799,7 +7323,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Declared Paths",
-          "line": 44,
+          "line": 45,
           "role": "shared_rule"
         }
       ],
@@ -6825,13 +7349,39 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Drift",
-          "line": 61,
+          "line": 63,
           "role": "shared_rule"
         }
       ],
       "preview": {
         "title": "Drift",
         "body": "Mismatch between current facts, protocol, contracts, or observed results.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "term:Entrypoint": {
+      "ref": "term:Entrypoint",
+      "kind": "term",
+      "title": "Entrypoint",
+      "summary": "Human-facing way to start workflow work, such as a Stage Skill, Grill, execution supervisor segment, or Change Intake. It sets routing semantics, not approval or Stage completion.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": ".agents/references/ubiquitous-language.md",
+          "anchor": "Entrypoint",
+          "line": 38,
+          "role": "shared_rule"
+        }
+      ],
+      "preview": {
+        "title": "Entrypoint",
+        "body": "Human-facing way to start workflow work, such as a Stage Skill, Grill, execution supervisor segment, or Change Intake. It sets routing semantics, not approval or Stage completion.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6851,7 +7401,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Evidence Chain",
-          "line": 49,
+          "line": 50,
           "role": "shared_rule"
         }
       ],
@@ -6877,7 +7427,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Gate Evidence",
-          "line": 50,
+          "line": 51,
           "role": "shared_rule"
         }
       ],
@@ -6903,7 +7453,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Gate Ledger",
-          "line": 51,
+          "line": 52,
           "role": "shared_rule"
         }
       ],
@@ -6929,7 +7479,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Human Approval",
-          "line": 53,
+          "line": 55,
           "role": "shared_rule"
         }
       ],
@@ -6955,13 +7505,39 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Operator Context",
-          "line": 54,
+          "line": 56,
           "role": "shared_rule"
         }
       ],
       "preview": {
         "title": "Operator Context",
         "body": "Stable operator preferences explicitly provided by the operator.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "term:Pending Request": {
+      "ref": "term:Pending Request",
+      "kind": "term",
+      "title": "Pending Request",
+      "summary": "Typed supervisor-owned request for human input, approval, steering, review edit, or escalation. It pauses execution until resolved.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": ".agents/references/ubiquitous-language.md",
+          "anchor": "Pending Request",
+          "line": 54,
+          "role": "shared_rule"
+        }
+      ],
+      "preview": {
+        "title": "Pending Request",
+        "body": "Typed supervisor-owned request for human input, approval, steering, review edit, or escalation. It pauses execution until resolved.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6981,7 +7557,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Protocol Draft",
-          "line": 57,
+          "line": 59,
           "role": "shared_rule"
         }
       ],
@@ -7007,7 +7583,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Read Contract",
-          "line": 41,
+          "line": 42,
           "role": "shared_rule"
         }
       ],
@@ -7033,7 +7609,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Review Packet",
-          "line": 52,
+          "line": 53,
           "role": "shared_rule"
         }
       ],
@@ -7059,7 +7635,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Sensitive Path",
-          "line": 45,
+          "line": 46,
           "role": "shared_rule"
         }
       ],
@@ -7085,7 +7661,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Skill",
-          "line": 39,
+          "line": 40,
           "role": "shared_rule"
         }
       ],
@@ -7111,7 +7687,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Skill Contract",
-          "line": 40,
+          "line": 41,
           "role": "shared_rule"
         }
       ],
@@ -7137,7 +7713,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Source Artifact",
-          "line": 47,
+          "line": 48,
           "role": "shared_rule"
         }
       ],
@@ -7163,7 +7739,7 @@
         {
           "path": ".agents/references/ubiquitous-language.md",
           "anchor": "Stage",
-          "line": 38,
+          "line": 39,
           "role": "shared_rule"
         }
       ],
@@ -7232,10 +7808,18 @@
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
       {
+        "ref": "page:workflow_supervisor_model",
+        "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
+        "line": 17,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
+      },
+      {
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Workflow Layers]]",
-        "line": 37,
+        "line": 40,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7243,7 +7827,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Details]]",
-        "line": 57,
+        "line": 60,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7251,7 +7835,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 77,
+        "line": 80,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7259,7 +7843,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 90,
+        "line": 93,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       },
@@ -7267,7 +7851,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Details]]",
-        "line": 97,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7275,15 +7859,23 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Workflow Layers]]",
-        "line": 98,
+        "line": 101,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
+      },
+      {
+        "ref": "page:workflow_supervisor_model",
+        "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
+        "line": 102,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
       {
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 99,
+        "line": 103,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7291,7 +7883,7 @@
         "ref": "page:hooks_permissions_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
-        "line": 100,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
       },
@@ -7299,7 +7891,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate Model]]",
-        "line": 101,
+        "line": 105,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       },
@@ -7307,7 +7899,7 @@
         "ref": "page:workflow_terms",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_terms|Workflow Terms]]",
-        "line": 102,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_terms.html"
       }
@@ -7913,7 +8505,7 @@
         "ref": "stage:WF9",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[stage:WF9]]",
-        "line": 47,
+        "line": 50,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf9_validate_run.html"
       },
@@ -7921,7 +8513,7 @@
         "ref": "skill:validate-run",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[skill:validate-run]]",
-        "line": 48,
+        "line": 51,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/validate-run.html"
       },
@@ -7929,7 +8521,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 49,
+        "line": 52,
         "status": "resolved",
         "target_html": null
       },
@@ -7937,15 +8529,23 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:stage_cards|Stage Details]]",
-        "line": 65,
+        "line": 70,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
+      },
+      {
+        "ref": "page:workflow_supervisor_model",
+        "source_path": "workflow_handbook/pages/workflow_layers.md",
+        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
+        "line": 71,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
       {
         "ref": "page:layer_explore",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:layer_explore|Explore Layer]]",
-        "line": 66,
+        "line": 72,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/layer_explore.html"
       },
@@ -7953,7 +8553,7 @@
         "ref": "page:layer_contract_plan",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:layer_contract_plan|Contract And Plan Layer]]",
-        "line": 67,
+        "line": 73,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/layer_contract_plan.html"
       },
@@ -7961,7 +8561,7 @@
         "ref": "page:layer_build_validate",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:layer_build_validate|Build And Validate Layer]]",
-        "line": 68,
+        "line": 74,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/layer_build_validate.html"
       },
@@ -7969,7 +8569,7 @@
         "ref": "page:layer_iterate_release",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:layer_iterate_release|Iterate And Release Layer]]",
-        "line": 69,
+        "line": 75,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/layer_iterate_release.html"
       },
@@ -7977,7 +8577,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 70,
+        "line": 76,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7985,17 +8585,67 @@
         "ref": "page:hooks_permissions_model",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
         "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
-        "line": 71,
+        "line": 77,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
       }
     ],
+    "workflow_handbook/pages/workflow_supervisor_model.md": [
+      {
+        "ref": "skill:grill",
+        "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+        "marker": "[[skill:grill]]",
+        "line": 134,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/grill.html"
+      },
+      {
+        "ref": "skill:workflow-supervisor",
+        "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+        "marker": "[[skill:workflow-supervisor]]",
+        "line": 135,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
+      },
+      {
+        "ref": "skill:change-intake",
+        "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+        "marker": "[[skill:change-intake]]",
+        "line": 136,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/change-intake.html"
+      },
+      {
+        "ref": "page:evidence_approval_model",
+        "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+        "marker": "[[page:evidence_approval_model|Evidence And Approval]]",
+        "line": 137,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
+      },
+      {
+        "ref": "page:auto_iterate_model",
+        "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+        "marker": "[[page:auto_iterate_model|Auto-Iterate]]",
+        "line": 138,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
+      }
+    ],
     "workflow_handbook/pages/workflow_terms.md": [
+      {
+        "ref": "term:Entrypoint",
+        "source_path": "workflow_handbook/pages/workflow_terms.md",
+        "marker": "[[term:Entrypoint]]",
+        "line": 91,
+        "status": "resolved",
+        "target_html": null
+      },
       {
         "ref": "term:Stage",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Stage]]",
-        "line": 79,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       },
@@ -8003,7 +8653,7 @@
         "ref": "term:Skill",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Skill]]",
-        "line": 80,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       },
@@ -8011,7 +8661,15 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 81,
+        "line": 94,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Pending Request",
+        "source_path": "workflow_handbook/pages/workflow_terms.md",
+        "marker": "[[term:Pending Request]]",
+        "line": 95,
         "status": "resolved",
         "target_html": null
       },
@@ -8019,7 +8677,7 @@
         "ref": "term:Human Approval",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Human Approval]]",
-        "line": 82,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       }
@@ -8388,6 +9046,32 @@
         "target_html": null
       }
     ],
+    "workflow_handbook/skills/change-intake.md": [
+      {
+        "ref": "skill:change-intake",
+        "source_path": "workflow_handbook/skills/change-intake.md",
+        "marker": "[[skill:change-intake]]",
+        "line": 103,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/change-intake.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#change-intake",
+        "source_path": "workflow_handbook/skills/change-intake.md",
+        "marker": "[[source:schemas/skill_contracts.json#change-intake]]",
+        "line": 104,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/change-intake.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 105,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
     "workflow_handbook/skills/code-debug.md": [
       {
         "ref": "skill:code-debug",
@@ -8648,12 +9332,38 @@
         "target_html": null
       }
     ],
+    "workflow_handbook/skills/grill.md": [
+      {
+        "ref": "skill:grill",
+        "source_path": "workflow_handbook/skills/grill.md",
+        "marker": "[[skill:grill]]",
+        "line": 109,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/grill.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#grill",
+        "source_path": "workflow_handbook/skills/grill.md",
+        "marker": "[[source:schemas/skill_contracts.json#grill]]",
+        "line": 110,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/grill.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 111,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
     "workflow_handbook/skills/harness-maintenance.md": [
       {
         "ref": "skill:harness-maintenance",
         "source_path": "workflow_handbook/skills/harness-maintenance.md",
         "marker": "[[skill:harness-maintenance]]",
-        "line": 157,
+        "line": 161,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/harness-maintenance.html"
       },
@@ -8661,7 +9371,7 @@
         "ref": "source:schemas/skill_contracts.json#harness-maintenance",
         "source_path": "workflow_handbook/skills/harness-maintenance.md",
         "marker": "[[source:schemas/skill_contracts.json#harness-maintenance]]",
-        "line": 158,
+        "line": 162,
         "status": "resolved",
         "target_html": null
       },
@@ -8669,7 +9379,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/harness-maintenance.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 159,
+        "line": 163,
         "status": "resolved",
         "target_html": null
       }
@@ -8980,6 +9690,32 @@
       {
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/validate-run.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 111,
+        "status": "resolved",
+        "target_html": null
+      }
+    ],
+    "workflow_handbook/skills/workflow-supervisor.md": [
+      {
+        "ref": "skill:workflow-supervisor",
+        "source_path": "workflow_handbook/skills/workflow-supervisor.md",
+        "marker": "[[skill:workflow-supervisor]]",
+        "line": 109,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
+      },
+      {
+        "ref": "source:schemas/skill_contracts.json#workflow-supervisor",
+        "source_path": "workflow_handbook/skills/workflow-supervisor.md",
+        "marker": "[[source:schemas/skill_contracts.json#workflow-supervisor]]",
+        "line": 110,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[term:Gate Evidence]]",
         "line": 111,
         "status": "resolved",

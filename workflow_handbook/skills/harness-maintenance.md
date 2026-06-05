@@ -89,6 +89,8 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 - `CLAUDE.md.template`
 - `README.md`
 - `AI_AGENT_SETUP.md`
+- `tooling/workflow_supervisor/`
+- `tooling/grill/`
 
 ## Final Outputs
 
@@ -108,6 +110,8 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 - `guidance: .claude/rules/`
 - `guidance: .claude/shared/`
 - `guidance: templates/`
+- `implementation: tooling/workflow_supervisor/`
+- `implementation: tooling/grill/`
 
 ## Tool-Owned Outputs
 

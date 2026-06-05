@@ -211,6 +211,7 @@ $iterate eval
 | `tooling/codex_hooks/**` | Codex hook runtime, install/status, and simulation tools. |
 | `tooling/evidence/**` | Protocol, docchain, Review Packet, approval, and gate tooling. |
 | `tooling/auto_iterate/**` | WF10 auto-iterate controller and runtime adapter. |
+| `tooling/workflow_supervisor/**` | V0 execution supervisor runtime CLI, node registry, and worker-result validation. |
 | `tooling/model_api/**` | External model reviewer helpers. |
 | `templates/**` | Files copied into target research workspaces. |
 | `schemas/**` | JSON schemas for evidence and framework artifacts. |
@@ -242,6 +243,62 @@ Important boundaries:
 - `approve_contract.py` should run only after explicit Human Approval.
 - `docs/30_evidence/**` stores operator-readable Conclusion Evidence tables.
 - `.evidence/**` is tool-owned; do not hand-edit Evidence Chains.
+
+## Grill And Workflow Supervisor
+
+V0 adds optional supervised entrypoints without changing the default manual
+Skill workflow:
+
+```text
+grill -> prepare -> build -> iterate -> release
+change -> route a mature-codebase delta
+```
+
+`$grill` writes draft intent/readiness artifacts only; it does not complete
+WF1-WF3 or approve contracts. The workflow supervisor owns
+`.workflow_supervisor/**` and currently supports runtime status, dry-run start,
+typed pending requests, node-registry validation, worker-result validation, and
+postcondition validation.
+Non-dry-run `prepare` is a v0 HITL PoC: it generates a WF5 Review Packet
+through evidence tooling after first verifying candidate readiness inputs and
+compiling a draft protocol packet. `workflow_ctl approve` runs the exact
+contract approval action through `approve_contract.py` only after explicit
+human approval; `workflow_ctl resume` reruns the gate and records
+`prepare_hitl_poc`, not `prepare_complete`.
+Slice 5 registry entries cover data-prep, baseline-repro, build-plan,
+code-expert/code-debug, and validate-run, but the supervisor still does not run
+those Stage Skills by itself.
+`start --segment iterate` delegates WF10 to `auto_iterate_ctl.py`; the
+supervisor records status and maps `manual_action_required` to a typed pending
+request without writing `.auto_iterate/**` directly.
+`start --segment change` runs deterministic Change Intake, writes a
+schema-validated Change Request under supervisor runtime, and either records a
+route such as `code-debug`, `iterate`, `review_packet`, or `delta_grill`, or
+pauses with `STEER` when the route is uncertain. It does not invoke the routed
+Skill by itself.
+`start --segment release` is a conservative WF12 approval gate: it requires an
+explicit `validate`, `package`, or `submit` action, runs the WF12
+dynamic-context Review Packet gate, and pauses with an exact scoped
+`APPROVE_ACTION` only after dynamic context plus approved Project Contract,
+Evaluation Contract, and Claim Boundary are confirmed. Resume records approval
+and reruns the gate; it does not package or submit.
+
+```bash
+tooling/workflow_supervisor/scripts/harness.sh prepare --goal "<goal>" --dry-run
+tooling/workflow_supervisor/scripts/harness.sh change --goal "<new request>" --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>"
+tooling/workflow_supervisor/scripts/workflow_ctl.sh approve --request-id <id> --decision approve --approved-by "<human>" --approval-source ".evidence/review_packets/<stage>/<build_id>/review_packet.md"
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment iterate --goal "<goal>" --auto-goal docs/auto_iterate_goal.md
+tooling/workflow_supervisor/scripts/workflow_ctl.sh monitor-iterate --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goal "<new request>" --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-postconditions --node-id build_validate_run --run-id <run_id> --worker-result <result.json> --json
+```
+
+Do not hand-edit `.workflow_supervisor/**`; use the supervisor tooling.
 
 ## Hooks And Contracts
 
@@ -356,6 +413,7 @@ AI agent 在 setup、同步、维护、更新 Harness 时，应该按任务读�
 | Hook or permission boundary update | [tooling/codex_hooks/README.md](tooling/codex_hooks/README.md), `schemas/skill_contracts.json`, `tooling/.tests/test_codex_hooks_contracts.py` |
 | Dynamic context, protocol, or review packet update | `tooling/evidence/**`, `schemas/**`, `.agents/skills/protocol-compiler/SKILL.md`, `.agents/skills/protocol-drift-check/SKILL.md`, `.agents/skills/review-packet/SKILL.md` |
 | WF10 auto-iterate update | `.agents/skills/iterate/SKILL.md`, `.agents/skills/auto-iterate-goal/SKILL.md`, `tooling/auto_iterate/**`, `tooling/.tests/test_auto_iterate*.py` |
+| Grill or supervisor update | `docs/grill_execution_supervisor.md`, `docs/grill_execution_supervisor_implementation_plan.md`, `.agents/skills/grill/SKILL.md`, `.agents/skills/workflow-supervisor/SKILL.md`, `tooling/workflow_supervisor/**`, `tooling/.tests/test_workflow_supervisor*.py` |
 
 ## Human Read
 

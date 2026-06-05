@@ -1,9 +1,9 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-04T07:37:02Z",
+  "generated_at": "2026-06-05T09:24:06Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
-  "site_title": "Harness Workflow Handbook",
+  "site_title": "Workflow Handbook",
   "reference_mode": "workflow-handbook",
   "nav_config_path": "workflow_handbook/config/navigation.json",
   "pages": [
@@ -245,12 +245,34 @@
       "page_id": "workflow_layers",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Explains the Intent -> Stage -> Skill -> Gate model.",
+      "summary": "Explains the Intent -> Entrypoint -> Stage -> Skill -> Gate model.",
       "references": [
         "term:Stage",
         "term:Skill",
         "term:Skill Contract",
         "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "pages__workflow_supervisor_model",
+      "doc_kind": "concept",
+      "title": "Workflow Supervisor Model",
+      "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+      "html_path": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "workflow_supervisor_model",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How Grill, execution supervisor, and change intake sit above existing Stage Skills without replacing Gate Evidence or Human Approval.",
+      "references": [
+        "skill:grill",
+        "skill:workflow-supervisor",
+        "skill:change-intake",
+        "term:Gate Evidence",
+        "term:Human Approval"
       ]
     },
     {
@@ -268,9 +290,11 @@
       "source_type": "hand_authored",
       "summary": "Clickable term targets for handbook references.",
       "references": [
+        "term:Entrypoint",
         "term:Stage",
         "term:Skill",
         "term:Gate Evidence",
+        "term:Pending Request",
         "term:Human Approval"
       ]
     },
@@ -571,6 +595,26 @@
       ]
     },
     {
+      "doc_id": "skills__change-intake",
+      "doc_kind": "skill",
+      "title": "change-intake",
+      "source_path": "workflow_handbook/skills/change-intake.md",
+      "html_path": "docs/_site/workflow_handbook/skills/change-intake.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "change-intake",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer.",
+      "references": [
+        "skill:change-intake",
+        "source:schemas/skill_contracts.json#change-intake",
+        "term:Gate Evidence"
+      ]
+    },
+    {
       "doc_id": "skills__code-debug",
       "doc_kind": "skill",
       "title": "code-debug",
@@ -767,6 +811,26 @@
       "references": [
         "skill:final-exp",
         "source:schemas/skill_contracts.json#final-exp",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__grill",
+      "doc_kind": "skill",
+      "title": "grill",
+      "source_path": "workflow_handbook/skills/grill.md",
+      "html_path": "docs/_site/workflow_handbook/skills/grill.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "grill",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Clarify early research intent through hard questions and produce draft-only Research Intent, Grill Round Log, and Execution Readiness Packet artifacts. Does not approve contracts or complete WF1-WF3 by itself.",
+      "references": [
+        "skill:grill",
+        "source:schemas/skill_contracts.json#grill",
         "term:Gate Evidence"
       ]
     },
@@ -1027,6 +1091,26 @@
       "references": [
         "skill:validate-run",
         "source:schemas/skill_contracts.json#validate-run",
+        "term:Gate Evidence"
+      ]
+    },
+    {
+      "doc_id": "skills__workflow-supervisor",
+      "doc_kind": "skill",
+      "title": "workflow-supervisor",
+      "source_path": "workflow_handbook/skills/workflow-supervisor.md",
+      "html_path": "docs/_site/workflow_handbook/skills/workflow-supervisor.html",
+      "status": "generated",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "workflow-supervisor",
+      "page_kind": "skill",
+      "source_type": "generated",
+      "summary": "Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation.",
+      "references": [
+        "skill:workflow-supervisor",
+        "source:schemas/skill_contracts.json#workflow-supervisor",
         "term:Gate Evidence"
       ]
     },
@@ -1345,6 +1429,7 @@
         "pages__evidence_approval_model",
         "pages__hooks_permissions_model",
         "pages__auto_iterate_model",
+        "pages__workflow_supervisor_model",
         "pages__04_markdown_to_html_preview_chain",
         "pages__workflow_terms",
         "pages__skill_reference",
@@ -1369,6 +1454,9 @@
         "skills__code-debug",
         "skills__harness-maintenance",
         "skills__code-review",
+        "skills__grill",
+        "skills__workflow-supervisor",
+        "skills__change-intake",
         "skills__validate-run",
         "skills__iterate",
         "skills__auto-iterate-goal",
@@ -1523,6 +1611,12 @@
           "children": []
         },
         {
+          "doc_id": "pages__workflow_supervisor_model",
+          "label": "Workflow Supervisor",
+          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+          "children": []
+        },
+        {
           "doc_id": "pages__04_markdown_to_html_preview_chain",
           "label": "HTML Preview Chain",
           "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
@@ -1663,6 +1757,24 @@
               "doc_id": "skills__code-review",
               "label": "code-review",
               "source_path": "workflow_handbook/skills/code-review.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__grill",
+              "label": "grill",
+              "source_path": "workflow_handbook/skills/grill.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__workflow-supervisor",
+              "label": "workflow-supervisor",
+              "source_path": "workflow_handbook/skills/workflow-supervisor.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__change-intake",
+              "label": "change-intake",
+              "source_path": "workflow_handbook/skills/change-intake.md",
               "children": []
             },
             {
