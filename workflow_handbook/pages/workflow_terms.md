@@ -43,7 +43,9 @@ execution supervisor segment, or Change Intake.
 
 ### Stage
 
-A named workflow phase such as WF5, WF10, or release.
+A named internal workflow phase such as WF5, WF10, or release. Use detailed
+reference pages for artifact and gate inspection, not as the normal first user
+entrypoint.
 
 ### Skill
 

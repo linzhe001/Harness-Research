@@ -29,13 +29,13 @@ Avoid bare `evidence` in prose when the meaning could be unclear.
 | --- | --- |
 | `Workflow` | End-to-end Harness control process from initialization through release. |
 | `Entrypoint` | Human-facing way to start workflow work, such as a Stage Skill, Grill, execution supervisor segment, or Change Intake. It sets routing semantics, not approval or Stage completion. |
-| `Stage` | Named workflow phase such as WF5, WF10, or `release`. |
+| `Stage` | Named internal workflow phase such as WF5, WF10, or `release`. Use detailed reference pages for artifact and gate inspection, not as the normal first user entrypoint. |
 | `Skill` | Agent behavior contract for a stage or bounded task. |
 | `Skill Contract` | Machine-readable rule set in `schemas/skill_contracts.json`. |
 | `Read Contract` | Files that must be read before writes for a skill. |
 | `Action Contract` | Required actions and forbidden actions for a skill. |
 | `Boundary Contract` | Declared path ownership, sensitive paths, and tool-owned path restrictions. |
-| `Declared Paths` | Paths a Skill Contract owns for notices, Stage Cards, and artifact planning; not prompt-time write authorization. |
+| `Declared Paths` | Paths a Skill Contract owns for notices, Stage reference, and artifact planning; not prompt-time write authorization. |
 | `Sensitive Path` | Path whose change may require Gate ledger evidence. |
 | `Claim` | Statement about project facts, methods, results, readiness, or release. |
 | `Source Artifact` | Concrete source such as paper, code, dataset record, config, log, metric, review report, or approval record. |

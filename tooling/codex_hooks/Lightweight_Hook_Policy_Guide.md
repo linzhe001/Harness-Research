@@ -78,7 +78,7 @@ elevation mechanism. Hook runtime uses it for:
 
 - recommended read notices
 - route owner notices
-- generated Stage Cards
+- generated Stage reference
 - artifact output descriptions
 - forbidden action checks that are concrete and high confidence
 - external review and tool-owned output boundaries

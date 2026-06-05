@@ -8,10 +8,10 @@ source_type: "hand_authored"
 source_path: "workflow_handbook/pages/workflow_supervisor_model.md"
 source_of_truth: true
 status: "current"
-summary: "How Grill, execution supervisor, and change intake sit above existing Stage Skills without replacing Gate Evidence or Human Approval."
+summary: "How Grill, execution supervisor, and change intake form the user-facing workflow entrypoints without replacing Gate Evidence or Human Approval."
 nav:
-  section: "details"
-  position: 46
+  section: "operate"
+  position: 10
 canonical_sources:
   - path: "docs/grill_execution_supervisor.md"
     role: "aggregate_source"
@@ -31,25 +31,35 @@ html:
 ## Purpose
 
 The supervisor layer reduces workflow friction without changing the authority
-model. Existing Stage Skills still produce Stage artifacts. Evidence tooling
-still owns Evidence Chains and Review Packets. Human Approval is still required
-for contracts, claim boundaries, high-risk transitions, and release decisions.
+model. Operators choose a human-facing Entrypoint first. Existing Skill-owned
+artifact producers remain the internal execution map. Evidence tooling still
+owns Evidence Chains and Review Packets. Human Approval is still required for
+contracts, claim boundaries, high-risk transitions, and release decisions.
 
 ## Model
 
 ```text
 Intent
   -> Entrypoint
-  -> Stage
-  -> Skill
-  -> Gate
+  -> Supervisor segment / Grill / Change Intake
+  -> Gate Evidence or typed HITL interrupt
+  -> Next safe action
 ```
 
-Entrypoints add routing semantics:
+Entrypoints define the operator surface:
 
-- `grill`: draft-only WF1-WF3 intent clarification.
-- `prepare`, `build`, `iterate`, `release`: supervised execution segments.
-- `change`: mature-codebase delta classification.
+| Entrypoint | 什么时候用 | 主要状态面 |
+| --- | --- | --- |
+| `grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
+| `prepare` | intent 已存在，需要检查 readiness / approval plumbing | Review Packet 和 pending request JSON |
+| `build` | 需要推进 bounded implementation 或 validation segment | worker result JSON 和 postcondition validation |
+| `iterate` | 需要把 WF10 委托给 auto-iterate | `auto_iterate_ctl.sh status --json` 和 `iteration_log.json` |
+| `release` | validate / package / submit action 需要 claim / approval check | WF12 Review Packet 和 scoped approval request |
+| `change` | 成熟代码库收到新请求 | Change Request JSON 和 route confidence |
+
+Detailed reference pages are still available, but they are not the first
+question the operator answers. Open them only when you need internal artifact
+ownership, postcondition details, or a Skill Contract field.
 
 The v0 CLI is intentionally lightweight:
 
@@ -131,6 +141,7 @@ readiness/HITL plumbing only.
 
 ## Related Pages
 
+- [[page:operator_task_index|Operator Task Index]]
 - [[skill:grill]]
 - [[skill:workflow-supervisor]]
 - [[skill:change-intake]]

@@ -5,6 +5,17 @@ workflow system built on Claude Code Skills. The system drives an AI/ML research
 project from idea to release or paper-ready state while keeping evidence,
 protocols, contracts, runtime state, and lessons separated.
 
+User-facing docs should start from the six entrypoints:
+
+```text
+grill -> prepare -> build -> iterate -> release
+change -> route mature-codebase deltas
+```
+
+Use this document as a detailed internal reference for Stage, Skill, state,
+gate, and artifact ownership. Do not expose WF0-WF12 as the first decision a
+normal operator must make.
+
 ---
 
 ## 1. System Architecture Overview
@@ -21,10 +32,12 @@ The system uses Claude Code's three-layer configuration mechanism, layered by lo
 
 **Design philosophy**: CLAUDE.md is minimal (≤80 lines), containing only stable information "needed every time"; Rules load conditionally by path (via globs frontmatter), avoiding context pollution from irrelevant info; Skills are invoked on demand to execute specific work. Stage skills set `disable-model-invocation: true` and must be explicitly triggered by the user or orchestrator.
 
-### 1.1.1 Operator-Facing Primitive Model
+### 1.1.1 Detailed Primitive Model
 
-The operator-facing model should stay smaller than the implementation surface.
-Most Harness work can be explained as eight primitives:
+The user-facing model stays smaller than the implementation surface:
+`grill`, `prepare`, `build`, `iterate`, `release`, and `change`. The eight
+primitives below are a maintainer reference for explaining how detailed Stage
+Skills, tools, and gates fit under those entrypoints:
 
 | Primitive | Human question | Main entrypoints | Boundary |
 |------|------|------|------|
@@ -191,7 +204,7 @@ The orchestrator does not perform specific research work, but manages the state 
 
 ---
 
-## 3. Stage Details
+## 3. Detailed Stage Reference
 
 ### WF1-WF4: Survey → Idea Debate → Refine Idea → Data
 

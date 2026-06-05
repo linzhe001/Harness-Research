@@ -187,14 +187,15 @@ Harness hook block  = would this tool call corrupt controlled state?
 Harness hook notice = what context or route should the model consider first?
 ```
 
-For operator-facing summaries, generate Stage Cards from the contract source:
+For detailed workflow references, generate the Stage reference from the contract source:
 
 ```bash
 python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md
 ```
 
-Stage Cards are reading aids. Keep the versioned operator snapshot under
-`workflow_handbook/`; `schemas/skill_contracts.json` remains
+Stage references are reading aids for deep inspection, not the operator's
+first-layer entrypoint. Keep the versioned snapshot under `workflow_handbook/`;
+`schemas/skill_contracts.json` remains
 the source of truth for required reads, declared writable paths, required actions, and
 forbidden actions.
 

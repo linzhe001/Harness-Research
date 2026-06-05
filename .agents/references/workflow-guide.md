@@ -5,6 +5,17 @@ workflow system built around Codex Skills. The system moves an AI/ML research
 project from idea to release or paper-ready state while separating evidence,
 protocols, contracts, runtime state, and promoted lessons.
 
+User-facing docs should start from the six entrypoints:
+
+```text
+grill -> prepare -> build -> iterate -> release
+change -> route mature-codebase deltas
+```
+
+Use this document as a detailed internal reference for Stage, Skill, state,
+gate, and artifact ownership. Do not expose WF0-WF12 as the first decision a
+normal operator must make.
+
 ---
 
 ## 1. System Architecture Overview
@@ -21,10 +32,12 @@ The system uses Codex's three-layer configuration mechanism, organized by load f
 
 **Design philosophy**: AGENTS.md / CLAUDE.md stay minimal and contain only stable information that is needed every time; shared references are loaded on demand to avoid polluting context with irrelevant information; skills are invoked on demand to perform concrete work.
 
-### 1.1.1 Operator-Facing Primitive Model
+### 1.1.1 Detailed Primitive Model
 
-The operator-facing model should stay smaller than the implementation surface.
-Most Harness work can be explained as eight primitives:
+The user-facing model stays smaller than the implementation surface:
+`grill`, `prepare`, `build`, `iterate`, `release`, and `change`. The eight
+primitives below are a maintainer reference for explaining how detailed Stage
+Skills, tools, and gates fit under those entrypoints:
 
 | Primitive | Human question | Main entrypoints | Boundary |
 |------|------|------|------|
@@ -193,7 +206,7 @@ Orchestrator does not perform the research work itself. It manages state transit
 
 ---
 
-## 3. Stage Details
+## 3. Detailed Stage Reference
 
 ### WF1-WF4: Survey → Idea Debate → Refine Idea → Data
 

@@ -20,14 +20,63 @@
       ]
     },
     {
-      "id": "details",
-      "title": "Workflow Details",
+      "id": "operate",
+      "title": "Operate",
+      "kind": "entrypoints",
+      "position": 10,
+      "items": [
+        {
+          "page_id": "operator_task_index",
+          "label": "Task Index",
+          "source_path": "workflow_handbook/pages/operator_task_index.md",
+          "generated": false
+        },
+        {
+          "page_id": "workflow_supervisor_model",
+          "label": "Entrypoints",
+          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+          "generated": false,
+          "children": [
+            { "page_id": "grill", "label": "grill", "source_path": "workflow_handbook/skills/grill.md", "generated": true },
+            { "page_id": "workflow-supervisor", "label": "workflow-supervisor", "source_path": "workflow_handbook/skills/workflow-supervisor.md", "generated": true },
+            { "page_id": "change-intake", "label": "change-intake", "source_path": "workflow_handbook/skills/change-intake.md", "generated": true }
+          ]
+        },
+        {
+          "page_id": "evidence_approval_model",
+          "label": "Evidence And Approval",
+          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
+          "generated": false
+        },
+        {
+          "page_id": "auto_iterate_model",
+          "label": "Auto-Iterate",
+          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
+          "generated": false
+        }
+      ]
+    },
+    {
+      "id": "detailed_reference",
+      "title": "Detailed Reference",
       "kind": "reference",
       "position": 40,
       "items": [
         {
+          "page_id": "workflow_layers",
+          "label": "Detailed Workflow Map",
+          "source_path": "workflow_handbook/pages/workflow_layers.md",
+          "generated": false,
+          "children": [
+            { "page_id": "layer_explore", "label": "Explore Layer", "source_path": "workflow_handbook/pages/layer_explore.md", "generated": false },
+            { "page_id": "layer_contract_plan", "label": "Contract And Plan Layer", "source_path": "workflow_handbook/pages/layer_contract_plan.md", "generated": false },
+            { "page_id": "layer_build_validate", "label": "Build And Validate Layer", "source_path": "workflow_handbook/pages/layer_build_validate.md", "generated": false },
+            { "page_id": "layer_iterate_release", "label": "Iterate And Release Layer", "source_path": "workflow_handbook/pages/layer_iterate_release.md", "generated": false }
+          ]
+        },
+        {
           "page_id": "stage_cards",
-          "label": "Stage Details",
+          "label": "Stage Reference",
           "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
           "generated": true,
           "children": [
@@ -47,56 +96,8 @@
           ]
         },
         {
-          "page_id": "workflow_layers",
-          "label": "Workflow Layers",
-          "source_path": "workflow_handbook/pages/workflow_layers.md",
-          "generated": false,
-          "children": [
-            { "page_id": "layer_explore", "label": "Explore Layer", "source_path": "workflow_handbook/pages/layer_explore.md", "generated": false },
-            { "page_id": "layer_contract_plan", "label": "Contract And Plan Layer", "source_path": "workflow_handbook/pages/layer_contract_plan.md", "generated": false },
-            { "page_id": "layer_build_validate", "label": "Build And Validate Layer", "source_path": "workflow_handbook/pages/layer_build_validate.md", "generated": false },
-            { "page_id": "layer_iterate_release", "label": "Iterate And Release Layer", "source_path": "workflow_handbook/pages/layer_iterate_release.md", "generated": false }
-          ]
-        },
-        {
-          "page_id": "evidence_approval_model",
-          "label": "Evidence And Approval",
-          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
-          "generated": false
-        },
-        {
-          "page_id": "hooks_permissions_model",
-          "label": "Hooks And Permissions",
-          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
-          "generated": false
-        },
-        {
-          "page_id": "auto_iterate_model",
-          "label": "Auto-Iterate",
-          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
-          "generated": false
-        },
-        {
-          "page_id": "workflow_supervisor_model",
-          "label": "Workflow Supervisor",
-          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
-          "generated": false
-        },
-        {
-          "page_id": "markdown_to_html_preview_chain",
-          "label": "HTML Preview Chain",
-          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
-          "generated": false
-        },
-        {
-          "page_id": "workflow_terms",
-          "label": "Workflow Terms",
-          "source_path": "workflow_handbook/pages/workflow_terms.md",
-          "generated": false
-        },
-        {
           "page_id": "skill_reference",
-          "label": "Skill Details",
+          "label": "Skill Reference",
           "source_path": "workflow_handbook/pages/skill_reference.md",
           "generated": false,
           "children": [
@@ -121,9 +122,6 @@
             { "page_id": "code-debug", "label": "code-debug", "source_path": "workflow_handbook/skills/code-debug.md", "generated": true },
             { "page_id": "harness-maintenance", "label": "harness-maintenance", "source_path": "workflow_handbook/skills/harness-maintenance.md", "generated": true },
             { "page_id": "code-review", "label": "code-review", "source_path": "workflow_handbook/skills/code-review.md", "generated": true },
-            { "page_id": "grill", "label": "grill", "source_path": "workflow_handbook/skills/grill.md", "generated": true },
-            { "page_id": "workflow-supervisor", "label": "workflow-supervisor", "source_path": "workflow_handbook/skills/workflow-supervisor.md", "generated": true },
-            { "page_id": "change-intake", "label": "change-intake", "source_path": "workflow_handbook/skills/change-intake.md", "generated": true },
             { "page_id": "validate-run", "label": "validate-run", "source_path": "workflow_handbook/skills/validate-run.md", "generated": true },
             { "page_id": "iterate", "label": "iterate", "source_path": "workflow_handbook/skills/iterate.md", "generated": true },
             { "page_id": "auto-iterate-goal", "label": "auto-iterate-goal", "source_path": "workflow_handbook/skills/auto-iterate-goal.md", "generated": true },
@@ -141,6 +139,24 @@
             { "page_id": "final-exp", "label": "final-exp", "source_path": "workflow_handbook/skills/final-exp.md", "generated": true },
             { "page_id": "release", "label": "release", "source_path": "workflow_handbook/skills/release.md", "generated": true }
           ]
+        },
+        {
+          "page_id": "hooks_permissions_model",
+          "label": "Hooks And Permissions",
+          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
+          "generated": false
+        },
+        {
+          "page_id": "workflow_terms",
+          "label": "Workflow Terms",
+          "source_path": "workflow_handbook/pages/workflow_terms.md",
+          "generated": false
+        },
+        {
+          "page_id": "markdown_to_html_preview_chain",
+          "label": "HTML Preview Chain",
+          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+          "generated": false
         }
       ]
     }

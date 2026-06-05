@@ -2,7 +2,9 @@
 
 Harness Research 是一套面向严肃 AI/ML 科研的 workflow framework。它的目标不是替研究者“想 idea”，而是帮助研究者把来自实践观察的 idea 更快、更可信地验证出来，并在实现、实验和反思中持续迭代自己的想法。
 
-这套框架把 AI assistant 当作研究工程伙伴使用：用明确的 Stage、Skill、Hook、可溯源文档、代码切片计划和 Ralph-style iteration loop，把科研从“让模型自由发挥”变成“让模型在当前阶段的证据、边界和反馈回路内工作”。
+这套框架把 AI assistant 当作研究工程伙伴使用：用清晰的 human-facing
+entrypoints、Skill Contracts、Hooks、可溯源文档、代码切片计划和 Ralph-style
+iteration loop，把科研从“让模型自由发挥”变成“让模型在当前证据、边界和反馈回路内工作”。
 
 ## What This Is
 
@@ -46,31 +48,28 @@ researcher idea
 
 ## Core Workflow
 
-Operator 视角只需要先记住 8 个 primitive：
+Operator 视角先记住 6 个入口：
 
 ```text
-init -> evidence -> protocol -> contract -> code -> validate -> iterate -> release
+grill -> prepare -> build -> iterate -> release
+change -> route mature-codebase deltas
 ```
 
-对应的 WF0-WF12:
+| Entrypoint | Use when | First status surface |
+| --- | --- | --- |
+| `harness grill` | idea 还不清楚，需要追问和收敛 Research Intent | Research Intent Draft / Grill Round Log |
+| `harness prepare` | intent 已有，需要 readiness、Review Packet、approval plumbing | `workflow_ctl status --json` |
+| `harness build` | 在边界内推进 build / validate | worker result JSON / Gate ledger |
+| `harness iterate` | 进入多轮实验 loop | `auto_iterate_ctl.sh status --json` / `iteration_log.json` |
+| `harness release` | 检查 release claim 或 package/submit action | WF12 Review Packet / Claim Boundary |
+| `harness change` | 成熟代码库收到新需求、新 idea 或 config/code delta | Change Request JSON / route confidence |
 
-```text
-WF0 init
-  -> WF1 survey-idea
-  -> WF2 idea-debate
-  -> WF3 refine-idea
-  -> WF4 data-prep
-  -> WF5 baseline-repro
-  -> WF6 refine-arch
-  -> WF7 build-plan
-  -> WF8 code-expert
-  -> WF9 validate-run
-  -> WF10 iterate
-  -> WF11 final-exp
-  -> WF12 release
-```
-
-每个 Stage 都有自己的输入、输出、允许写入面、Gate Evidence 和 human decision 边界。完整操作手册见 [workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md)。
+内部 WF0-WF12 参考仍然存在，但它主要服务 artifact ownership、Skill
+Contract、Gate 条件和失败排查，不是普通用户的第一层入口。日常操作先读
+[workflow_handbook/Workflow_Operator_Handbook.md](workflow_handbook/Workflow_Operator_Handbook.md)
+和
+[workflow_handbook/pages/operator_task_index.md](workflow_handbook/pages/operator_task_index.md)；
+需要细查内部节点时再打开 detailed reference。
 
 ## How Harness Helps
 
@@ -216,8 +215,9 @@ $iterate eval
 | `templates/**` | Files copied into target research workspaces. |
 | `schemas/**` | JSON schemas for evidence and framework artifacts. |
 | `tooling/.tests/**` | Framework regression tests. |
-| `workflow_handbook/Workflow_Operator_Handbook.md` | Detailed human workflow handbook, including workflow model, evidence/approval boundaries, hooks, auto-iterate, and AI coding discipline. |
-| `workflow_handbook/Workflow_Stage_Cards.md` | Daily Stage / Skill lookup generated from Skill Contracts. |
+| `workflow_handbook/Workflow_Operator_Handbook.md` | Human-facing workflow entrypoint and operating model. |
+| `workflow_handbook/pages/operator_task_index.md` | Task-first index for choosing an entrypoint, status surface, and stop condition. |
+| `workflow_handbook/Workflow_Stage_Cards.md` | Detailed internal artifact and gate reference generated from Skill Contracts. |
 
 ## Dynamic Context Tools
 
@@ -326,7 +326,7 @@ Harness hooks
 
 Hooks are runtime guardrails, not proof that a research gate passed. Readiness still depends on tooling outputs, tests, Review Packets, Gate Ledger, and explicit Human Approval.
 
-Generate operator Stage Cards:
+Generate the detailed Stage reference:
 
 ```bash
 python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md

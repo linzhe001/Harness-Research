@@ -154,6 +154,26 @@ def test_harness_maintenance_contract_covers_guardrail_paths() -> None:
     )
 
 
+def test_framework_design_docs_are_not_gitignored() -> None:
+    paths = [
+        "docs/grill_execution_supervisor.md",
+        "docs/grill_execution_supervisor_implementation_plan.md",
+        "docs/_site/manifest.json",
+        "docs/_site/grill_execution_supervisor.html",
+        "docs/_site/grill_execution_supervisor_implementation_plan.html",
+        "docs/_site/assets/site.css",
+        "docs/_site/assets/evidence-preview.js",
+    ]
+
+    for path in paths:
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", path],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+        assert result.returncode == 1, path
+
+
 def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
     contracts = {contract["skill"]: contract for contract in load_contracts(REPO_ROOT)}
 
@@ -523,7 +543,9 @@ def test_validate_run_contract_reads_slice_plan_when_present() -> None:
 def test_stage_card_generator_renders_core_skill_boundaries() -> None:
     rendered = generate_stage_cards.render_stage_cards(REPO_ROOT)
 
-    assert "# Harness Workflow Stage Cards" in rendered
+    assert "# Detailed Workflow Stage Reference" in rendered
+    assert "不是\noperator 的第一层入口" in rendered
+    assert "`harness grill`" in rendered
     assert "## Explore" in rendered
     assert "## Contract & Plan" in rendered
     assert "## Build & Validate" in rendered
@@ -563,6 +585,7 @@ def test_stage_card_generator_writes_output(tmp_path: Path) -> None:
     text = output.read_text(encoding="utf-8")
     assert "## Iterate & Release" in text
     assert "### WF12 Release" in text
+    assert "详细排查时的读法" in text
     assert "Stage -> 一句话 -> 怎么启动 -> 完成后得到 -> 深入阅读" in text
     assert "[[skill:release|release Skill]]" in text
     assert "--output docs/Workflow_Stage_Cards.md" not in text
@@ -589,11 +612,22 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
         encoding="utf-8"
     )
     assert "Start Here" in handbook
-    assert "The Run Model" in handbook
-    assert "Intent\n  -> Entrypoint\n  -> Stage\n  -> Skill\n  -> Gate" in handbook
+    assert "Quick Task Index" in handbook
+    assert "Human Entrypoints" in handbook
+    assert "内部执行细节不属于第一层界面" in handbook
+    assert (
+        "Intent\n"
+        "  -> Entrypoint\n"
+        "  -> typed request / worker result / Gate ledger\n"
+        "  -> Human Approval or next safe action"
+    ) in handbook
     assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
+    assert "[[page:operator_task_index|Operator Task Index]]" in handbook
     assert "Daily Run Shape" in handbook
+    assert "Detailed Reference" in handbook
+    assert "[[page:stage_cards|Stage Reference]]" in handbook
     assert "Generated Views" in handbook
+    assert "Currentness" in handbook
     assert "docs/_views/workflow_handbook_reference_index.json" in handbook
     assert "不要再在 `workflow_handbook/` 下新增平行叙事文档" in handbook
 

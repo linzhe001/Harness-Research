@@ -6,9 +6,16 @@
 /baselines/
 /experiments/
 /docs/*
+!/docs/grill_execution_supervisor.md
+!/docs/grill_execution_supervisor_implementation_plan.md
 !/docs/_site/
 /docs/_site/*
+!/docs/_site/assets/
+!/docs/_site/assets/**
 !/docs/_site/index.html
+!/docs/_site/manifest.json
+!/docs/_site/grill_execution_supervisor.html
+!/docs/_site/grill_execution_supervisor_implementation_plan.html
 !/docs/_site/workflow_handbook/
 !/docs/_site/workflow_handbook/**
 !/docs/_views/

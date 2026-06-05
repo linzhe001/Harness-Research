@@ -149,9 +149,15 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
 
     assert manifest["reference_mode"] == "workflow-handbook"
-    assert manifest["navigation"][1]["label"] == "Workflow Details"
-    assert manifest["navigation"][1]["items"][0]["label"] == "Stage Details"
-    assert manifest["navigation"][1]["items"][0]["children"]
+    assert manifest["navigation"][1]["label"] == "Operate"
+    assert manifest["navigation"][1]["items"][0]["label"] == "Task Index"
+    assert manifest["navigation"][1]["items"][1]["label"] == "Entrypoints"
+    assert manifest["navigation"][1]["items"][1]["children"]
+    assert [
+        child["label"] for child in manifest["navigation"][1]["items"][1]["children"]
+    ] == ["grill", "workflow-supervisor", "change-intake"]
+    assert manifest["navigation"][2]["label"] == "Detailed Reference"
+    assert manifest["navigation"][2]["items"][1]["label"] == "Stage Reference"
     assert 'href="assets/site.css"' in index_html
     assert 'src="assets/evidence-preview.js"' in index_html
     assert '<details class="nav-section" open>' in index_html
@@ -164,14 +170,21 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
         in index_html
     )
     assert '<h2 id="start-here">Start Here</h2>' in index_html
+    assert '<h2 id="quick-task-index">Quick Task Index</h2>' in index_html
+    assert '<h2 id="human-entrypoints">Human Entrypoints</h2>' in index_html
     assert 'content="0; url=workflow_handbook/index.html"' in root_index_html
     assert 'href="workflow_handbook/index.html"' in root_index_html
     assert "Opening the rendered handbook." in root_index_html
     assert 'href="Workflow_Stage_Cards.html"' in index_html
-    assert "Workflow Details" in index_html
-    assert "Stage Details" in index_html
+    assert "Operate" in index_html
+    assert "Task Index" in index_html
+    assert "Entrypoints" in index_html
+    assert "Detailed Reference" in index_html
+    assert "Stage Reference" in index_html
+    assert "Workflow Details" not in index_html
+    assert "Stage Details" not in index_html
     assert "Run The Workflow" not in index_html
-    assert "Workflow Map" not in index_html
+    assert "Detailed Workflow Map" in index_html
     assert "<summary>Maintenance</summary>" not in index_html
     assert 'href="plans/HTML_Rendering_Handbook_Plan.html"' not in index_html
     assert 'href="../assets/site.css"' in html

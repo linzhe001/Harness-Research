@@ -669,7 +669,7 @@ Initial navigation example:
         },
         {
           "page_id": "stage_cards",
-          "label": "Stage Cards",
+          "label": "Stage Reference",
           "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
           "generated": true
         }
@@ -1251,7 +1251,7 @@ Handbook validation:
 python tooling/evidence/validate_workflow_handbook.py --workspace-root .
 ```
 
-Stage Cards regeneration check:
+Stage reference regeneration check:
 
 ```bash
 python tooling/codex_hooks/generate_stage_cards.py \

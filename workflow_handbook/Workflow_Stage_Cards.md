@@ -1,8 +1,13 @@
-# Harness Workflow Stage Cards
+# Detailed Workflow Stage Reference
 
-本文件由 `schemas/skill_contracts.json` 生成，是 operator 的 Stage 速查入口。
-它只回答每个 Stage 怎么启动、完成后得到什么、去哪里读深层细节。
-完整推荐读取、声明路径、artifact 输出和 Gate 条件保留在 Stage / Skill 详情页。
+本文件由 `schemas/skill_contracts.json` 生成，是 detailed reference，不是
+operator 的第一层入口。日常操作先从 `harness grill`、`harness prepare`、
+`harness build`、`harness iterate`、`harness release` 或 `harness change`
+选择 Entrypoint。
+
+只有当你需要追踪内部 WF artifact、定位某个 Skill Contract、或排查
+Gate/postcondition 失败时，才使用本页。完整推荐读取、声明路径、
+artifact 输出和 Gate 条件保留在 Stage / Skill 详情页。
 
 生成命令:
 
@@ -10,7 +15,7 @@
 python tooling/codex_hooks/generate_stage_cards.py --workspace-root . --output workflow_handbook/Workflow_Stage_Cards.md
 ```
 
-通用读法:
+详细排查时的读法:
 
 ```text
 Stage -> 一句话 -> 怎么启动 -> 完成后得到 -> 深入阅读
