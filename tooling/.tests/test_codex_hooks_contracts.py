@@ -165,6 +165,11 @@ def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
                 assert output["requires_tool"] is True
             if any(path.startswith("docs/_site/") for path in output["paths"]):
                 assert output["requires_tool"] is True
+            if any(
+                path.startswith(".workflow_supervisor/")
+                for path in output["paths"]
+            ):
+                assert output["requires_tool"] is True
             if output["kind"] == "legacy_compat":
                 assert output.get("replacement")
 
@@ -185,6 +190,24 @@ def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
         for output in contract["artifact_outputs"]
         for path in output["paths"]
     )
+
+
+def test_supervisor_skill_contracts_are_guardrail_scoped() -> None:
+    for skill in ["grill", "workflow-supervisor", "change-intake"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert "AGENTS.md" in contract["required_read_set"]["project_when_present"]
+        assert "gate_ledger" in contract["required_actions"]
+        assert "direct_edit_workflow_supervisor" in contract["forbidden_actions"]
+        assert any(
+            output["owner"] in {"workflow-supervisor", "grill-tooling"}
+            and output["requires_tool"] is True
+            and any(
+                path.startswith(".workflow_supervisor/")
+                for path in output["paths"]
+            )
+            for output in contract["artifact_outputs"]
+        )
 
 
 def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
@@ -566,7 +589,9 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
         encoding="utf-8"
     )
     assert "Start Here" in handbook
-    assert "The Four Layers" in handbook
+    assert "The Run Model" in handbook
+    assert "Intent\n  -> Entrypoint\n  -> Stage\n  -> Skill\n  -> Gate" in handbook
+    assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
     assert "Daily Run Shape" in handbook
     assert "Generated Views" in handbook
     assert "docs/_views/workflow_handbook_reference_index.json" in handbook
@@ -2066,6 +2091,27 @@ def test_pre_tool_blocks_manual_auto_iterate_edit_tool(tmp_path: Path) -> None:
     assert ".auto_iterate/state.json" in reason
 
 
+def test_pre_tool_blocks_manual_workflow_supervisor_edit_tool(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "workspace"
+    (root / CONTRACTS_PATH).parent.mkdir(parents=True)
+    (root / CONTRACTS_PATH).write_text(
+        '{"schema_version":"0.1","contracts":[]}\n',
+        encoding="utf-8",
+    )
+    event = {
+        "tool_name": "Write",
+        "tool_input": {"filePath": ".workflow_supervisor/state.json"},
+    }
+
+    reason = block_pre_tool(root, event)
+
+    assert reason is not None
+    assert "do not manually edit or write" in reason
+    assert ".workflow_supervisor/state.json" in reason
+
+
 def test_pre_tool_allows_primary_evidence_tool_mutation() -> None:
     event = {
         "tool_name": "Bash",
@@ -2073,6 +2119,34 @@ def test_pre_tool_allows_primary_evidence_tool_mutation() -> None:
             "command": (
                 "python tooling/evidence/approve_contract.py --workspace-root . "
                 "--approval-source .evidence/review_packets/wf10/packet.md"
+            )
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+
+
+def test_pre_tool_allows_workflow_supervisor_tool_mutation() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "python tooling/workflow_supervisor/scripts/workflow_ctl.py "
+                "--workspace-root . status --json"
+            )
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+
+
+def test_pre_tool_allows_grill_tool_owned_readiness_mutation() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "python tooling/grill/readiness.py --workspace-root . "
+                "--output .workflow_supervisor/readiness.json"
             )
         },
     }

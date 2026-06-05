@@ -41,7 +41,9 @@ Tooling is layered so the workflow stays explainable:
 
 - **Always-on guardrails**: `AGENTS.md`, `CLAUDE.md`, skill contracts, and Codex hooks shape behavior and catch missing reads or forbidden writes.
 - **On-demand evidence tools**: `compile_protocol.py`, `compile_doc.py`, review packets, approval tools, and dynamic-context gates create auditable state when a stage needs it.
-- **Controller-owned runtime**: `.auto_iterate/**` and WF10 controller logs belong to the auto-iterate controller; operators should inspect them, not hand-edit them.
+- **Controller-owned runtime**: `.auto_iterate/**` belongs to the WF10
+  auto-iterate controller, and `.workflow_supervisor/**` belongs to the
+  workflow supervisor; operators should inspect them, not hand-edit them.
 
 ### 1.2 State Ownership
 
@@ -63,6 +65,7 @@ These canonical state files should all live at the repository root, not inside `
 | File | Owner | Purpose |
 |------|-----------|------|
 | `.auto_iterate/` | auto-iterate controller | Controller-owned runtime state (e.g. `state.json`, phase logs). The controller only **reads** `iteration_log.json` and `PROJECT_STATE.json`; it never writes them. |
+| `.workflow_supervisor/` | workflow supervisor | Supervisor-owned runtime state (e.g. `state.json`, `pending_request.json`, node records). Use `tooling/workflow_supervisor/scripts/workflow_ctl.sh`; do not hand-edit. |
 
 ### 1.2.1 Gate Evidence Model
 

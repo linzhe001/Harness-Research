@@ -21,8 +21,8 @@ Gate Evidence、review packet 或 human approval。
 - 意图判断会犯错，误判后容易阻断正常工作。
 - 每次注入完整 contract/read-set 会消耗大量 token。
 - Stop 阶段阻断容易制造重复提醒，也会在任务已经足够清楚时打断输出。
-- 但 `.evidence/**`、`.auto_iterate/**`、生成视图、外部 review wrapper
-  和 commit hygiene 仍然需要 guardrail。
+- 但 `.evidence/**`、`.auto_iterate/**`、`.workflow_supervisor/**`、
+  生成视图、外部 review wrapper 和 commit hygiene 仍然需要 guardrail。
 
 新模型的目标:
 
@@ -109,6 +109,7 @@ Hard blocks are reserved for concrete boundary violations:
 
 - direct manual writes to `.evidence/**`
 - direct manual writes to `.auto_iterate/**`
+- direct manual writes to `.workflow_supervisor/**`
 - direct manual writes to generated view paths `docs/_views/**` and
   `docs/_site/**`
 - `git add` of known local-only or reference-only paths

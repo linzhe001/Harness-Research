@@ -34,14 +34,23 @@ IGNORE_GIT_ADD_PATTERNS = [
 DIRECT_TOOL_OWNED_PATHS = [
     ".evidence/",
     ".auto_iterate/",
+    ".workflow_supervisor/",
     "docs/_views/",
     "docs/_site/",
 ]
 GUARDRAIL_PATH_OWNERS = {
     "harness-maintenance": [
         "tooling/codex_hooks/",
+        "tooling/workflow_supervisor/",
+        "tooling/grill/",
         "schemas/skill_contracts.json",
         "schemas/skill_contracts.schema.json",
+        "schemas/workflow_supervisor_state.schema.json",
+        "schemas/workflow_supervisor_nodes.schema.json",
+        "schemas/workflow_supervisor_worker_result.schema.json",
+        "schemas/human_interrupt.schema.json",
+        "schemas/execution_readiness.schema.json",
+        "schemas/change_request.schema.json",
         ".agents/skills/",
         ".agents/references/",
         ".claude/Workflow_Guide.md",
@@ -133,6 +142,7 @@ KNOWN_FORBIDDEN_ACTIONS = {
     "current_doc_without_docchain",
     "direct_edit_auto_iterate",
     "direct_edit_evidence",
+    "direct_edit_workflow_supervisor",
     "edit_source_markdown_during_render",
     "final_exp_outside_claim_boundary",
     "heavy_review_without_trace",
@@ -182,7 +192,12 @@ MUTATING_COMMAND_RE = re.compile(
 MUTATING_TOOL_NAMES = {"apply_patch", "Edit", "Write", "Bash", "shell", "local_shell"}
 READ_TOOL_NAMES = {"Read", "View", "Open"}
 REVIEW_WRITE_ALLOWED_PATHS = [".agents/state/review_traces/code-review/"]
-TOOL_OWNED_WRITE_TOOL_PREFIXES = ("tooling/evidence/", "tooling/auto_iterate/")
+TOOL_OWNED_WRITE_TOOL_PREFIXES = (
+    "tooling/evidence/",
+    "tooling/auto_iterate/",
+    "tooling/workflow_supervisor/",
+    "tooling/grill/",
+)
 TOOL_OWNED_OUTPUT_PATHS_BY_SCRIPT = {
     "tooling/evidence/build_docs_site.py": ["docs/_views/", "docs/_site/"],
     "tooling/evidence/build_evidence_preview_index.py": [
@@ -1076,8 +1091,9 @@ def daily_context_for_workspace(root: Path) -> str:
         "files, tests, or tool output.\n"
         "- Before durable repo edits, read the relevant local files. Start with:\n"
         + "\n".join(f"- {path}" for path in files)
-        + "\n- Manual writes to .evidence/**, .auto_iterate/**, docs/_views/**, "
-        "and docs/_site/** are blocked; use the owning tools."
+        + "\n- Manual writes to .evidence/**, .auto_iterate/**, "
+        ".workflow_supervisor/**, docs/_views/**, and docs/_site/** are "
+        "blocked; use the owning tools."
     )
 
 
@@ -1155,6 +1171,14 @@ def validate_contract_files(root: Path) -> list[str]:
                     if output_path.startswith(".auto_iterate/") and not requires_tool:
                         errors.append(
                             f"{skill}: .auto_iterate output {output_path} "
+                            "must set requires_tool=true"
+                        )
+                    if (
+                        output_path.startswith(".workflow_supervisor/")
+                        and not requires_tool
+                    ):
+                        errors.append(
+                            f"{skill}: .workflow_supervisor output {output_path} "
                             "must set requires_tool=true"
                         )
                     if (
@@ -2357,8 +2381,9 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
             if is_untrusted_tool_owned_path_command(command, root):
                 return (
                     "Blocked by Harness policy: .evidence/**, "
-                    ".auto_iterate/**, docs/_views/**, and docs/_site/** "
-                    "are tool/controller-owned paths."
+                    ".auto_iterate/**, .workflow_supervisor/**, "
+                    "docs/_views/**, and docs/_site/** are "
+                    "tool/controller-owned paths."
                 )
 
     if name == "apply_patch":
@@ -2371,8 +2396,8 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
         ):
             return (
                 "Blocked by Harness policy: do not manually patch "
-                ".evidence/**, .auto_iterate/**, docs/_views/**, or "
-                "docs/_site/**."
+                ".evidence/**, .auto_iterate/**, .workflow_supervisor/**, "
+                "docs/_views/**, or docs/_site/**."
             )
 
     if name in {"Edit", "Write"}:
@@ -2385,8 +2410,8 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
             shown = "\n".join(f"- {p}" for p in tool_owned_paths[:12])
             return (
                 "Blocked by Harness policy: do not manually edit or write "
-                ".evidence/**, .auto_iterate/**, docs/_views/**, or "
-                "docs/_site/**.\n"
+                ".evidence/**, .auto_iterate/**, .workflow_supervisor/**, "
+                "docs/_views/**, or docs/_site/**.\n"
                 f"{shown}"
             )
 

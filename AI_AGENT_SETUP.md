@@ -301,6 +301,7 @@ cat >> .git/info/exclude <<'EOF'
 /.setup_backup/
 /.codex/
 /.harness_hooks/
+/.workflow_supervisor/
 /.claude/
 /.agents/
 /tooling/
@@ -338,6 +339,7 @@ cat >> .harness/info/exclude <<'EOF'
 /docs/
 /.evidence/
 /.auto_iterate/
+/.workflow_supervisor/
 /tests/
 EOF
 ```
@@ -362,6 +364,7 @@ __pycache__/
 .pytest_cache/
 .harness_hooks/
 .auto_iterate/
+.workflow_supervisor/
 wandb/
 *.ckpt
 *.pth
@@ -525,6 +528,9 @@ tooling/auto_iterate/config/controller.local.yaml
 
 .auto_iterate/
   -> controller-owned runtime, never create by hand
+
+.workflow_supervisor/
+  -> supervisor-owned runtime, never create or edit by hand
 ```
 
 Before the first real run:
@@ -532,6 +538,13 @@ Before the first real run:
 ```bash
 $auto-iterate-goal check
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
+```
+
+Optional supervisor smoke check:
+
+```bash
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json || true
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
 ```
 
 Start only after WF9 has passed and the human accepts the relevant contract
@@ -680,3 +693,4 @@ clean stale runtime only after confirming no real controller process is active.
 | `docs/30_evidence/**` | research git | operator-readable Conclusion Evidence tables |
 | `.evidence/**` | research git or generated audit artifacts | tool-owned Evidence Chains/review packets; use tooling, do not hand-edit |
 | `.auto_iterate/**` | ignored runtime | controller-owned |
+| `.workflow_supervisor/**` | ignored runtime | supervisor-owned |

@@ -164,8 +164,9 @@ Tool-time policy is intentionally concrete:
 - `git commit` produces a notice when
   `.agents/references/sliced-commit-rule.md` has not been read in the turn.
 - Mutations that mention guardrail paths produce a route hint notice.
-- Manual writes to `.evidence/**`, `.auto_iterate/**`, `docs/_views/**`, and
-  `docs/_site/**` are blocked; use the owning tools.
+- Manual writes to `.evidence/**`, `.auto_iterate/**`,
+  `.workflow_supervisor/**`, `docs/_views/**`, and `docs/_site/**` are
+  blocked; use the owning tools.
 - Known local-only and reference-only files are blocked from `git add`.
 - Direct external review scripts are blocked; provider-backed review must use
   `tooling/model_api/harness_external_review.py`.
@@ -202,10 +203,11 @@ durable results should land, without granting permission. Declared writable
 paths answer "which paths belong to this stage or skill"; `Artifact Output`
 answers "where should final docs, canonical state, tool traces, review traces,
 implementation files, guidance, generated views, or release packages land."
-Tool-owned outputs such as `.evidence/**`, `docs/_views/**`, and
-`docs/_site/**` must set `requires_tool=true`, and direct manual writes to
-`.evidence/**`, `.auto_iterate/**`, `docs/_views/**`, and `docs/_site/**`
-remain blocked.
+Tool-owned outputs such as `.evidence/**`, `.workflow_supervisor/**`,
+`docs/_views/**`, and `docs/_site/**` must set `requires_tool=true`, and direct
+manual writes to `.evidence/**`, `.auto_iterate/**`,
+`.workflow_supervisor/**`, `docs/_views/**`, and `docs/_site/**` remain
+blocked.
 
 ## Optional: User-Level Install
 

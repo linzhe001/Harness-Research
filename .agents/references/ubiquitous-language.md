@@ -35,6 +35,7 @@ Avoid bare `evidence` when the meaning could be unclear:
 | Term | Definition |
 | --- | --- |
 | `Workflow` | End-to-end Harness control process from initialization through release. |
+| `Entrypoint` | Human-facing way to start workflow work, such as a Stage Skill, Grill, execution supervisor segment, or Change Intake. It sets routing semantics, not approval or Stage completion. |
 | `Stage` | Named workflow phase such as WF5, WF10, or `release`. |
 | `Skill` | Agent behavior contract for a stage or bounded task. |
 | `Skill Contract` | Machine-readable rule set in `schemas/skill_contracts.json`. |
@@ -50,6 +51,7 @@ Avoid bare `evidence` when the meaning could be unclear:
 | `Gate Evidence` | Proof that a workflow gate was attempted or satisfied. |
 | `Gate Ledger` | Final command/result/reason/artifact report. |
 | `Review Packet` | Human decision input. It is not approval. |
+| `Pending Request` | Typed supervisor-owned request for human input, approval, steering, review edit, or escalation. It pauses execution until resolved. |
 | `Human Approval` | Explicit operator approval in the current conversation or auditable artifact. |
 | `Operator Context` | Stable operator preferences explicitly provided by the operator. |
 | `Current Facts` | Facts derived from current project artifacts and evidence chains. |
@@ -64,6 +66,8 @@ Avoid bare `evidence` when the meaning could be unclear:
 ## Workflow Naming Rules
 
 - Use `WF<N>` only for canonical workflow stages.
+- Use `Entrypoint` for how work is started; do not use it as a synonym for
+  Stage completion, approval, or write authorization.
 - Use `Stage` for the active phase, and `Skill` for agent behavior.
 - Use `<skill> Contract` only for machine-readable contract behavior.
 - Use `Approved <Thing> Contract` only after explicit human approval.
