@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-05T12:46:58Z",
+  "generated_at": "2026-06-05T13:45:45Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Workflow Handbook",
@@ -224,7 +224,7 @@
       "page_id": "operator_task_index",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Task-first index for choosing the right Harness entrypoint, status check, and detailed reference.",
+      "summary": "Task-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -288,7 +288,7 @@
       "page_id": "workflow_supervisor_model",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "How Grill, execution supervisor, and change intake form the user-facing workflow entrypoints without replacing Gate Evidence or Human Approval.",
+      "summary": "How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -1433,7 +1433,6 @@
         "pages__workflow_supervisor_model",
         "skills__grill",
         "skills__workflow-supervisor",
-        "skills__change-intake",
         "pages__evidence_approval_model",
         "pages__auto_iterate_model"
       ],
@@ -1447,7 +1446,7 @@
         },
         {
           "doc_id": "pages__workflow_supervisor_model",
-          "label": "Entrypoints",
+          "label": "Modes",
           "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
           "children": [
             {
@@ -1458,14 +1457,8 @@
             },
             {
               "doc_id": "skills__workflow-supervisor",
-              "label": "workflow-supervisor",
+              "label": "execution supervisor",
               "source_path": "workflow_handbook/skills/workflow-supervisor.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__change-intake",
-              "label": "change-intake",
-              "source_path": "workflow_handbook/skills/change-intake.md",
               "children": []
             }
           ]
@@ -1526,6 +1519,7 @@
         "skills__build-plan",
         "skills__code-expert",
         "skills__code-debug",
+        "skills__change-intake",
         "skills__harness-maintenance",
         "skills__code-review",
         "skills__validate-run",
@@ -1783,6 +1777,12 @@
               "doc_id": "skills__code-debug",
               "label": "code-debug",
               "source_path": "workflow_handbook/skills/code-debug.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__change-intake",
+              "label": "change-intake",
+              "source_path": "workflow_handbook/skills/change-intake.md",
               "children": []
             },
             {

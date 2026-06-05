@@ -16,7 +16,8 @@
 <p>本文档阐述 Harness Research 中一套拟议的 <code>grill + execution supervisor</code> 机制。它的用途是帮助人类理解这套机制的目的、边界、完整流程、HITL 细节、状态恢复模型，以及外部可参考的实现。它不是用于指导 agent 直接修改 workflow 的操作手册。</p>
 <p>用户第一层不应该先选择内部 WF node，而应该先选择 human-facing entrypoint：</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">rough idea or request
-  -&gt; grill | prepare | build | iterate | release | change
+  -&gt; grill | execution supervisor
+  -&gt; supervisor action, when applicable
   -&gt; status / output / pending request
   -&gt; Human Approval or next safe action</code></pre></div>
 <p>内部 WF0-WF12 map 保留为 artifact、Skill Contract、Gate 和恢复排查索引。 只有需要解释兼容关系、postcondition 或 completion 条件时，本文才展开细节。</p>
@@ -117,9 +118,9 @@ Change intake / delta grill
 <p><code>workflow_supervisor_nodes.json</code> 引用 Skill Contracts？</p>
 <ul><li><code>Execution Readiness Packet</code> 应写成 root <code>docs/*.md</code>、JSON state，还是同时写</li></ul>
 <p>human-readable Markdown 和 machine-readable JSON？</p>
-<ul><li>codebase 建成后的 <code>change intake</code> 是否应是独立 entrypoint，还是由</li></ul>
-<p><code>harness build</code> / <code>harness iterate</code> 内部自动路由？</p>
-<p>V0 implementation should not leave these choices ambiguous. The implementation plan freezes the first runtime namespace, artifact layout, node registry shape, human interface, and change-intake entrypoint; later versions may revisit those choices after tests and fixture runs prove the baseline.</p>
+<ul><li>codebase 建成后的 <code>change intake</code> 是否应是显式 supervisor action，还是由</li></ul>
+<p><code>build</code> / <code>iterate</code> actions 内部自动路由？</p>
+<p>V0 implementation should not leave these choices ambiguous. The implementation plan freezes the first runtime namespace, artifact layout, node registry shape, human interface, and change-intake action; later versions may revisit those choices after tests and fixture runs prove the baseline.</p>
 <h2 id="section">设计目的</h2>
 <p>这套机制的目标是：减少 workflow 手工调用摩擦，同时不削弱人类对研究判断、 contracts、claims 和 release 的责任。</p>
 <p>当前手动调用 Skill 的优点是灵活、人类参与充分、问题容易局部定位；缺点是操作 成本高，operator 必须记住下一步 Skill、必跑 gates、哪些 artifact 是 Review Packet 而不是 Approval Evidence，以及中断后如何恢复。</p>
@@ -163,42 +164,46 @@ workflow friction problem
 <table><thead><tr><th>Mode</th><th>Main Work</th><th>Automation Level</th><th>Human Role</th><th>Exit Condition</th></tr></thead><tbody>
 <tr><td><code>grill</code></td><td>WF1-WF3 idea clarification、debate、claim discipline</td><td>低自动化，高对话</td><td>Co-designer / decision maker</td><td>人类接受 Research Intent Draft，或 pivot / abandon</td></tr>
 <tr><td><code>execution_supervisor</code></td><td>WF4-WF12 data、baseline、build、validate、iterate、release</td><td>postconditions 强的地方自动继续</td><td>Approver / information provider / steering authority</td><td>segment 完成、HITL interrupt、gate failure 或 fatal error</td></tr>
-<tr><td><code>change_intake</code></td><td>post-WF8/WF9 mature codebase 上的新需求、新 idea、config/code delta</td><td>先分类，低风险自动路由，高风险进入 delta grill</td><td>Intent clarifier / steering authority</td><td>change route 明确，或进入 STEER / approval gate</td></tr>
+<tr><td><code>change_intake</code> action</td><td>post-WF8/WF9 mature codebase 上的新需求、新 idea、config/code delta</td><td>Execution Supervisor 内部先分类，低风险自动路由，高风险进入 delta grill</td><td>Intent clarifier / steering authority</td><td>change route 明确，或进入 STEER / approval gate</td></tr>
 </tbody></table>
 <h2 id="segment-model">Segment Model</h2>
-<p>这套机制建议暴露多个 human-facing entrypoint，而不是一个巨大命令：</p>
+<p>这套机制只暴露两个第一层 human-facing entrypoint：<code>grill</code> 和 <code>execution supervisor</code>。Execution Supervisor 再暴露 scoped actions：</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">harness grill
   -&gt; WF1-WF3
   -&gt; produces Research Intent Draft
   -&gt; requires explicit exit decision
 
-harness prepare
+harness &lt;action&gt;
+  -&gt; execution supervisor
+  -&gt; action is one of prepare / build / iterate / release / change
+
+prepare
   -&gt; WF4-WF5
   -&gt; data, baseline, protocol, review packet
   -&gt; pauses for dataset input and Evaluation Contract approval
 
-harness build
+build
   -&gt; WF6-WF9
   -&gt; architecture, plan, implementation, validation
   -&gt; pauses for architecture tradeoffs and high-risk scope changes
 
-harness iterate
+iterate
   -&gt; WF10
   -&gt; existing auto-iterate controller
   -&gt; pauses for manual_action_required, PIVOT, ABORT, budget, or goal changes
 
-harness release
+release
   -&gt; WF11-WF12
   -&gt; final experiment, claim boundary, release package
   -&gt; pauses for Claim Boundary and release/submission approval
 
-harness change
+change
   -&gt; after WF8/WF9 or after a mature codebase exists
   -&gt; classify a new request as bugfix / experiment_delta / stable_code_delta /
      architecture_delta / evaluation_delta / claim_boundary_delta /
      new_research_direction
   -&gt; route to code-debug / iterate / build_delta / review-packet / delta grill</code></pre></div>
-<p>这些入口不是简单 alias。它们代表不同人类参与语义：</p>
+<p>这些 actions 不是新的顶层入口。它们代表 Execution Supervisor 内部不同的人类参与语义：</p>
 <ul><li><code>grill</code>: human input 本身就是主要工作。</li><li><code>prepare</code>: human input 解决缺失事实和 contract risk。</li><li><code>build</code>: human input 处理 architecture / scope / tradeoff。</li><li><code>iterate</code>: human input 处理 loop exits、pivot、failure、budget。</li><li><code>release</code>: human input 批准 supported claims 和 submission actions。</li><li><code>change</code>: human input 说明新需求意图；supervisor 判断它是局部 delta 还是新研究</li></ul>
 <p>branch。</p>
 <p>Compatibility rule: <code>harness grill</code> may cover the interactive intent work that historically spans WF1-WF3, but its draft artifacts do not by themselves complete WF1, WF2, or WF3. Stage completion still requires canonical Stage artifacts and Gate ledger, produced by existing Skills or by an explicit bridge path that validates those Skill contracts.</p>

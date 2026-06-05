@@ -16,7 +16,7 @@
 <p>本文档是把当前 Harness workflow 改造成 <code>grill + execution supervisor</code> 架构的实施计划。它不是重新解释机制的概念，而是说明现有仓库应该如何改：</p>
 <ul><li>哪些 framework files、schemas、Skills、hooks、tooling 要新增或调整。</li><li><code>.evidence/**</code> 如何参与，但仍保持 tool-owned。</li><li>哪些 docs 在什么时候生成，哪些 docs 需要 Evidence Chain。</li><li>每个 Stage、每次 supervisor run、每个 node run 应记录什么。</li><li>用户输入导致中断后，用户应如何提供信息，supervisor 如何继续。</li><li>如何逐步 rollout，避免一次性重写整个 workflow。</li></ul>
 <p>本文以当前仓库状态为前提：Harness framework 已有 WF0-WF12、Skill Contracts、 dynamic-context evidence tooling、Review Packet tooling、Codex hooks、以及 WF10 auto-iterate controller。计划的核心不是删除现有 workflow，而是增加一个可恢复的 supervisor layer，让现有 Skills 成为可编排节点。</p>
-<p>用户文档必须 entrypoint-first：先说明 <code>grill / prepare / build / iterate / release / change</code> 怎么用、看什么状态、何时暂停；WF0-WF12 只作为 detailed reference、compatibility 和 postcondition 语言出现。</p>
+<p>用户文档必须 top-level entrypoint first：先说明只有 <code>grill</code> 和 <code>execution supervisor</code> 两个第一层入口；<code>prepare/build/iterate/release/change</code> 只是 Execution Supervisor actions，用来说明怎么运行、看什么状态、何时暂停。 WF0-WF12 只作为 detailed reference、compatibility 和 postcondition 语言出现。</p>
 <h2 id="document-boundary">Document Boundary</h2>
 <p>本文档只负责回答“如何把设计落到 Harness Research 仓库”：</p>
 <ul><li>新增或修改哪些 framework files、schemas、Skills、hooks 和 tests。</li><li><code>.workflow_supervisor/**</code>、<code>.auto_iterate/**</code>、<code>.evidence/**</code> 的 ownership 如何划分。</li><li>每个 segment 的 first implementation slice、acceptance criteria 和 validation</li></ul>
@@ -69,13 +69,15 @@
 <tr><td>Grill implementation shape</td><td>Add a <code>grill</code> Skill plus lightweight <code>tooling/grill/**</code> helpers; optional CLI wrapper may call the Skill, but v0 does not implement Grill as a supervisor subgraph.</td><td>Keeps early human discussion separate from execution automation.</td></tr>
 <tr><td>Node registry</td><td>Add <code>schemas/workflow_supervisor_nodes.schema.json</code> and <code>tooling/workflow_supervisor/config/default_nodes.json</code>; do not modify <code>schemas/skill_contracts.json</code> in the first runtime slice.</td><td>Avoids destabilizing hook/contract behavior before the registry contract is tested.</td></tr>
 <tr><td>Human interface</td><td>Use CLI + Markdown/Review Packet payloads; no dashboard in v0.</td><td>Matches local research workspace usage and keeps implementation auditable.</td></tr>
-<tr><td>Change intake entrypoint</td><td>Add explicit <code>harness change</code> / <code>workflow_ctl start --segment change</code>; later <code>build</code> or <code>iterate</code> may internally route to it only after classifier tests pass.</td><td>Prevents post-codebase requests from silently becoming code edits.</td></tr>
+<tr><td>Change intake action</td><td>Add explicit <code>harness change</code> / <code>workflow_ctl start --segment change</code> as an Execution Supervisor action; later <code>build</code> or <code>iterate</code> may internally route to it only after classifier tests pass.</td><td>Prevents post-codebase requests from silently becoming code edits while keeping only two top-level entrypoints.</td></tr>
 <tr><td>Default enablement</td><td>Manual Skill workflow remains default until the final default-enablement gate passes.</td><td>Preserves existing Harness behavior during rollout.</td></tr>
 </tbody></table>
 <h2 id="operator-documentation-contract">Operator Documentation Contract</h2>
 <p>所有 human-facing supervisor 文档都应遵循同一顺序：</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">what you want
-  -&gt; command / entrypoint
+  -&gt; top-level entrypoint
+  -&gt; supervisor action, when applicable
+  -&gt; command
   -&gt; required input
   -&gt; status surface
   -&gt; output artifact
@@ -84,10 +86,10 @@
 <p>Required index surfaces:</p>
 <ul><li><code>workflow_handbook/Workflow_Operator_Handbook.md</code>: short mental model and</li></ul>
 <p>quick task index.</p>
-<ul><li><code>workflow_handbook/pages/operator_task_index.md</code>: complete task-to-entrypoint</li></ul>
+<ul><li><code>workflow_handbook/pages/operator_task_index.md</code>: complete task-to-mode/action</li></ul>
 <p>index.</p>
-<ul><li><code>workflow_handbook/pages/workflow_supervisor_model.md</code>: entrypoint behavior,</li></ul>
-<p>status surfaces, HITL boundary.</p>
+<ul><li><code>workflow_handbook/pages/workflow_supervisor_model.md</code>: two top-level modes,</li></ul>
+<p>supervisor actions, status surfaces, HITL boundary.</p>
 <ul><li><code>workflow_handbook/Workflow_Stage_Cards.md</code>: detailed internal reference</li></ul>
 <p>generated from Skill Contracts.</p>
 <ul><li><code>README.md</code>: repository-level overview that links to the operator index</li></ul>
@@ -417,7 +419,9 @@ Release segment
   &quot;base_git_commit&quot;: &quot;...&quot;,
   &quot;base_git_dirty&quot;: true,
   &quot;goal&quot;: &quot;...&quot;,
-  &quot;entrypoint&quot;: &quot;harness prepare&quot;,
+  &quot;top_level_mode&quot;: &quot;execution_supervisor&quot;,
+  &quot;supervisor_action&quot;: &quot;prepare&quot;,
+  &quot;command&quot;: &quot;harness prepare&quot;,
   &quot;policy&quot;: {
     &quot;max_llm_calls&quot;: 50,
     &quot;max_node_attempts&quot;: 2,
@@ -824,8 +828,8 @@ tooling/grill/
 <h2 id="hook-and-guardrail-changes">Hook and Guardrail Changes</h2>
 <p>Codex hooks should recognize supervisor prompts and runtime paths.</p>
 <p>Add hook behavior:</p>
-<ul><li>route hints for <code>harness grill</code>, <code>harness prepare</code>, <code>harness build</code>,</li></ul>
-<p><code>harness change</code>, <code>harness release</code>;</p>
+<ul><li>route hints for <code>harness grill</code> and Execution Supervisor action commands</li></ul>
+<p>such as <code>harness prepare</code>, <code>harness build</code>, <code>harness change</code>, and <code>harness release</code>;</p>
 <ul><li>warn when worker attempts to ask user directly in <code>auto_mode</code>;</li><li>block manual writes to <code>.workflow_supervisor/**</code> except through supervisor tooling;</li><li>continue blocking manual writes to <code>.evidence/**</code> and <code>.auto_iterate/**</code>;</li><li>record read/write metadata for supervisor worker prompts;</li><li>warn if a worker attempts to approve contracts or release claims;</li><li>test <code>.workflow_supervisor/**</code> direct-write blocks and supervisor-tool</li></ul>
 <p>allowlist behavior.</p>
 <p>Tests:</p>
@@ -923,7 +927,9 @@ build / iterate / release supervisor
 <ul><li>run in standard/legacy compatibility mode with warnings, or</li><li>stop and ask whether to initialize dynamic context.</li></ul>
 <h2 id="required-updates-to-templates-and-docs">Required Updates to Templates and Docs</h2>
 <p>Update:</p>
-<ul><li><code>.gitignore</code> and hook policy docs for <code>.workflow_supervisor/**</code> runtime ownership.</li><li><code>AI_AGENT_SETUP.md</code> for bootstrap instructions and <code>.workflow_supervisor/</code> ignore rules.</li><li><code>templates/**</code> to include optional Grill / supervisor docs.</li><li><code>README.md</code> to describe <code>grill -&gt; prepare -&gt; build -&gt; iterate -&gt; release -&gt; change</code>.</li><li><code>AGENTS.md</code> and <code>CLAUDE.md</code> to add concise routing rules.</li><li><code>workflow_handbook/Workflow_Operator_Handbook.md</code> for operator-facing flows.</li><li><code>workflow_handbook/pages/workflow_supervisor_model.md</code> and navigation.</li><li><code>workflow_handbook/Workflow_Stage_Cards.md</code> after Skill Contract updates.</li><li><code>.agents/skills/**</code> and <code>.claude/skills/**</code> for semantic alignment.</li><li><code>schemas/skill_contracts.json</code> only after node registry behavior stabilizes.</li></ul>
+<ul><li><code>.gitignore</code> and hook policy docs for <code>.workflow_supervisor/**</code> runtime ownership.</li><li><code>AI_AGENT_SETUP.md</code> for bootstrap instructions and <code>.workflow_supervisor/</code> ignore rules.</li><li><code>templates/**</code> to include optional Grill / supervisor docs.</li><li><code>README.md</code> to describe two top-level modes: <code>grill</code> and Execution Supervisor</li></ul>
+<p>actions (<code>prepare/build/iterate/release/change</code>).</p>
+<ul><li><code>AGENTS.md</code> and <code>CLAUDE.md</code> to add concise routing rules.</li><li><code>workflow_handbook/Workflow_Operator_Handbook.md</code> for operator-facing flows.</li><li><code>workflow_handbook/pages/workflow_supervisor_model.md</code> and navigation.</li><li><code>workflow_handbook/Workflow_Stage_Cards.md</code> after Skill Contract updates.</li><li><code>.agents/skills/**</code> and <code>.claude/skills/**</code> for semantic alignment.</li><li><code>schemas/skill_contracts.json</code> only after node registry behavior stabilizes.</li></ul>
 <h2 id="final-gate-before-enabling-by-default">Final Gate Before Enabling by Default</h2>
 <p>Before making supervisor the default route, require:</p>
 <ul><li>passing hook contract tests,</li><li>passing supervisor unit/integration tests,</li><li>successful dry-run on at least one fixture target workspace,</li><li>successful interrupted/resumed run,</li><li>evidence tooling still passes dynamic context and docchain tests,</li><li>human review of approval payload UX,</li><li>explicit operator acceptance that supervisor can run the selected segment.</li></ul>
