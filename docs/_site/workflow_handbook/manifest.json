@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-05T09:24:06Z",
+  "generated_at": "2026-06-05T12:46:58Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Workflow Handbook",
@@ -26,7 +26,7 @@
     {
       "doc_id": "Workflow_Stage_Cards",
       "doc_kind": "current_doc",
-      "title": "Harness Workflow Stage Cards",
+      "title": "Detailed Workflow Stage Reference",
       "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
       "html_path": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html",
       "status": null,
@@ -212,6 +212,28 @@
       ]
     },
     {
+      "doc_id": "pages__operator_task_index",
+      "doc_kind": "concept",
+      "title": "Operator Task Index",
+      "source_path": "workflow_handbook/pages/operator_task_index.md",
+      "html_path": "docs/_site/workflow_handbook/pages/operator_task_index.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "operator_task_index",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Task-first index for choosing the right Harness entrypoint, status check, and detailed reference.",
+      "references": [
+        "skill:grill",
+        "skill:workflow-supervisor",
+        "skill:change-intake",
+        "term:Gate Evidence",
+        "term:Human Approval"
+      ]
+    },
+    {
       "doc_id": "pages__skill_reference",
       "doc_kind": "reference",
       "title": "Skill Reference",
@@ -245,7 +267,7 @@
       "page_id": "workflow_layers",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Explains the Intent -> Entrypoint -> Stage -> Skill -> Gate model.",
+      "summary": "Explains the entrypoint-first operating model and where internal Stage references fit.",
       "references": [
         "term:Stage",
         "term:Skill",
@@ -266,7 +288,7 @@
       "page_id": "workflow_supervisor_model",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "How Grill, execution supervisor, and change intake sit above existing Stage Skills without replacing Gate Evidence or Human Approval.",
+      "summary": "How Grill, execution supervisor, and change intake form the user-facing workflow entrypoints without replacing Gate Evidence or Human Approval.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -1405,8 +1427,71 @@
       ]
     },
     {
-      "label": "Workflow Details",
+      "label": "Operate",
       "pages": [
+        "pages__operator_task_index",
+        "pages__workflow_supervisor_model",
+        "skills__grill",
+        "skills__workflow-supervisor",
+        "skills__change-intake",
+        "pages__evidence_approval_model",
+        "pages__auto_iterate_model"
+      ],
+      "section_id": "operate",
+      "items": [
+        {
+          "doc_id": "pages__operator_task_index",
+          "label": "Task Index",
+          "source_path": "workflow_handbook/pages/operator_task_index.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__workflow_supervisor_model",
+          "label": "Entrypoints",
+          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
+          "children": [
+            {
+              "doc_id": "skills__grill",
+              "label": "grill",
+              "source_path": "workflow_handbook/skills/grill.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__workflow-supervisor",
+              "label": "workflow-supervisor",
+              "source_path": "workflow_handbook/skills/workflow-supervisor.md",
+              "children": []
+            },
+            {
+              "doc_id": "skills__change-intake",
+              "label": "change-intake",
+              "source_path": "workflow_handbook/skills/change-intake.md",
+              "children": []
+            }
+          ]
+        },
+        {
+          "doc_id": "pages__evidence_approval_model",
+          "label": "Evidence And Approval",
+          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__auto_iterate_model",
+          "label": "Auto-Iterate",
+          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "Detailed Reference",
+      "pages": [
+        "pages__workflow_layers",
+        "pages__layer_explore",
+        "pages__layer_contract_plan",
+        "pages__layer_build_validate",
+        "pages__layer_iterate_release",
         "Workflow_Stage_Cards",
         "stages__wf0_init",
         "stages__wf1_survey_idea",
@@ -1421,17 +1506,6 @@
         "stages__wf10_iterate",
         "stages__wf11_final_exp",
         "stages__wf12_release",
-        "pages__workflow_layers",
-        "pages__layer_explore",
-        "pages__layer_contract_plan",
-        "pages__layer_build_validate",
-        "pages__layer_iterate_release",
-        "pages__evidence_approval_model",
-        "pages__hooks_permissions_model",
-        "pages__auto_iterate_model",
-        "pages__workflow_supervisor_model",
-        "pages__04_markdown_to_html_preview_chain",
-        "pages__workflow_terms",
         "pages__skill_reference",
         "skills__orchestrator",
         "skills__doc-compiler",
@@ -1454,9 +1528,6 @@
         "skills__code-debug",
         "skills__harness-maintenance",
         "skills__code-review",
-        "skills__grill",
-        "skills__workflow-supervisor",
-        "skills__change-intake",
         "skills__validate-run",
         "skills__iterate",
         "skills__auto-iterate-goal",
@@ -1472,13 +1543,47 @@
         "skills__auto-paper-data",
         "skills__auto-paper-figure",
         "skills__final-exp",
-        "skills__release"
+        "skills__release",
+        "pages__hooks_permissions_model",
+        "pages__workflow_terms",
+        "pages__04_markdown_to_html_preview_chain"
       ],
-      "section_id": "details",
+      "section_id": "detailed_reference",
       "items": [
         {
+          "doc_id": "pages__workflow_layers",
+          "label": "Detailed Workflow Map",
+          "source_path": "workflow_handbook/pages/workflow_layers.md",
+          "children": [
+            {
+              "doc_id": "pages__layer_explore",
+              "label": "Explore Layer",
+              "source_path": "workflow_handbook/pages/layer_explore.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_contract_plan",
+              "label": "Contract And Plan Layer",
+              "source_path": "workflow_handbook/pages/layer_contract_plan.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_build_validate",
+              "label": "Build And Validate Layer",
+              "source_path": "workflow_handbook/pages/layer_build_validate.md",
+              "children": []
+            },
+            {
+              "doc_id": "pages__layer_iterate_release",
+              "label": "Iterate And Release Layer",
+              "source_path": "workflow_handbook/pages/layer_iterate_release.md",
+              "children": []
+            }
+          ]
+        },
+        {
           "doc_id": "Workflow_Stage_Cards",
-          "label": "Stage Details",
+          "label": "Stage Reference",
           "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
           "children": [
             {
@@ -1562,75 +1667,8 @@
           ]
         },
         {
-          "doc_id": "pages__workflow_layers",
-          "label": "Workflow Layers",
-          "source_path": "workflow_handbook/pages/workflow_layers.md",
-          "children": [
-            {
-              "doc_id": "pages__layer_explore",
-              "label": "Explore Layer",
-              "source_path": "workflow_handbook/pages/layer_explore.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_contract_plan",
-              "label": "Contract And Plan Layer",
-              "source_path": "workflow_handbook/pages/layer_contract_plan.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_build_validate",
-              "label": "Build And Validate Layer",
-              "source_path": "workflow_handbook/pages/layer_build_validate.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_iterate_release",
-              "label": "Iterate And Release Layer",
-              "source_path": "workflow_handbook/pages/layer_iterate_release.md",
-              "children": []
-            }
-          ]
-        },
-        {
-          "doc_id": "pages__evidence_approval_model",
-          "label": "Evidence And Approval",
-          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__hooks_permissions_model",
-          "label": "Hooks And Permissions",
-          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__auto_iterate_model",
-          "label": "Auto-Iterate",
-          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__workflow_supervisor_model",
-          "label": "Workflow Supervisor",
-          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__04_markdown_to_html_preview_chain",
-          "label": "HTML Preview Chain",
-          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__workflow_terms",
-          "label": "Workflow Terms",
-          "source_path": "workflow_handbook/pages/workflow_terms.md",
-          "children": []
-        },
-        {
           "doc_id": "pages__skill_reference",
-          "label": "Skill Details",
+          "label": "Skill Reference",
           "source_path": "workflow_handbook/pages/skill_reference.md",
           "children": [
             {
@@ -1760,24 +1798,6 @@
               "children": []
             },
             {
-              "doc_id": "skills__grill",
-              "label": "grill",
-              "source_path": "workflow_handbook/skills/grill.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__workflow-supervisor",
-              "label": "workflow-supervisor",
-              "source_path": "workflow_handbook/skills/workflow-supervisor.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__change-intake",
-              "label": "change-intake",
-              "source_path": "workflow_handbook/skills/change-intake.md",
-              "children": []
-            },
-            {
               "doc_id": "skills__validate-run",
               "label": "validate-run",
               "source_path": "workflow_handbook/skills/validate-run.md",
@@ -1874,6 +1894,24 @@
               "children": []
             }
           ]
+        },
+        {
+          "doc_id": "pages__hooks_permissions_model",
+          "label": "Hooks And Permissions",
+          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__workflow_terms",
+          "label": "Workflow Terms",
+          "source_path": "workflow_handbook/pages/workflow_terms.md",
+          "children": []
+        },
+        {
+          "doc_id": "pages__04_markdown_to_html_preview_chain",
+          "label": "HTML Preview Chain",
+          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+          "children": []
         }
       ]
     }

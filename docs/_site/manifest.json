@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.1",
+  "generated_at": "2026-06-05T12:46:33Z",
+  "source_root": "docs",
+  "output_root": "docs/_site",
+  "site_title": "Project Docs",
+  "reference_mode": "project-evidence",
+  "nav_config_path": null,
+  "pages": [
+    {
+      "doc_id": "grill_execution_supervisor",
+      "doc_kind": "current_doc",
+      "title": "Grill + Execution Supervisor 机制参考架构",
+      "source_path": "docs/grill_execution_supervisor.md",
+      "html_path": "docs/_site/grill_execution_supervisor.html",
+      "status": null,
+      "evidence_chain_path": null,
+      "preview_index_path": null,
+      "related_pages": [],
+      "page_id": null,
+      "page_kind": null,
+      "source_type": null,
+      "summary": null,
+      "references": []
+    },
+    {
+      "doc_id": "grill_execution_supervisor_implementation_plan",
+      "doc_kind": "current_doc",
+      "title": "Grill + Execution Supervisor Implementation Plan",
+      "source_path": "docs/grill_execution_supervisor_implementation_plan.md",
+      "html_path": "docs/_site/grill_execution_supervisor_implementation_plan.html",
+      "status": null,
+      "evidence_chain_path": null,
+      "preview_index_path": null,
+      "related_pages": [],
+      "page_id": null,
+      "page_kind": null,
+      "source_type": null,
+      "summary": null,
+      "references": []
+    }
+  ],
+  "navigation": [
+    {
+      "label": "docs",
+      "pages": [
+        "grill_execution_supervisor",
+        "grill_execution_supervisor_implementation_plan"
+      ]
+    }
+  ]
+}
