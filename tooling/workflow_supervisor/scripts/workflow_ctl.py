@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Lightweight Harness workflow supervisor control CLI.
 
-This v0 controller owns only ``.workflow_supervisor/**``. It records typed
-state, events, pending human requests, and validation results, but it does not
-invoke Stage Skills or mark canonical workflow stages complete.
+This controller owns only ``.workflow_supervisor/**``. It records typed state,
+events, pending human requests, worker results, and validation results. It may
+delegate nodes to structured workers, but it does not mark canonical workflow
+stages complete or approve contracts by itself.
 """
 
 from __future__ import annotations
@@ -14,8 +15,12 @@ import hashlib
 import json
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -94,6 +99,77 @@ FORBIDDEN_WORKER_WRITE_PREFIXES = (
     "docs/_views/",
     "docs/_site/",
 )
+CODEX_WORKER_SANDBOX_ARGS = ["--full-auto"]
+GRILL_ARTIFACT_REFS = (
+    "docs/Execution_Readiness_Packet.md",
+    "docs/Research_Intent_Draft.md",
+    "docs/Grill_Round_Log.md",
+)
+GRILL_BRIDGE_KEYS = {
+    "dataset_source",
+    "dataset_remote",
+    "dataset_root",
+    "dataset_path",
+    "dataset_target",
+    "dataset_download_dir",
+    "baseline_repo",
+    "baseline_source",
+    "baseline_cache",
+    "baseline_target",
+    "baseline_download_dir",
+    "external_download_policy",
+    "allow_external_downloads",
+}
+GRILL_KEY_ALIASES = {
+    "dataset_url": "dataset_source",
+    "dataset_remote": "dataset_source",
+    "dataset_source": "dataset_source",
+    "dataset_download_url": "dataset_source",
+    "data_source": "dataset_source",
+    "data_url": "dataset_source",
+    "dataset_root": "dataset_root",
+    "dataset_path": "dataset_root",
+    "dataset_target": "dataset_root",
+    "dataset_download_dir": "dataset_root",
+    "dataset_dir": "dataset_root",
+    "data_root": "dataset_root",
+    "data_path": "dataset_root",
+    "data_dir": "dataset_root",
+    "baseline_repo": "baseline_repo",
+    "baseline_source": "baseline_repo",
+    "baseline_url": "baseline_repo",
+    "baseline_git": "baseline_repo",
+    "baseline_repository": "baseline_repo",
+    "baseline_clone": "baseline_repo",
+    "baseline_cache": "baseline_cache",
+    "baseline_target": "baseline_cache",
+    "baseline_download_dir": "baseline_cache",
+    "baseline_dir": "baseline_cache",
+    "external_download_policy": "external_download_policy",
+    "allow_external_downloads": "external_download_policy",
+    "download_policy": "external_download_policy",
+}
+GRILL_REDACTED_VALUES = {
+    "",
+    "pending",
+    "redacted",
+    "<redacted>",
+    "unknown",
+    "none",
+    "n/a",
+    "na",
+    "not run",
+    "candidate",
+}
+CREATABLE_READINESS_PATH_KEYS = {
+    "dataset_root",
+    "dataset_path",
+    "dataset_target",
+    "dataset_download_dir",
+    "baseline_cache",
+    "baseline_target",
+    "baseline_download_dir",
+}
 CHANGE_CONTEXT_INPUTS = [
     "PROJECT_STATE.json",
     "project_map.json",
@@ -665,6 +741,10 @@ def run_manifest(
     segment: str,
     goal: str,
     entrypoint: str,
+    allow_external_downloads: bool = False,
+    worker_mode: str = "none",
+    complete_prepare: bool = False,
+    grill_bridge_ref: str | None = None,
 ) -> dict[str, Any]:
     commit = ""
     dirty = None
@@ -701,7 +781,10 @@ def run_manifest(
             "max_llm_calls": 0,
             "max_node_attempts": 1,
             "pause_on_gate_fail": True,
-            "allow_external_downloads": False,
+            "allow_external_downloads": allow_external_downloads,
+            "worker_mode": worker_mode,
+            "complete_prepare": complete_prepare,
+            "grill_bridge_ref": grill_bridge_ref,
         },
     }
 
@@ -1027,6 +1110,1455 @@ def write_json_artifact(workspace_root: Path, relative_path: str, data: Any) -> 
     path = workspace_root / relative_path
     atomic_write_json(path, data)
     return relative_path
+
+
+def path_stats(path: Path) -> dict[str, int]:
+    if not path.exists():
+        return {"files": 0, "bytes": 0}
+    if path.is_file():
+        return {"files": 1, "bytes": path.stat().st_size}
+    files = 0
+    bytes_total = 0
+    for child in path.rglob("*"):
+        if child.is_file():
+            files += 1
+            bytes_total += child.stat().st_size
+    return {"files": files, "bytes": bytes_total}
+
+
+def nonempty_path(path: Path) -> bool:
+    if path.is_file():
+        return True
+    if path.is_dir():
+        return any(path.iterdir())
+    return False
+
+
+def source_basename(source: str) -> str:
+    parsed = urllib.parse.urlparse(source)
+    name = Path(parsed.path.rstrip("/")).name if parsed.path else ""
+    if name.endswith(".git"):
+        name = name[:-4]
+    return name or "downloaded_dataset"
+
+
+def source_is_remote(source: str) -> bool:
+    parsed = urllib.parse.urlparse(source)
+    return parsed.scheme in {"http", "https", "git", "ssh"} or source.startswith(
+        "git@"
+    )
+
+
+def source_is_git(source: str) -> bool:
+    if source.endswith(".git") or source.startswith("git@"):
+        return True
+    parsed = urllib.parse.urlparse(source)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    host = parsed.netloc.lower()
+    if not any(name in host for name in ("github.com", "gitlab.com", "bitbucket.org")):
+        return False
+    parts = [part for part in parsed.path.split("/") if part]
+    return len(parts) >= 2
+
+
+def resolve_operator_path(workspace_root: Path, value: str | None) -> Path | None:
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    return workspace_root / path
+
+
+def readiness_value(workspace_root: Path, key: str) -> str | None:
+    path = supervisor_root(workspace_root) / "readiness.json"
+    if not path.exists():
+        return None
+    data = load_json_if_exists(path, {})
+    if not isinstance(data, dict):
+        return None
+    for item in data.get("inputs", []):
+        if not isinstance(item, dict):
+            continue
+        if item.get("key") == key and item.get("verification_status") in {
+            "candidate",
+            "verified",
+        }:
+            value = item.get("value")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def normalize_grill_key(key: str) -> str | None:
+    normalized = re.sub(r"[^a-z0-9]+", "_", key.lower()).strip("_")
+    return GRILL_KEY_ALIASES.get(normalized)
+
+
+def usable_grill_value(value: Any) -> str | None:
+    if value is None:
+        return None
+    rendered = str(value).strip().strip("`'\"")
+    if not rendered:
+        return None
+    if rendered.lower() in GRILL_REDACTED_VALUES:
+        return None
+    if rendered.startswith("<") and rendered.endswith(">"):
+        return None
+    return rendered
+
+
+def truthy_policy_value(value: str | None) -> bool:
+    if value is None:
+        return False
+    normalized = value.strip().lower()
+    return normalized in {
+        "1",
+        "true",
+        "yes",
+        "y",
+        "allow",
+        "allowed",
+        "approve",
+        "approved",
+        "enabled",
+    }
+
+
+def bridge_candidate(
+    value: str,
+    *,
+    source_ref: str,
+    confidence: str,
+    notes: str,
+) -> dict[str, str]:
+    return {
+        "value": value,
+        "source_ref": source_ref,
+        "confidence": confidence,
+        "notes": notes,
+    }
+
+
+def add_bridge_candidate(
+    values: dict[str, dict[str, str]],
+    *,
+    key: str,
+    value: Any,
+    source_ref: str,
+    confidence: str,
+    notes: str,
+) -> None:
+    normalized = normalize_grill_key(key)
+    rendered = usable_grill_value(value)
+    if normalized is None or rendered is None:
+        return
+    values.setdefault(
+        normalized,
+        bridge_candidate(
+            rendered,
+            source_ref=source_ref,
+            confidence=confidence,
+            notes=notes,
+        ),
+    )
+
+
+def add_readiness_json_bridge_values(
+    workspace_root: Path,
+    values: dict[str, dict[str, str]],
+    input_refs: list[str],
+) -> None:
+    path = supervisor_root(workspace_root) / "readiness.json"
+    if not path.exists():
+        return
+    input_refs.append(path.relative_to(workspace_root).as_posix())
+    data = load_json_if_exists(path, {})
+    if not isinstance(data, dict):
+        return
+    for item in data.get("inputs", []):
+        if not isinstance(item, dict):
+            continue
+        if item.get("verification_status") not in {"candidate", "verified"}:
+            continue
+        add_bridge_candidate(
+            values,
+            key=str(item.get("key", "")),
+            value=item.get("value"),
+            source_ref=path.relative_to(workspace_root).as_posix(),
+            confidence="structured_readiness_json",
+            notes=str(item.get("notes", "readiness candidate")),
+        )
+
+
+def parse_markdown_table_row(line: str) -> list[str] | None:
+    stripped = line.strip()
+    if not stripped.startswith("|") or not stripped.endswith("|"):
+        return None
+    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+    if not cells or all(set(cell) <= {"-", ":"} for cell in cells):
+        return None
+    return cells
+
+
+def add_packet_table_bridge_values(
+    text: str,
+    *,
+    source_ref: str,
+    values: dict[str, dict[str, str]],
+) -> None:
+    for line in text.splitlines():
+        cells = parse_markdown_table_row(line)
+        if not cells or len(cells) < 2:
+            continue
+        if cells[0].lower() in {"input", "key", "field"}:
+            continue
+        add_bridge_candidate(
+            values,
+            key=cells[0],
+            value=cells[1],
+            source_ref=source_ref,
+            confidence="readiness_packet_table",
+            notes="parsed from Execution Readiness Packet table",
+        )
+
+
+def add_explicit_line_bridge_values(
+    text: str,
+    *,
+    source_ref: str,
+    values: dict[str, dict[str, str]],
+) -> None:
+    for line in text.splitlines():
+        pattern = (
+            r"^\s*(?:[-*]\s*)?(?:`)?"
+            r"([A-Za-z][A-Za-z0-9 _./-]{2,64})(?:`)?\s*[:=]\s*(.+?)\s*$"
+        )
+        match = re.match(
+            pattern,
+            line,
+        )
+        if not match:
+            continue
+        add_bridge_candidate(
+            values,
+            key=match.group(1),
+            value=match.group(2),
+            source_ref=source_ref,
+            confidence="explicit_grill_line",
+            notes="parsed from explicit key/value line",
+        )
+
+
+def add_contextual_url_bridge_values(
+    text: str,
+    *,
+    source_ref: str,
+    values: dict[str, dict[str, str]],
+) -> None:
+    url_re = re.compile(r"(https?://[^\s`'\"<>]+|git@[^\s`'\"<>]+)")
+    for line in text.splitlines():
+        lower = line.lower()
+        for match in url_re.finditer(line):
+            value = match.group(1).rstrip(".,;)")
+            if "dataset" in lower or "data set" in lower:
+                add_bridge_candidate(
+                    values,
+                    key="dataset_source",
+                    value=value,
+                    source_ref=source_ref,
+                    confidence="contextual_dataset_url",
+                    notes="line mentions dataset and contains a URL",
+                )
+            if "baseline" in lower or "repo" in lower or "clone" in lower:
+                add_bridge_candidate(
+                    values,
+                    key="baseline_repo",
+                    value=value,
+                    source_ref=source_ref,
+                    confidence="contextual_baseline_url",
+                    notes="line mentions baseline/repo/clone and contains a URL",
+                )
+
+
+def build_grill_bridge(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    args: argparse.Namespace,
+) -> tuple[dict[str, Any], str]:
+    values: dict[str, dict[str, str]] = {}
+    input_refs: list[str] = []
+    add_readiness_json_bridge_values(workspace_root, values, input_refs)
+    for source_ref in GRILL_ARTIFACT_REFS:
+        path = workspace_root / source_ref
+        if not path.exists():
+            continue
+        input_refs.append(source_ref)
+        text = path.read_text(encoding="utf-8")
+        if source_ref.endswith("Execution_Readiness_Packet.md"):
+            add_packet_table_bridge_values(
+                text,
+                source_ref=source_ref,
+                values=values,
+            )
+        add_explicit_line_bridge_values(text, source_ref=source_ref, values=values)
+        add_contextual_url_bridge_values(text, source_ref=source_ref, values=values)
+
+    if args.dataset_source:
+        values["dataset_source"] = bridge_candidate(
+            args.dataset_source,
+            source_ref="cli:--dataset-source",
+            confidence="cli",
+            notes="explicit CLI override",
+        )
+    if args.dataset_target:
+        values["dataset_root"] = bridge_candidate(
+            args.dataset_target,
+            source_ref="cli:--dataset-target",
+            confidence="cli",
+            notes="explicit CLI override",
+        )
+    if args.baseline_repo:
+        values["baseline_repo"] = bridge_candidate(
+            args.baseline_repo[0],
+            source_ref="cli:--baseline-repo",
+            confidence="cli",
+            notes="explicit CLI override",
+        )
+    if args.baseline_target:
+        values["baseline_cache"] = bridge_candidate(
+            args.baseline_target,
+            source_ref="cli:--baseline-target",
+            confidence="cli",
+            notes="explicit CLI override",
+        )
+
+    dataset_source = values.get("dataset_source", {}).get("value")
+    dataset_target = values.get("dataset_root", {}).get("value")
+    if dataset_source and not dataset_target:
+        resolved_source = resolve_operator_path(workspace_root, dataset_source)
+        if resolved_source is not None and resolved_source.exists():
+            values["dataset_root"] = bridge_candidate(
+                relpath_or_abs(resolved_source, workspace_root),
+                source_ref=values["dataset_source"]["source_ref"],
+                confidence="adopt_existing_dataset_source",
+                notes="dataset source is an existing local path; adopting it as root",
+            )
+        else:
+            values["dataset_root"] = bridge_candidate(
+                f"data/{source_basename(dataset_source)}",
+                source_ref=values["dataset_source"]["source_ref"],
+                confidence="default_dataset_download_target",
+                notes="dataset source exists but no target was provided",
+            )
+
+    allow_policy = values.get("external_download_policy", {}).get("value")
+    allow_external = bool(args.allow_external_downloads) or truthy_policy_value(
+        allow_policy
+    )
+    remote_sources = [
+        item
+        for item in (
+            values.get("dataset_source", {}).get("value"),
+            values.get("baseline_repo", {}).get("value"),
+        )
+        if item and source_is_remote(item)
+    ]
+    unresolved: list[str] = []
+    if remote_sources and not allow_external:
+        unresolved.append(
+            "remote dataset or baseline source found, but external download "
+            "policy is not approved"
+        )
+    if not values.get("dataset_source") and not values.get("dataset_root"):
+        unresolved.append(
+            "dataset source or dataset root is not explicit in Grill outputs"
+        )
+    if not values.get("baseline_repo") and not values.get("baseline_cache"):
+        unresolved.append(
+            "baseline repo or existing baseline cache is not explicit in Grill outputs"
+        )
+
+    bridge = {
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "created_at": utc_now(),
+        "source": "grill_to_prepare_bridge",
+        "input_refs": list(dict.fromkeys(input_refs)),
+        "values": values,
+        "policy": {
+            "allow_external_downloads": allow_external,
+            "allow_external_downloads_source": (
+                "cli:--allow-external-downloads"
+                if args.allow_external_downloads
+                else values.get("external_download_policy", {}).get("source_ref")
+            ),
+            "remote_sources": remote_sources,
+        },
+        "unresolved": unresolved,
+    }
+    path = (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "runtime"
+        / "grill_bridge.json"
+    )
+    atomic_write_json(path, bridge)
+    return bridge, path.relative_to(workspace_root).as_posix()
+
+
+def grill_bridge_value(args: argparse.Namespace, *keys: str) -> str | None:
+    bridge = getattr(args, "_grill_bridge", None)
+    if not isinstance(bridge, dict):
+        return None
+    values = bridge.get("values")
+    if not isinstance(values, dict):
+        return None
+    for key in keys:
+        item = values.get(key)
+        if isinstance(item, dict):
+            value = item.get("value")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def effective_allow_external_downloads(args: argparse.Namespace) -> bool:
+    if getattr(args, "allow_external_downloads", False):
+        return True
+    bridge = getattr(args, "_grill_bridge", None)
+    if isinstance(bridge, dict):
+        policy = bridge.get("policy")
+        if isinstance(policy, dict):
+            return bool(policy.get("allow_external_downloads"))
+    return False
+
+
+def attach_grill_bridge_to_args(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    args: argparse.Namespace,
+) -> str:
+    bridge, bridge_ref = build_grill_bridge(workspace_root, run_id=run_id, args=args)
+    setattr(args, "_grill_bridge", bridge)
+    setattr(args, "_grill_bridge_ref", bridge_ref)
+    if effective_allow_external_downloads(args):
+        args.allow_external_downloads = True
+    return bridge_ref
+
+
+def project_state_path(workspace_root: Path) -> Path:
+    return workspace_root / "PROJECT_STATE.json"
+
+
+def load_project_state(workspace_root: Path) -> dict[str, Any]:
+    path = project_state_path(workspace_root)
+    if not path.exists():
+        return {"schema_version": 1}
+    data = load_json_if_exists(path, {})
+    return data if isinstance(data, dict) else {"schema_version": 1}
+
+
+def update_project_state(workspace_root: Path, updates: dict[str, Any]) -> str:
+    state = load_project_state(workspace_root)
+    for key, value in updates.items():
+        if isinstance(value, dict) and isinstance(state.get(key), dict):
+            merged = dict(state[key])
+            merged.update(value)
+            state[key] = merged
+        else:
+            state[key] = value
+    state["updated_at"] = utc_now()
+    atomic_write_json(project_state_path(workspace_root), state)
+    return "PROJECT_STATE.json"
+
+
+def write_markdown_table(path: Path, heading: str, rows: list[list[str]]) -> str:
+    lines = [f"# {heading}", "", "| Field | Value |", "| --- | --- |"]
+    for key, value in rows:
+        lines.append(f"| {key} | {value} |")
+    lines.append("")
+    atomic_write_text(path, "\n".join(lines))
+    return path.as_posix()
+
+
+def copy_local_source(source_path: Path, target_path: Path) -> None:
+    if source_path.is_dir():
+        if target_path.exists() and target_path.is_file():
+            raise OSError(f"target exists and is not a directory: {target_path}")
+        shutil.copytree(source_path, target_path, dirs_exist_ok=True)
+        return
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    if target_path.is_dir():
+        shutil.copy2(source_path, target_path / source_path.name)
+    else:
+        shutil.copy2(source_path, target_path)
+
+
+def download_http_source(source: str, target_path: Path) -> Path:
+    if target_path.suffix:
+        output_path = target_path
+    else:
+        output_path = target_path / source_basename(source)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with urllib.request.urlopen(source, timeout=60) as response:
+        with output_path.open("wb") as handle:
+            shutil.copyfileobj(response, handle)
+    return output_path
+
+
+def clone_git_source(source: str, target_path: Path, *, timeout: int) -> dict[str, Any]:
+    if target_path.exists() and nonempty_path(target_path):
+        return {
+            "command": f"git clone {source} {target_path}",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "skipped": True,
+        }
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    command = ["git", "clone", source, str(target_path)]
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=target_path.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return {
+            "command": " ".join(command),
+            "exit_code": 1,
+            "stdout": "",
+            "stderr": str(exc),
+            "skipped": False,
+        }
+    return {
+        "command": " ".join(command),
+        "exit_code": proc.returncode,
+        "stdout": proc.stdout,
+        "stderr": proc.stderr,
+        "skipped": False,
+    }
+
+
+def acquire_source(
+    workspace_root: Path,
+    *,
+    source: str | None,
+    target: Path,
+    allow_external_downloads: bool,
+    timeout: int,
+) -> dict[str, Any]:
+    if target.exists() and nonempty_path(target):
+        return {
+            "ok": True,
+            "command": "existing_path",
+            "artifacts": [relpath_or_abs(target, workspace_root)],
+            "reason": "target already exists",
+        }
+    if not source:
+        return {
+            "ok": False,
+            "reason": "source is missing and target does not exist",
+            "command": "not run",
+            "artifacts": [relpath_or_abs(target, workspace_root)],
+        }
+    if source_is_remote(source) and not allow_external_downloads:
+        return {
+            "ok": False,
+            "reason": "external download requires --allow-external-downloads",
+            "command": "not run",
+            "artifacts": [relpath_or_abs(target, workspace_root)],
+        }
+    local_source = resolve_operator_path(workspace_root, source)
+    if local_source is not None and local_source.exists():
+        try:
+            copy_local_source(local_source, target)
+            return {
+                "ok": True,
+                "command": f"copy {local_source} {target}",
+                "artifacts": [relpath_or_abs(target, workspace_root)],
+                "reason": "copied local source",
+            }
+        except OSError as exc:
+            return {
+                "ok": False,
+                "reason": str(exc),
+                "command": f"copy {local_source} {target}",
+                "artifacts": [relpath_or_abs(target, workspace_root)],
+            }
+    if source_is_git(source):
+        result = clone_git_source(source, target, timeout=timeout)
+        return {
+            "ok": result["exit_code"] == 0,
+            "command": result["command"],
+            "artifacts": [relpath_or_abs(target, workspace_root)],
+            "reason": (
+                "git clone completed"
+                if result["exit_code"] == 0
+                else result["stderr"].strip()
+            ),
+            "stdout": result["stdout"],
+            "stderr": result["stderr"],
+        }
+    if urllib.parse.urlparse(source).scheme in {"http", "https"}:
+        try:
+            output = download_http_source(source, target)
+            return {
+                "ok": True,
+                "command": f"download {source} {output}",
+                "artifacts": [relpath_or_abs(output, workspace_root)],
+                "reason": "download completed",
+            }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "reason": str(exc),
+                "command": f"download {source} {target}",
+                "artifacts": [relpath_or_abs(target, workspace_root)],
+            }
+    return {
+        "ok": False,
+        "reason": f"source not found or unsupported: {source}",
+        "command": "not run",
+        "artifacts": [relpath_or_abs(target, workspace_root)],
+    }
+
+
+def worker_result_payload(
+    *,
+    run_id: str,
+    node: dict[str, Any],
+    status: str,
+    exit_code: int | None,
+    summary: str,
+    artifact_refs: list[str],
+    gate_ledger: list[dict[str, Any]],
+    observed_writes: list[str],
+    stdout_ref: str | None = None,
+    stderr_ref: str | None = None,
+    interrupt_request: dict[str, Any] | None = None,
+    contract_violations: list[str] | None = None,
+    worker_warnings: list[str] | None = None,
+) -> dict[str, Any]:
+    now = utc_now()
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "node_id": str(node["node_id"]),
+        "skill": str(node["skill"]),
+        "attempt": 1,
+        "status": status,
+        "exit_code": exit_code,
+        "started_at": now,
+        "finished_at": now,
+        "summary": summary,
+        "artifact_refs": artifact_refs,
+        "gate_ledger": gate_ledger,
+        "postcondition_claims": [],
+        "interrupt_request": interrupt_request,
+        "observed_writes": observed_writes,
+        "stdout_ref": stdout_ref,
+        "stderr_ref": stderr_ref,
+        "contract_violations": contract_violations or [],
+        "worker_warnings": worker_warnings or [],
+    }
+
+
+def write_worker_result(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+    result: dict[str, Any],
+) -> str:
+    path = (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "runtime"
+        / f"{node_id}.worker_result.json"
+    )
+    atomic_write_json(path, result)
+    return path.relative_to(workspace_root).as_posix()
+
+
+def dataset_source_from_args(
+    workspace_root: Path,
+    args: argparse.Namespace,
+) -> str | None:
+    return (
+        args.dataset_source
+        or readiness_value(workspace_root, "dataset_source")
+        or readiness_value(workspace_root, "dataset_remote")
+        or grill_bridge_value(args, "dataset_source")
+    )
+
+
+def dataset_target_from_args(
+    workspace_root: Path,
+    args: argparse.Namespace,
+) -> Path | None:
+    value = (
+        args.dataset_target
+        or readiness_value(workspace_root, "dataset_root")
+        or readiness_value(workspace_root, "dataset_path")
+        or grill_bridge_value(args, "dataset_root")
+    )
+    return resolve_operator_path(workspace_root, value)
+
+
+def baseline_repos_from_args(
+    workspace_root: Path,
+    args: argparse.Namespace,
+) -> list[str]:
+    repos = list(args.baseline_repo or [])
+    for key in ("baseline_repo", "baseline_source"):
+        value = readiness_value(workspace_root, key)
+        if value:
+            repos.append(value)
+    bridge_value = grill_bridge_value(args, "baseline_repo")
+    if bridge_value:
+        repos.append(bridge_value)
+    return list(dict.fromkeys(repos))
+
+
+def baseline_target_from_args(workspace_root: Path, args: argparse.Namespace) -> Path:
+    value = (
+        args.baseline_target
+        or readiness_value(workspace_root, "baseline_cache")
+        or grill_bridge_value(args, "baseline_cache")
+    )
+    return resolve_operator_path(workspace_root, value or "baselines") or (
+        workspace_root / "baselines"
+    )
+
+
+def run_data_prep_worker(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+) -> dict[str, Any]:
+    source = dataset_source_from_args(workspace_root, args)
+    target = dataset_target_from_args(workspace_root, args)
+    if target is None:
+        interrupt = {
+            "type": "ASK_INPUT",
+            "reason": "dataset_input_required",
+            "question": (
+                "Provide --dataset-target, and optionally --dataset-source if "
+                "the target path does not already contain the dataset."
+            ),
+            "allowed_responses": ["provide_dataset_path", "revise", "reject"],
+        }
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="interrupt_requested",
+            exit_code=None,
+            summary="dataset target path is missing",
+            artifact_refs=[],
+            gate_ledger=[
+                {
+                    "command": "dataset acquisition",
+                    "result": "NOT_RUN",
+                    "reason": "dataset target path is missing",
+                    "artifacts": [],
+                }
+            ],
+            observed_writes=[],
+            interrupt_request=interrupt,
+        )
+
+    acquisition = acquire_source(
+        workspace_root,
+        source=source,
+        target=target,
+        allow_external_downloads=effective_allow_external_downloads(args),
+        timeout=int(node.get("timeout_seconds", 900)),
+    )
+    if not acquisition["ok"]:
+        interrupt = {
+            "type": "ASK_INPUT",
+            "reason": "dataset_input_required",
+            "question": (
+                "Dataset acquisition could not proceed. Provide an existing "
+                "dataset path, or rerun with --dataset-source, --dataset-target, "
+                "and --allow-external-downloads for remote sources."
+            ),
+            "allowed_responses": ["provide_dataset_path", "approve_download", "reject"],
+        }
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="interrupt_requested",
+            exit_code=1,
+            summary=str(acquisition["reason"]),
+            artifact_refs=[],
+            gate_ledger=[
+                {
+                    "command": str(acquisition["command"]),
+                    "result": "FAIL",
+                    "reason": str(acquisition["reason"]),
+                    "artifacts": acquisition.get("artifacts", []),
+                }
+            ],
+            observed_writes=[],
+            interrupt_request=interrupt,
+        )
+
+    docs_dir = workspace_root / "docs"
+    evidence_dir = docs_dir / "30_evidence"
+    stats = path_stats(target)
+    dataset_ref = relpath_or_abs(target, workspace_root)
+    dataset_stats_path = docs_dir / "Dataset_Stats.md"
+    dataset_table_path = evidence_dir / "Dataset_Table.md"
+    write_markdown_table(
+        dataset_stats_path,
+        "Dataset Stats",
+        [
+            ["dataset_root", dataset_ref],
+            ["source", source or "existing local target"],
+            ["files", str(stats["files"])],
+            ["bytes", str(stats["bytes"])],
+            ["acquisition", str(acquisition["reason"])],
+        ],
+    )
+    write_markdown_table(
+        dataset_table_path,
+        "Dataset Evidence Table",
+        [
+            ["dataset_root", dataset_ref],
+            ["acquisition_command", str(acquisition["command"])],
+            ["verification", "path_stats"],
+        ],
+    )
+    state_ref = update_project_state(
+        workspace_root,
+        {
+            "dataset_paths": {"primary": dataset_ref},
+            "artifacts": {"dataset_stats": "docs/Dataset_Stats.md"},
+        },
+    )
+    artifacts = [
+        "docs/Dataset_Stats.md",
+        "docs/30_evidence/Dataset_Table.md",
+        state_ref,
+        *[str(item) for item in acquisition.get("artifacts", [])],
+    ]
+    observed = [
+        "docs/Dataset_Stats.md",
+        "docs/30_evidence/Dataset_Table.md",
+        state_ref,
+    ]
+    return worker_result_payload(
+        run_id=run_id,
+        node=node,
+        status="success",
+        exit_code=0,
+        summary="dataset acquired or verified and stats report written",
+        artifact_refs=artifacts,
+        gate_ledger=[
+            {
+                "command": str(acquisition["command"]),
+                "result": "PASS",
+                "reason": str(acquisition["reason"]),
+                "artifacts": [str(item) for item in acquisition.get("artifacts", [])],
+            },
+            {
+                "command": f"path_stats {dataset_ref}",
+                "result": "PASS",
+                "reason": "dataset path exists and was summarized",
+                "artifacts": ["docs/Dataset_Stats.md"],
+            },
+        ],
+        observed_writes=observed,
+    )
+
+
+def write_minimal_project_map(
+    workspace_root: Path,
+    *,
+    baseline_entries: dict[str, dict[str, Any]],
+) -> str:
+    path = workspace_root / "project_map.json"
+    existing = load_json_if_exists(path, {})
+    if not isinstance(existing, dict) or not existing:
+        existing = {
+            "version": "1.0",
+            "detail_policy": {
+                "detailed": (
+                    "Main research code with public interfaces and dependencies"
+                ),
+                "medium": "Configs and docs",
+                "brief": "Reproduced baselines",
+                "minimal": "Logs and generated outputs",
+            },
+            "structure": {},
+        }
+    existing["updated_at"] = utc_now()
+    structure = existing.setdefault("structure", {})
+    if isinstance(structure, dict):
+        structure["baselines"] = {
+            "type": "directory",
+            "detail_level": "brief",
+            "description": "Reproduced baseline repositories",
+            "children": baseline_entries,
+        }
+    atomic_write_json(path, existing)
+    return "project_map.json"
+
+
+def run_baseline_repro_worker(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+) -> dict[str, Any]:
+    repos = baseline_repos_from_args(workspace_root, args)
+    target_root = baseline_target_from_args(workspace_root, args)
+    target_root.mkdir(parents=True, exist_ok=True)
+    gate_ledger: list[dict[str, Any]] = []
+    artifacts: list[str] = []
+    baseline_entries: dict[str, dict[str, Any]] = {}
+
+    if not repos and not nonempty_path(target_root):
+        interrupt = {
+            "type": "ASK_INPUT",
+            "reason": "baseline_input_required",
+            "question": (
+                "Provide --baseline-repo for the required baseline, or place an "
+                "existing baseline under --baseline-target."
+            ),
+            "allowed_responses": ["provide_baseline_repo", "revise", "reject"],
+        }
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="interrupt_requested",
+            exit_code=None,
+            summary="baseline repository is missing",
+            artifact_refs=[],
+            gate_ledger=[
+                {
+                    "command": "baseline acquisition",
+                    "result": "NOT_RUN",
+                    "reason": "baseline repo and existing baseline target are missing",
+                    "artifacts": [],
+                }
+            ],
+            observed_writes=[],
+            interrupt_request=interrupt,
+        )
+
+    for repo in repos:
+        repo_target = target_root / source_basename(repo)
+        result = acquire_source(
+            workspace_root,
+            source=repo,
+            target=repo_target,
+            allow_external_downloads=effective_allow_external_downloads(args),
+            timeout=int(node.get("timeout_seconds", 1800)),
+        )
+        gate_ledger.append(
+            {
+                "command": str(result["command"]),
+                "result": "PASS" if result["ok"] else "FAIL",
+                "reason": str(result["reason"]),
+                "artifacts": [str(item) for item in result.get("artifacts", [])],
+            }
+        )
+        if not result["ok"]:
+            interrupt = {
+                "type": "ASK_INPUT",
+                "reason": "baseline_reproduction_decision_required",
+                "question": (
+                    "Baseline acquisition failed. Provide another repo/path or "
+                    "approve the external clone/download requirements."
+                ),
+                "allowed_responses": [
+                    "provide_baseline_repo",
+                    "approve_clone",
+                    "reject",
+                ],
+            }
+            return worker_result_payload(
+                run_id=run_id,
+                node=node,
+                status="interrupt_requested",
+                exit_code=1,
+                summary=str(result["reason"]),
+                artifact_refs=[],
+                gate_ledger=gate_ledger,
+                observed_writes=[],
+                interrupt_request=interrupt,
+            )
+        artifacts.extend(str(item) for item in result.get("artifacts", []))
+
+    for child in sorted(target_root.iterdir()):
+        if child.is_dir():
+            baseline_entries[child.name] = {
+                "type": "directory",
+                "detail_level": "brief",
+                "description": "Baseline repository",
+                "source": "",
+                "status": "untested",
+                "entry_point": "",
+            }
+
+    docs_dir = workspace_root / "docs"
+    evidence_dir = docs_dir / "30_evidence"
+    target_ref = relpath_or_abs(target_root, workspace_root)
+    baseline_report_path = docs_dir / "Baseline_Report.md"
+    baseline_table_path = evidence_dir / "Baseline_Table.md"
+    write_markdown_table(
+        baseline_report_path,
+        "Baseline Report",
+        [
+            ["baseline_root", target_ref],
+            ["repos", ", ".join(repos) if repos else "existing local baselines"],
+            ["status", "cloned_or_existing"],
+            ["reproduction", "not run by acquisition helper"],
+        ],
+    )
+    write_markdown_table(
+        baseline_table_path,
+        "Baseline Evidence Table",
+        [
+            ["baseline_root", target_ref],
+            [
+                "acquisition",
+                " ; ".join(gate["command"] for gate in gate_ledger)
+                or "existing_path",
+            ],
+            ["status", "untested until baseline smoke command runs"],
+        ],
+    )
+    project_map_ref = write_minimal_project_map(
+        workspace_root,
+        baseline_entries=baseline_entries,
+    )
+    state_ref = update_project_state(
+        workspace_root,
+        {
+            "artifacts": {"baseline_report": "docs/Baseline_Report.md"},
+            "baseline_metrics": {},
+        },
+    )
+    artifacts.extend(
+        [
+            "docs/Baseline_Report.md",
+            "docs/30_evidence/Baseline_Table.md",
+            project_map_ref,
+            state_ref,
+        ]
+    )
+    observed = [
+        "docs/Baseline_Report.md",
+        "docs/30_evidence/Baseline_Table.md",
+        project_map_ref,
+        state_ref,
+        relpath_or_abs(target_root, workspace_root),
+    ]
+    if not gate_ledger:
+        gate_ledger.append(
+            {
+                "command": f"inspect {target_ref}",
+                "result": "PASS",
+                "reason": "existing baseline target is non-empty",
+                "artifacts": [target_ref],
+            }
+        )
+    return worker_result_payload(
+        run_id=run_id,
+        node=node,
+        status="success",
+        exit_code=0,
+        summary="baseline repositories acquired or verified",
+        artifact_refs=artifacts,
+        gate_ledger=gate_ledger,
+        observed_writes=observed,
+    )
+
+
+def render_worker_prompt(
+    *,
+    workspace_root: Path,
+    run_id: str,
+    node: dict[str, Any],
+    goal: str,
+    result_ref: str,
+) -> str:
+    node_id = str(node["node_id"])
+    skill = str(node["skill"])
+    postconditions = json.dumps(
+        node.get("postconditions", []),
+        indent=2,
+        sort_keys=True,
+    )
+    allowed_writes = json.dumps(
+        node.get("allowed_worker_write_patterns", []),
+        indent=2,
+        sort_keys=True,
+    )
+    return (
+        "You are a Harness workflow supervisor worker.\n"
+        "\n"
+        f"Workspace: {workspace_root}\n"
+        f"Run ID: {run_id}\n"
+        f"Node ID: {node_id}\n"
+        f"Skill: ${skill}\n"
+        f"Goal: {goal}\n"
+        "\n"
+        "Execute the local Harness skill for this node in auto mode. Do not ask "
+        "the operator directly. If input is missing, write an "
+        "interrupt_requested worker result instead.\n"
+        "\n"
+        "Quality bar:\n"
+        "- Read the relevant local artifacts before editing.\n"
+        "- Make the smallest code/config/doc changes needed for this node.\n"
+        "- Run concrete commands that prove the node postconditions below.\n"
+        "- If a command fails, debug and rerun within the node budget before "
+        "declaring failure.\n"
+        "- For build_validate_run, run the project's actual smoke/validation "
+        "command when one is discoverable; otherwise return interrupt_requested "
+        "with the missing command as the reason.\n"
+        "- Do not report success from prose. Success requires artifacts, "
+        "observed_writes, and PASS gate_ledger entries.\n"
+        "- Treat hook or sandbox write denials as contract_violations and route "
+        "them through the worker result.\n"
+        "\n"
+        "Allowed worker write patterns:\n"
+        f"{allowed_writes}\n"
+        "\n"
+        "Supervisor postconditions for this node:\n"
+        f"{postconditions}\n"
+        "\n"
+        "Write exactly one JSON object matching "
+        "schemas/workflow_supervisor_worker_result.schema.json to:\n"
+        f"{result_ref}\n"
+        "If that path is under `.agents/state/`, treat it as a temporary "
+        "worker handoff. The supervisor will validate and adopt it into "
+        "`.workflow_supervisor/**`; do not write supervisor runtime state "
+        "directly.\n"
+        "\n"
+        "The result must include gate_ledger entries for every command or gate "
+        "that mattered, observed_writes, artifact_refs, and any contract "
+        "violations. The supervisor will reject prose-only completion claims.\n"
+    )
+
+
+def worker_runtime_paths(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+) -> dict[str, str]:
+    base = supervisor_root(workspace_root) / "runs" / run_id / "runtime"
+    handoff_base = (
+        workspace_root
+        / ".agents"
+        / "state"
+        / "workflow_supervisor_worker_results"
+        / run_id
+    )
+    return {
+        "result": (base / f"{node_id}.worker_result.json").relative_to(
+            workspace_root
+        ).as_posix(),
+        "handoff_result": (handoff_base / f"{node_id}.worker_result.json").relative_to(
+            workspace_root
+        ).as_posix(),
+        "prompt": (base / f"{node_id}.prompt.txt").relative_to(
+            workspace_root
+        ).as_posix(),
+        "stdout": (base / f"{node_id}.stdout.log").relative_to(
+            workspace_root
+        ).as_posix(),
+        "stderr": (base / f"{node_id}.stderr.log").relative_to(
+            workspace_root
+        ).as_posix(),
+    }
+
+
+def run_worker_command(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+    goal: str,
+) -> dict[str, Any]:
+    node_id = str(node["node_id"])
+    paths = worker_runtime_paths(workspace_root, run_id=run_id, node_id=node_id)
+    result_path = workspace_root / paths["result"]
+    prompt_path = workspace_root / paths["prompt"]
+    stdout_path = workspace_root / paths["stdout"]
+    stderr_path = workspace_root / paths["stderr"]
+    prompt = render_worker_prompt(
+        workspace_root=workspace_root,
+        run_id=run_id,
+        node=node,
+        goal=goal,
+        result_ref=paths["result"],
+    )
+    atomic_write_text(prompt_path, prompt)
+
+    command_template = args.worker_command
+    if not command_template:
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="interrupt_requested",
+            exit_code=None,
+            summary="worker command is not configured",
+            artifact_refs=[],
+            gate_ledger=[
+                {
+                    "command": "worker command",
+                    "result": "NOT_RUN",
+                    "reason": "run with --worker-command or --auto",
+                    "artifacts": [],
+                }
+            ],
+            observed_writes=[],
+            interrupt_request={
+                "type": "STEER",
+                "reason": "worker_command_required",
+                "question": (
+                    "Provide --worker-command for this supervisor node, or rerun "
+                    "with --auto to delegate the node to Codex."
+                ),
+                "allowed_responses": ["provide_worker_command", "auto", "reject"],
+            },
+        )
+
+    rendered = command_template.format(
+        workspace_root=str(workspace_root),
+        run_id=run_id,
+        node_id=node_id,
+        skill=str(node["skill"]),
+        result_path=str(result_path),
+        result_ref=paths["result"],
+        prompt_path=str(prompt_path),
+        prompt_ref=paths["prompt"],
+    )
+    command = shlex.split(rendered)
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=workspace_root,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=int(node.get("timeout_seconds", 900)),
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="failed",
+            exit_code=1,
+            summary=f"worker command failed before result collection: {exc}",
+            artifact_refs=[paths["prompt"]],
+            gate_ledger=[
+                {
+                    "command": rendered,
+                    "result": "FAIL",
+                    "reason": str(exc),
+                    "artifacts": [paths["prompt"]],
+                }
+            ],
+            observed_writes=[],
+            stdout_ref=None,
+            stderr_ref=None,
+        )
+    atomic_write_text(stdout_path, proc.stdout)
+    atomic_write_text(stderr_path, proc.stderr)
+    if not result_path.exists():
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="failed",
+            exit_code=proc.returncode,
+            summary="worker command did not write worker result JSON",
+            artifact_refs=[paths["stdout"], paths["stderr"]],
+            gate_ledger=[
+                {
+                    "command": rendered,
+                    "result": "FAIL",
+                    "reason": "missing worker result JSON",
+                    "artifacts": [paths["stdout"], paths["stderr"]],
+                }
+            ],
+            observed_writes=[],
+            stdout_ref=paths["stdout"],
+            stderr_ref=paths["stderr"],
+        )
+    loaded = load_json(result_path)
+    if not isinstance(loaded, dict):
+        raise ValueError("worker result must be an object")
+    loaded.setdefault("stdout_ref", paths["stdout"])
+    loaded.setdefault("stderr_ref", paths["stderr"])
+    return loaded
+
+
+def run_codex_worker(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+    goal: str,
+) -> dict[str, Any]:
+    node_id = str(node["node_id"])
+    codex = shutil.which("codex")
+    paths = worker_runtime_paths(workspace_root, run_id=run_id, node_id=node_id)
+    result_path = workspace_root / paths["handoff_result"]
+    prompt_path = workspace_root / paths["prompt"]
+    stdout_path = workspace_root / paths["stdout"]
+    stderr_path = workspace_root / paths["stderr"]
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt = render_worker_prompt(
+        workspace_root=workspace_root,
+        run_id=run_id,
+        node=node,
+        goal=goal,
+        result_ref=paths["handoff_result"],
+    )
+    atomic_write_text(prompt_path, prompt)
+    if codex is None:
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="interrupt_requested",
+            exit_code=127,
+            summary="codex worker runtime is unavailable",
+            artifact_refs=[paths["prompt"]],
+            gate_ledger=[
+                {
+                    "command": "codex exec",
+                    "result": "NOT_RUN",
+                    "reason": "codex binary was not found",
+                    "artifacts": [paths["prompt"]],
+                }
+            ],
+            observed_writes=[],
+            interrupt_request={
+                "type": "STEER",
+                "reason": "worker_runtime_unavailable",
+                "question": (
+                    "Codex worker runtime is unavailable. Install Codex, provide "
+                    "--worker-command, or run the node manually and validate the "
+                    "worker result."
+                ),
+                "allowed_responses": [
+                    "provide_worker_command",
+                    "manual_recover",
+                    "reject",
+                ],
+            },
+        )
+    command = [
+        codex,
+        *CODEX_WORKER_SANDBOX_ARGS,
+        "exec",
+        "--cd",
+        str(workspace_root),
+        "-",
+    ]
+    env = os.environ.copy()
+    if args.codex_home:
+        env["CODEX_HOME"] = str(Path(args.codex_home).expanduser())
+    with stdout_path.open("w", encoding="utf-8") as out, stderr_path.open(
+        "w", encoding="utf-8"
+    ) as err:
+        try:
+            proc = subprocess.run(
+                command,
+                cwd=workspace_root,
+                input=prompt,
+                text=True,
+                stdout=out,
+                stderr=err,
+                env=env,
+                check=False,
+                timeout=int(node.get("timeout_seconds", 900)),
+            )
+            codex_exit_code = proc.returncode
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            err.write(str(exc))
+            codex_exit_code = 1
+    if result_path.exists():
+        loaded = load_json(result_path)
+        if not isinstance(loaded, dict):
+            raise ValueError("worker result must be an object")
+        loaded.setdefault("stdout_ref", paths["stdout"])
+        loaded.setdefault("stderr_ref", paths["stderr"])
+        return loaded
+    return worker_result_payload(
+        run_id=run_id,
+        node=node,
+        status="failed",
+        exit_code=codex_exit_code,
+        summary="codex worker did not write worker result JSON",
+        artifact_refs=[paths["prompt"], paths["stdout"], paths["stderr"]],
+        gate_ledger=[
+            {
+                "command": " ".join(command),
+                "result": "FAIL",
+                "reason": "missing worker result JSON",
+                "artifacts": [paths["prompt"], paths["stdout"], paths["stderr"]],
+            }
+        ],
+        observed_writes=[],
+        stdout_ref=paths["stdout"],
+        stderr_ref=paths["stderr"],
+    )
+
+
+def worker_mode(args: argparse.Namespace) -> str:
+    if args.worker_command:
+        return "command"
+    if args.auto:
+        return "codex"
+    return str(args.worker_mode)
+
+
+def run_external_worker(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+    goal: str,
+) -> dict[str, Any]:
+    mode = worker_mode(args)
+    if mode == "codex":
+        return run_codex_worker(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            node=node,
+            goal=goal,
+        )
+    return run_worker_command(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        node=node,
+        goal=goal,
+    )
 
 
 def contains_change_keyword(text: str, keyword: str) -> bool:
@@ -2075,11 +3607,14 @@ def path_verification_command(value: str) -> str:
 def verify_readiness_inputs(
     workspace_root: Path,
     readiness: dict[str, Any],
+    *,
+    allow_creatable_paths: bool = False,
 ) -> list[str]:
     errors: list[str] = []
     for index, item in enumerate(readiness.get("inputs", [])):
         if not isinstance(item, dict) or item.get("kind") != "path":
             continue
+        key = str(item.get("key", ""))
         value = item.get("value")
         if not isinstance(value, str) or not value.strip():
             item["verification_status"] = "rejected"
@@ -2094,6 +3629,12 @@ def verify_readiness_inputs(
         item["verified_at"] = utc_now()
         if path.exists():
             item["verification_status"] = "verified"
+        elif allow_creatable_paths and key in CREATABLE_READINESS_PATH_KEYS:
+            item["verification_status"] = "candidate"
+            item["notes"] = (
+                (str(item.get("notes", "")).strip() + "; ").lstrip("; ")
+                + "path may be created by prepare --complete"
+            )
         else:
             item["verification_status"] = "rejected"
             errors.append(
@@ -2105,6 +3646,8 @@ def verify_readiness_inputs(
 
 def run_prepare_readiness_preflight(
     workspace_root: Path,
+    *,
+    allow_creatable_paths: bool = False,
 ) -> tuple[dict[str, Any], list[str], list[str]]:
     input_refs: list[str] = []
     source_path = supervisor_root(workspace_root) / "readiness.json"
@@ -2131,7 +3674,11 @@ def run_prepare_readiness_preflight(
         atomic_write_json(readiness_preflight_path(workspace_root), preflight)
         return preflight, schema_errors, input_refs
 
-    errors = verify_readiness_inputs(workspace_root, readiness)
+    errors = verify_readiness_inputs(
+        workspace_root,
+        readiness,
+        allow_creatable_paths=allow_creatable_paths,
+    )
     atomic_write_json(readiness_preflight_path(workspace_root), readiness)
     return readiness, errors, input_refs
 
@@ -2463,6 +4010,8 @@ def create_prepare_approval_request(
     run_id: str,
     gate_result: dict[str, Any],
     node_record_path: Path,
+    reason: str = "evaluation_contract_approval_required",
+    unlocks_execution: bool = False,
 ) -> dict[str, Any]:
     packet = gate_result["stdout"]["review_packet"]
     markdown_path = str(packet["markdown_path"])
@@ -2484,7 +4033,7 @@ def create_prepare_approval_request(
         "run_id": run_id,
         "node_id": "prepare_review_packet",
         "type": "APPROVE_ACTION",
-        "reason": "evaluation_contract_approval_required",
+        "reason": reason,
         "question": (
             "Review the WF5 dynamic-context packet and choose approve, revise, "
             "or reject. The approve command runs the exact contract approval "
@@ -2503,7 +4052,11 @@ def create_prepare_approval_request(
         "risk_summary": [
             "Review Packet is a decision input, not Approval Evidence.",
             "approve_contract.py runs only for an explicit approve decision.",
-            "prepare_hitl_poc does not unlock build, iterate, or release.",
+            (
+                "Approval records prepare_complete and unlocks build."
+                if unlocks_execution
+                else "prepare_hitl_poc does not unlock build, iterate, or release."
+            ),
         ],
         "rollback_plan": "Reject or revise; no canonical contract is modified by v0.",
         "escalation_policy": {
@@ -2639,6 +4192,419 @@ def create_pending_request(
         payload={"request_id": request_id, "type": "STEER"},
     )
     return request
+
+
+def create_node_pending_request(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    segment: str,
+    node_id: str,
+    request_type: str,
+    reason: str,
+    question: str,
+    allowed_responses: list[str] | None = None,
+    evidence_refs: list[Any] | None = None,
+    gate_status_refs: list[str] | None = None,
+    risk_summary: list[str] | None = None,
+    resume_strategy: str = "manual_recover",
+) -> dict[str, Any]:
+    request_id = new_request_id()
+    request = {
+        "schema_version": SCHEMA_VERSION,
+        "request_id": request_id,
+        "run_id": run_id,
+        "node_id": node_id,
+        "type": request_type,
+        "reason": reason,
+        "question": question,
+        "allowed_responses": allowed_responses or ["acknowledge", "revise", "reject"],
+        "exact_action": None,
+        "evidence_refs": evidence_refs or [],
+        "diff_refs": [],
+        "gate_status_refs": gate_status_refs or [],
+        "risk_summary": risk_summary
+        or [
+            "The supervisor paused before accepting this node.",
+            "No later node has been accepted for this segment.",
+        ],
+        "rollback_plan": None,
+        "escalation_policy": {
+            "expires_at": None,
+            "on_expire": "fail_closed",
+        },
+        "resume_strategy": resume_strategy,
+        "created_at": utc_now(),
+        "expires_at": None,
+    }
+    request["request_snapshot_hash"] = request_snapshot_hash(request)
+    atomic_write_json(pending_request_path(workspace_root), request)
+    append_event(
+        workspace_root,
+        "INTERRUPT_CREATED",
+        run_id=run_id,
+        segment=segment,
+        node_id=node_id,
+        status="paused",
+        payload={"request_id": request_id, "type": request_type, "reason": reason},
+    )
+    return request
+
+
+def node_precondition_result(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node: dict[str, Any],
+) -> dict[str, Any]:
+    worker_result = {"gate_ledger": [], "observed_writes": []}
+    gates = [
+        evaluate_condition(
+            workspace_root,
+            condition,
+            run_id=run_id,
+            worker_result=worker_result,
+        )
+        for condition in node.get("preconditions", [])
+        if isinstance(condition, dict)
+    ]
+    failed = [gate for gate in gates if gate["result"] == "FAIL"]
+    return {"ok": not failed, "gate_ledger": gates, "failed_checks": failed}
+
+
+def write_supervisor_node_record(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node: dict[str, Any],
+    worker_result: dict[str, Any],
+    worker_result_ref: str,
+    postcondition_result: dict[str, Any],
+    status: str,
+    next_node: str | None,
+) -> str:
+    path = (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "node_runs"
+        / f"{node['node_id']}.json"
+    )
+    postcondition_path = postcondition_record_path(
+        workspace_root,
+        run_id=run_id,
+        node_id=str(node["node_id"]),
+    )
+    atomic_write_json(postcondition_path, postcondition_result)
+    postcondition_ref = postcondition_path.relative_to(workspace_root).as_posix()
+    atomic_write_json(
+        path,
+        {
+            "schema_version": SCHEMA_VERSION,
+            "run_id": run_id,
+            "node_id": node["node_id"],
+            "skill": node["skill"],
+            "stage": node.get("stage"),
+            "status": status,
+            "attempt": 1,
+            "started_at": worker_result.get("started_at") or utc_now(),
+            "finished_at": worker_result.get("finished_at") or utc_now(),
+            "input_refs": [
+                str(condition.get("path"))
+                for condition in node.get("preconditions", [])
+                if isinstance(condition, dict) and condition.get("path")
+            ],
+            "output_refs": worker_result.get("artifact_refs", []),
+            "evidence_refs": worker_result.get("artifact_refs", []),
+            "gate_refs": [postcondition_ref],
+            "worker_result_ref": worker_result_ref,
+            "observed_writes": worker_result.get("observed_writes", []),
+            "postcondition_result": postcondition_result,
+            "contract_violations": worker_result.get("contract_violations", []),
+            "gate_ledger": postcondition_result.get("gate_ledger", []),
+            "next_node": next_node,
+            "segment": node.get("segment"),
+        },
+    )
+    return path.relative_to(workspace_root).as_posix()
+
+
+def ordered_segment_nodes(
+    registry: dict[str, Any],
+    segment: str,
+    *,
+    node_ids: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    nodes = [
+        node
+        for node in registry.get("nodes", [])
+        if isinstance(node, dict)
+        and node.get("segment") == segment
+        and (node_ids is None or str(node.get("node_id")) in node_ids)
+    ]
+    return sorted(nodes, key=lambda node: int(node.get("order", 0)))
+
+
+def run_node_worker(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    node: dict[str, Any],
+    goal: str,
+) -> dict[str, Any]:
+    node_id = str(node["node_id"])
+    if node_id == "prepare_data_prep":
+        return run_data_prep_worker(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            node=node,
+        )
+    if node_id == "prepare_baseline_repro":
+        return run_baseline_repro_worker(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            node=node,
+        )
+    return run_external_worker(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        node=node,
+        goal=goal,
+    )
+
+
+def pause_for_node_request(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    node: dict[str, Any],
+    reason: str,
+    question: str,
+    request_type: str = "STEER",
+    allowed_responses: list[str] | None = None,
+    gate_status_refs: list[str] | None = None,
+) -> int:
+    request = create_node_pending_request(
+        workspace_root,
+        run_id=run_id,
+        segment=str(node.get("segment")),
+        node_id=str(node["node_id"]),
+        request_type=request_type,
+        reason=reason,
+        question=question,
+        allowed_responses=allowed_responses,
+        gate_status_refs=gate_status_refs,
+    )
+    state["status"] = "paused"
+    state["segment_status"] = reason
+    state["pending_request_id"] = request["request_id"]
+    state["failed_nodes"] = list(
+        dict.fromkeys([*state.get("failed_nodes", []), str(node["node_id"])])
+    )
+    save_state(workspace_root, state)
+    return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+
+def run_supervised_nodes(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    segment: str,
+    goal: str,
+    node_ids: set[str] | None = None,
+) -> int | None:
+    registry = load_node_registry(workspace_root)
+    nodes = ordered_segment_nodes(registry, segment, node_ids=node_ids)
+    completed = list(state.get("completed_nodes", []))
+    for index, node in enumerate(nodes):
+        node_id = str(node["node_id"])
+        state["current_node_id"] = node_id
+        state["current_attempt"] = 1
+        save_state(workspace_root, state)
+        append_event(
+            workspace_root,
+            "NODE_STARTED",
+            run_id=run_id,
+            segment=segment,
+            node_id=node_id,
+            status="running",
+            payload={"skill": node.get("skill")},
+        )
+        preconditions = node_precondition_result(
+            workspace_root,
+            run_id=run_id,
+            node=node,
+        )
+        if not preconditions["ok"]:
+            ref = write_json_artifact(
+                workspace_root,
+                f"{SUPERVISOR_DIR}/runs/{run_id}/gate_results/{node_id}.preconditions.json",
+                preconditions,
+            )
+            return pause_for_node_request(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                node=node,
+                reason="node_precondition_failed",
+                question=f"Preconditions failed before running {node_id}.",
+                gate_status_refs=[ref],
+            )
+
+        worker_result = run_node_worker(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            node=node,
+            goal=goal,
+        )
+        worker_result_ref = write_worker_result(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            result=worker_result,
+        )
+        worker_errors = validate_worker_result(workspace_root, worker_result)
+        if worker_errors:
+            postcondition_result = {
+                "schema_version": SCHEMA_VERSION,
+                "run_id": run_id,
+                "node_id": node_id,
+                "ok": False,
+                "gate_ledger": [
+                    {
+                        "command": "validate_worker_result",
+                        "result": "FAIL",
+                        "reason": "; ".join(worker_errors),
+                        "artifacts": [worker_result_ref],
+                    }
+                ],
+                "failed_checks": worker_errors,
+            }
+            record_ref = write_supervisor_node_record(
+                workspace_root,
+                run_id=run_id,
+                node=node,
+                worker_result=worker_result,
+                worker_result_ref=worker_result_ref,
+                postcondition_result=postcondition_result,
+                status="failed",
+                next_node=None,
+            )
+            return pause_for_node_request(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                node=node,
+                reason="worker_contract_violation",
+                question=f"Worker result for {node_id} failed validation.",
+                gate_status_refs=[worker_result_ref, record_ref],
+            )
+
+        if worker_result.get("status") == "interrupt_requested":
+            interrupt = worker_result.get("interrupt_request")
+            reason = (
+                str(interrupt.get("reason"))
+                if isinstance(interrupt, dict) and interrupt.get("reason")
+                else "worker_interrupt_requested"
+            )
+            question = (
+                str(interrupt.get("question"))
+                if isinstance(interrupt, dict) and interrupt.get("question")
+                else f"Worker requested interruption for {node_id}."
+            )
+            request_type = (
+                str(interrupt.get("type"))
+                if isinstance(interrupt, dict) and interrupt.get("type")
+                else "STEER"
+            )
+            allowed = (
+                interrupt.get("allowed_responses")
+                if isinstance(interrupt, dict)
+                and isinstance(interrupt.get("allowed_responses"), list)
+                else None
+            )
+            return pause_for_node_request(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                node=node,
+                reason=reason,
+                question=question,
+                request_type=request_type,
+                allowed_responses=[str(item) for item in allowed] if allowed else None,
+                gate_status_refs=[worker_result_ref],
+            )
+
+        postcondition_result = evaluate_node_postconditions(
+            workspace_root,
+            node,
+            run_id=run_id,
+            worker_result=worker_result,
+        )
+        node_status = (
+            "success"
+            if worker_result.get("status") == "success"
+            and postcondition_result["ok"]
+            else "failed"
+        )
+        next_node = (
+            str(nodes[index + 1]["node_id"]) if index + 1 < len(nodes) else None
+        )
+        record_ref = write_supervisor_node_record(
+            workspace_root,
+            run_id=run_id,
+            node=node,
+            worker_result=worker_result,
+            worker_result_ref=worker_result_ref,
+            postcondition_result=postcondition_result,
+            status=node_status,
+            next_node=next_node,
+        )
+        append_event(
+            workspace_root,
+            "NODE_COMPLETED",
+            run_id=run_id,
+            segment=segment,
+            node_id=node_id,
+            status=node_status,
+            payload={
+                "postcondition": (
+                    "PASS" if postcondition_result["ok"] else "FAIL"
+                ),
+                "node_record": record_ref,
+                "worker_result": worker_result_ref,
+            },
+        )
+        if node_status != "success":
+            return pause_for_node_request(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                node=node,
+                reason="node_postcondition_failed",
+                question=(
+                    f"{node_id} ran but did not satisfy supervisor "
+                    "postconditions."
+                ),
+                gate_status_refs=[worker_result_ref, record_ref],
+            )
+        completed.append(node_id)
+        state["completed_nodes"] = list(dict.fromkeys(completed))
+        save_state(workspace_root, state)
+    return None
 
 
 def guard_segment_start(workspace_root: Path, segment: str) -> None:
@@ -2808,6 +4774,224 @@ def start_prepare_hitl_poc(
     ]
     save_state(workspace_root, state)
     return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+
+def start_prepare_complete(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    goal: str,
+) -> int:
+    state["current_node_id"] = "prepare_readiness_preflight"
+    save_state(workspace_root, state)
+    _preflight, readiness_errors, readiness_input_refs = (
+        run_prepare_readiness_preflight(
+            workspace_root,
+            allow_creatable_paths=True,
+        )
+    )
+    bridge_ref = getattr(args, "_grill_bridge_ref", None)
+    if isinstance(bridge_ref, str):
+        readiness_input_refs.append(bridge_ref)
+    readiness_record_path = write_prepare_readiness_node_record(
+        workspace_root,
+        run_id=run_id,
+        input_refs=readiness_input_refs,
+        errors=readiness_errors,
+    )
+    readiness_ref = readiness_preflight_path(workspace_root).relative_to(
+        workspace_root
+    ).as_posix()
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_readiness_preflight",
+        status="success" if not readiness_errors else "failed",
+        payload={
+            "postcondition": "PASS" if not readiness_errors else "FAIL",
+            "mode": "prepare_complete_readiness_preflight",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+        },
+    )
+    if readiness_errors:
+        request = create_prepare_readiness_request(
+            workspace_root,
+            run_id=run_id,
+            node_record_path=readiness_record_path,
+            errors=readiness_errors,
+        )
+        state["status"] = "paused"
+        state["segment_status"] = "prepare_readiness_input_required"
+        state["pending_request_id"] = request["request_id"]
+        state["failed_nodes"] = ["prepare_readiness_preflight"]
+        state["last_failure"] = {
+            "kind": "prepare_readiness_preflight_failed",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+            "errors": readiness_errors,
+        }
+        save_state(workspace_root, state)
+        return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+    state["completed_nodes"] = ["prepare_readiness_preflight"]
+    save_state(workspace_root, state)
+    exit_code = run_supervised_nodes(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        segment="prepare",
+        goal=goal,
+        node_ids={"prepare_data_prep", "prepare_baseline_repro"},
+    )
+    if exit_code is not None:
+        return exit_code
+
+    state["current_node_id"] = "prepare_protocol_compiler"
+    save_state(workspace_root, state)
+    protocol_result = run_protocol_compiler(workspace_root, build_id=run_id)
+    protocol_record_path = write_prepare_protocol_node_record(
+        workspace_root,
+        run_id=run_id,
+        protocol_result=protocol_result,
+        readiness_ref=readiness_ref,
+    )
+    protocol_ref = protocol_record_path.relative_to(workspace_root).as_posix()
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_protocol_compiler",
+        status="success" if protocol_result["exit_code"] == 0 else "failed",
+        payload={
+            "postcondition": (
+                "PASS" if protocol_result["exit_code"] == 0 else "FAIL"
+            ),
+            "mode": "prepare_complete_protocol_compiler",
+            "node_record": protocol_ref,
+        },
+    )
+    if protocol_result["exit_code"] != 0:
+        request = create_prepare_protocol_request(
+            workspace_root,
+            run_id=run_id,
+            node_record_path=protocol_record_path,
+            protocol_result=protocol_result,
+        )
+        state["status"] = "paused"
+        state["segment_status"] = "prepare_protocol_compiler_failed"
+        state["pending_request_id"] = request["request_id"]
+        state["failed_nodes"] = ["prepare_protocol_compiler"]
+        state["last_failure"] = {
+            "kind": "prepare_protocol_compiler_failed",
+            "node_record": protocol_ref,
+            "exit_code": protocol_result["exit_code"],
+        }
+        save_state(workspace_root, state)
+        return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+    state["completed_nodes"] = list(
+        dict.fromkeys([*state.get("completed_nodes", []), "prepare_protocol_compiler"])
+    )
+    state["current_node_id"] = "prepare_review_packet"
+    save_state(workspace_root, state)
+    gate_result = run_dynamic_context_gate(
+        workspace_root,
+        stage="wf5",
+        build_id=run_id,
+        write_review_packet=True,
+    )
+    node_record_path = write_prepare_review_packet_node_record(
+        workspace_root,
+        run_id=run_id,
+        gate_result=gate_result,
+        readiness_ref=readiness_ref,
+        protocol_ref=protocol_ref,
+    )
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_review_packet",
+        status="success" if gate_result["exit_code"] == 0 else "failed",
+        payload={
+            "postcondition": "PASS" if gate_result["exit_code"] == 0 else "FAIL",
+            "mode": "prepare_complete_review_packet",
+            "node_record": node_record_path.relative_to(workspace_root).as_posix(),
+        },
+    )
+    if gate_result["exit_code"] != 0:
+        return pause_for_node_request(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            state=state,
+            node={"node_id": "prepare_review_packet", "segment": "prepare"},
+            reason="prepare_wf5_gate_failed",
+            question="WF5 dynamic-context gate failed after data and baseline prep.",
+            gate_status_refs=[node_record_path.relative_to(workspace_root).as_posix()],
+        )
+
+    request = create_prepare_approval_request(
+        workspace_root,
+        run_id=run_id,
+        gate_result=gate_result,
+        node_record_path=node_record_path,
+        reason="prepare_complete_approval_required",
+        unlocks_execution=True,
+    )
+    state["status"] = "paused"
+    state["segment_status"] = "prepare_waiting_for_approval"
+    state["pending_request_id"] = request["request_id"]
+    state["completed_nodes"] = list(
+        dict.fromkeys([*state.get("completed_nodes", []), "prepare_review_packet"])
+    )
+    save_state(workspace_root, state)
+    return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+
+def start_build_segment(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    goal: str,
+) -> int:
+    exit_code = run_supervised_nodes(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        segment="build",
+        goal=goal,
+    )
+    if exit_code is not None:
+        return exit_code
+    state["status"] = "completed"
+    state["segment_status"] = "build_ready_for_iterate"
+    state["current_node_id"] = None
+    state["current_attempt"] = 0
+    state["pending_request_id"] = None
+    save_state(workspace_root, state)
+    append_event(
+        workspace_root,
+        "RUN_COMPLETED",
+        run_id=run_id,
+        segment="build",
+        status="completed",
+        payload={"mode": "build_ready_for_iterate"},
+    )
+    return emit_status(workspace_root, args.json)
 
 
 def sync_auto_iterate_status(
@@ -3127,12 +5311,23 @@ def command_start(args: argparse.Namespace) -> int:
     supervisor_root(workspace_root).mkdir(parents=True, exist_ok=True)
     acquire_lock(workspace_root, run_id)
     try:
+        grill_bridge_ref = None
+        if segment == "prepare" and args.complete:
+            grill_bridge_ref = attach_grill_bridge_to_args(
+                workspace_root,
+                run_id=run_id,
+                args=args,
+            )
         manifest = run_manifest(
             workspace_root=workspace_root,
             run_id=run_id,
             segment=segment,
             goal=goal,
             entrypoint=f"harness {segment}",
+            allow_external_downloads=effective_allow_external_downloads(args),
+            worker_mode=worker_mode(args),
+            complete_prepare=bool(args.complete),
+            grill_bridge_ref=grill_bridge_ref,
         )
         manifest_path = write_run_manifest(workspace_root, manifest)
         append_event(
@@ -3141,7 +5336,11 @@ def command_start(args: argparse.Namespace) -> int:
             run_id=run_id,
             segment=segment,
             status="running",
-            payload={"dry_run": bool(args.dry_run), "manifest": str(manifest_path)},
+            payload={
+                "dry_run": bool(args.dry_run),
+                "manifest": str(manifest_path),
+                "grill_bridge": grill_bridge_ref,
+            },
         )
         state = base_state(run_id, segment)
         save_state(workspace_root, state)
@@ -3179,12 +5378,30 @@ def command_start(args: argparse.Namespace) -> int:
             save_state(workspace_root, state)
             return emit_status(workspace_root, args.json)
 
+        if segment == "prepare" and args.complete:
+            return start_prepare_complete(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                goal=goal,
+            )
+
         if segment == "prepare":
             return start_prepare_hitl_poc(
                 workspace_root,
                 args=args,
                 run_id=run_id,
                 state=state,
+            )
+
+        if segment == "build":
+            return start_build_segment(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                goal=goal,
             )
 
         if segment == "iterate":
@@ -3608,7 +5825,11 @@ def command_resume(args: argparse.Namespace) -> int:
     resume_exit_code = EXIT_OK
     if (
         state.get("segment") == "prepare"
-        and request.get("reason") == "evaluation_contract_approval_required"
+        and request.get("reason")
+        in {
+            "evaluation_contract_approval_required",
+            "prepare_complete_approval_required",
+        }
     ):
         if decision == "approve":
             gate_result = run_dynamic_context_gate(
@@ -3626,7 +5847,10 @@ def command_resume(args: argparse.Namespace) -> int:
             state["resolved_inputs_ref"] = gate_record_path.relative_to(
                 workspace_root
             ).as_posix()
-            segment_status = "prepare_hitl_poc"
+            if request.get("reason") == "prepare_complete_approval_required":
+                segment_status = "prepare_complete"
+            else:
+                segment_status = "prepare_hitl_poc"
         elif decision == "revise":
             segment_status = "prepare_revision_requested"
         elif decision == "reject":
@@ -4350,6 +6574,27 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--goal")
     start.add_argument("--goal-file")
     start.add_argument("--dry-run", action="store_true")
+    start.add_argument("--complete", action="store_true")
+    start.add_argument("--auto", action="store_true")
+    start.add_argument(
+        "--worker-mode",
+        choices=["none", "codex"],
+        default="none",
+    )
+    start.add_argument(
+        "--worker-command",
+        help=(
+            "Command template that writes worker result JSON. Available "
+            "fields: {workspace_root}, {run_id}, {node_id}, {skill}, "
+            "{result_path}, {prompt_path}."
+        ),
+    )
+    start.add_argument("--codex-home")
+    start.add_argument("--allow-external-downloads", action="store_true")
+    start.add_argument("--dataset-source")
+    start.add_argument("--dataset-target")
+    start.add_argument("--baseline-repo", action="append")
+    start.add_argument("--baseline-target")
     start.add_argument("--auto-goal", default="docs/auto_iterate_goal.md")
     start.add_argument("--auto-config")
     start.add_argument("--auto-dry-run", action="store_true")

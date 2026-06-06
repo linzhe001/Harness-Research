@@ -83,3 +83,29 @@ def test_worker_result_rejects_direct_user_question() -> None:
     errors = workflow_ctl.validate_worker_result(REPO_ROOT, result)
 
     assert "worker_direct_user_question" in errors
+
+
+def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
+    paths = workflow_ctl.worker_runtime_paths(
+        REPO_ROOT,
+        run_id="sup_20260605_000000",
+        node_id="build_validate_run",
+    )
+    prompt = workflow_ctl.render_worker_prompt(
+        workspace_root=REPO_ROOT,
+        run_id="sup_20260605_000000",
+        node={
+            "node_id": "build_validate_run",
+            "skill": "validate-run",
+            "postconditions": [],
+            "allowed_worker_write_patterns": ["docs/Validate_Run_Report.md"],
+        },
+        goal="validate runnable build",
+        result_ref=paths["handoff_result"],
+    )
+
+    assert paths["handoff_result"].startswith(
+        ".agents/state/workflow_supervisor_worker_results/"
+    )
+    assert not paths["handoff_result"].startswith(".workflow_supervisor/")
+    assert "temporary worker handoff" in prompt

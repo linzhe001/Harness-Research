@@ -4205,6 +4205,8 @@
           "PROJECT_STATE.json",
           "iteration_log.json",
           "project_map.json",
+          "docs/Research_Intent_Draft.md",
+          "docs/Grill_Round_Log.md",
           "docs/Execution_Readiness_Packet.md"
         ],
         "project_optional": [

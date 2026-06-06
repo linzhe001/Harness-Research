@@ -47,6 +47,7 @@
 /.agents/state/iterations/
 /.agents/state/current_iteration.json
 /.agents/state/review_traces/
+/.agents/state/workflow_supervisor_worker_results/
 
 # === Local-only paths (kept out of harness history) ===
 /.harness/

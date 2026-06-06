@@ -2176,6 +2176,23 @@ def test_pre_tool_allows_workflow_supervisor_tool_mutation() -> None:
     assert block_pre_tool(REPO_ROOT, event) is None
 
 
+def test_pre_tool_allows_build_writes_to_implementation_surfaces() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "python - <<'PY'\n"
+                "from pathlib import Path\n"
+                "Path('src/model.py').write_text('pass\\n')\n"
+                "Path('configs/train.yaml').write_text('epochs: 1\\n')\n"
+                "PY"
+            )
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+
+
 def test_pre_tool_allows_grill_tool_owned_readiness_mutation() -> None:
     event = {
         "tool_name": "Bash",

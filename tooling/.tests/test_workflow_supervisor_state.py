@@ -15,6 +15,12 @@ def make_workspace(tmp_path: Path) -> Path:
     root = tmp_path / "workspace"
     root.mkdir()
     shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+    config_dir = root / "tooling" / "workflow_supervisor" / "config"
+    config_dir.mkdir(parents=True)
+    shutil.copy2(
+        REPO_ROOT / "tooling" / "workflow_supervisor" / "config" / "default_nodes.json",
+        config_dir / "default_nodes.json",
+    )
     return root
 
 
@@ -103,13 +109,14 @@ def test_start_without_dry_run_pauses_with_typed_request(
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
     assert state["status"] == "paused"
-    assert state["segment_status"] == "v0_interrupt"
+    assert state["segment_status"] == "node_precondition_failed"
     pending = json.loads(
         (root / ".workflow_supervisor" / "pending_request.json").read_text(
             encoding="utf-8"
         )
     )
     assert pending["type"] == "STEER"
+    assert pending["node_id"] == "build_refine_arch"
     assert pending["request_snapshot_hash"] == workflow_ctl.request_snapshot_hash(
         pending
     )

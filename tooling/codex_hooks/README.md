@@ -164,6 +164,13 @@ Tool-time policy is intentionally concrete:
 - `git commit` produces a notice when
   `.agents/references/sliced-commit-rule.md` has not been read in the turn.
 - Mutations that mention guardrail paths produce a route hint notice.
+- Ordinary implementation writes under declared build surfaces such as `src/`,
+  `scripts/`, `configs/`, `project_map.json`, and owned docs are not hard
+  blocked by hooks.
+- Workflow supervisor Codex workers use
+  `.agents/state/workflow_supervisor_worker_results/**` as a temporary result
+  handoff; the supervisor process adopts validated results into
+  `.workflow_supervisor/**`.
 - Manual writes to `.evidence/**`, `.auto_iterate/**`,
   `.workflow_supervisor/**`, `docs/_views/**`, and `docs/_site/**` are
   blocked; use the owning tools.
