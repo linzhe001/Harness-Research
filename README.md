@@ -271,9 +271,32 @@ compiling a draft protocol packet. `workflow_ctl approve` runs the exact
 contract approval action through `approve_contract.py` only after explicit
 human approval; `workflow_ctl resume` reruns the gate and records
 `prepare_hitl_poc`, not `prepare_complete`.
-Slice 5 registry entries cover data-prep, baseline-repro, build-plan,
-code-expert/code-debug, and validate-run, but the supervisor still does not run
-those Stage Skills by itself.
+`prepare --complete` runs deterministic data acquisition or verification,
+baseline clone/acquisition, protocol compilation, and WF5 Review Packet
+generation. External dataset downloads and baseline clones require
+`--allow-external-downloads` or an explicit Grill readiness value such as
+`external_download_policy: allow`. On start, full prepare also writes
+`.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
+`.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
+`docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`, so a
+conversation-triggered `$workflow-supervisor` can use Grill's structured
+dataset/baseline answers without the operator hand-building CLI arguments.
+Redacted or ambiguous Grill values still become typed input requests. Full
+prepare pauses for Human Approval and only resumes to `prepare_complete` after
+approval.
+`build` runs the build registry through structured workers. Use `--auto` to
+delegate non-deterministic nodes to Codex, or `--worker-command` to provide a
+command template that writes a validated worker-result JSON. Build stops as
+`build_ready_for_iterate` only after validate-run postconditions pass. Build
+worker prompts include postconditions and allowed write patterns; workers must
+run concrete checks, debug failures inside the node budget, and write Gate
+ledger entries instead of prose-only success claims. Codex workers write their
+result JSON to `.agents/state/workflow_supervisor_worker_results/**`; the
+supervisor validates and adopts it into `.workflow_supervisor/**`.
+Harness hooks do not block ordinary build writes under declared implementation
+surfaces such as `src/`, `scripts/`, `configs/`, `project_map.json`, or owned
+docs. They block manual writes to tool-owned runtime/generated paths; use the
+owning supervisor, evidence, or docs-site command for those paths.
 `start --segment iterate` delegates WF10 to `auto_iterate_ctl.py`; the
 supervisor records status and maps `manual_action_required` to a typed pending
 request without writing `.auto_iterate/**` directly.
@@ -295,6 +318,9 @@ tooling/workflow_supervisor/scripts/harness.sh change --goal "<new request>" --j
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>"
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --auto
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --worker-command '<command template>'
 tooling/workflow_supervisor/scripts/workflow_ctl.sh approve --request-id <id> --decision approve --approved-by "<human>" --approval-source ".evidence/review_packets/<stage>/<build_id>/review_packet.md"
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment iterate --goal "<goal>" --auto-goal docs/auto_iterate_goal.md
 tooling/workflow_supervisor/scripts/workflow_ctl.sh monitor-iterate --json

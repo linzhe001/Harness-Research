@@ -57,8 +57,8 @@ Execution Supervisor actions are scoped commands under the second mode:
 
 | Supervisor action | 什么时候用 | 主要状态面 |
 | --- | --- | --- |
-| `prepare` | intent 已存在，需要检查 readiness / approval plumbing | Review Packet 和 pending request JSON |
-| `build` | 需要推进 bounded implementation 或 validation segment | worker result JSON 和 postcondition validation |
+| `prepare` | intent 已存在，需要检查 readiness，或用 `--complete` 获取/验证数据集和 baseline | Dataset Stats、Baseline Report、Review Packet 和 pending request JSON |
+| `build` | 需要推进 bounded implementation 并验证到可运行 | worker result JSON、Gate ledger、Validate Run Report 和 postcondition validation |
 | `iterate` | 需要把 WF10 委托给 auto-iterate | `auto_iterate_ctl.sh status --json` 和 `iteration_log.json` |
 | `release` | validate / package / submit action 需要 claim / approval check | WF12 Review Packet 和 scoped approval request |
 | `change` | 成熟代码库收到新请求 | Change Request JSON 和 route confidence |
@@ -75,6 +75,9 @@ tooling/workflow_supervisor/scripts/harness.sh change --goal "<new request>" --j
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>"
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --auto
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --worker-command '<command template>'
 tooling/workflow_supervisor/scripts/workflow_ctl.sh approve --request-id <id> --decision approve --approved-by "<human>" --approval-source ".evidence/review_packets/<stage>/<build_id>/review_packet.md"
 tooling/workflow_supervisor/scripts/workflow_ctl.sh resume --request-id <id>
 tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
@@ -85,20 +88,47 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goa
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
 
-Non-dry-run `prepare` is a v0 HITL PoC. It verifies candidate readiness inputs,
-compiles a draft protocol packet under `.evidence/protocol_compiler/**`, then
-generates a WF5 Review Packet with dynamic-context tooling. It writes the
-pending request under `.workflow_supervisor/**` and waits for
-approve/revise/reject. For an explicit approve decision on a contract approval
-request, `workflow_ctl approve` runs the exact `approve_contract.py` action
-with the recorded `approval_source`; revise/reject never mark a contract
-approved. Approval resume reruns the WF5 dynamic-context gate and records
-`prepare_hitl_poc`, not `prepare_complete`.
+Default non-dry-run `prepare` is still the low-risk HITL PoC. It verifies
+candidate readiness inputs, compiles a draft protocol packet under
+`.evidence/protocol_compiler/**`, generates a WF5 Review Packet with
+dynamic-context tooling, writes a pending request under
+`.workflow_supervisor/**`, and waits for approve/revise/reject. Approval resume
+reruns the WF5 dynamic-context gate and records `prepare_hitl_poc`, not
+`prepare_complete`.
 
-Slice 5 adds registry coverage for data-prep, baseline-repro, refine-arch,
-build-plan, code-expert/code-debug, and validate-run. Postcondition validation
-records PASS/FAIL/NOT_RUN from artifacts, schema checks, forbidden-write
-checks, and worker Gate ledger. It does not execute Stage Skills by itself.
+`prepare --complete` is the full prepare path. It verifies or acquires the
+dataset, clones/copies/adopts the baseline, writes `docs/Dataset_Stats.md`,
+`docs/Baseline_Report.md`, `docs/30_evidence/Dataset_Table.md`,
+`docs/30_evidence/Baseline_Table.md`, updates `PROJECT_STATE.json` and
+`project_map.json`, then runs protocol and Review Packet gates. Local sources
+can be copied directly. On start it writes
+`.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
+`.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
+`docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
+structured readiness rows, explicit `key: value` lines, or labeled contextual
+dataset/baseline URLs. Dataset downloads and remote baseline clones require
+`--allow-external-downloads` or an explicit Grill readiness policy such as
+`external_download_policy: allow`. Redacted or ambiguous values become typed
+input requests. The segment still pauses for Human Approval before recording
+`prepare_complete`.
+
+`build` runs registry nodes in order through deterministic checks or structured
+workers. `--auto` delegates non-deterministic nodes to Codex with full-auto
+sandboxing. `--worker-command` supplies a testable command template that must
+write a schema-valid worker result JSON. The segment records
+`build_ready_for_iterate` only after the validate-run node and its
+postconditions pass. Missing inputs, worker failures, invalid Gate ledgers, or
+failed postconditions stop the run with a typed request or failure record.
+Worker prompts include node postconditions and allowed write patterns; workers
+must run concrete checks and record PASS/FAIL/NOT_RUN Gate ledger entries before
+claiming success. Codex workers write result JSON to
+`.agents/state/workflow_supervisor_worker_results/**`; the supervisor validates
+and adopts it into `.workflow_supervisor/**`.
+
+Registry coverage includes data-prep, baseline-repro, refine-arch, build-plan,
+code-expert/code-debug, and validate-run. Postcondition validation records
+PASS/FAIL/NOT_RUN from artifacts, schema checks, forbidden-write checks, and
+worker Gate ledger.
 
 Slice 6 delegates WF10 to the existing auto-iterate controller. The supervisor
 launches `auto_iterate_ctl.py`, records status snapshots under
@@ -141,6 +171,12 @@ artifacts exist and can be used as context for canonical Stage Skills.
 
 `prepare_hitl_poc` does not unlock build, iterate, or release. It proves
 readiness/HITL plumbing only.
+
+`prepare_complete` is the prepare state that later execution can depend on. It
+requires data and baseline artifacts plus the required approval/revision gate.
+
+`build_ready_for_iterate` means build has reached validate-run and the
+configured runnable postconditions passed. It does not start WF10 by itself.
 
 `approve` on the supervisor CLI is scoped to a pending request and must preserve
 `approval_source`. It is not a local boolean toggle.

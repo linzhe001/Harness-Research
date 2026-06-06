@@ -71,6 +71,8 @@ Operate the Harness execution supervisor CLI and runtime boundaries. Use for har
 - `PROJECT_STATE.json`
 - `iteration_log.json`
 - `project_map.json`
+- `docs/Research_Intent_Draft.md`
+- `docs/Grill_Round_Log.md`
 - `docs/Execution_Readiness_Packet.md`
 - `docs/10_contract/Project_Contract.md`
 - `docs/10_contract/Evaluation_Contract.md`

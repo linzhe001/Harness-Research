@@ -54,9 +54,10 @@ what you want
 | 我想做什么 | 顶层入口 | 具体动作 | 先看什么状态或产物 | 什么时候停下来 |
 | --- | --- | --- | --- | --- |
 | 澄清粗糙 research idea | Grill | `harness grill` 或 `$grill` | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
+| 获取或验证数据集和 baseline | Execution Supervisor | `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、contract approval decision |
 | 判断能否进入执行 | Execution Supervisor | `prepare --dry-run` | Review Packet、readiness preflight、pending request JSON | 需要 contract、缺失事实或 approval decision |
 | 处理 pending request | Execution Supervisor | `workflow_ctl status --json`，然后 `workflow_ctl approve ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
-| 推进 planned slice 的 build / validate | Execution Supervisor | `build` | worker result JSON、Gate ledger、postcondition validation | worker prose 缺 artifact、Gate ledger 或 schema validity |
+| 推进 planned slice 的 build / validate | Execution Supervisor | `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、postcondition validation、Validate Run Report | 缺输入、worker 失败、Gate ledger 无效或 validate-run postconditions 未通过 |
 | 跑多轮实验 | Execution Supervisor | `$auto-iterate-goal check`，然后 `iterate` | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |
 | 成熟代码库收到新需求 | Execution Supervisor | `change` | Change Request JSON 和 route confidence | route 影响 evaluation、claim boundary、architecture 或 new research direction |
 | 准备 release / submit action | Execution Supervisor | `release --action validate|package|submit` | WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、approval 缺失或 claim 超出证据 |
@@ -87,6 +88,10 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
 
 - `grill_draft_ready` 只表示 draft intent 存在，不表示 WF1-WF3 complete。
 - `prepare_hitl_poc` 证明 approval plumbing，不表示完整 prepare completion。
+- `prepare_complete` 才表示数据、baseline、protocol / review-packet gate 和
+  required approval/revision checks 已经走完。
+- `build_ready_for_iterate` 才表示 build registry 已运行到 validate-run，并且可跑通的
+  postconditions 通过。
 - low-confidence change route 应暂停请求 steering，而不是直接 edit code。
 - release readiness 不等于 package 或 submit approval。
 

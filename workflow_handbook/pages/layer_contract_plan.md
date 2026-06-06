@@ -35,11 +35,21 @@ WF5-WF7 建立 baseline、human-approved boundaries、architecture 和 implement
 ## Model
 
 ```text
-WF5 baseline / contracts -> WF6 architecture -> WF7 implementation roadmap
+prepare --complete
+  -> dataset facts and baseline evidence
+  -> WF5 contracts / review packet
+  -> WF6 architecture
+  -> WF7 implementation roadmap
 ```
 
 ## Boundaries
 
+- `prepare --complete` can copy local datasets, download remote datasets, and
+  clone baseline repositories when explicit sources/targets are provided.
+- Remote dataset downloads and baseline clones require
+  `--allow-external-downloads` or an explicit Grill readiness policy.
+- Full prepare bridges structured Grill outputs from readiness JSON and draft
+  packets, but redacted or ambiguous values remain pending inputs.
 - Contracts 只有在 Human Approval 后才是 approved。
 - WF6 不能越过 approved evaluation 或 claim boundary。
 - WF7 负责切片计划，不应重新做架构决策。
@@ -47,6 +57,7 @@ WF5 baseline / contracts -> WF6 architecture -> WF7 implementation roadmap
 ## Common Confusions
 
 - Review Packet 不是 approval。
+- Dataset Stats 或 Baseline Report 不是 contract approval。
 - Technical Spec 不是 implementation commit。
 - Roadmap 不是代码实现。
 

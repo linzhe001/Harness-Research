@@ -1014,7 +1014,9 @@ Add framework support without changing existing default behavior:
   sequence recovery, worker-result validation, approval hash validation, and
   `.workflow_supervisor/**` guardrails.
 
-No Skill should auto-run in this phase.
+This bootstrap phase should not auto-run Skills. Later slices add explicit
+worker-backed automation after state, interrupts, and postconditions are in
+place.
 
 ### Segment 1: Grill
 
@@ -1046,7 +1048,7 @@ Trust model:
 
 ### Segment 2: Prepare Supervisor
 
-Implement only low-risk orchestration first as `prepare_hitl_poc`:
+The low-risk orchestration path remains available as `prepare_hitl_poc`:
 
 ```text
 readiness preflight
@@ -1055,9 +1057,8 @@ readiness preflight
   -> human interrupt for contract approval/revision
 ```
 
-Do not auto-run data downloads or baseline training in the first supervisor slice.
-The first goal is to prove typed HITL, Review Packet handling, and resume.
-This slice must not report `prepare_complete`.
+This path proves typed HITL, Review Packet handling, and resume. It must not
+report `prepare_complete` and must not unlock later segments.
 
 Required postconditions:
 
@@ -1077,9 +1078,30 @@ Rules:
 
 - If dataset path was preanswered, verify path/readability before continuing.
 - If baseline cache dir was preanswered, verify directory/writability before continuing.
-- If downloads are needed, require `external_download_policy` and possibly `APPROVE_ACTION`.
+- If downloads or baseline clones are needed, require explicit
+  `--allow-external-downloads` or an explicit Grill readiness policy such as
+  `external_download_policy: allow`. Concrete source/target inputs may come
+  from CLI, `.workflow_supervisor/readiness.json`, or the Grill bridge parser
+  reading `docs/Execution_Readiness_Packet.md`, `docs/Research_Intent_Draft.md`,
+  and `docs/Grill_Round_Log.md`.
+- Redacted or ambiguous Grill values must not be guessed; produce a typed
+  pending request instead.
 - Baseline/evaluation evidence should update `docs/30_evidence/**`.
 - Evaluation Contract readiness triggers `check_dynamic_context.py --stage wf5 --review-packet`.
+
+Current implementation:
+
+```text
+workflow_ctl start --segment prepare --complete
+  -> Grill/readiness bridge writes runtime/grill_bridge.json
+  -> readiness preflight
+  -> deterministic dataset acquisition / verification
+  -> deterministic baseline clone / acquisition
+  -> protocol-compiler
+  -> WF5 Review Packet
+  -> APPROVE_ACTION
+  -> resume to prepare_complete only after explicit approval
+```
 
 ### Segment 4: Build
 
@@ -1098,9 +1120,24 @@ Rules:
 
 - `code-expert` is first-pass only.
 - `code-debug` is default for post-WF8 implementation changes.
+- Build nodes run through structured workers: `--auto` delegates to Codex and
+  `--worker-command` supplies a testable command template.
+- Worker prompts include node postconditions and allowed write patterns. A
+  worker must run concrete checks, debug failures inside the node budget, and
+  record PASS/FAIL/NOT_RUN Gate ledger entries before claiming success.
+- Codex worker result JSON uses
+  `.agents/state/workflow_supervisor_worker_results/**` as a temporary handoff;
+  supervisor runtime state is written only by the supervisor after validation.
 - Stable interface/file changes require `project_map.json` and `docs/20_facts/Codebase_Map.md` sync.
 - If `Codebase_Map.md` changes, run `compile_doc.py` and docchain gates.
 - WF9 PASS triggers `$auto-iterate-goal` readiness checks but does not silently start WF10 without required approvals.
+- The segment stops as `build_ready_for_iterate` only after `validate-run`
+  postconditions pass.
+- Harness hooks should not block ordinary build writes under declared
+  implementation surfaces such as `src/`, `scripts/`, `configs/`,
+  `project_map.json`, and owned docs. They should continue blocking manual
+  writes to tool-owned paths such as `.evidence/**`, `.auto_iterate/**`,
+  `.workflow_supervisor/**`, `docs/_views/**`, and `docs/_site/**`.
 
 ### Segment 5: Iterate Delegation
 
