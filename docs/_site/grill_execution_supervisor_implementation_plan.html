@@ -663,7 +663,7 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh resume \
 <p>exit codes, even when the command body is not implemented yet.</p>
 <ul><li>Add tests for schemas, loading, <code>status --json</code>, state invariants, event</li></ul>
 <p>sequence recovery, worker-result validation, approval hash validation, and <code>.workflow_supervisor/**</code> guardrails.</p>
-<p>No Skill should auto-run in this phase.</p>
+<p>This bootstrap phase should not auto-run Skills. Later slices add explicit worker-backed automation after state, interrupts, and postconditions are in place.</p>
 <h3 id="segment-1-grill">Segment 1: Grill</h3>
 <p>Add a new <code>grill</code> Skill and lightweight tooling:</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">.agents/skills/grill/SKILL.md
@@ -678,18 +678,32 @@ tooling/grill/
 <ul><li>Grill docs include Evidence Sources / Verified Facts / Inferences / Open Questions.</li><li>No Grill output is an Approved Contract.</li><li>Local paths are candidate inputs until readiness preflight verifies them.</li><li>Grill output alone does not mark WF1-WF3 complete; the bridge path must</li></ul>
 <p>produce the existing canonical Stage artifacts and Gate ledger.</p>
 <h3 id="segment-2-prepare-supervisor">Segment 2: Prepare Supervisor</h3>
-<p>Implement only low-risk orchestration first as <code>prepare_hitl_poc</code>:</p>
+<p>The low-risk orchestration path remains available as <code>prepare_hitl_poc</code>:</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">readiness preflight
   -&gt; protocol-compiler
   -&gt; review-packet
   -&gt; human interrupt for contract approval/revision</code></pre></div>
-<p>Do not auto-run data downloads or baseline training in the first supervisor slice. The first goal is to prove typed HITL, Review Packet handling, and resume. This slice must not report <code>prepare_complete</code>.</p>
+<p>This path proves typed HITL, Review Packet handling, and resume. It must not report <code>prepare_complete</code> and must not unlock later segments.</p>
 <p>Required postconditions:</p>
 <ul><li>readiness preflight written,</li><li>protocol compiler packet path recorded when run,</li><li>review packet path recorded,</li><li>pending approval request generated when approval is required,</li><li>no direct <code>.evidence/**</code> writes by supervisor,</li><li>worker result validates against <code>workflow_supervisor_worker_result.schema.json</code>,</li><li><code>prepare_hitl_poc</code> state cannot satisfy any later-segment precondition.</li></ul>
 <h3 id="segment-3-data-and-baseline">Segment 3: Data and Baseline</h3>
 <p>Add <code>data-prep</code> and <code>baseline-repro</code> only after readiness preflight is reliable.</p>
 <p>Rules:</p>
-<ul><li>If dataset path was preanswered, verify path/readability before continuing.</li><li>If baseline cache dir was preanswered, verify directory/writability before continuing.</li><li>If downloads are needed, require <code>external_download_policy</code> and possibly <code>APPROVE_ACTION</code>.</li><li>Baseline/evaluation evidence should update <code>docs/30_evidence/**</code>.</li><li>Evaluation Contract readiness triggers <code>check_dynamic_context.py --stage wf5 --review-packet</code>.</li></ul>
+<ul><li>If dataset path was preanswered, verify path/readability before continuing.</li><li>If baseline cache dir was preanswered, verify directory/writability before continuing.</li><li>If downloads or baseline clones are needed, require explicit</li></ul>
+<p><code>--allow-external-downloads</code> or an explicit Grill readiness policy such as <code>external_download_policy: allow</code>. Concrete source/target inputs may come from CLI, <code>.workflow_supervisor/readiness.json</code>, or the Grill bridge parser reading <code>docs/Execution_Readiness_Packet.md</code>, <code>docs/Research_Intent_Draft.md</code>, and <code>docs/Grill_Round_Log.md</code>.</p>
+<ul><li>Redacted or ambiguous Grill values must not be guessed; produce a typed</li></ul>
+<p>pending request instead.</p>
+<ul><li>Baseline/evaluation evidence should update <code>docs/30_evidence/**</code>.</li><li>Evaluation Contract readiness triggers <code>check_dynamic_context.py --stage wf5 --review-packet</code>.</li></ul>
+<p>Current implementation:</p>
+<div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">workflow_ctl start --segment prepare --complete
+  -&gt; Grill/readiness bridge writes runtime/grill_bridge.json
+  -&gt; readiness preflight
+  -&gt; deterministic dataset acquisition / verification
+  -&gt; deterministic baseline clone / acquisition
+  -&gt; protocol-compiler
+  -&gt; WF5 Review Packet
+  -&gt; APPROVE_ACTION
+  -&gt; resume to prepare_complete only after explicit approval</code></pre></div>
 <h3 id="segment-4-build">Segment 4: Build</h3>
 <p>Add build orchestration:</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">refine-arch
@@ -699,7 +713,16 @@ tooling/grill/
   -&gt; code-debug for post-WF8 deltas
   -&gt; validate-run</code></pre></div>
 <p>Rules:</p>
-<ul><li><code>code-expert</code> is first-pass only.</li><li><code>code-debug</code> is default for post-WF8 implementation changes.</li><li>Stable interface/file changes require <code>project_map.json</code> and <code>docs/20_facts/Codebase_Map.md</code> sync.</li><li>If <code>Codebase_Map.md</code> changes, run <code>compile_doc.py</code> and docchain gates.</li><li>WF9 PASS triggers <code>$auto-iterate-goal</code> readiness checks but does not silently start WF10 without required approvals.</li></ul>
+<ul><li><code>code-expert</code> is first-pass only.</li><li><code>code-debug</code> is default for post-WF8 implementation changes.</li><li>Build nodes run through structured workers: <code>--auto</code> delegates to Codex and</li></ul>
+<p><code>--worker-command</code> supplies a testable command template.</p>
+<ul><li>Worker prompts include node postconditions and allowed write patterns. A</li></ul>
+<p>worker must run concrete checks, debug failures inside the node budget, and record PASS/FAIL/NOT_RUN Gate ledger entries before claiming success.</p>
+<ul><li>Codex worker result JSON uses</li></ul>
+<p><code>.agents/state/workflow_supervisor_worker_results/**</code> as a temporary handoff; supervisor runtime state is written only by the supervisor after validation.</p>
+<ul><li>Stable interface/file changes require <code>project_map.json</code> and <code>docs/20_facts/Codebase_Map.md</code> sync.</li><li>If <code>Codebase_Map.md</code> changes, run <code>compile_doc.py</code> and docchain gates.</li><li>WF9 PASS triggers <code>$auto-iterate-goal</code> readiness checks but does not silently start WF10 without required approvals.</li><li>The segment stops as <code>build_ready_for_iterate</code> only after <code>validate-run</code></li></ul>
+<p>postconditions pass.</p>
+<ul><li>Harness hooks should not block ordinary build writes under declared</li></ul>
+<p>implementation surfaces such as <code>src/</code>, <code>scripts/</code>, <code>configs/</code>, <code>project_map.json</code>, and owned docs. They should continue blocking manual writes to tool-owned paths such as <code>.evidence/**</code>, <code>.auto_iterate/**</code>, <code>.workflow_supervisor/**</code>, <code>docs/_views/**</code>, and <code>docs/_site/**</code>.</p>
 <h3 id="segment-5-iterate-delegation">Segment 5: Iterate Delegation</h3>
 <p>Do not rewrite auto-iterate. Wrap it:</p>
 <div class="code-block code-block-diagram" data-language="text"><div class="code-label">text</div><pre><code class="language-text">workflow_ctl start --segment iterate

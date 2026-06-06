@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-05T13:45:45Z",
+  "generated_at": "2026-06-05T17:42:50Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -5388,7 +5388,7 @@
       ],
       "preview": {
         "title": "workflow-supervisor",
-        "body": "Reads 20 declared paths; writes .workflow_supervisor/; must prove workflow_state_gate_or_NOT_RUN, build_review_packet_or_NOT_RUN, gate_ledger.",
+        "body": "Reads 22 declared paths; writes .workflow_supervisor/; must prove workflow_state_gate_or_NOT_RUN, build_review_packet_or_NOT_RUN, gate_ledger.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7869,7 +7869,7 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:operator_task_index|Operator Task Index]]",
-        "line": 35,
+        "line": 36,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
@@ -7877,7 +7877,7 @@
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
-        "line": 53,
+        "line": 54,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
@@ -7885,7 +7885,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 94,
+        "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7893,7 +7893,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 100,
+        "line": 117,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7901,7 +7901,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 101,
+        "line": 118,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7909,7 +7909,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 102,
+        "line": 119,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7917,7 +7917,7 @@
         "ref": "page:hooks_permissions_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
-        "line": 103,
+        "line": 120,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
       },
@@ -7925,7 +7925,7 @@
         "ref": "page:workflow_terms",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_terms|Workflow Terms]]",
-        "line": 104,
+        "line": 121,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_terms.html"
       },
@@ -7933,7 +7933,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 105,
+        "line": 122,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       },
@@ -7941,7 +7941,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 121,
+        "line": 138,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       }
@@ -8369,7 +8369,7 @@
         "ref": "stage:WF8",
         "source_path": "workflow_handbook/pages/layer_build_validate.md",
         "marker": "[[stage:WF8]]",
-        "line": 55,
+        "line": 71,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf8_code_expert.html"
       },
@@ -8377,7 +8377,7 @@
         "ref": "stage:WF9",
         "source_path": "workflow_handbook/pages/layer_build_validate.md",
         "marker": "[[stage:WF9]]",
-        "line": 56,
+        "line": 72,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf9_validate_run.html"
       },
@@ -8385,7 +8385,7 @@
         "ref": "skill:code-debug",
         "source_path": "workflow_handbook/pages/layer_build_validate.md",
         "marker": "[[skill:code-debug]]",
-        "line": 57,
+        "line": 73,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/code-debug.html"
       },
@@ -8393,7 +8393,7 @@
         "ref": "skill:validate-run",
         "source_path": "workflow_handbook/pages/layer_build_validate.md",
         "marker": "[[skill:validate-run]]",
-        "line": 58,
+        "line": 74,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/validate-run.html"
       }
@@ -8403,7 +8403,7 @@
         "ref": "stage:WF5",
         "source_path": "workflow_handbook/pages/layer_contract_plan.md",
         "marker": "[[stage:WF5]]",
-        "line": 55,
+        "line": 66,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf5_baseline_repro.html"
       },
@@ -8411,7 +8411,7 @@
         "ref": "stage:WF6",
         "source_path": "workflow_handbook/pages/layer_contract_plan.md",
         "marker": "[[stage:WF6]]",
-        "line": 56,
+        "line": 67,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf6_refine_arch.html"
       },
@@ -8419,7 +8419,7 @@
         "ref": "stage:WF7",
         "source_path": "workflow_handbook/pages/layer_contract_plan.md",
         "marker": "[[stage:WF7]]",
-        "line": 57,
+        "line": 68,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf7_build_plan.html"
       },
@@ -8427,7 +8427,7 @@
         "ref": "term:Human Approval",
         "source_path": "workflow_handbook/pages/layer_contract_plan.md",
         "marker": "[[term:Human Approval]]",
-        "line": 58,
+        "line": 69,
         "status": "resolved",
         "target_html": null
       }
@@ -8513,7 +8513,7 @@
         "ref": "term:Human Approval",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[term:Human Approval]]",
-        "line": 82,
+        "line": 83,
         "status": "resolved",
         "target_html": null
       },
@@ -8521,7 +8521,7 @@
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
-        "line": 95,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
@@ -8529,7 +8529,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 96,
+        "line": 101,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -8537,7 +8537,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate Model]]",
-        "line": 97,
+        "line": 102,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       },
@@ -8545,7 +8545,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 98,
+        "line": 103,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -8553,7 +8553,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 99,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -8561,7 +8561,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 100,
+        "line": 105,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       }
@@ -8687,7 +8687,7 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:operator_task_index|Operator Task Index]]",
-        "line": 150,
+        "line": 186,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
@@ -8695,7 +8695,7 @@
         "ref": "skill:grill",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:grill]]",
-        "line": 151,
+        "line": 187,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/grill.html"
       },
@@ -8703,7 +8703,7 @@
         "ref": "skill:workflow-supervisor",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:workflow-supervisor]]",
-        "line": 152,
+        "line": 188,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
       },
@@ -8711,7 +8711,7 @@
         "ref": "skill:change-intake",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:change-intake]]",
-        "line": 153,
+        "line": 189,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/change-intake.html"
       },
@@ -8719,7 +8719,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval]]",
-        "line": 154,
+        "line": 190,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -8727,7 +8727,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate]]",
-        "line": 155,
+        "line": 191,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       }
@@ -9801,7 +9801,7 @@
         "ref": "skill:workflow-supervisor",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[skill:workflow-supervisor]]",
-        "line": 109,
+        "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
       },
@@ -9809,7 +9809,7 @@
         "ref": "source:schemas/skill_contracts.json#workflow-supervisor",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[source:schemas/skill_contracts.json#workflow-supervisor]]",
-        "line": 110,
+        "line": 112,
         "status": "resolved",
         "target_html": null
       },
@@ -9817,7 +9817,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 113,
         "status": "resolved",
         "target_html": null
       }
