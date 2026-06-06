@@ -7,10 +7,6 @@ same-worktree dual-repo project.
 
 ## Related Framework Docs
 
-For remote-control and Feishu specific operator docs, also see:
-
-- [tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
-
 For full framework bootstrap, see:
 
 - [AI_AGENT_SETUP.md](./AI_AGENT_SETUP.md)
@@ -30,51 +26,59 @@ When you update harness, the following paths are framework files managed by
 `hgit`:
 
 - `.claude/**`
-- `.agents/**`
+- `.agents/**`, except ignored local state under `.agents/state/**`
 - `*.template`
 - `templates/**`
 - `schemas/**`
+- `workflow_handbook/**`
+- `tooling/codex_hooks/**`
 - `tooling/evidence/**`
 - `tooling/auto_iterate/**`
-- `tooling/remote_control/**`
+- `tooling/workflow_supervisor/**`
+- `tooling/model_api/**`
+- `tooling/.tests/**`
 - `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
-- the root `.gitignore`
 
 Do not add these files to the research repo.
 
 ## Ignore Rules In Dual-Repo Mode
 
-There is only one root `.gitignore` at the shared project root, and it is
-harness-owned.
+There is only one root `.gitignore` at the shared project root, and both git
+histories read it. In a dual-repo target workspace, keep that file
+research-owned or limited to rules that are safe for both histories. Do not
+copy the framework source `.gitignore` into a target workspace just to hide
+Harness paths.
 
-The research repo should not maintain a second competing root `.gitignore` for
-framework files. Instead:
+Use per-repo exclude files for ownership hiding:
 
 - use `.git/info/exclude` to hide harness-owned paths from the research repo
-- use subdirectory `.gitignore` files only inside research-owned paths when the
-  project needs shared ignore rules for its own generated files
+- use `.harness/info/exclude` to hide research-owned paths from the harness repo
+- use subdirectory `.gitignore` files inside research-owned paths when the
+  project needs shared ignore rules for generated research files
 
 Examples:
 
 - good: `experiments/.gitignore`
 - good: `data/.gitignore`
-- avoid: editing the root `.gitignore` for research-only ignore rules
+- good: root `.gitignore` rules for ordinary runtime outputs such as
+  `.auto_iterate/`, `.workflow_supervisor/`, `.harness_hooks/`,
+  `.agents/state/workflow_supervisor_worker_results/`, and `__pycache__/`
+- avoid: root `.gitignore` rules whose only purpose is to hide framework files
+  from the research repo or research files from the harness repo
 
-Remote-control local files follow the same pattern:
+Workflow supervisor worker handoffs are local runtime state:
 
-- commit templates under `tooling/remote_control/config/templates/`
-- keep `tooling/remote_control/config/*.local.*` local-only
-- do not commit `tooling/remote_control/vendor/go/`
-- do not commit built binaries under `tooling/remote_control/vendor/bin/`
+- keep `.agents/state/workflow_supervisor_worker_results/**` out of both git
+  histories
+- do not manually edit `.workflow_supervisor/**`; use
+  `tooling/workflow_supervisor/scripts/workflow_ctl.sh`
 
-One more dual-repo nuance: the shared root `.gitignore` is read by both git
-histories. If normal `git status --untracked-files=all` suddenly stops showing
-research files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, or `src/`, the root
-`.gitignore` is hiding too much. In that case, move those research-side hide
-rules into `.harness/info/exclude` instead of keeping them in the shared root
-`.gitignore`.
+If normal `git status --untracked-files=all` suddenly stops showing research
+files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, or `src/`, the root
+`.gitignore` is hiding too much. Move those research-side hide rules into
+`.harness/info/exclude`.
 
 ## Daily Pull Workflow
 
@@ -146,11 +150,15 @@ Typical blocking files are:
 
 - `README.md`
 - `AI_AGENT_SETUP.md`
-- root `.gitignore`
+- `Harness_Update_Guide.md`
 - `.claude/**`
 - `.agents/**`
+- `workflow_handbook/**`
+- `tooling/codex_hooks/**`
 - `tooling/auto_iterate/**`
-- `tooling/remote_control/**`
+- `tooling/workflow_supervisor/**`
+- `tooling/evidence/**`
+- `tooling/model_api/**`
 
 ## After Pulling
 
@@ -232,117 +240,45 @@ docs; leave `.evidence/protocol_compiler/**` and `.evidence/review_packets/**`
 as local/generated review artifacts unless the project explicitly archives
 them.
 
-If you use remote control / Feishu integration, also check:
+### 3b. Check workflow supervisor and hook updates
+
+If any of these changed:
+
+- `tooling/workflow_supervisor/**`
+- `.agents/skills/workflow-supervisor/SKILL.md`
+- `.claude/skills/workflow-supervisor/SKILL.md`
+- `schemas/skill_contracts.json`
+- `workflow_handbook/**`
+- `tooling/codex_hooks/**`
+
+run:
 
 ```bash
-diff tooling/remote_control/config/templates/remote_control.example.yaml tooling/remote_control/config/remote_control.local.yaml || true
-diff tooling/remote_control/config/templates/cc_connect.local.example.toml tooling/remote_control/config/cc_connect.local.toml || true
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
+python tooling/codex_hooks/check_contracts.py --workspace-root .
+python tooling/evidence/validate_workflow_handbook.py --workspace-root .
 ```
 
+Current supervisor behavior to remember after a pull:
+
+- `$workflow-supervisor prepare --complete` can read `$grill` outputs such as
+  `docs/Execution_Readiness_Packet.md`, `docs/Research_Intent_Draft.md`,
+  `docs/Grill_Round_Log.md`, and optional
+  `.workflow_supervisor/readiness.json`
+- the inferred bridge is written by the supervisor under
+  `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json`
+- external dataset downloads and baseline clones require
+  `--allow-external-downloads` or an explicit allow policy in readiness input
+- Codex worker handoffs belong under
+  `.agents/state/workflow_supervisor_worker_results/**`; the supervisor adopts
+  validated results into `.workflow_supervisor/**`
+
 When templates add new sections or fields, merge them manually into the
-project goal file or local controller YAML. For Codex auth, do not recreate
-manual account homes; keep `accounts.local.yaml` in `mode: external_current`
-and ensure WSL `~/.codex/auth.json` points at the Cockpit-managed Windows auth
-file.
+project goal file or local controller YAML.
 
 If your repo versions `controller.local.yaml` / `accounts.local.yaml` as shared
 defaults, update those tracked files in place while keeping generated credential
-directories outside the repo. For remote control, merge new template fields
-into your local `.local` files manually, but do not commit secrets or
-machine-specific values.
-
-### 3b. Rebuild patched `cc-connect` if needed
-
-If your harness pull changed either of these:
-
-- `tooling/remote_control/cc_connect_src/**`
-- `tooling/remote_control/scripts/build_patched_cc_connect.sh`
-
-rebuild the local binary before using Feishu again:
-
-```bash
-tooling/remote_control/scripts/build_patched_cc_connect.sh
-```
-
-The resulting local binary belongs under `tooling/remote_control/vendor/bin/`
-and should stay out of Git history.
-
-### 3b.1 Reinstall local remote-control commands if needed
-
-If your harness pull changed either of these:
-
-- `tooling/remote_control/bin/**`
-- `tooling/remote_control/scripts/install_user_commands.sh`
-
-rerun the local command installer:
-
-```bash
-tooling/remote_control/scripts/install_user_commands.sh --shell-init
-```
-
-This refreshes the user-local command shims such as:
-
-- `codex_all`
-- `cw`
-
-If you do not want the installer to manage `~/.profile` / `~/.bashrc`, you can
-rerun it without `--shell-init`.
-
-If you do use `--shell-init`, the installer only appends shell code when those
-files do not already contain related command or PATH setup. Refresh the current
-shell afterwards:
-
-```bash
-source ~/.bashrc
-source ~/.profile
-```
-
-### 3c. Recheck live `cc-connect` workspace assumptions
-
-If you use Feishu / remote control, also verify the live local config still
-matches the current workspace after the pull:
-
-- for a single local repo, prefer single-workspace config with `projects.agent.options.work_dir = "$(pwd)"` and no `mode` / `base_dir`
-- in `multi-workspace` mode, `base_dir` should be the parent directory of the workspace, not the workspace root itself
-- custom commands such as `/ai` and `/home` may still set `work_dir` to the concrete workspace root
-- direct natural-language chat still depends on channel-to-workspace binding
-
-Recommended quick check:
-
-```bash
-CURRENT_WORKSPACE="$(pwd)"
-WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
-WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
-
-rg -n 'name = |mode = |base_dir = |work_dir = ' tooling/remote_control/config/cc_connect.local.toml
-tooling/remote_control/bin/cc-connect -version
-```
-
-If you changed `cc_connect.local.toml`, restart `cc-connect` before testing in
-Feishu. If the bot still says no workspace is bound, run `/workspace bind
-<workspace-name>` in that channel.
-
-### 3c.1 Verify the shared-session entrypoints
-
-After a rebuild or config migration, do not stop at `cc-connect -version`.
-Verify the whole local chain:
-
-```bash
-tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
-tooling/remote_control/bin/cw list
-tooling/remote_control/bin/codex_all help
-```
-
-These checks prove that:
-
-- the patched shared-session subcommands are available
-- the `cw` wrapper is routing to the expected binary and config
-- `codex_all` is installed and can reach the shared-session layer
-
-If you are editing an existing local config rather than creating a fresh one
-from the template, follow the in-place migration checklist in
-[`tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md`](./tooling/remote_control/REMOTE_CONTROL_GUIDE.zh-CN.md)
-section `1.4`.
+directories outside the repo.
 
 ### 4. Check the research repo separately
 
@@ -360,8 +296,12 @@ them via `.git/info/exclude` in the research repo instead of tracking them.
 Inspect both staged and unstaged harness state:
 
 ```bash
-git --git-dir=.harness --work-tree=. diff -- README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
-git --git-dir=.harness --work-tree=. diff --cached -- README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
+git --git-dir=.harness --work-tree=. diff -- \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
+git --git-dir=.harness --work-tree=. diff --cached -- \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
 ```
 
 If those are just stale local harness changes, restore them to harness `HEAD`
@@ -370,7 +310,8 @@ before retrying:
 ```bash
 git --git-dir=.harness --work-tree=. restore \
   --staged --worktree --source=HEAD --ignore-skip-worktree-bits \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md .gitignore .claude .agents
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
 ```
 
 Then run the pull again.
@@ -388,28 +329,10 @@ Instead, add harness-managed paths to `.git/info/exclude`, for example:
 /README.md
 /AI_AGENT_SETUP.md
 /Harness_Update_Guide.md
-/.gitignore
+/workflow_handbook/
 /tooling/
+/.agents/state/workflow_supervisor_worker_results/
 /*.template
-```
-
-If local remote-control files appear in `git status`, do not add them. These
-paths should remain local-only:
-
-```gitignore
-/tooling/remote_control/config/*.local.toml
-/tooling/remote_control/config/*.local.yaml
-/tooling/remote_control/vendor/go/
-/tooling/remote_control/vendor/bin/cc-connect*
-```
-
-Do not use `git add -f` on those paths. If you are unsure whether local
-protection still works after a pull, verify it explicitly:
-
-```bash
-git check-ignore -v tooling/remote_control/config/cc_connect.local.toml
-git check-ignore -v tooling/remote_control/config/remote_control.local.yaml
-git status --short --ignored tooling/remote_control/config tooling/remote_control/vendor
 ```
 
 ### Research files disappear from normal `git status`
@@ -437,105 +360,6 @@ git --git-dir=.harness --work-tree=. status --short
 git status --untracked-files=all
 ```
 
-### `build_patched_cc_connect.sh` fails because `go` is missing
-
-The remote-control tree expects Go 1.25. The build helper already prefers a
-local toolchain at:
-
-```text
-tooling/remote_control/vendor/go/bin/go
-```
-
-If `go` is not on `PATH`, unpack a Go 1.25 tarball into
-`tooling/remote_control/vendor/go/` and rerun:
-
-```bash
-tooling/remote_control/scripts/build_patched_cc_connect.sh
-```
-
-This keeps the toolchain local to the harness tree and avoids depending on a
-system-wide Go install.
-
-### `tooling/remote_control/config/` only has `README.md` and `templates/`
-
-That is normal in a freshly pulled framework source tree.
-
-The live files:
-
-- `tooling/remote_control/config/cc_connect.local.toml`
-- `tooling/remote_control/config/remote_control.local.yaml`
-
-are workspace-local bootstrap outputs, not framework templates. Create them in
-the target workspace before trying to start `cc-connect`, `cw`, or `codex_all`.
-
-### `cw` or `codex_all` cannot see shared slots
-
-If `cc-connect -version` works but `cw list`, `codex_all`, or
-`cc-connect share list` fail, assume the patched binary is missing or the
-wrapper is still resolving to the wrong binary/config.
-
-Recommended checks:
-
-```bash
-tooling/remote_control/bin/cc-connect -version
-tooling/remote_control/bin/cc-connect share list --config tooling/remote_control/config/cc_connect.local.toml
-tooling/remote_control/bin/cw list
-tooling/remote_control/bin/codex_all help
-command -v cw
-command -v codex_all
-```
-
-If `share list` fails, rebuild patched `cc-connect` first. If `share list`
-works but `cw` still fails, rerun the local installer:
-
-```bash
-tooling/remote_control/scripts/install_user_commands.sh --shell-init
-```
-
-### Bot replies `No workspace found for this channel`
-
-This usually means one of these is true:
-
-- you actually wanted single-workspace mode, but the config is still using `multi-workspace`
-- the channel was never bound to a workspace
-- `base_dir` points at the wrong parent directory
-- `projects.name` changed, so old bindings are stored under a stale project key
-- you updated `cc_connect.local.toml` but did not restart `cc-connect`
-
-Remember:
-
-- for one repo, the simplest fix is to remove `mode` / `base_dir` and set `projects.agent.options.work_dir` to the current workspace root
-- `base_dir` is the parent directory that contains workspaces
-- `work_dir` on `/ai` or `/home` only affects those custom commands
-- direct natural-language chat still resolves workspace from channel binding
-
-Recommended recovery:
-
-```bash
-CURRENT_WORKSPACE="$(pwd)"
-WORKSPACE_NAME="$(basename "$CURRENT_WORKSPACE")"
-WORKSPACE_PARENT="$(dirname "$CURRENT_WORKSPACE")"
-
-rg -n 'name = |mode = |base_dir = |work_dir = ' tooling/remote_control/config/cc_connect.local.toml
-tooling/remote_control/bin/cc-connect -version
-```
-
-Then in Feishu:
-
-```bash
-/workspace
-/workspace bind <workspace-name>
-```
-
-If bindings still look wrong after a rename or config rewrite, inspect:
-
-```bash
-sed -n '1,200p' ~/.cc-connect/workspace_bindings.json
-```
-
-Bindings are keyed by `project:<name>`, so changing `[[projects]].name`
-requires rebinding channels for the new project key.
-
 ## Summary
 
 Use `git` for research files and `hgit` for framework files.
@@ -547,9 +371,8 @@ After every harness pull:
 3. diff templates against project-owned files
 4. verify normal `git status` is still clean with respect to harness paths and
    is still able to see research-owned files
-5. rebuild patched `cc-connect` if remote-control source changed
-6. verify `cc-connect share list`, `cw list`, and `codex_all help`
-7. restart `cc-connect` and re-check workspace binding if remote-control config changed
+5. run workflow-supervisor, hook-contract, and handbook checks when those paths
+   changed
 
 After every harness push:
 

@@ -5,8 +5,8 @@ workspace until the operator can immediately use the workflow, for example:
 
 ```text
 $init init
-$orchestrator status
-$iterate status
+$grill
+$workflow-supervisor status
 ```
 
 Canonical names still exist. `$init` is the short alias for
@@ -27,6 +27,8 @@ Setup is complete only when all of these are true:
   opts into them
 - the operator can open Codex in the target workspace and run `$init init`
   without needing to manually reconstruct framework paths
+- `$workflow-supervisor` is installed enough for status and node validation, or
+  any missing runtime check is explicitly marked `NOT_RUN`
 - no temporary `harness-research/` or `Harness-Research/` source checkout is
   left inside the target research workspace after `.harness` is attached
 
@@ -123,6 +125,7 @@ for path in \
   workflow_handbook \
   README.md \
   AI_AGENT_SETUP.md \
+  Harness_Update_Guide.md \
   AGENTS.md.template \
   CLAUDE.md.template \
   MEMORY.md.template \
@@ -152,6 +155,7 @@ for path in \
   workflow_handbook \
   README.md \
   AI_AGENT_SETUP.md \
+  Harness_Update_Guide.md \
   AGENTS.md.template \
   CLAUDE.md.template \
   MEMORY.md.template \
@@ -228,6 +232,7 @@ cat > .harness/info/sparse-checkout <<'EOF'
 /workflow_handbook/
 /README.md
 /AI_AGENT_SETUP.md
+/Harness_Update_Guide.md
 /AGENTS.md.template
 /CLAUDE.md.template
 /MEMORY.md.template
@@ -365,6 +370,7 @@ __pycache__/
 .harness_hooks/
 .auto_iterate/
 .workflow_supervisor/
+.agents/state/workflow_supervisor_worker_results/
 wandb/
 *.ckpt
 *.pth
@@ -506,7 +512,55 @@ python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10
 
 Do not hand-edit `.evidence/**`; rerun the owning tooling.
 
-### 7. Optional Auto-Iterate Bootstrap
+### 7. Optional Workflow Supervisor Bootstrap
+
+Use this when the operator wants conversation-driven execution through
+`$workflow-supervisor` instead of manually running setup scripts. Prepare files
+only; do not approve a contract or invent dataset/baseline paths during setup.
+
+Useful smoke checks:
+
+```bash
+test -f .agents/skills/workflow-supervisor/SKILL.md
+test -f tooling/workflow_supervisor/scripts/workflow_ctl.sh
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json || true
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
+```
+
+Bridge behavior:
+
+```text
+$grill artifacts
+  -> docs/Execution_Readiness_Packet.md
+  -> docs/Research_Intent_Draft.md
+  -> docs/Grill_Round_Log.md
+  -> optional .workflow_supervisor/readiness.json
+  -> workflow_ctl prepare --complete
+  -> .workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json
+```
+
+`prepare --complete` may read the Grill outputs above and infer candidate
+dataset and baseline requirements. Exact private values still belong in the
+readiness artifact or current operator instruction. If the packet leaves a path,
+URL, license, or credential ambiguous, the supervisor should raise a typed
+pending request rather than guess.
+
+External dataset downloads and baseline clones are disabled unless the operator
+passes `--allow-external-downloads` or the readiness artifact explicitly sets an
+allow policy such as `external_download_policy: allow` or
+`allow_external_downloads: true`.
+
+Codex workers must not hand-edit `.workflow_supervisor/**`. When they need to
+return a build result, they write the validated handoff under:
+
+```text
+.agents/state/workflow_supervisor_worker_results/**
+```
+
+The supervisor then validates and adopts that result into
+`.workflow_supervisor/**`.
+
+### 8. Optional Auto-Iterate Bootstrap
 
 Prepare files only. Do not start unattended WF10 during setup.
 
@@ -568,13 +622,20 @@ $init init
 Then:
 
 ```text
-$orchestrator status
+$workflow-supervisor status
 ```
 
-If the project is ready to initialize workflow state:
+If the idea still needs clarification:
 
 ```text
-$orchestrator init
+$grill
+```
+
+If Grill artifacts already exist and the project is ready for execution
+readiness:
+
+```text
+$workflow-supervisor prepare --complete
 ```
 
 If only compact guidance needs refresh:
@@ -591,6 +652,7 @@ Run the smallest useful checks:
 test -f schemas/skill_contracts.json
 test -f schemas/skill_contracts.schema.json
 test -f .agents/skills/init-project/SKILL.md
+test -f .agents/skills/workflow-supervisor/SKILL.md
 test -f .claude/skills/init-project/SKILL.md
 test -f CLAUDE.md
 test -f AGENTS.md
@@ -598,6 +660,7 @@ test -f MEMORY.md
 
 python tooling/codex_hooks/check_contracts.py --workspace-root .
 python tooling/codex_hooks/hook_status.py --workspace-root .
+tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
 python tooling/codex_hooks/simulate_hook.py UserPromptSubmit \
   --workspace-root . \
   --event-json '{"prompt":"run $init init"}'
@@ -608,7 +671,10 @@ Dual-repo checks:
 ```bash
 git --git-dir=.harness --work-tree=. status --short
 git status --short
-git check-ignore -v .agents/ .claude/ tooling/ schemas/ README.md AI_AGENT_SETUP.md
+git check-ignore -v \
+  .agents/ .claude/ tooling/ schemas/ workflow_handbook/ \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .agents/state/workflow_supervisor_worker_results/
 test ! -d harness-research
 test ! -d Harness-Research
 ```
@@ -676,12 +742,13 @@ clean stale runtime only after confirming no real controller process is active.
 | Path | Owner | Notes |
 | --- | --- | --- |
 | `.harness/` | harness git | framework history |
-| `.agents/**` | harness git | Codex skills and references |
+| `.agents/**` | harness git | Codex skills and references, except ignored local state below |
 | `.claude/**` | harness git | Claude Code skills and shared rules |
 | `tooling/**` | harness git | hooks, evidence, auto-iterate, model API, framework tests |
 | `templates/**` | harness git | bootstrap templates |
 | `schemas/**` | harness git | framework schemas and Skill Contracts |
-| `README.md`, `AI_AGENT_SETUP.md` | harness git | framework docs |
+| `workflow_handbook/**` | harness git | operator-facing framework docs |
+| `README.md`, `AI_AGENT_SETUP.md`, `Harness_Update_Guide.md` | harness git | framework docs |
 | `CLAUDE.md`, `AGENTS.md`, `MEMORY.md` | research git | project guidance and memory |
 | `OPERATOR_CONTEXT.md` | research git | explicit operator preferences only |
 | `PROJECT_STATE.json` | research git | workflow state |
@@ -694,3 +761,4 @@ clean stale runtime only after confirming no real controller process is active.
 | `.evidence/**` | research git or generated audit artifacts | tool-owned Evidence Chains/review packets; use tooling, do not hand-edit |
 | `.auto_iterate/**` | ignored runtime | controller-owned |
 | `.workflow_supervisor/**` | ignored runtime | supervisor-owned |
+| `.agents/state/workflow_supervisor_worker_results/**` | ignored runtime | worker-result handoff, adopted by supervisor |
