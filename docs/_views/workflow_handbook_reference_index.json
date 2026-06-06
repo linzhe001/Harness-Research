@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-05T17:42:50Z",
+  "generated_at": "2026-06-06T08:40:08Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -3288,8 +3288,8 @@
     "page:operator_task_index": {
       "ref": "page:operator_task_index",
       "kind": "page",
-      "title": "Operator Task Index",
-      "summary": "Task-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+      "title": "Operator Action Index",
+      "summary": "Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3301,8 +3301,8 @@
         }
       ],
       "preview": {
-        "title": "Operator Task Index",
-        "body": "Operator Task Index: Task-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+        "title": "Operator Action Index",
+        "body": "Operator Action Index: Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7812,7 +7812,7 @@
       {
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
-        "marker": "[[page:operator_task_index|Operator Task Index]]",
+        "marker": "[[page:operator_task_index|Operator Action Index]]",
         "line": 17,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
@@ -7868,7 +7868,7 @@
       {
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
-        "marker": "[[page:operator_task_index|Operator Task Index]]",
+        "marker": "[[page:operator_task_index|Operator Action Index]]",
         "line": 36,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
@@ -8343,7 +8343,7 @@
         "ref": "page:workflow_terms",
         "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
         "marker": "[[page:workflow_terms|Workflow Terms]]",
-        "line": 61,
+        "line": 63,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_terms.html"
       },
@@ -8351,7 +8351,7 @@
         "ref": "term:Read Contract",
         "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
         "marker": "[[term:Read Contract]]",
-        "line": 62,
+        "line": 64,
         "status": "resolved",
         "target_html": null
       },
@@ -8359,7 +8359,7 @@
         "ref": "term:Gate Ledger",
         "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
         "marker": "[[term:Gate Ledger]]",
-        "line": 63,
+        "line": 65,
         "status": "resolved",
         "target_html": null
       }
@@ -8686,7 +8686,7 @@
       {
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
-        "marker": "[[page:operator_task_index|Operator Task Index]]",
+        "marker": "[[page:operator_task_index|Operator Action Index]]",
         "line": 186,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"

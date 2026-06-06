@@ -613,7 +613,7 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
         encoding="utf-8"
     )
     assert "Start Here" in handbook
-    assert "Quick Task Index" in handbook
+    assert "Quick Action Index" in handbook
     assert "Top-Level Modes" in handbook
     assert "内部执行细节不属于第一层界面" in handbook
     assert (
@@ -624,7 +624,7 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
     ) in handbook
     assert "`prepare`、`build`、`iterate`、`release`、`change` actions" in handbook
     assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
-    assert "[[page:operator_task_index|Operator Task Index]]" in handbook
+    assert "[[page:operator_task_index|Operator Action Index]]" in handbook
     assert "Daily Run Shape" in handbook
     assert "Detailed Reference" in handbook
     assert "[[page:stage_cards|Stage Reference]]" in handbook

@@ -27,7 +27,7 @@
       "items": [
         {
           "page_id": "operator_task_index",
-          "label": "Task Index",
+          "label": "Action Index",
           "source_path": "workflow_handbook/pages/operator_task_index.md",
           "generated": false
         },

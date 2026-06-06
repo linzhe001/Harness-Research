@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-05T17:42:56Z",
+  "generated_at": "2026-06-06T08:40:15Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Harness Workflow Handbook",
@@ -123,6 +123,7 @@
       "references": [
         "term:Read Contract",
         "term:Gate Ledger",
+        "artifact:.workflow_supervisor/",
         "source:tooling/evidence/build_docs_site.py"
       ]
     },
@@ -214,7 +215,7 @@
     {
       "doc_id": "pages__operator_task_index",
       "doc_kind": "concept",
-      "title": "Operator Task Index",
+      "title": "Operator Action Index",
       "source_path": "workflow_handbook/pages/operator_task_index.md",
       "html_path": "docs/_site/workflow_handbook/pages/operator_task_index.html",
       "status": "current",
@@ -224,7 +225,7 @@
       "page_id": "operator_task_index",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Task-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+      "summary": "Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -1440,7 +1441,7 @@
       "items": [
         {
           "doc_id": "pages__operator_task_index",
-          "label": "Task Index",
+          "label": "Action Index",
           "source_path": "workflow_handbook/pages/operator_task_index.md",
           "children": []
         },

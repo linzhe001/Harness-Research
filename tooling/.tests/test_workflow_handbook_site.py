@@ -150,7 +150,7 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
 
     assert manifest["reference_mode"] == "workflow-handbook"
     assert manifest["navigation"][1]["label"] == "Operate"
-    assert manifest["navigation"][1]["items"][0]["label"] == "Task Index"
+    assert manifest["navigation"][1]["items"][0]["label"] == "Action Index"
     assert manifest["navigation"][1]["items"][1]["label"] == "Modes"
     assert manifest["navigation"][1]["items"][1]["children"]
     assert [
@@ -170,14 +170,14 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
         in index_html
     )
     assert '<h2 id="start-here">Start Here</h2>' in index_html
-    assert '<h2 id="quick-task-index">Quick Task Index</h2>' in index_html
+    assert '<h2 id="quick-action-index">Quick Action Index</h2>' in index_html
     assert '<h2 id="top-level-modes">Top-Level Modes</h2>' in index_html
     assert 'content="0; url=workflow_handbook/index.html"' in root_index_html
     assert 'href="workflow_handbook/index.html"' in root_index_html
     assert "Opening the rendered handbook." in root_index_html
     assert 'href="Workflow_Stage_Cards.html"' in index_html
     assert "Operate" in index_html
-    assert "Task Index" in index_html
+    assert "Action Index" in index_html
     assert "Modes" in index_html
     assert "Detailed Reference" in index_html
     assert "Stage Reference" in index_html

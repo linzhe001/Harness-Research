@@ -20,6 +20,7 @@ canonical_sources:
 references:
   - "term:Read Contract"
   - "term:Gate Ledger"
+  - "artifact:.workflow_supervisor/"
   - "source:tooling/evidence/build_docs_site.py"
 html:
   render: true
@@ -46,7 +47,8 @@ Stop             -> pending cleanup; no default read/Gate block
 
 - Missing recommended reads produce a notice rather than a block.
 - Mixed-owner writes or commits produce a notice rather than a block.
-- `.evidence/**`, `.auto_iterate/**`, `docs/_views/**`, `docs/_site/**` 是 tool-owned 或 controller-owned。
+- `.evidence/**`, `.auto_iterate/**`, `.workflow_supervisor/**`,
+  `docs/_views/**`, `docs/_site/**` 是 tool-owned 或 controller-owned。
 - Direct external model review must go through the Harness wrapper.
 
 ## Common Confusions

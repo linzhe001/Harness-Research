@@ -183,7 +183,7 @@ configured runnable postconditions passed. It does not start WF10 by itself.
 
 ## Related Pages
 
-- [[page:operator_task_index|Operator Task Index]]
+- [[page:operator_task_index|Operator Action Index]]
 - [[skill:grill]]
 - [[skill:workflow-supervisor]]
 - [[skill:change-intake]]

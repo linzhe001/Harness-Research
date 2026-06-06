@@ -1,14 +1,14 @@
 ---
 schema_version: "0.1"
 page_id: "operator_task_index"
-title: "Operator Task Index"
+title: "Operator Action Index"
 kind: "concept"
 audience: ["operator", "agent", "maintainer"]
 source_type: "hand_authored"
 source_path: "workflow_handbook/pages/operator_task_index.md"
 source_of_truth: true
 status: "current"
-summary: "Task-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference."
+summary: "Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference."
 nav:
   section: "operate"
   position: 5
@@ -31,15 +31,15 @@ html:
   preview_index_path: "docs/_views/workflow_handbook_reference_index.json"
 ---
 
-# Operator Task Index
+# Operator Action Index
 
 ## Purpose
 
 当你知道自己想推进什么、但不确定该进入 Grill、Execution Supervisor，还是
 detailed reference 时，从这里开始。
 
-本页刻意按任务组织。内部 reference pages 仍然存在，但它们用于检查、恢复和
-artifact ownership，不是普通用户的第一步选择。
+本页刻意按操作意图组织。内部 reference pages 仍然存在，但它们用于检查、恢复和
+artifact ownership，不是普通用户的第一步选择，也不是新的顶层入口。
 
 ## Model
 
