@@ -82,6 +82,48 @@ files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, or `src/`, the root
 
 ## Daily Pull Workflow
 
+### Safe current-pull flow
+
+Run from the target research workspace root, not from the framework source
+checkout. Normal `git` is the research repo; `hgit` is the Harness repo stored
+in `.harness`.
+
+If `hgit` is not defined in the shell, define it for the current session:
+
+```bash
+alias hgit='git --git-dir=.harness --work-tree=.'
+```
+
+Then update the Harness framework with a fast-forward pull:
+
+```bash
+test -d .harness
+hgit remote -v
+hgit status --short
+hgit fetch origin
+hgit pull --ff-only origin "$(hgit branch --show-current)"
+hgit status --short
+```
+
+Expected result after the final status command: empty output.
+
+If `hgit remote -v` does not point at the Harness Research remote, fix the
+Harness remote before pulling. Do not use the research repo remote for Harness:
+
+```bash
+hgit remote set-url origin https://github.com/linzhe001/Harness-Research.git
+```
+
+Use a branch name explicitly when the target workspace pins Harness to a known
+branch:
+
+```bash
+hgit pull --ff-only origin master
+```
+
+Do not run normal `git pull` to update Harness framework files. Normal `git`
+updates the research repo only.
+
 ### Preferred command
 
 If you have the alias:
@@ -194,6 +236,30 @@ diff tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_g
 diff tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
 diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
 ```
+
+When Grill or init-project changed, also check whether the accepted-draft
+handoff rules need to be merged into project guidance:
+
+```bash
+rg -n "update-from-grill|grill_draft_ready" \
+  CLAUDE.md.template AGENTS.md.template \
+  .agents/skills/grill/SKILL.md .agents/skills/init-project/SKILL.md \
+  .claude/skills/grill/SKILL.md .claude/skills/init-project/SKILL.md
+diff CLAUDE.md.template CLAUDE.md
+diff AGENTS.md.template AGENTS.md
+```
+
+Current expected behavior after this Harness update:
+
+- after the operator accepts a Grill draft, `$grill` should route directly to
+  `$init-project update-from-grill` unless guidance initialization is skipped
+- `$init-project update-from-grill` reads `docs/Research_Intent_Draft.md`,
+  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+  supervisor-produced `.workflow_supervisor/readiness.json` when present
+- the handoff may initialize or refresh `CLAUDE.md`, `AGENTS.md`, and
+  `README.md`
+- dataset paths, baseline repos, and local clone/download targets from Grill
+  remain candidate context until `prepare`, WF4, or WF5 verifies them
 
 If the project uses the dynamic context layout, also compare the framework
 templates and schemas before refreshing project-owned docs:
@@ -369,9 +435,12 @@ After every harness pull:
 1. verify `hgit status`
 2. read updated framework docs
 3. diff templates against project-owned files
-4. verify normal `git status` is still clean with respect to harness paths and
+4. merge relevant template guidance into project-owned `CLAUDE.md`, `AGENTS.md`,
+   `README.md`, or `docs/auto_iterate_goal.md` only after reviewing current
+   project state
+5. verify normal `git status` is still clean with respect to harness paths and
    is still able to see research-owned files
-5. run workflow-supervisor, hook-contract, and handbook checks when those paths
+6. run workflow-supervisor, hook-contract, and handbook checks when those paths
    changed
 
 After every harness push:
