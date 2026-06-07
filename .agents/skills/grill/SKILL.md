@@ -81,12 +81,17 @@ Grill may create or refresh:
 - `docs/Research_Intent_Draft.md`
 - `docs/Grill_Round_Log.md`
 - `docs/Execution_Readiness_Packet.md`
-- `.workflow_supervisor/readiness.json` through Grill or supervisor tooling
+- `.workflow_supervisor/readiness.json` only when Grill readiness tooling is
+  run with a write action, or when supervisor tooling produces it
 
 Exact local paths, commands, budgets, and private values belong in
 `.workflow_supervisor/readiness.json`. Public Markdown should redact sensitive
 values and mark them as candidate inputs until readiness preflight verifies
 them.
+
+Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
+`iteration_log.json`. Those are canonical research-workspace state files owned
+by later workflow/state tooling, stable build planning, and WF10 iteration.
 
 ## Tooling
 
@@ -106,6 +111,9 @@ Prefer the Grill helpers for durable draft writes:
 - `python tooling/grill/readiness.py --workspace-root . --check \
   --verify-paths --json` validates readiness shape and path-kind inputs
   without writing runtime state.
+- `python tooling/grill/readiness.py --workspace-root . --write-readiness \
+  --input-json <path> --json` writes supervisor-owned
+  `.workflow_supervisor/readiness.json` after validation.
 
 Use `--write-readiness` only when intentionally writing supervisor-owned
 `.workflow_supervisor/readiness.json` through tooling.
@@ -140,7 +148,8 @@ initialization. The handoff inputs are:
 The handoff initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md`
 from candidate Grill context only. It must preserve `## Custom`, keep dataset
 and baseline items marked as candidate until `prepare` / WF4-WF5 verify them,
-and must not mark WF1-WF3 complete. If the handoff is not run, report
+and must not mark WF1-WF3 complete. It does not create `PROJECT_STATE.json`,
+`project_map.json`, or `iteration_log.json`. If the handoff is not run, report
 `init_project_update_from_grill_or_NOT_RUN` with the reason.
 
 ## Exit Condition

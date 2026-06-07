@@ -87,7 +87,8 @@ WF1-WF3 Stage artifacts necessarily exist.
    - `.workflow_supervisor/readiness.json` only when supervisor tooling has
      produced it
 2. Read existing `CLAUDE.md`, `AGENTS.md`, `README.md`, `PROJECT_STATE.json`,
-   and `OPERATOR_CONTEXT.md` when present.
+   and `OPERATOR_CONTEXT.md` when present. Missing `PROJECT_STATE.json` is not
+   a failure in this mode.
 3. If `CLAUDE.md` is missing, create it from the canonical template. If it
    exists, use `./references/claude-maintenance.md` and update only the
    relevant sections.
@@ -113,12 +114,14 @@ WF1-WF3 Stage artifacts necessarily exist.
 8. Preserve every `## Custom` section in existing guidance files.
 9. Do not write `.workflow_supervisor/**` or `.evidence/**` by hand, do not
    mark WF1-WF3 complete, and do not promote Grill draft facts into approved
-   contracts.
+   contracts. Do not create `PROJECT_STATE.json`, `project_map.json`, or
+   `iteration_log.json` from `update-from-grill`; those are owned by explicit
+   workflow-state initialization, stable build planning, and WF10 iteration.
 10. Report a Gate ledger when `CLAUDE.md`, `AGENTS.md`, `README.md`,
     `OPERATOR_CONTEXT.md`, dynamic-context directories, or
-    `PROJECT_STATE.json` are written. If Grill handoff artifacts, context init,
-    workflow-state checks, or docs-site rendering are not run, mark the
-    corresponding action `NOT_RUN` with the reason.
+    an already-existing `PROJECT_STATE.json` are written. If Grill handoff
+    artifacts, context init, workflow-state checks, or docs-site rendering are
+    not run, mark the corresponding action `NOT_RUN` with the reason.
 
 ### `deps-changed`
 
@@ -142,6 +145,10 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
   project entry point. The stable operating truth remains in `CLAUDE.md` /
   `AGENTS.md`, and Grill artifacts remain draft inputs until later gates verify
   them.
+- In `update-from-grill`, absence of `PROJECT_STATE.json`, `project_map.json`,
+  `iteration_log.json`, or `.workflow_supervisor/readiness.json` is expected
+  unless another tool already produced them. Report that as not applicable or
+  `NOT_RUN`, not as a failed handoff.
 
 ## Execution Rule
 

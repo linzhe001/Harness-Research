@@ -20,10 +20,20 @@ def make_workspace(tmp_path: Path) -> Path:
     return root
 
 
-def test_readiness_helper_writes_supervisor_owned_json(tmp_path: Path) -> None:
+def test_readiness_helper_does_not_write_without_explicit_flag(tmp_path: Path) -> None:
     root = make_workspace(tmp_path)
 
     code = readiness.main(["--workspace-root", str(root)])
+
+    assert code == 0
+    output = root / ".workflow_supervisor" / "readiness.json"
+    assert not output.exists()
+
+
+def test_readiness_helper_writes_supervisor_owned_json(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+
+    code = readiness.main(["--workspace-root", str(root), "--write-readiness"])
 
     assert code == 0
     output = root / ".workflow_supervisor" / "readiness.json"

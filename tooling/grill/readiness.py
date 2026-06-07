@@ -79,6 +79,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--write-readiness",
+        action="store_true",
+        help="Write supervisor-owned readiness JSON after validation.",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
@@ -95,7 +100,8 @@ def main(argv: list[str] | None = None) -> int:
             errors.extend(verify_path_inputs(root, data))
         if errors:
             raise ValueError("; ".join(errors))
-        if not args.check and not args.dry_run:
+        should_write = args.write_readiness and not args.check and not args.dry_run
+        if should_write:
             atomic_write_json(output, data)
     except ValueError as exc:
         if args.json:
@@ -107,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         "ok": True,
         "output": str(output),
-        "written": not args.check and not args.dry_run,
+        "written": should_write,
         "verified_path_count": (
             sum(1 for item in data.get("inputs", []) if item.get("kind") == "path")
             if args.verify_paths

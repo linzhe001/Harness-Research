@@ -260,6 +260,9 @@ Current expected behavior after this Harness update:
   `README.md`
 - dataset paths, baseline repos, and local clone/download targets from Grill
   remain candidate context until `prepare`, WF4, or WF5 verifies them
+- the handoff does not create `PROJECT_STATE.json`, `project_map.json`, or
+  `iteration_log.json`; missing state/map/iteration JSON immediately after
+  `update-from-grill` is expected unless another tool already produced it
 
 If the project uses the dynamic context layout, also compare the framework
 templates and schemas before refreshing project-owned docs:

@@ -306,6 +306,12 @@ def test_init_project_skill_describes_update_from_grill_mode() -> None:
         assert "docs/Grill_Round_Log.md" in text
         assert "docs/Execution_Readiness_Packet.md" in text
         assert ".workflow_supervisor/readiness.json" in text
+        assert "Do not create `PROJECT_STATE.json`, `project_map.json`, or" in text
+        lowered = text.lower()
+        assert "absence of" in lowered
+        assert "`project_state.json`" in lowered
+        assert "`project_map.json`" in lowered
+        assert "`iteration_log.json`" in lowered
 
 
 def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
@@ -2290,7 +2296,8 @@ def test_pre_tool_allows_grill_tool_owned_readiness_mutation() -> None:
         "tool_input": {
             "command": (
                 "python tooling/grill/readiness.py --workspace-root . "
-                "--output .workflow_supervisor/readiness.json"
+                "--output .workflow_supervisor/readiness.json "
+                "--write-readiness"
             )
         },
     }

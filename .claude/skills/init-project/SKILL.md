@@ -200,7 +200,8 @@ or `/grill` exits as `grill_draft_ready`.
    - `.workflow_supervisor/readiness.json` only when supervisor tooling has
      produced it
 2. Read existing `CLAUDE.md`, `AGENTS.md`, `README.md`,
-   `PROJECT_STATE.json`, and `OPERATOR_CONTEXT.md` when present.
+   `PROJECT_STATE.json`, and `OPERATOR_CONTEXT.md` when present. Missing
+   `PROJECT_STATE.json` is not a failure in this mode.
 3. If `CLAUDE.md` is missing, create it from the canonical template. If it
    exists, use precise section replacement and preserve unrelated sections.
 4. Fill only candidate-clear Grill context:
@@ -224,12 +225,17 @@ or `/grill` exits as `grill_draft_ready`.
 8. Preserve every `## Custom` section in existing guidance files.
 9. Do not write `.workflow_supervisor/**` or `.evidence/**` by hand, do not
    mark WF1-WF3 complete, and do not promote Grill draft facts into approved
-   contracts.
+   contracts. Do not create `PROJECT_STATE.json`, `project_map.json`, or
+   `iteration_log.json` from `update-from-grill`; those are owned by explicit
+   workflow-state initialization, stable build planning, and WF10 iteration.
 10. Report Gate Evidence for `CLAUDE.md`, `AGENTS.md`, `README.md`,
     `OPERATOR_CONTEXT.md`, dynamic-context directories, or
-    `PROJECT_STATE.json` writes. If Grill handoff artifacts, workflow-state
-    checks, or docs-site rendering are not run, report `NOT_RUN` with the
-    reason.
+    an already-existing `PROJECT_STATE.json` write. If Grill handoff artifacts,
+    workflow-state checks, or docs-site rendering are not run, report
+    `NOT_RUN` with the reason. Absence of `PROJECT_STATE.json`,
+    `project_map.json`, `iteration_log.json`, or
+    `.workflow_supervisor/readiness.json` is expected unless another tool
+    already produced them.
 
 ### Common Update Logic
 

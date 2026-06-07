@@ -65,6 +65,9 @@ execution supervisor -> prepare | build | iterate | release | change
 Grill Round Log、Execution Readiness Packet 和 readiness JSON 初始化或刷新
 `CLAUDE.md`、`AGENTS.md`、`README.md`。这里写入的是 candidate context：
 dataset 和 baseline 需求可以被记录为待准备输入，但不会被当成 WF4/WF5 已验证事实。
+这个 handoff 不会生成 `PROJECT_STATE.json`、`project_map.json` 或
+`iteration_log.json`；这些文件分别由显式 workflow-state 初始化、stable build
+planning、WF10 iteration 产生或维护。
 
 Execution Supervisor 下面再选择具体 action：
 
@@ -276,6 +279,8 @@ initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md` from the
 draft artifacts so a new target workspace has a clear startup surface before
 prepare/build begins. Candidate datasets, baseline repos, and local targets
 remain unverified until prepare, WF4, or WF5 validates them.
+It does not create `PROJECT_STATE.json`, `project_map.json`, or
+`iteration_log.json`; missing state/map/iteration JSON at this point is normal.
 Non-dry-run `prepare` is a v0 HITL PoC: it generates a WF5 Review Packet
 through evidence tooling after first verifying candidate readiness inputs and
 compiling a draft protocol packet. `workflow_ctl approve` runs the exact

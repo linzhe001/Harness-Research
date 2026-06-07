@@ -40,7 +40,8 @@ Outputs:
 - `docs/Research_Intent_Draft.md`
 - `docs/Grill_Round_Log.md`
 - `docs/Execution_Readiness_Packet.md`
-- `.workflow_supervisor/readiness.json` through tooling
+- `.workflow_supervisor/readiness.json` only when Grill readiness tooling is
+  run with a write action, or when supervisor tooling produces it
 
 Prefer helper commands for durable draft writes:
 - `python tooling/grill/questions.py --lens intake`
@@ -48,9 +49,13 @@ Prefer helper commands for durable draft writes:
 - `python tooling/grill/draft.py --workspace-root . round --lens skeptic --answer-summary "<summary>" --gap-check "<gap>" --next-question "<question>" --exit-recommendation continue_grill`
 - `python tooling/grill/draft.py --workspace-root . packet --readiness-json <path>`
 - `python tooling/grill/readiness.py --workspace-root . --check --verify-paths --json`
+- `python tooling/grill/readiness.py --workspace-root . --write-readiness --input-json <path> --json`
 
 Use `--write-readiness` only when intentionally writing supervisor-owned
 `.workflow_supervisor/readiness.json` through tooling.
+Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
+`iteration_log.json`; those are owned by later workflow/state tooling, stable
+build planning, and WF10 iteration.
 
 When the operator explicitly confirms `grill_draft_ready` or asks to proceed
 from an accepted Grill draft, continue in the same turn with
@@ -61,7 +66,8 @@ initialization. The handoff reads `docs/Research_Intent_Draft.md`,
 It initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md` from
 candidate Grill context only; dataset and baseline items remain candidate
 until `prepare` / WF4-WF5 verify them. Do not mark WF1-WF3 complete from this
-handoff. If the handoff is skipped, report
+handoff, and do not create `PROJECT_STATE.json`, `project_map.json`, or
+`iteration_log.json`. If the handoff is skipped, report
 `init_project_update_from_grill_or_NOT_RUN` with the reason.
 
 Exit with `grill_draft_ready`, `grill_bridge_complete`, `pivot`, or `abandon`,
