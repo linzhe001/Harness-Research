@@ -36,8 +36,17 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --go
 Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
 operator to hand-build CLI arguments. First run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. If a run
-or pending request is active, report it and do not start a new run. If no run
-is active and `docs/Research_Intent_Draft.md` plus either
+or pending request is active, immediately run
+`tooling/workflow_supervisor/scripts/workflow_ctl.sh recover --repair-stale-running --auto-resume-answered --json`.
+If this resumes an already answered request, continue from the returned
+supervisor status and report the recovery Gate ledger. If the recover payload
+reports `recommended_action: resume_answered_pending_request` without resuming,
+run `tooling/workflow_supervisor/scripts/workflow_ctl.sh resume --request-id <id> --json`.
+If it reports `answer_pending_request`, `manual_recover`, an unanswered pending
+request, or a pending `APPROVE_ACTION` without Approval Evidence, report the
+pending request and do not start a new run. Do not ask the operator to type a
+separate resume command for a request that already has an `answer_record`. If
+no run is active and `docs/Research_Intent_Draft.md` plus either
 `docs/Execution_Readiness_Packet.md` or `docs/Grill_Round_Log.md` exists, start
 full prepare with:
 

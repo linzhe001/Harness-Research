@@ -328,6 +328,8 @@ def test_workflow_supervisor_skill_describes_bare_post_grill_start() -> None:
         assert "--complete" in text
         assert "--goal-file docs/Research_Intent_Draft.md" in text
         assert "typed pending requests" in text
+        assert "recover --repair-stale-running --auto-resume-answered --json" in text
+        assert "resume_answered_pending_request" in text
         assert "--allow-external-downloads" in text
 
 

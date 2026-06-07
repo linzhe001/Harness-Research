@@ -884,7 +884,7 @@ def new_run_id() -> str:
 
 
 def new_request_id() -> str:
-    return "req_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return "req_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
 
 
 def read_goal(args: argparse.Namespace) -> str:
@@ -1202,18 +1202,30 @@ def write_json_artifact(workspace_root: Path, relative_path: str, data: Any) -> 
     return relative_path
 
 
-def path_stats(path: Path) -> dict[str, int]:
+def path_stats(path: Path, *, max_entries: int = 2000) -> dict[str, int | bool]:
     if not path.exists():
-        return {"files": 0, "bytes": 0}
+        return {"files": 0, "bytes": 0, "truncated": False}
     if path.is_file():
-        return {"files": 1, "bytes": path.stat().st_size}
+        return {"files": 1, "bytes": path.stat().st_size, "truncated": False}
     files = 0
     bytes_total = 0
-    for child in path.rglob("*"):
-        if child.is_file():
-            files += 1
-            bytes_total += child.stat().st_size
-    return {"files": files, "bytes": bytes_total}
+    stack = [path]
+    while stack:
+        current = stack.pop()
+        for child in current.iterdir():
+            if child.is_dir():
+                stack.append(child)
+                continue
+            if child.is_file():
+                files += 1
+                bytes_total += child.stat().st_size
+                if files >= max_entries:
+                    return {
+                        "files": files,
+                        "bytes": bytes_total,
+                        "truncated": True,
+                    }
+    return {"files": files, "bytes": bytes_total, "truncated": False}
 
 
 def nonempty_path(path: Path) -> bool:
@@ -2314,6 +2326,7 @@ def run_data_prep_worker(
             ["source", source or "existing local target"],
             ["files", str(stats["files"])],
             ["bytes", str(stats["bytes"])],
+            ["stats_truncated", str(stats["truncated"]).lower()],
             ["acquisition", str(acquisition["reason"])],
         ],
     )
@@ -4779,6 +4792,7 @@ def pause_for_node_request(
         question=question,
         allowed_responses=allowed_responses,
         gate_status_refs=gate_status_refs,
+        resume_strategy=str(node.get("resume_strategy") or "manual_recover"),
     )
     state["status"] = "paused"
     state["segment_status"] = reason
@@ -4805,6 +4819,8 @@ def run_supervised_nodes(
     completed = list(state.get("completed_nodes", []))
     for index, node in enumerate(nodes):
         node_id = str(node["node_id"])
+        if node_id in completed:
+            continue
         state["current_node_id"] = node_id
         state["current_attempt"] = 1
         save_state(workspace_root, state)
@@ -4982,6 +4998,11 @@ def run_supervised_nodes(
             )
         completed.append(node_id)
         state["completed_nodes"] = list(dict.fromkeys(completed))
+        state["failed_nodes"] = [
+            failed
+            for failed in state.get("failed_nodes", [])
+            if failed != node_id
+        ]
         save_state(workspace_root, state)
     return None
 
@@ -5155,84 +5176,14 @@ def start_prepare_hitl_poc(
     return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
 
 
-def start_prepare_complete(
+def continue_prepare_complete_after_supervised_nodes(
     workspace_root: Path,
     *,
     args: argparse.Namespace,
     run_id: str,
     state: dict[str, Any],
-    goal: str,
+    readiness_ref: str,
 ) -> int:
-    state["current_node_id"] = "prepare_readiness_preflight"
-    save_state(workspace_root, state)
-    _preflight, readiness_errors, readiness_input_refs = (
-        run_prepare_readiness_preflight(
-            workspace_root,
-            allow_creatable_paths=True,
-        )
-    )
-    bridge_ref = getattr(args, "_grill_bridge_ref", None)
-    if isinstance(bridge_ref, str):
-        readiness_input_refs.append(bridge_ref)
-    readiness_record_path = write_prepare_readiness_node_record(
-        workspace_root,
-        run_id=run_id,
-        input_refs=readiness_input_refs,
-        errors=readiness_errors,
-    )
-    readiness_ref = readiness_preflight_path(workspace_root).relative_to(
-        workspace_root
-    ).as_posix()
-    append_event(
-        workspace_root,
-        "NODE_COMPLETED",
-        run_id=run_id,
-        segment="prepare",
-        node_id="prepare_readiness_preflight",
-        status="success" if not readiness_errors else "failed",
-        payload={
-            "postcondition": "PASS" if not readiness_errors else "FAIL",
-            "mode": "prepare_complete_readiness_preflight",
-            "node_record": readiness_record_path.relative_to(
-                workspace_root
-            ).as_posix(),
-        },
-    )
-    if readiness_errors:
-        request = create_prepare_readiness_request(
-            workspace_root,
-            run_id=run_id,
-            node_record_path=readiness_record_path,
-            errors=readiness_errors,
-        )
-        state["status"] = "paused"
-        state["segment_status"] = "prepare_readiness_input_required"
-        state["pending_request_id"] = request["request_id"]
-        state["failed_nodes"] = ["prepare_readiness_preflight"]
-        state["last_failure"] = {
-            "kind": "prepare_readiness_preflight_failed",
-            "node_record": readiness_record_path.relative_to(
-                workspace_root
-            ).as_posix(),
-            "errors": readiness_errors,
-        }
-        save_state(workspace_root, state)
-        return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
-
-    state["completed_nodes"] = ["prepare_readiness_preflight"]
-    save_state(workspace_root, state)
-    exit_code = run_supervised_nodes(
-        workspace_root,
-        args=args,
-        run_id=run_id,
-        state=state,
-        segment="prepare",
-        goal=goal,
-        node_ids={"prepare_data_prep", "prepare_baseline_repro"},
-    )
-    if exit_code is not None:
-        return exit_code
-
     state["current_node_id"] = "prepare_protocol_compiler"
     save_state(workspace_root, state)
     protocol_result = run_protocol_compiler(workspace_root, build_id=run_id)
@@ -5336,6 +5287,93 @@ def start_prepare_complete(
     )
     save_state(workspace_root, state)
     return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+
+def start_prepare_complete(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    goal: str,
+) -> int:
+    state["current_node_id"] = "prepare_readiness_preflight"
+    save_state(workspace_root, state)
+    _preflight, readiness_errors, readiness_input_refs = (
+        run_prepare_readiness_preflight(
+            workspace_root,
+            allow_creatable_paths=True,
+        )
+    )
+    bridge_ref = getattr(args, "_grill_bridge_ref", None)
+    if isinstance(bridge_ref, str):
+        readiness_input_refs.append(bridge_ref)
+    readiness_record_path = write_prepare_readiness_node_record(
+        workspace_root,
+        run_id=run_id,
+        input_refs=readiness_input_refs,
+        errors=readiness_errors,
+    )
+    readiness_ref = readiness_preflight_path(workspace_root).relative_to(
+        workspace_root
+    ).as_posix()
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_readiness_preflight",
+        status="success" if not readiness_errors else "failed",
+        payload={
+            "postcondition": "PASS" if not readiness_errors else "FAIL",
+            "mode": "prepare_complete_readiness_preflight",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+        },
+    )
+    if readiness_errors:
+        request = create_prepare_readiness_request(
+            workspace_root,
+            run_id=run_id,
+            node_record_path=readiness_record_path,
+            errors=readiness_errors,
+        )
+        state["status"] = "paused"
+        state["segment_status"] = "prepare_readiness_input_required"
+        state["pending_request_id"] = request["request_id"]
+        state["failed_nodes"] = ["prepare_readiness_preflight"]
+        state["last_failure"] = {
+            "kind": "prepare_readiness_preflight_failed",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+            "errors": readiness_errors,
+        }
+        save_state(workspace_root, state)
+        return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+    state["completed_nodes"] = ["prepare_readiness_preflight"]
+    save_state(workspace_root, state)
+    exit_code = run_supervised_nodes(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        segment="prepare",
+        goal=goal,
+        node_ids={"prepare_data_prep", "prepare_baseline_repro"},
+    )
+    if exit_code is not None:
+        return exit_code
+
+    return continue_prepare_complete_after_supervised_nodes(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        readiness_ref=readiness_ref,
+    )
 
 
 def start_build_segment(
@@ -5834,6 +5872,7 @@ def status_payload(workspace_root: Path) -> dict[str, Any]:
             pending_ref = {
                 "request_id": pending.get("request_id"),
                 "path": f"{SUPERVISOR_DIR}/pending_request.json",
+                "answered": bool(pending.get("answer_record")),
             }
     return {
         "schema_version": SCHEMA_VERSION,
@@ -6182,6 +6221,292 @@ def command_approve(args: argparse.Namespace) -> int:
     return emit_status(workspace_root, args.json)
 
 
+def run_manifest_path(workspace_root: Path, run_id: str) -> Path:
+    return supervisor_root(workspace_root) / "runs" / run_id / "run_manifest.json"
+
+
+def load_run_manifest(workspace_root: Path, run_id: str) -> dict[str, Any]:
+    manifest = load_json(run_manifest_path(workspace_root, run_id))
+    if not isinstance(manifest, dict):
+        raise ValueError("run manifest must be an object")
+    return manifest
+
+
+def answer_payload_answers(answer_record: dict[str, Any]) -> dict[str, Any]:
+    answer = answer_record.get("answer")
+    if not isinstance(answer, dict):
+        return {}
+    answers = answer.get("answers")
+    return answers if isinstance(answers, dict) else {}
+
+
+def answer_string(answers: dict[str, Any], *keys: str) -> str | None:
+    for key in keys:
+        value = answers.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def answer_bool(answers: dict[str, Any], *keys: str) -> bool | None:
+    for key in keys:
+        value = answers.get(key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str) and value.strip():
+            return truthy_policy_value(value)
+    return None
+
+
+def answer_string_list(answers: dict[str, Any], *keys: str) -> list[str] | None:
+    for key in keys:
+        value = answers.get(key)
+        if isinstance(value, list):
+            rendered = [str(item).strip() for item in value if str(item).strip()]
+            if rendered:
+                return rendered
+        if isinstance(value, str) and value.strip():
+            return [value.strip()]
+    return None
+
+
+def resume_args_from_answer(
+    workspace_root: Path,
+    *,
+    state: dict[str, Any],
+    answer_record: dict[str, Any],
+    as_json: bool,
+) -> argparse.Namespace:
+    run_id = str(state["active_run_id"])
+    manifest = load_run_manifest(workspace_root, run_id)
+    policy = manifest.get("policy")
+    policy = policy if isinstance(policy, dict) else {}
+    args = argparse.Namespace(
+        json=as_json,
+        auto=False,
+        worker_mode=str(policy.get("worker_mode") or "none"),
+        worker_command=None,
+        codex_home=None,
+        allow_external_downloads=bool(policy.get("allow_external_downloads")),
+        dataset_source=None,
+        dataset_target=None,
+        baseline_repo=[],
+        baseline_target=None,
+    )
+    grill_bridge_ref = policy.get("grill_bridge_ref")
+    if isinstance(grill_bridge_ref, str) and grill_bridge_ref:
+        bridge_path = workspace_root / grill_bridge_ref
+        if bridge_path.exists():
+            bridge = load_json(bridge_path)
+            if isinstance(bridge, dict):
+                setattr(args, "_grill_bridge", bridge)
+                setattr(args, "_grill_bridge_ref", grill_bridge_ref)
+
+    answers = answer_payload_answers(answer_record)
+    args.dataset_source = answer_string(
+        answers,
+        "dataset_source",
+        "dataset_remote",
+        "source",
+    )
+    args.dataset_target = answer_string(
+        answers,
+        "dataset_target",
+        "dataset_root",
+        "dataset_path",
+        "path",
+    )
+    baseline_repos = answer_string_list(
+        answers,
+        "baseline_repo",
+        "baseline_source",
+        "baseline_repos",
+    )
+    if baseline_repos is not None:
+        args.baseline_repo = baseline_repos
+    args.baseline_target = answer_string(
+        answers,
+        "baseline_target",
+        "baseline_cache",
+        "baseline_path",
+    )
+    allow_downloads = answer_bool(
+        answers,
+        "allow_external_downloads",
+        "external_download_policy",
+    )
+    if allow_downloads is not None:
+        args.allow_external_downloads = allow_downloads
+    return args
+
+
+def answer_record_ref(workspace_root: Path, request: dict[str, Any]) -> str:
+    return answer_record_path(workspace_root, request).relative_to(
+        workspace_root
+    ).as_posix()
+
+
+def mark_answered_resume_failed(
+    workspace_root: Path,
+    *,
+    state: dict[str, Any],
+    request: dict[str, Any],
+    reason: str,
+    detail: str,
+) -> None:
+    state["status"] = "paused"
+    state["segment_status"] = reason
+    state["pending_request_id"] = request["request_id"]
+    state["last_failure"] = {
+        "kind": reason,
+        "detail": detail,
+        "request_id": request["request_id"],
+    }
+    append_event(
+        workspace_root,
+        "RUN_RESUME_FAILED",
+        run_id=str(state.get("active_run_id")),
+        segment=state.get("segment"),
+        node_id=request.get("node_id"),
+        status="paused",
+        payload={
+            "request_id": request["request_id"],
+            "reason": reason,
+            "detail": detail,
+        },
+    )
+    save_state(workspace_root, state)
+
+
+def resume_supervised_node_request(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    state: dict[str, Any],
+    request: dict[str, Any],
+    answer_record: dict[str, Any],
+) -> int | None:
+    strategy = request.get("resume_strategy")
+    if strategy not in {
+        DEFAULT_RECOVERY_STRATEGY,
+        "manual_recover",
+        "rerun_idempotent",
+        "resume_with_answer",
+    }:
+        return None
+    segment = state.get("segment")
+    node_id = request.get("node_id")
+    run_id = state.get("active_run_id")
+    if not isinstance(segment, str) or not isinstance(node_id, str):
+        return None
+    if not isinstance(run_id, str) or not run_id:
+        return None
+
+    manifest = load_run_manifest(workspace_root, run_id)
+    goal = str(manifest.get("goal") or "")
+    resume_args = resume_args_from_answer(
+        workspace_root,
+        state=state,
+        answer_record=answer_record,
+        as_json=args.json,
+    )
+    acquire_lock(workspace_root, run_id)
+    try:
+        state["status"] = "running"
+        state["pending_request_id"] = request["request_id"]
+        state["resolved_inputs_ref"] = answer_record_ref(workspace_root, request)
+        state["last_failure"] = None
+        append_event(
+            workspace_root,
+            "RUN_RESUMED",
+            run_id=run_id,
+            segment=segment,
+            node_id=node_id,
+            status="running",
+            payload={
+                "request_id": args.request_id,
+                "mode": "rerun_answered_node",
+            },
+        )
+        save_state(workspace_root, state)
+
+        if segment == "prepare" and node_id in {
+            "prepare_data_prep",
+            "prepare_baseline_repro",
+        }:
+            exit_code = run_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                segment="prepare",
+                goal=goal,
+                node_ids={"prepare_data_prep", "prepare_baseline_repro"},
+            )
+            if exit_code is not None:
+                return exit_code
+            return continue_prepare_complete_after_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                readiness_ref=f"{SUPERVISOR_DIR}/readiness_preflight.json",
+            )
+
+        if segment == "build":
+            exit_code = run_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                segment="build",
+                goal=goal,
+            )
+            if exit_code is not None:
+                return exit_code
+            state["status"] = "completed"
+            state["segment_status"] = "build_ready_for_iterate"
+            state["current_node_id"] = None
+            state["current_attempt"] = 0
+            state["pending_request_id"] = None
+            save_state(workspace_root, state)
+            pending = load_json_if_exists(pending_request_path(workspace_root), {})
+            if isinstance(pending, dict) and pending.get("request_id") == request.get(
+                "request_id"
+            ):
+                pending_request_path(workspace_root).unlink(missing_ok=True)
+            append_event(
+                workspace_root,
+                "RUN_COMPLETED",
+                run_id=run_id,
+                segment="build",
+                status="completed",
+                payload={"mode": "build_ready_for_iterate"},
+            )
+            return emit_status(workspace_root, args.json)
+    except KeyboardInterrupt:
+        mark_answered_resume_failed(
+            workspace_root,
+            state=state,
+            request=request,
+            reason="answered_resume_interrupted",
+            detail="operator interrupted answered request resume",
+        )
+        raise
+    except Exception as exc:
+        mark_answered_resume_failed(
+            workspace_root,
+            state=state,
+            request=request,
+            reason="answered_resume_failed",
+            detail=str(exc),
+        )
+        raise
+    finally:
+        release_lock(workspace_root, run_id)
+    return None
+
+
 def command_resume(args: argparse.Namespace) -> int:
     workspace_root = repo_root(args.workspace_root)
     try:
@@ -6198,6 +6523,15 @@ def command_resume(args: argparse.Namespace) -> int:
     if not request.get("answer_record"):
         return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
     answer_record = load_answer_record(workspace_root, request)
+    supervised_exit = resume_supervised_node_request(
+        workspace_root,
+        args=args,
+        state=state,
+        request=request,
+        answer_record=answer_record,
+    )
+    if supervised_exit is not None:
+        return supervised_exit
     decision = answer_decision(answer_record)
     segment_status = "v0_resume_recorded"
     resume_status = "completed"
@@ -6312,27 +6646,133 @@ def command_resume(args: argparse.Namespace) -> int:
     return emit_status(workspace_root, args.json, exit_code=resume_exit_code)
 
 
+def repair_stale_running_answered_request(
+    workspace_root: Path,
+    state: dict[str, Any],
+) -> dict[str, Any] | None:
+    if state.get("status") != "running" or lock_path(workspace_root).exists():
+        return None
+    answer_ref = state.get("resolved_inputs_ref")
+    node_id = state.get("current_node_id")
+    run_id = state.get("active_run_id")
+    segment = state.get("segment")
+    if not all(isinstance(value, str) and value for value in [answer_ref, node_id]):
+        return None
+    if not isinstance(run_id, str) or not isinstance(segment, str):
+        return None
+    answer_path = workspace_root / str(answer_ref)
+    if not answer_path.exists():
+        return None
+    answer_record = load_json(answer_path)
+    if not isinstance(answer_record, dict) or not isinstance(
+        answer_record.get("answer"),
+        dict,
+    ):
+        return None
+    reason = str(state.get("segment_status") or "answered_resume_interrupted")
+    request = create_node_pending_request(
+        workspace_root,
+        run_id=run_id,
+        segment=segment,
+        node_id=str(node_id),
+        request_type="ASK_INPUT",
+        reason=reason,
+        question=(
+            "Resume was interrupted after an answer was recorded. Reuse the "
+            "recorded answer, revise it, or reject this recovery."
+        ),
+        allowed_responses=["reuse_answer", "revise", "reject"],
+        gate_status_refs=[str(answer_ref)],
+        resume_strategy=DEFAULT_RECOVERY_STRATEGY,
+    )
+    answer_hash = answer_record.get("answer_hash")
+    if not isinstance(answer_hash, str):
+        answer_hash = sha256_json(answer_record["answer"])
+    request["answer_record"] = {
+        "path": str(answer_ref),
+        "answer_hash": answer_hash,
+        "recorded_at": answer_record.get("recorded_at") or utc_now(),
+    }
+    atomic_write_json(pending_request_path(workspace_root), request)
+    state["status"] = "paused"
+    state["pending_request_id"] = request["request_id"]
+    state["last_failure"] = {
+        "kind": "stale_running_answered_request_repaired",
+        "answer_ref": str(answer_ref),
+        "request_id": request["request_id"],
+    }
+    append_event(
+        workspace_root,
+        "RECOVERY_REPAIRED_STATE",
+        run_id=run_id,
+        segment=segment,
+        node_id=str(node_id),
+        status="paused",
+        payload={
+            "request_id": request["request_id"],
+            "answer_ref": str(answer_ref),
+        },
+    )
+    save_state(workspace_root, state)
+    return request
+
+
 def command_recover(args: argparse.Namespace) -> int:
     workspace_root = repo_root(args.workspace_root)
     if not state_path(workspace_root).exists():
         return EXIT_NO_ACTIVE_RUN
     state = load_state(workspace_root)
+    if args.repair_stale_running:
+        repair_stale_running_answered_request(workspace_root, state)
+        state = load_state(workspace_root)
     errors = validate_state_invariants(state, workspace_root)
     event_seq = latest_event_seq(workspace_root)
+    pending_request_id = None
+    pending_answered = False
+    pending_errors: list[str] = []
+    if pending_request_path(workspace_root).exists():
+        try:
+            request = load_pending_request(workspace_root)
+            pending_request_id = request.get("request_id")
+            pending_answered = bool(request.get("answer_record"))
+        except ValueError as exc:
+            pending_errors.append(str(exc))
+    recommended_action = "status_only"
+    if errors or pending_errors:
+        recommended_action = "manual_recover"
+    elif state.get("status") == "paused" and pending_request_id:
+        recommended_action = (
+            "resume_answered_pending_request"
+            if pending_answered
+            else "answer_pending_request"
+        )
+    if (
+        args.auto_resume_answered
+        and recommended_action == "resume_answered_pending_request"
+    ):
+        return command_resume(
+            argparse.Namespace(
+                workspace_root=str(workspace_root),
+                request_id=pending_request_id,
+                json=args.json,
+            )
+        )
     payload = {
         "schema_version": SCHEMA_VERSION,
         "run_id": args.run_id or state.get("active_run_id"),
         "state_valid": not errors,
-        "errors": errors,
+        "errors": [*errors, *pending_errors],
         "latest_event_seq": event_seq,
         "state_last_event_seq": state.get("last_event_seq"),
-        "recommended_action": "manual_recover" if errors else "status_only",
+        "pending_request_id": pending_request_id,
+        "pending_answered": pending_answered,
+        "recommended_action": recommended_action,
     }
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print(payload["recommended_action"])
-    return EXIT_MANUAL_ACTION if errors else EXIT_OK
+    return EXIT_MANUAL_ACTION if errors or pending_errors else EXIT_OK
 
 
 def command_tail(args: argparse.Namespace) -> int:
@@ -7024,6 +7464,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     recover = subparsers.add_parser("recover")
     recover.add_argument("--run-id")
+    recover.add_argument("--auto-resume-answered", action="store_true")
+    recover.add_argument("--repair-stale-running", action="store_true")
     recover.add_argument("--json", action="store_true")
     recover.set_defaults(func=command_recover)
 

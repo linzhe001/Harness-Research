@@ -329,6 +329,172 @@ def test_prepare_complete_acquires_dataset_and_baseline(
     assert (root / "docs" / "Baseline_Report.md").exists()
 
 
+def test_recover_auto_resume_answered_prepare_dataset_request(
+    tmp_path: Path,
+    capsys,
+    monkeypatch,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "# Readiness\n",
+        encoding="utf-8",
+    )
+    dataset_target = root / "data" / "answered"
+    dataset_target.mkdir(parents=True)
+    (dataset_target / "sample.txt").write_text("data\n", encoding="utf-8")
+    baseline_target = root / "baselines" / "local_baseline"
+    baseline_target.mkdir(parents=True)
+    (baseline_target / "train.py").write_text(
+        "print('baseline')\n",
+        encoding="utf-8",
+    )
+
+    def fake_protocol(workspace_root: Path, *, build_id: str) -> dict[str, object]:
+        return {
+            "command": "fake compile_protocol.py",
+            "exit_code": 0,
+            "stdout": {
+                "output_root": f".evidence/protocol_compiler/{build_id}",
+                "actions": [
+                    {
+                        "path": (
+                            f".evidence/protocol_compiler/{build_id}/"
+                            "docs/35_protocol/Research_Protocol.md"
+                        )
+                    }
+                ],
+            },
+            "stdout_text": "{}",
+            "stderr": "",
+        }
+
+    def fake_gate(
+        workspace_root: Path,
+        *,
+        stage: str,
+        build_id: str,
+        write_review_packet: bool,
+    ) -> dict[str, object]:
+        packet_dir = (
+            workspace_root
+            / ".evidence"
+            / "review_packets"
+            / stage
+            / build_id
+        )
+        packet_dir.mkdir(parents=True)
+        markdown = packet_dir / "review_packet.md"
+        payload = packet_dir / "review_packet.json"
+        markdown.write_text("# Review\n", encoding="utf-8")
+        payload.write_text("{}\n", encoding="utf-8")
+        return {
+            "command": "fake check_dynamic_context.py",
+            "exit_code": 0,
+            "stdout": {
+                "review_packet": {
+                    "markdown_path": markdown.relative_to(workspace_root).as_posix(),
+                    "json_path": payload.relative_to(workspace_root).as_posix(),
+                    "output_dir": packet_dir.relative_to(workspace_root).as_posix(),
+                }
+            },
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(workflow_ctl, "run_protocol_compiler", fake_protocol)
+    monkeypatch.setattr(workflow_ctl, "run_dynamic_context_gate", fake_gate)
+
+    start_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "prepare",
+            "--goal",
+            "prepare waits for dataset input",
+            "--complete",
+            "--json",
+        ]
+    )
+    assert start_code == workflow_ctl.EXIT_MANUAL_ACTION
+    start_payload = json.loads(capsys.readouterr().out)
+    pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert start_payload["state"]["segment_status"] == "dataset_input_required"
+    assert pending["reason"] == "dataset_input_required"
+
+    answer_path = tmp_path / "dataset_answer.json"
+    answer_path.write_text(
+        json.dumps(
+            {
+                "request_id": pending["request_id"],
+                "request_snapshot_hash": pending["request_snapshot_hash"],
+                "idempotency_key": "dataset-answer",
+                "answered_by": "Test Operator",
+                "answered_at": "2026-06-07T00:00:00Z",
+                "answers": {
+                    "decision": "provide_dataset_path",
+                    "dataset_target": "data/answered",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        workflow_ctl.main(
+            [
+                "--workspace-root",
+                str(root),
+                "answer",
+                "--request-id",
+                pending["request_id"],
+                "--json",
+                str(answer_path),
+            ]
+        )
+        == workflow_ctl.EXIT_OK
+    )
+    capsys.readouterr()
+
+    recover_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "recover",
+            "--repair-stale-running",
+            "--auto-resume-answered",
+            "--json",
+        ]
+    )
+
+    assert recover_code == workflow_ctl.EXIT_MANUAL_ACTION
+    payload = json.loads(capsys.readouterr().out)
+    state = payload["state"]
+    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert "prepare_data_prep" in state["completed_nodes"]
+    assert "prepare_baseline_repro" in state["completed_nodes"]
+    assert "prepare_data_prep" not in state["failed_nodes"]
+    new_pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert new_pending["request_id"] != pending["request_id"]
+    assert new_pending["reason"] == "prepare_complete_approval_required"
+    assert (root / "docs" / "Dataset_Stats.md").exists()
+    assert (root / "docs" / "Baseline_Report.md").exists()
+    events = workflow_ctl.read_events(root)
+    assert any(
+        event["event"] == "RUN_RESUMED"
+        and event["payload"].get("mode") == "rerun_answered_node"
+        for event in events
+    )
+
+
 def test_prepare_complete_bridges_grill_readiness_packet(
     tmp_path: Path,
     capsys,
