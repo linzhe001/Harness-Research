@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-06T08:40:08Z",
+  "generated_at": "2026-06-06T17:56:23Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -637,20 +637,20 @@
       "ref": "artifact:README.md",
       "kind": "artifact",
       "title": "README.md",
-      "summary": "README.md is declared by harness-maintenance.",
+      "summary": "README.md is declared by init-project.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
         {
           "path": "schemas/skill_contracts.json",
-          "anchor": "harness-maintenance",
+          "anchor": "init-project",
           "line": null,
           "role": "skill_contract"
         }
       ],
       "preview": {
         "title": "README.md",
-        "body": "README.md is declared by harness-maintenance.",
+        "body": "README.md is declared by init-project.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4912,7 +4912,7 @@
       ],
       "preview": {
         "title": "grill",
-        "body": "Reads 20 declared paths; writes docs/Research_Intent_Draft.md, docs/Grill_Round_Log.md, docs/Execution_Readiness_Packet.md, docs/_views/, docs/_site/; must prove gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 20 declared paths; writes docs/Research_Intent_Draft.md, docs/Grill_Round_Log.md, docs/Execution_Readiness_Packet.md, docs/_views/, docs/_site/; must prove gate_ledger, grill_round_contract, gap_check, human_exit_decision_status, docs_site_render_or_NOT_RUN.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5014,7 +5014,7 @@
       ],
       "preview": {
         "title": "init-project",
-        "body": "Reads 16 declared paths; writes CLAUDE.md, AGENTS.md, OPERATOR_CONTEXT.md, PROJECT_STATE.json, docs/; must prove context_gate_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 21 declared paths; writes CLAUDE.md, AGENTS.md, README.md, OPERATOR_CONTEXT.md, PROJECT_STATE.json; must prove grill_handoff_read_or_NOT_RUN, context_gate_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6646,7 +6646,7 @@
       ],
       "preview": {
         "title": "WF0 Init",
-        "body": "Primary skill: init-project. Gate conditions: dynamic_context_init, CLAUDE_write, operator_context_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: init-project. Gate conditions: dynamic_context_init, CLAUDE_write, AGENTS_write, README_write, grill_handoff_guidance_write.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -9437,7 +9437,7 @@
         "ref": "skill:grill",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[skill:grill]]",
-        "line": 109,
+        "line": 112,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/grill.html"
       },
@@ -9445,7 +9445,7 @@
         "ref": "source:schemas/skill_contracts.json#grill",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[source:schemas/skill_contracts.json#grill]]",
-        "line": 110,
+        "line": 113,
         "status": "resolved",
         "target_html": null
       },
@@ -9453,7 +9453,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 114,
         "status": "resolved",
         "target_html": null
       }
@@ -9515,7 +9515,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[skill:init-project]]",
-        "line": 113,
+        "line": 128,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9523,7 +9523,7 @@
         "ref": "source:schemas/skill_contracts.json#init-project",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[source:schemas/skill_contracts.json#init-project]]",
-        "line": 114,
+        "line": 129,
         "status": "resolved",
         "target_html": null
       },
@@ -9531,7 +9531,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 115,
+        "line": 130,
         "status": "resolved",
         "target_html": null
       }
@@ -9827,7 +9827,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[skill:init-project]]",
-        "line": 108,
+        "line": 122,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9835,7 +9835,7 @@
         "ref": "stage:WF0",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[stage:WF0]]",
-        "line": 112,
+        "line": 126,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf0_init.html"
       },
@@ -9843,7 +9843,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[skill:init-project]]",
-        "line": 113,
+        "line": 127,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9851,7 +9851,7 @@
         "ref": "source:schemas/skill_contracts.json#init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[source:schemas/skill_contracts.json#init-project]]",
-        "line": 114,
+        "line": 128,
         "status": "resolved",
         "target_html": null
       },
@@ -9859,7 +9859,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 115,
+        "line": 129,
         "status": "resolved",
         "target_html": null
       }

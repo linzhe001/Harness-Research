@@ -85,6 +85,9 @@ Clarify early research intent through hard questions and produce draft-only Rese
 ## Must Prove
 
 - `gate_ledger`
+- `grill_round_contract`
+- `gap_check`
+- `human_exit_decision_status`
 - `docs_site_render_or_NOT_RUN`
 - `grill_draft_write`
 - `readiness_packet_write`

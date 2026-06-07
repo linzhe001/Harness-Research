@@ -50,6 +50,10 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 - `/init`
 - `/init-project`
 - `init-project`
+- `update-from-grill`
+- `$init-project update-from-grill`
+- `/init-project update-from-grill`
+- `grill_draft_ready`
 - `init project`
 - `WF0`
 - `bootstrap init`
@@ -61,6 +65,7 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 
 - `guidance: CLAUDE.md`
 - `guidance: AGENTS.md`
+- `guidance: README.md`
 - `guidance: OPERATOR_CONTEXT.md`
 - `canonical_state: PROJECT_STATE.json`
 - `operational_scope: docs/`
@@ -81,7 +86,12 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 - `AGENTS.md`
 - `PROJECT_STATE.json`
 - `CLAUDE.md`
+- `README.md`
 - `OPERATOR_CONTEXT.md`
+- `docs/Research_Intent_Draft.md`
+- `docs/Grill_Round_Log.md`
+- `docs/Execution_Readiness_Packet.md`
+- `.workflow_supervisor/readiness.json`
 - `docs/Feasibility_Report.md`
 - `docs/Dataset_Stats.md`
 - `docs/Baseline_Report.md`
@@ -89,12 +99,16 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 
 ## Gates
 
+- `grill_handoff_read_or_NOT_RUN`
 - `context_gate_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_render_or_NOT_RUN`
 - `dynamic_context_init`
 - `CLAUDE_write`
+- `AGENTS_write`
+- `README_write`
+- `grill_handoff_guidance_write`
 - `operator_context_write`
 - `canonical_state_edit`
 - `docs_site_render`
