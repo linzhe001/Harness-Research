@@ -45,7 +45,11 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     )
     assert "Status: draft" in intent
     assert "does not complete WF1-WF3" in intent
+    assert "## Grill Maturity Checklist" in intent
+    assert "## Human Exit Decision" in intent
     assert "Test whether a smaller baseline" in log
+    assert "## Round Contract" in log
+    assert "## Current Gap Check" in log
     assert "This packet is not a Review Packet" in packet
     assert not (root / ".evidence").exists()
     assert not (root / ".workflow_supervisor").exists()
@@ -81,12 +85,22 @@ def test_grill_round_appends_next_round(tmp_path: Path) -> None:
             "baseline risk clarified",
             "--risk",
             "claim may depend on baseline choice",
+            "--gap-check",
+            "baseline choice is still underspecified",
+            "--next-question",
+            "Which baseline would make the idea unnecessary?",
+            "--exit-recommendation",
+            "continue_grill",
         ]
     )
 
     assert code == 0
     log = (root / "docs" / "Grill_Round_Log.md").read_text(encoding="utf-8")
     assert "| 2 | skeptic | baseline risk clarified |" in log
+    assert "baseline choice is still underspecified" in log
+    assert "Which baseline would make the idea unnecessary?" in log
+    assert "- exit_recommendation: `continue_grill`" in log
+    assert "## Human Exit Decision\n\n`pending`" in log
 
 
 def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
@@ -138,6 +152,11 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
 def test_questions_render_known_lens() -> None:
     payload = questions.question_round("implementation")
 
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["lens"] == "implementation"
+    assert payload["questions"][0]["why_this_matters"]
+    assert payload["questions"][0]["answer_type"] == "path"
+    assert payload["gap_check"][0]["key"] == "operator_observation"
+    assert "continue_grill" in payload["exit_options"]
     assert "local path" in questions.render_markdown(payload)
+    assert "Maturity gap template" in questions.render_markdown(payload)

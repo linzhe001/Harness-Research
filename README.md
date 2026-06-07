@@ -60,6 +60,12 @@ execution supervisor -> prepare | build | iterate | release | change
 | `harness grill` | idea 还不清楚，需要追问和收敛 Research Intent | Research Intent Draft / Grill Round Log |
 | `harness <action>` / `$workflow-supervisor` | intent 已经能进入执行、验证、迭代、release，或成熟代码库出现新需求 | `workflow_ctl status --json`、worker result JSON、Gate ledger |
 
+当 operator 确认 Grill draft 已经足够进入下一步时，agent 应直接继续
+`$init-project update-from-grill`，用 Grill 产出的 Research Intent Draft、
+Grill Round Log、Execution Readiness Packet 和 readiness JSON 初始化或刷新
+`CLAUDE.md`、`AGENTS.md`、`README.md`。这里写入的是 candidate context：
+dataset 和 baseline 需求可以被记录为待准备输入，但不会被当成 WF4/WF5 已验证事实。
+
 Execution Supervisor 下面再选择具体 action：
 
 | Action | Use when | First status surface |
@@ -265,6 +271,11 @@ WF1-WF3 or approve contracts. The workflow supervisor owns
 `.workflow_supervisor/**` and currently supports runtime status, dry-run start,
 typed pending requests, node-registry validation, worker-result validation, and
 postcondition validation.
+After an operator accepts the Grill draft, `$init-project update-from-grill`
+initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md` from the
+draft artifacts so a new target workspace has a clear startup surface before
+prepare/build begins. Candidate datasets, baseline repos, and local targets
+remain unverified until prepare, WF4, or WF5 validates them.
 Non-dry-run `prepare` is a v0 HITL PoC: it generates a WF5 Review Packet
 through evidence tooling after first verifying candidate readiness inputs and
 compiling a draft protocol packet. `workflow_ctl approve` runs the exact

@@ -46,6 +46,14 @@
 
 - Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.
 - Use `$init-project` for WF0 compact guidance setup, staged guidance refresh, and explicit operator-context updates.
+- Use `$init-project update-from-grill` immediately after an accepted Grill
+  draft to initialize or refresh `CLAUDE.md`, `AGENTS.md`, and `README.md`
+  from candidate Grill context without marking WF1-WF3 complete.
+- Use `$grill` for draft-only early research intent clarification. After the
+  operator confirms `grill_draft_ready`, route directly to
+  `$init-project update-from-grill` unless guidance initialization is skipped.
+- Use `$workflow-supervisor` for `harness prepare/build/iterate/release/change`
+  runtime status, typed HITL requests, and worker-result validation.
 - Use `$doc-compiler` for contract, fact, protocol, or release docs that need evidence-chain JSON.
 - Use `$docs-site` after durable Markdown docs are finalized when
   `docs/_site/**` human-readable HTML should be refreshed; do not use it for

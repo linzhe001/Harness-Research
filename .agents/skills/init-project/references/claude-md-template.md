@@ -66,6 +66,10 @@ See `.agents/references/project-map-rule.md` for detailed rules.
 ## Workflow
 WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline) -> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
 WF10 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF11 | PIVOT->WF2 idea-debate/refine-idea | ABORT->stop)
+After `$grill` exits `grill_draft_ready`, run
+`$init-project update-from-grill` to initialize `CLAUDE.md`, `AGENTS.md`, and
+`README.md` from candidate Grill context. Do not mark WF1-WF3 complete from
+that handoff alone.
 Current stage: {current_stage or "not initialized"}
 
 ## Documentation Evidence Rule

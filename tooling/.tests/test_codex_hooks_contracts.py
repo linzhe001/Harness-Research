@@ -230,6 +230,84 @@ def test_supervisor_skill_contracts_are_guardrail_scoped() -> None:
         )
 
 
+def test_grill_contract_requires_discussion_round_state() -> None:
+    contract = contract_by_skill(REPO_ROOT, "grill")
+    assert contract is not None
+
+    assert "grill_round_contract" in contract["required_actions"]
+    assert "gap_check" in contract["required_actions"]
+    assert "human_exit_decision_status" in contract["required_actions"]
+
+
+def test_grill_hands_accepted_draft_to_init_project() -> None:
+    agents_skill = (REPO_ROOT / ".agents/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    claude_skill = (REPO_ROOT / ".claude/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "$init-project update-from-grill" in agents_skill
+    assert "/init-project update-from-grill" in claude_skill
+    for text in [agents_skill, claude_skill]:
+        assert "docs/Research_Intent_Draft.md" in text
+        assert "docs/Grill_Round_Log.md" in text
+        assert "docs/Execution_Readiness_Packet.md" in text
+        assert "README.md" in text
+
+
+def test_init_project_contract_supports_grill_handoff() -> None:
+    contract = contract_by_skill(REPO_ROOT, "init-project")
+    assert contract is not None
+
+    assert "update-from-grill" in contract["triggers"]
+    assert "$init-project update-from-grill" in contract["triggers"]
+    assert "README.md" in contract["required_read_set"]["project_when_present"]
+    for path in [
+        "docs/Research_Intent_Draft.md",
+        "docs/Grill_Round_Log.md",
+        "docs/Execution_Readiness_Packet.md",
+        ".workflow_supervisor/readiness.json",
+    ]:
+        assert path in contract["required_read_set"]["project_optional"]
+
+    assert "grill_handoff_read_or_NOT_RUN" in contract["required_actions"]
+    assert "README_write" in contract["gate_ledger_required_when"]
+    assert "grill_handoff_guidance_write" in contract["gate_ledger_required_when"]
+    assert "README.md" in contract["write_scope"]["allowed_paths"]
+    assert "README.md" in contract["sensitive_paths"]
+    assert any(
+        output["kind"] == "guidance" and "README.md" in output["paths"]
+        for output in contract["artifact_outputs"]
+    )
+
+
+def test_init_project_skill_describes_update_from_grill_mode() -> None:
+    agents_skill = (REPO_ROOT / ".agents/skills/init-project/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    claude_skill = (REPO_ROOT / ".claude/skills/init-project/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    agents_template = (
+        REPO_ROOT / ".agents/skills/init-project/references/claude-md-template.md"
+    ).read_text(encoding="utf-8")
+    claude_template = (
+        REPO_ROOT / ".claude/skills/init-project/templates/claude-md-template.md"
+    ).read_text(encoding="utf-8")
+
+    for text in [agents_skill, claude_skill, agents_template, claude_template]:
+        assert "update-from-grill" in text
+        assert "README.md" in text
+        assert "WF1-WF3" in text
+
+    for text in [agents_skill, claude_skill]:
+        assert "docs/Research_Intent_Draft.md" in text
+        assert "docs/Grill_Round_Log.md" in text
+        assert "docs/Execution_Readiness_Packet.md" in text
+        assert ".workflow_supervisor/readiness.json" in text
+
+
 def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
     skills = [
         "doc-compiler",
@@ -1220,6 +1298,19 @@ def test_detection_treats_explicit_init_project_update_as_write() -> None:
 
     assert match is not None
     assert match["skill"] is None
+    assert match["candidate_skill"] == "init-project"
+    assert match["trigger"] == "$init-project"
+    assert match["trigger_type"] == "explicit"
+    assert match["enforcement_mode"] == "context_only"
+
+
+def test_detection_maps_update_from_grill_to_init_project() -> None:
+    prompt = "$init-project update-from-grill"
+
+    assert classify_prompt_intent(prompt) == "code_write"
+    match = detect_skill_match(REPO_ROOT, prompt)
+
+    assert match is not None
     assert match["candidate_skill"] == "init-project"
     assert match["trigger"] == "$init-project"
     assert match["trigger_type"] == "explicit"

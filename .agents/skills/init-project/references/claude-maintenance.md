@@ -8,6 +8,8 @@ Use these rules instead of helper scripts.
 - `iteration_log.json` stays at the repository root.
 - `project_map.json` stays at the repository root.
 - `CLAUDE.md` stays at the repository root.
+- `README.md` stays at the repository root when init-project creates a target
+  workspace entry point.
 - `MEMORY.md` stays at the repository root.
 - `OPERATOR_CONTEXT.md` stays at the repository root when used.
 - `OPERATOR_CONTEXT.md` is written only from explicit operator-provided preferences or local constraints; do not infer it from project facts.
@@ -63,5 +65,11 @@ Render section bodies from project state rather than inventing new structure:
 
 - `init` creates the minimal `CLAUDE.md`.
 - `update` fills only sections whose source artifacts are known.
+- `update-from-grill` initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and
+  `README.md` from `docs/Research_Intent_Draft.md`,
+  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+  supervisor-produced `.workflow_supervisor/readiness.json` when present.
+  Treat dataset and baseline details as candidate until prepare / WF4-WF5
+  verify them.
 - WF4 dataset updates also check `AGENTS.md` for a stable pointer to `CLAUDE.md`; volatile dataset paths stay in `CLAUDE.md`.
 - `deps-changed` updates only the runtime environment facts in `## Environment` and preserves `### Dataset Paths`.

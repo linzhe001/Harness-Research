@@ -2,17 +2,35 @@
 
 Status: draft
 
+## Round Contract
+
+Each round must leave:
+
+- operator answer summary
+- skeptic / methodologist / implementation or claim-boundary gap
+- next blocking question
+- exit recommendation
+- human exit decision status
+
 ## Rounds
 
-| Round | Question Focus | Operator Answer Summary | Updated Risk Or Open Question |
-| --- | --- | --- | --- |
-| 1 | intake | pending | pending |
+| Round | Lens | Operator Answer Summary | Gap Check | Next Question | Exit Recommendation |
+| --- | --- | --- | --- | --- | --- |
+| 1 | intake | pending | pending | What concrete observation motivates this project? | `continue_grill` |
 
-## Exit Decision
+## Current Gap Check
 
-Record one of:
+- latest_gap: pending
+- next_question: What concrete observation motivates this project?
+- exit_recommendation: `continue_grill`
 
-- `more_grill`
+## Human Exit Decision
+
+`pending`
+
+Valid decisions:
+
+- `continue_grill`
 - `grill_draft_ready`
 - `bridge_wf1_wf3`
 - `pivot`

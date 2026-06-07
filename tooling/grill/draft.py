@@ -9,7 +9,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from questions import question_round, render_markdown
+from questions import (
+    EXIT_OPTIONS,
+    maturity_gap_template,
+    question_round,
+    render_markdown,
+)
 from readiness import empty_readiness, validate_readiness
 from state import (
     atomic_write_json,
@@ -25,6 +30,10 @@ RESEARCH_INTENT = Path("docs/Research_Intent_Draft.md")
 ROUND_LOG = Path("docs/Grill_Round_Log.md")
 READINESS_PACKET = Path("docs/Execution_Readiness_Packet.md")
 READINESS_JSON = Path(".workflow_supervisor/readiness.json")
+ROUND_TABLE_MARKER = "| --- | --- | --- | --- | --- | --- |"
+LEGACY_ROUND_TABLE_MARKER = "| --- | --- | --- | --- |"
+HUMAN_EXIT_PENDING = "pending"
+HUMAN_EXIT_OPTIONS = [HUMAN_EXIT_PENDING, *EXIT_OPTIONS]
 
 
 def markdown_escape_table(value: str) -> str:
@@ -36,6 +45,94 @@ def write_if_allowed(path: Path, text: str, *, force: bool) -> bool:
         return False
     atomic_write_text(path, text)
     return True
+
+
+def render_maturity_checklist() -> str:
+    rows = [
+        "| Gap | Status | Blocking Question |",
+        "| --- | --- | --- |",
+    ]
+    for item in maturity_gap_template():
+        rows.append(
+            "| {key} | {status} | {question} |".format(
+                key=markdown_escape_table(item["key"]),
+                status=markdown_escape_table(item["status"]),
+                question=markdown_escape_table(item["blocking_question"]),
+            )
+        )
+    return "\n".join(rows)
+
+
+def first_question_for_lens(lens: str) -> str:
+    payload = question_round(lens, max_questions=1)
+    questions = payload.get("questions", [])
+    if not questions:
+        raise ValueError(f"Grill lens {lens!r} did not produce a question")
+    question = questions[0].get("question")
+    if not isinstance(question, str) or not question.strip():
+        raise ValueError(f"Grill lens {lens!r} produced an empty question")
+    return question.strip()
+
+
+def replace_markdown_section(text: str, heading: str, body: str) -> str:
+    lines = text.splitlines()
+    start = next((index for index, line in enumerate(lines) if line == heading), None)
+    body_lines = ["", *body.rstrip().splitlines(), ""]
+    if start is None:
+        if lines and lines[-1] != "":
+            lines.append("")
+        lines.extend([heading, *body_lines])
+        return "\n".join(lines).rstrip() + "\n"
+
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+    updated = [*lines[: start + 1], *body_lines, *lines[end:]]
+    return "\n".join(updated).rstrip() + "\n"
+
+
+def render_current_gap_check(
+    *,
+    gap_check: str,
+    next_question: str,
+    exit_recommendation: str,
+) -> str:
+    return "\n".join(
+        [
+            f"- latest_gap: {gap_check}",
+            f"- next_question: {next_question}",
+            f"- exit_recommendation: `{exit_recommendation}`",
+        ]
+    )
+
+
+def render_human_exit_decision(decision: str) -> str:
+    lines = [
+        f"`{decision}`",
+        "",
+        "Valid decisions:",
+        "",
+    ]
+    for option in HUMAN_EXIT_OPTIONS:
+        if option == HUMAN_EXIT_PENDING:
+            continue
+        lines.append(f"- `{option}`")
+    return "\n".join(lines)
+
+
+def append_table_row(text: str, marker: str, row: str) -> str:
+    lines = text.splitlines()
+    try:
+        marker_index = lines.index(marker)
+    except ValueError as exc:
+        raise ValueError("Grill rounds table marker is missing") from exc
+    insert_at = marker_index + 1
+    while insert_at < len(lines) and lines[insert_at].startswith("|"):
+        insert_at += 1
+    lines.insert(insert_at, row)
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_intent(seed: str, lens: str) -> str:
@@ -65,6 +162,60 @@ Updated: {utc_now()}
 
 - None yet.
 
+## Problem
+
+Pending. Grill should make the concrete problem explicit before execution.
+
+## Operator Observation
+
+{seed or "Pending operator answer."}
+
+## Candidate Claim
+
+Pending. Do not promote a claim until the operator has bounded it.
+
+## Minimal Hypothesis
+
+Pending. State the smallest hypothesis that can be tested.
+
+## Why This Is Worth Testing
+
+Pending. Record why this is worth spending data, compute, and review effort.
+
+## Target Metric / Evaluation Signal
+
+Pending.
+
+## Baselines And Negative Controls
+
+Pending.
+
+## Dataset And Compute Assumptions
+
+Pending.
+
+## Forbidden Directions
+
+Pending.
+
+## Pivot / Abort Conditions
+
+Pending.
+
+## Human Exit Decision
+
+Pending operator decision. Valid decisions:
+
+- `continue_grill`
+- `grill_draft_ready`
+- `bridge_wf1_wf3`
+- `pivot`
+- `abandon`
+
+## Grill Maturity Checklist
+
+{render_maturity_checklist()}
+
 ## Open Questions
 
 - What observation motivates this project?
@@ -84,24 +235,52 @@ This draft is not an Approved Contract and does not complete WF1-WF3 by itself.
 
 
 def render_round_log(seed: str, lens: str) -> str:
-    focus = f"{lens} intake"
+    focus = lens
     summary = seed or "pending"
+    next_question = first_question_for_lens(lens)
+    round_header = (
+        "| Round | Lens | Operator Answer Summary | Gap Check | Next Question | "
+        "Exit Recommendation |"
+    )
+    first_round = (
+        f"| 1 | {markdown_escape_table(focus)} | "
+        f"{markdown_escape_table(summary)} | pending | "
+        f"{markdown_escape_table(next_question)} | `continue_grill` |"
+    )
     return f"""# Grill Round Log
 
 Status: draft
 Updated: {utc_now()}
 
+## Round Contract
+
+Each round must leave:
+
+- operator answer summary
+- skeptic / methodologist / implementation or claim-boundary gap
+- next blocking question
+- exit recommendation
+- human exit decision status
+
 ## Rounds
 
-| Round | Question Focus | Operator Answer Summary | Updated Risk Or Open Question |
-| --- | --- | --- | --- |
-| 1 | {markdown_escape_table(focus)} | {markdown_escape_table(summary)} | pending |
+{round_header}
+| --- | --- | --- | --- | --- | --- |
+{first_round}
 
-## Exit Decision
+## Current Gap Check
 
-Record one of:
+- latest_gap: pending
+- next_question: {next_question}
+- exit_recommendation: `continue_grill`
 
-- `more_grill`
+## Human Exit Decision
+
+`pending`
+
+Valid decisions:
+
+- `continue_grill`
 - `grill_draft_ready`
 - `bridge_wf1_wf3`
 - `pivot`
@@ -194,24 +373,70 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
     )
 
 
-def append_round(root: Path, *, lens: str, answer_summary: str, risk: str) -> Path:
+def append_round(
+    root: Path,
+    *,
+    lens: str,
+    answer_summary: str,
+    risk: str,
+    gap_check: str,
+    next_question: str,
+    exit_recommendation: str,
+    human_exit_decision: str,
+) -> Path:
     path = root / ROUND_LOG
     existing = read_text_if_exists(path)
     if existing is None:
         existing = render_round_log("", lens)
-    marker = "| --- | --- | --- | --- |"
     round_number = 0
     for line in existing.splitlines():
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
         if cells and cells[0].isdigit():
             round_number = max(round_number, int(cells[0]))
-    row = (
-        f"| {round_number + 1} | {markdown_escape_table(lens)} | "
-        f"{markdown_escape_table(answer_summary)} | {markdown_escape_table(risk)} |"
-    )
-    if marker not in existing:
+    if exit_recommendation not in EXIT_OPTIONS:
+        known = ", ".join(EXIT_OPTIONS)
+        raise ValueError(
+            f"unknown exit recommendation {exit_recommendation!r}; expected {known}"
+        )
+    if human_exit_decision not in HUMAN_EXIT_OPTIONS:
+        known = ", ".join(HUMAN_EXIT_OPTIONS)
+        raise ValueError(
+            f"unknown human exit decision {human_exit_decision!r}; expected {known}"
+        )
+    gap_text = gap_check or risk or "pending"
+    question_text = next_question or first_question_for_lens(lens)
+    if ROUND_TABLE_MARKER in existing:
+        row = (
+            f"| {round_number + 1} | {markdown_escape_table(lens)} | "
+            f"{markdown_escape_table(answer_summary)} | "
+            f"{markdown_escape_table(gap_text)} | "
+            f"{markdown_escape_table(question_text)} | "
+            f"`{markdown_escape_table(exit_recommendation)}` |"
+        )
+        updated = append_table_row(existing, ROUND_TABLE_MARKER, row)
+    elif LEGACY_ROUND_TABLE_MARKER in existing:
+        row = (
+            f"| {round_number + 1} | {markdown_escape_table(lens)} | "
+            f"{markdown_escape_table(answer_summary)} | "
+            f"{markdown_escape_table(gap_text)} |"
+        )
+        updated = append_table_row(existing, LEGACY_ROUND_TABLE_MARKER, row)
+    else:
         raise ValueError(f"{path} is missing Grill rounds table")
-    updated = existing.replace(marker, marker + "\n" + row, 1)
+    updated = replace_markdown_section(
+        updated,
+        "## Current Gap Check",
+        render_current_gap_check(
+            gap_check=gap_text,
+            next_question=question_text,
+            exit_recommendation=exit_recommendation,
+        ),
+    )
+    updated = replace_markdown_section(
+        updated,
+        "## Human Exit Decision",
+        render_human_exit_decision(human_exit_decision),
+    )
     atomic_write_text(path, updated)
     return path
 
@@ -254,6 +479,10 @@ def command_round(args: argparse.Namespace) -> int:
         lens=args.lens,
         answer_summary=args.answer_summary,
         risk=args.risk,
+        gap_check=args.gap_check or args.risk,
+        next_question=args.next_question,
+        exit_recommendation=args.exit_recommendation,
+        human_exit_decision=args.human_exit_decision,
     )
     emit_result(args, written=[path.relative_to(root).as_posix()], skipped=[])
     return 0
@@ -304,6 +533,18 @@ def build_parser() -> argparse.ArgumentParser:
     round_cmd.add_argument("--lens", required=True)
     round_cmd.add_argument("--answer-summary", required=True)
     round_cmd.add_argument("--risk", default="pending")
+    round_cmd.add_argument("--gap-check", default="")
+    round_cmd.add_argument("--next-question", default="")
+    round_cmd.add_argument(
+        "--exit-recommendation",
+        default="continue_grill",
+        choices=sorted(EXIT_OPTIONS),
+    )
+    round_cmd.add_argument(
+        "--human-exit-decision",
+        default=HUMAN_EXIT_PENDING,
+        choices=sorted(HUMAN_EXIT_OPTIONS),
+    )
     round_cmd.add_argument("--json", action="store_true")
     round_cmd.set_defaults(func=command_round)
 

@@ -12,6 +12,53 @@ automation starts. Grill is high-interaction and draft-only: it challenges the
 idea, records candidate readiness inputs, and helps the operator decide whether
 to bridge into canonical WF1-WF3 Skills.
 
+## Conversation Contract
+
+Grill is conversation-first. Do not begin by producing a completed draft,
+approval, or long questionnaire. Start by restating the current intent in one
+short paragraph, then ask 3-5 blocking questions that would change the next
+safe action. Each question must include why it matters.
+
+Every Grill round must leave:
+
+- operator answer summary
+- skeptic, methodologist, implementation, or claim-boundary critique
+- current gap check
+- next blocking question or explicit exit choice
+- exit recommendation
+- human exit decision status
+
+The operator owns the exit decision. The agent may recommend
+`continue_grill`, `grill_draft_ready`, `bridge_wf1_wf3`, `pivot`, or
+`abandon`, but must not declare an exit decision unless the operator made that
+decision in the current conversation or an auditable artifact.
+
+## Maturity Target
+
+Grill is ready to hand off only when these fields are at least candidate-clear
+and the remaining uncertainty is explicit:
+
+- concrete operator observation
+- candidate claim
+- falsifier or not-worth-continuing result
+- target metric or evaluation signal
+- expected baseline or negative control
+- dataset / compute assumptions
+- maximum claim boundary and forbidden claims
+- pivot / abort condition
+- execution readiness inputs that would otherwise stop `prepare`
+
+If any of these are missing, continue discussion or record the missing item as
+an unresolved question. Do not hide the gap by writing a polished draft.
+
+## Question Policy
+
+Ask fewer, harder questions. Avoid questions that can be answered by reading
+the repository, broad survey prompts, generic approvals, and long intake forms.
+Prefer questions that force a decision about claim shape, failure criteria,
+baseline risk, metric validity, data/compute readiness, or what should happen
+if the first experiment fails.
+
 ## References
 
 Read these first:
@@ -19,6 +66,7 @@ Read these first:
 - `../../../CLAUDE.md`
 - `../../../docs/grill_execution_supervisor.md`
 - `../../../docs/grill_execution_supervisor_implementation_plan.md`
+- `../../../.agents/skills/init-project/SKILL.md`
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/contract-gating-rule.md`
@@ -44,11 +92,14 @@ them.
 
 Prefer the Grill helpers for durable draft writes:
 - `python tooling/grill/questions.py --lens intake` prints a reusable question
-  round. Lenses: `intake`, `skeptic`, `methodologist`, `implementation`.
+  round contract with gap template and exit options. Lenses: `facilitator`,
+  `intake`, `skeptic`, `methodologist`, `implementation`, `claim_boundary`.
 - `python tooling/grill/draft.py --workspace-root . init --seed "<idea>"`
   initializes draft Markdown artifacts without overwriting existing drafts.
 - `python tooling/grill/draft.py --workspace-root . round --lens skeptic \
-  --answer-summary "<summary>" --risk "<risk>"` appends a Grill round.
+  --answer-summary "<summary>" --gap-check "<gap>" \
+  --next-question "<question>" --exit-recommendation continue_grill`
+  appends a Grill round contract.
 - `python tooling/grill/draft.py --workspace-root . packet \
   --readiness-json <path>` renders the public readiness packet with local
   values redacted.
@@ -74,10 +125,31 @@ Use `--write-readiness` only when intentionally writing supervisor-owned
 context for `$survey-idea`, `$idea-debate`, and `$refine-idea`. A Stage is
 complete only when its canonical artifact and Gate ledger exist.
 
+## Init Handoff Rule
+
+When the operator explicitly confirms `grill_draft_ready` or asks to proceed
+from an accepted Grill draft, continue in the same turn with
+`$init-project update-from-grill` unless the operator asks to skip guidance
+initialization. The handoff inputs are:
+
+- `docs/Research_Intent_Draft.md`
+- `docs/Grill_Round_Log.md`
+- `docs/Execution_Readiness_Packet.md`
+- `.workflow_supervisor/readiness.json` when supervisor tooling has produced it
+
+The handoff initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md`
+from candidate Grill context only. It must preserve `## Custom`, keep dataset
+and baseline items marked as candidate until `prepare` / WF4-WF5 verify them,
+and must not mark WF1-WF3 complete. If the handoff is not run, report
+`init_project_update_from_grill_or_NOT_RUN` with the reason.
+
 ## Exit Condition
 
 Return one of:
-- `grill_draft_ready`: draft artifacts exist and unresolved questions are clear.
+- `continue_grill`: blocking gaps remain and the next question is clear.
+- `grill_draft_ready`: draft artifacts exist, unresolved questions are clear,
+  the operator chose to hand off the draft, and
+  `$init-project update-from-grill` has run or is reported as `NOT_RUN`.
 - `grill_bridge_complete`: canonical WF1-WF3 artifacts and Gate ledger exist.
 - `pivot` or `abandon`: operator chose not to proceed with the draft.
 

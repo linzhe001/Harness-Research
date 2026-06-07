@@ -1575,6 +1575,10 @@
         "/init",
         "/init-project",
         "init-project",
+        "update-from-grill",
+        "$init-project update-from-grill",
+        "/init-project update-from-grill",
+        "grill_draft_ready",
         "init project",
         "WF0",
         "bootstrap init",
@@ -1598,10 +1602,15 @@
         "project_when_present": [
           "AGENTS.md",
           "PROJECT_STATE.json",
-          "CLAUDE.md"
+          "CLAUDE.md",
+          "README.md"
         ],
         "project_optional": [
           "OPERATOR_CONTEXT.md",
+          "docs/Research_Intent_Draft.md",
+          "docs/Grill_Round_Log.md",
+          "docs/Execution_Readiness_Packet.md",
+          ".workflow_supervisor/readiness.json",
           "docs/Feasibility_Report.md",
           "docs/Dataset_Stats.md",
           "docs/Baseline_Report.md",
@@ -1609,6 +1618,7 @@
         ]
       },
       "required_actions": [
+        "grill_handoff_read_or_NOT_RUN",
         "context_gate_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
@@ -1621,6 +1631,9 @@
       "gate_ledger_required_when": [
         "dynamic_context_init",
         "CLAUDE_write",
+        "AGENTS_write",
+        "README_write",
+        "grill_handoff_guidance_write",
         "operator_context_write",
         "canonical_state_edit",
         "docs_site_render"
@@ -1628,6 +1641,7 @@
       "sensitive_paths": [
         "CLAUDE.md",
         "AGENTS.md",
+        "README.md",
         "OPERATOR_CONTEXT.md",
         "PROJECT_STATE.json",
         "docs/",
@@ -1639,6 +1653,7 @@
         "allowed_paths": [
           "CLAUDE.md",
           "AGENTS.md",
+          "README.md",
           "OPERATOR_CONTEXT.md",
           "PROJECT_STATE.json",
           "docs/",
@@ -1653,6 +1668,7 @@
           "paths": [
             "CLAUDE.md",
             "AGENTS.md",
+            "README.md",
             "OPERATOR_CONTEXT.md"
           ],
           "owner": "init-project",
@@ -4104,6 +4120,9 @@
       },
       "required_actions": [
         "gate_ledger",
+        "grill_round_contract",
+        "gap_check",
+        "human_exit_decision_status",
         "docs_site_render_or_NOT_RUN"
       ],
       "forbidden_actions": [

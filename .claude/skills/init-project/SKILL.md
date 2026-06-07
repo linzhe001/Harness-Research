@@ -1,7 +1,7 @@
 ---
 name: init-project
-description: WF0/bootstrap CLAUDE.md phased generator. init mode generates a minimal version (Environment + Workflow), update mode incrementally fills in content (Idea, Structure, etc.) after key stages.
-argument-hint: "[init|update]"
+description: WF0/bootstrap CLAUDE.md phased generator. init mode generates a minimal version (Environment + Workflow), update mode incrementally fills in content after stages or after an accepted Grill draft.
+argument-hint: "[init|update|update-from-grill|deps-changed]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
 ---
 
@@ -31,6 +31,12 @@ CLAUDE.md content is only finalized at different workflow stages:
 
 If PROJECT_STATE.json exists, read it to determine current stage.
 If CLAUDE.md already exists, read it first.
+If AGENTS.md, README.md, or OPERATOR_CONTEXT.md exist, read them before
+guidance initialization or refresh.
+For `/init-project update-from-grill`, also read
+`docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`,
+`docs/Execution_Readiness_Packet.md`, and `.workflow_supervisor/readiness.json`
+when supervisor tooling produced it.
 For the template format, see [templates/claude-md-template.md](templates/claude-md-template.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For workflow terminology, see [../../shared/ubiquitous-language.md](../../shared/ubiquitous-language.md).
@@ -181,6 +187,49 @@ This section takes effect for all subsequent `/iterate code` and `/code-debug` c
 
 When dependency files change (prompted by the `deps-update` rule), only re-detect the environment and update the `## Environment` section.
 Equivalent to the effect of `/env-setup refresh`.
+
+### `update-from-grill` Mode
+
+Use this mode immediately after the operator explicitly accepts a Grill draft
+or `/grill` exits as `grill_draft_ready`.
+
+1. Read the Grill handoff artifacts from disk:
+   - `docs/Research_Intent_Draft.md`
+   - `docs/Grill_Round_Log.md`
+   - `docs/Execution_Readiness_Packet.md`
+   - `.workflow_supervisor/readiness.json` only when supervisor tooling has
+     produced it
+2. Read existing `CLAUDE.md`, `AGENTS.md`, `README.md`,
+   `PROJECT_STATE.json`, and `OPERATOR_CONTEXT.md` when present.
+3. If `CLAUDE.md` is missing, create it from the canonical template. If it
+   exists, use precise section replacement and preserve unrelated sections.
+4. Fill only candidate-clear Grill context:
+   - project idea / current intent
+   - current stage as Grill draft accepted, not WF1-WF3 complete
+   - core startup artifacts and where to continue
+   - candidate dataset acquisition needs and intended local paths
+   - candidate baseline repositories or negative controls and intended clone
+     locations
+   - unresolved questions, falsifiers, claim boundaries, and prepare blockers
+5. Keep candidate dataset paths and baseline clone targets explicitly labeled
+   candidate until `prepare` / WF4-WF5 verify them. Do not replace the stable
+   environment or dataset truth with unverified Grill notes.
+6. Ensure `AGENTS.md` exists or points to `CLAUDE.md` plus the Grill handoff
+   artifacts for startup context. Do not duplicate volatile local paths in
+   `AGENTS.md`.
+7. Ensure `README.md` exists for a new target workspace, or refresh only its
+   short project/startup pointers when the operator requested
+   initialization. Link to `CLAUDE.md`, `AGENTS.md`, and the Grill draft
+   artifacts instead of copying full Grill content.
+8. Preserve every `## Custom` section in existing guidance files.
+9. Do not write `.workflow_supervisor/**` or `.evidence/**` by hand, do not
+   mark WF1-WF3 complete, and do not promote Grill draft facts into approved
+   contracts.
+10. Report Gate Evidence for `CLAUDE.md`, `AGENTS.md`, `README.md`,
+    `OPERATOR_CONTEXT.md`, dynamic-context directories, or
+    `PROJECT_STATE.json` writes. If Grill handoff artifacts, workflow-state
+    checks, or docs-site rendering are not run, report `NOT_RUN` with the
+    reason.
 
 ### Common Update Logic
 

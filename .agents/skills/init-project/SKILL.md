@@ -18,17 +18,26 @@ Read these first:
 - `../../../PROJECT_STATE.json` if it exists
 - `../../../CLAUDE.md` if it exists
 - `../../../AGENTS.md` if it exists
+- `../../../README.md` if it exists
 - `../../../OPERATOR_CONTEXT.md` if it exists
+- `../../../docs/Research_Intent_Draft.md` when running `update-from-grill`
+- `../../../docs/Grill_Round_Log.md` when running `update-from-grill`
+- `../../../docs/Execution_Readiness_Packet.md` when running `update-from-grill`
+- `../../../.workflow_supervisor/readiness.json` when running
+  `update-from-grill` and supervisor tooling produced it
 
 ## When To Use
 
 Interpret natural-language requests as one of:
 - `init`
 - `update`
+- `update-from-grill`
 - `deps-changed`
 
 Treat WF0, bootstrap, and explicit operator-context setup requests as `init`
 unless the user is clearly asking only to refresh an existing section.
+Treat a Grill exit of `grill_draft_ready`, an accepted Grill draft, or an
+explicit `$init-project update-from-grill` request as `update-from-grill`.
 
 ## Required Work
 
@@ -65,6 +74,52 @@ operator context; it does not validate research evidence or approve contracts.
 8. Render data-backed section bodies according to `./references/claude-maintenance.md` before writing them into `CLAUDE.md`.
 9. Report a Gate ledger when `CLAUDE.md`, `AGENTS.md`, `OPERATOR_CONTEXT.md`, dynamic-context directories, or `PROJECT_STATE.json` are written. If context init or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
+### `update-from-grill`
+
+This is the Grill handoff path. It initializes or refreshes operator-facing
+guidance immediately after the operator accepts a Grill draft, before canonical
+WF1-WF3 Stage artifacts necessarily exist.
+
+1. Read the Grill handoff artifacts from disk:
+   - `docs/Research_Intent_Draft.md`
+   - `docs/Grill_Round_Log.md`
+   - `docs/Execution_Readiness_Packet.md`
+   - `.workflow_supervisor/readiness.json` only when supervisor tooling has
+     produced it
+2. Read existing `CLAUDE.md`, `AGENTS.md`, `README.md`, `PROJECT_STATE.json`,
+   and `OPERATOR_CONTEXT.md` when present.
+3. If `CLAUDE.md` is missing, create it from the canonical template. If it
+   exists, use `./references/claude-maintenance.md` and update only the
+   relevant sections.
+4. Write only candidate-clear Grill context:
+   - project idea / current intent
+   - current stage as Grill draft accepted, not WF1-WF3 complete
+   - core startup artifacts and where to continue
+   - candidate dataset acquisition needs and intended local paths
+   - candidate baseline repositories or negative controls and intended clone
+     locations
+   - unresolved questions, falsifiers, claim boundaries, and prepare blockers
+5. Keep candidate dataset paths and baseline clone targets out of the stable
+   `CLAUDE.md` dataset/environment truth section unless they are explicitly
+   labeled candidate. Verified paths still belong to WF4/WF5 or
+   workflow-supervisor prepare/build evidence.
+6. Ensure `AGENTS.md` exists or points to `CLAUDE.md` plus the Grill handoff
+   artifacts for startup context. Do not duplicate volatile local paths in
+   `AGENTS.md`.
+7. Ensure `README.md` exists for a new target workspace, or refresh only its
+   short project/startup pointers when the operator requested initialization.
+   Keep it concise and link to `CLAUDE.md`, `AGENTS.md`, and the Grill draft
+   artifacts instead of copying full Grill content.
+8. Preserve every `## Custom` section in existing guidance files.
+9. Do not write `.workflow_supervisor/**` or `.evidence/**` by hand, do not
+   mark WF1-WF3 complete, and do not promote Grill draft facts into approved
+   contracts.
+10. Report a Gate ledger when `CLAUDE.md`, `AGENTS.md`, `README.md`,
+    `OPERATOR_CONTEXT.md`, dynamic-context directories, or
+    `PROJECT_STATE.json` are written. If Grill handoff artifacts, context init,
+    workflow-state checks, or docs-site rendering are not run, mark the
+    corresponding action `NOT_RUN` with the reason.
+
 ### `deps-changed`
 
 - Refresh only the environment section, equivalent to `$env-setup refresh`.
@@ -83,6 +138,10 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 - Preserve the `## Global Rule: Ubiquitous Language` section when refreshing
   generated guidance.
 - Keep `AGENTS.md` as Codex-native always-on guidance, but maintain `CLAUDE.md` for compatibility exactly as the canonical prompt expects.
+- In `update-from-grill`, initialize or refresh `README.md` only as a concise
+  project entry point. The stable operating truth remains in `CLAUDE.md` /
+  `AGENTS.md`, and Grill artifacts remain draft inputs until later gates verify
+  them.
 
 ## Execution Rule
 
