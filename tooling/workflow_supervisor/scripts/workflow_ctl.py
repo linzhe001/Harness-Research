@@ -189,10 +189,13 @@ CONTEXTUAL_BASELINE_URL_LABELS = {
 }
 DATASET_TABLE_SOURCE_HEADERS = {
     "source",
+    "source_url",
+    "source_url_or_official_entrypoint",
     "url",
     "remote",
     "dataset_source",
     "download_source",
+    "official_entrypoint",
     "repository",
     "repo",
 }
@@ -252,6 +255,12 @@ DATASET_CANDIDATE_MARKERS = {
     "p0",
     "p1",
     "candidate",
+}
+DATASET_LOCAL_SOURCE_MARKERS = {
+    "already_local",
+    "already_downloaded",
+    "local_probe_verified",
+    "operator_reported_downloaded",
 }
 DATASET_DECISION_PRIORITY = {
     "candidate": 0,
@@ -1323,6 +1332,11 @@ def normalized_marker_text(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
 
 
+def contains_normalized_label(normalized_text: str, labels: set[str]) -> bool:
+    padded = f"_{normalized_text}_"
+    return any(f"_{label}_" in padded for label in labels)
+
+
 def contains_marker(normalized_text: str, markers: set[str]) -> bool:
     return any(marker in normalized_text for marker in markers)
 
@@ -1538,6 +1552,7 @@ def extract_dataset_candidates_from_packet(
         source = table_cell(headers, cells, DATASET_TABLE_SOURCE_HEADERS)
         source = usable_grill_value(source)
         row_text = " ".join(cells)
+        normalized_row = normalized_marker_text(row_text)
         decision = dataset_access_decision(row_text)
         key = dataset_id or dataset_name or source
         if not key:
@@ -1549,7 +1564,11 @@ def extract_dataset_candidates_from_packet(
             "reason": row_text,
             "source_ref": source_ref,
         }
-        if source and source_is_remote(source):
+        local_candidate = contains_marker(normalized_row, DATASET_LOCAL_SOURCE_MARKERS)
+        if source and source_is_remote(source) and local_candidate:
+            update["official_source"] = source
+            update["local_status"] = "local_existing"
+        elif source and source_is_remote(source):
             update["source"] = source
         elif source and Path(source).is_absolute():
             update["source"] = source
@@ -1558,7 +1577,11 @@ def extract_dataset_candidates_from_packet(
     return [
         candidate
         for candidate in candidates.values()
-        if candidate.get("source") or candidate.get("decision") == "rejected"
+        if (
+            candidate.get("source")
+            or candidate.get("local_status") == "local_existing"
+            or candidate.get("decision") == "rejected"
+        )
     ]
 
 
@@ -1657,11 +1680,13 @@ def add_contextual_url_bridge_values(
     url_re = re.compile(r"(https?://[^\s`'\"<>]+|git@[^\s`'\"<>]+)")
     for line in text.splitlines():
         normalized_line = re.sub(r"[^a-z0-9]+", "_", line.lower()).strip("_")
-        has_dataset_label = any(
-            label in normalized_line for label in CONTEXTUAL_DATASET_URL_LABELS
+        has_dataset_label = contains_normalized_label(
+            normalized_line,
+            CONTEXTUAL_DATASET_URL_LABELS,
         )
-        has_baseline_label = any(
-            label in normalized_line for label in CONTEXTUAL_BASELINE_URL_LABELS
+        has_baseline_label = contains_normalized_label(
+            normalized_line,
+            CONTEXTUAL_BASELINE_URL_LABELS,
         )
         for match in url_re.finditer(line):
             value = match.group(1).rstrip(".,;)")

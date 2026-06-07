@@ -133,8 +133,11 @@ requires-approval sources. Local paths can be copied or verified without that fl
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
-structured readiness rows, explicit `key: value` lines, or labeled contextual
-dataset/baseline URLs; redacted or ambiguous values become typed input
+structured readiness rows, explicit `key: value` lines, or exactly labeled
+contextual dataset/baseline URLs. Treat `docs/Research_Intent_Draft.md` as the
+primary narrative intent source for scope and clone intent, but do not treat
+ordinary literature, method, or baseline-comparison URLs in that draft as
+executable acquisition inputs. Redacted or ambiguous values become typed input
 requests. When `docs/Execution_Readiness_Packet.md` contains a Dataset Access
 Ledger or candidate dataset manifest, the Grill bridge must preserve dataset
 access decisions, skip entries marked `rejected`, `deferred`, or

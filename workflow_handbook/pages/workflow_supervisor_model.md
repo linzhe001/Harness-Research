@@ -116,8 +116,11 @@ can be copied directly. On start it writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
-structured readiness rows, explicit `key: value` lines, or labeled contextual
-dataset/baseline URLs. Dataset downloads and remote baseline clones require
+structured readiness rows, explicit `key: value` lines, or exactly labeled
+contextual dataset/baseline URLs. `docs/Research_Intent_Draft.md` is the primary
+narrative intent source for scope and clone intent, but ordinary literature,
+method, or baseline-comparison URLs in that draft are not executable acquisition
+inputs. Dataset downloads and remote baseline clones require
 `--allow-external-downloads`, an explicit Grill readiness policy such as
 `external_download_policy: allow`, or a narrower source-specific Grill policy.
 Current source-specific handoff supports Hugging Face dataset downloads when

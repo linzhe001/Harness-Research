@@ -786,6 +786,11 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
                     "operator_reported_unavailable | not reprobed | "
                     "deferred | Method reference only. |"
                 ),
+                (
+                    "| dataset_stereomis | https://zenodo.org/records/7727692 "
+                    "| local_probe_verified | local directory exists | "
+                    "candidate | Already local; do not download. |"
+                ),
                 "",
             ]
         ),
@@ -800,6 +805,11 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
                     "8. Clone only first baseline set under `baselines/`: "
                     "Free-SurGS and Feature 3DGS; clone extra 2D baselines "
                     "only after active HF dataset cards clarify the benchmark task."
+                ),
+                (
+                    "| GAN surgical smoke baseline | "
+                    "[MARS-GAN](https://doi.org/10.1109/TMI.2023.3245298) | "
+                    "reported-method baseline only |"
                 ),
                 "",
             ]
@@ -830,6 +840,33 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
     assert policy["allowed_remote_hosts"] == ["huggingface.co"]
     assert "free_surgs" in policy["allowed_baseline_repo_markers"]
     assert "feature_3dgs" in policy["allowed_baseline_repo_markers"]
+    realx3d = [
+        item
+        for item in bridge["dataset_candidates"]
+        if item.get("dataset_id") == "dataset_realx3d"
+    ]
+    assert realx3d
+    assert realx3d[0]["decision"] == "candidate"
+    assert (
+        realx3d[0]["source"]
+        == "https://huggingface.co/datasets/ToferFish/RealX3D"
+    )
+    assert "https://huggingface.co/datasets/ToferFish/RealX3D" in policy[
+        "remote_sources"
+    ]
+    stereomis = [
+        item
+        for item in bridge["dataset_candidates"]
+        if item.get("dataset_id") == "dataset_stereomis"
+    ]
+    assert stereomis
+    assert stereomis[0]["local_status"] == "local_existing"
+    assert stereomis[0]["official_source"] == "https://zenodo.org/records/7727692"
+    assert "source" not in stereomis[0]
+    assert "https://zenodo.org/records/7727692" not in policy["remote_sources"]
+    assert "https://doi.org/10.1109/TMI.2023.3245298" not in policy[
+        "remote_sources"
+    ]
     assert bridge["unresolved"] == []
     assert workflow_ctl.external_source_allowed(
         args,
@@ -843,6 +880,72 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
         args,
         "https://github.com/ZcsrenlongZ/SelfSVD",
     )
+
+
+def test_grill_bridge_does_not_treat_literature_baseline_url_as_repo(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "\n".join(
+            [
+                "# Execution Readiness Packet",
+                "",
+                (
+                    "| Input | Redacted Value | Verification Status | "
+                    "Verification Command |"
+                ),
+                "| --- | --- | --- | --- |",
+                "| dataset_root | data/from_grill | candidate | not run |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "docs" / "Research_Intent_Draft.md").write_text(
+        "\n".join(
+            [
+                "# Research Intent Draft",
+                "",
+                (
+                    "| GAN surgical smoke baseline | "
+                    "[MARS-GAN](https://doi.org/10.1109/TMI.2023.3245298) | "
+                    "reported-method baseline only |"
+                ),
+                (
+                    "Clone only first baseline set under `baselines/`: "
+                    "Free-SurGS and Feature 3DGS."
+                ),
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "docs" / "Grill_Round_Log.md").write_text(
+        "# Grill Round Log\n",
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+
+    assert "baseline_repo" not in bridge["values"]
+    assert "https://doi.org/10.1109/TMI.2023.3245298" not in bridge["policy"][
+        "remote_sources"
+    ]
+    assert bridge["unresolved"] == [
+        "baseline repo or existing baseline cache is not explicit in Grill outputs"
+    ]
 
 
 def test_resume_args_approve_clone_sets_external_download_permission(
