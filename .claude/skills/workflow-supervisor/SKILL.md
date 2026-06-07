@@ -80,8 +80,15 @@ by Grill. When `--complete` starts, the supervisor writes
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or labeled contextual
 dataset/baseline URLs; redacted or ambiguous values become typed input
-requests. Successful full prepare still pauses for explicit approval and
-resumes to `prepare_complete` only after approval.
+requests. When the Readiness Packet contains a Dataset Access Ledger or
+candidate dataset manifest, the Grill bridge preserves dataset access
+decisions, skips entries marked `rejected`, `deferred`, or
+`requires_approval` for unattended acquisition, and passes only executable
+`candidate` entries to data-prep. Data-prep records every skipped or failed
+candidate in the worker Gate ledger and tries the next executable candidate
+before creating an `ASK_INPUT` pending request. Successful full prepare still
+pauses for explicit approval and resumes to `prepare_complete` only after
+approval.
 `start --segment build` runs the build registry through structured workers.
 Use `--auto` for Codex delegation, or `--worker-command` for a command template
 that writes `schemas/workflow_supervisor_worker_result.schema.json`. Build

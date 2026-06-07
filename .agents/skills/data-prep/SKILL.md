@@ -67,6 +67,13 @@ If a remote source or local archive is known but the extracted local dataset roo
 
 Record acquisition attempts as Gate Evidence: source URL, target path, command, result, observed bytes or checksum when available, extraction path, and any follow-up stat command. Only mark exact dataset statistics as blocked after this gate is attempted, declined, or impossible to execute in the current environment.
 
+When multiple dataset candidates are available from Grill or the supervisor
+bridge, do not stop after the first failed download/acquisition. Record the
+failed or skipped candidate in the Gate ledger, then try the next executable
+`candidate` entry. Entries marked `rejected`, `deferred`, or
+`requires_approval` are not executable in unattended data-prep and should be
+recorded as `NOT_RUN` unless the operator separately approves them.
+
 ## Remote Repository Selection
 
 Before downloading from a remote dataset repository, inspect the repository contents with source-native listings instead of guessing from a preferred filename. Use dataset APIs, repository trees, manifests, README files, or file-list commands as appropriate. For Hugging Face datasets, check the dataset API and relevant `tree/main/...` listings before choosing archive paths.

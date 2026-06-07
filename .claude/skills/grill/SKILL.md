@@ -35,6 +35,15 @@ Read the mechanism and implementation plan, workflow guide, context layering,
 contract gating, documentation rules, language policy, and ubiquitous language
 before durable edits. Keep exact local/private values in
 `.workflow_supervisor/readiness.json` through tooling; redact public Markdown.
+When datasets are discussed, record a structured `Dataset Access Ledger` or
+equivalent table in `docs/Execution_Readiness_Packet.md`: dataset id, source
+URL or official entrypoint, access verdict, non-destructive download probe,
+execution decision, and notes. Execution decision must be explicit:
+`candidate`, `rejected`, `requires_approval`, or `deferred`. Use repository,
+API, README, HTTP HEAD, or file-list probes when feasible, but do not download
+large assets, private assets, or non-approved gated datasets during Grill;
+`prepare` / WF4 performs actual acquisition and records download Gate
+Evidence.
 
 Outputs:
 - `docs/Research_Intent_Draft.md`

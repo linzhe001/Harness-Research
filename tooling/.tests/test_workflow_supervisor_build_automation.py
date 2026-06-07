@@ -519,6 +519,20 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
                     "video desmoking | https://github.com/ZcsrenlongZ/SelfSVD "
                     "| operator-reported unavailable; not local | reference only |"
                 ),
+                (
+                    "| dataset_stsvd | STSVD | video desmoking | "
+                    "https://example.com/stsvd | public download candidate "
+                    "| future baseline |"
+                ),
+                "",
+                "## Dataset Accessibility Verification",
+                "",
+                "| Dataset ID | Access Verdict | Action |",
+                "| --- | --- | --- |",
+                (
+                    "| dataset_stsvd | not_publicly_verified | "
+                    "Exclude from early subset. |"
+                ),
             ]
         ),
         encoding="utf-8",
@@ -543,4 +557,86 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
     assert "https://github.com/ZcsrenlongZ/SelfSVD" not in bridge["policy"][
         "remote_sources"
     ]
+    rejected = [
+        item
+        for item in bridge["dataset_candidates"]
+        if item.get("dataset_id") == "dataset_selfsvd_lsvd"
+    ]
+    assert rejected
+    assert rejected[0]["decision"] == "rejected"
+    deferred = [
+        item
+        for item in bridge["dataset_candidates"]
+        if item.get("dataset_id") == "dataset_stsvd"
+    ]
+    assert deferred
+    assert deferred[0]["decision"] == "deferred"
+    assert "https://example.com/stsvd" not in bridge["policy"]["remote_sources"]
     assert workflow_ctl.dataset_target_from_args(root, args) == dataset_root
+
+
+def test_data_prep_records_failed_candidate_and_tries_next(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    dataset_root = root / "data"
+    dataset_root.mkdir()
+    local_source = tmp_path / "local_candidate"
+    local_source.mkdir()
+    (local_source / "sample.txt").write_text("data\n", encoding="utf-8")
+    node = {
+        "node_id": "prepare_data_prep",
+        "skill": "data-prep",
+        "timeout_seconds": 120,
+    }
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        dataset_source=None,
+        dataset_target=str(dataset_root),
+        _grill_bridge={
+            "dataset_candidates": [
+                {
+                    "dataset_id": "dataset_selfsvd_lsvd",
+                    "name": "LSVD / SelfSVD",
+                    "source": "https://github.com/ZcsrenlongZ/SelfSVD",
+                    "decision": "rejected",
+                    "reason": "operator_reported_unavailable baidu_request_gated",
+                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                },
+                {
+                    "dataset_id": "dataset_missing_remote",
+                    "name": "Missing Remote",
+                    "source": "https://example.invalid/missing.zip",
+                    "decision": "candidate",
+                    "reason": "candidate public url",
+                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                },
+                {
+                    "dataset_id": "dataset_local_fallback",
+                    "name": "Local Fallback",
+                    "source": str(local_source),
+                    "decision": "candidate",
+                    "reason": "verified local fallback",
+                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                },
+            ]
+        },
+    )
+
+    result = workflow_ctl.run_data_prep_worker(
+        root,
+        args=args,
+        run_id="sup_test",
+        node=node,
+    )
+
+    assert result["status"] == "success"
+    gate_results = [gate["result"] for gate in result["gate_ledger"]]
+    assert gate_results[:3] == ["NOT_RUN", "FAIL", "PASS"]
+    assert "dataset_selfsvd_lsvd not executable" in result["gate_ledger"][0][
+        "reason"
+    ]
+    assert (
+        root / "data" / "local_candidate" / "sample.txt"
+    ).read_text(encoding="utf-8") == "data\n"
+    assert (root / "docs" / "Dataset_Stats.md").exists()

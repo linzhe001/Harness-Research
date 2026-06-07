@@ -179,6 +179,78 @@ CONTEXTUAL_BASELINE_URL_LABELS = {
     "baseline_repository",
     "baseline_clone",
 }
+DATASET_TABLE_SOURCE_HEADERS = {
+    "source",
+    "url",
+    "remote",
+    "dataset_source",
+    "download_source",
+    "repository",
+    "repo",
+}
+DATASET_TABLE_ID_HEADERS = {"dataset_id", "dataset", "id", "name"}
+DATASET_REJECT_MARKERS = {
+    "operator_reported_unavailable",
+    "baidu_request_gated",
+    "request_gated",
+    "request_required",
+    "registration_required",
+    "challenge_gated",
+    "challenge_account_gated",
+    "challenge_gated_no_download",
+    "do_not_download",
+    "not_downloaded_under_current_policy",
+    "excluded_from_download",
+    "reference_future_approval",
+    "future_approval_only",
+    "method_reference_only",
+    "reference_only",
+    "p2_request_only",
+    "not_executable",
+    "not_executable_now",
+    "no_accessible_source",
+    "blocked_do_not",
+    "rejected",
+}
+DATASET_REQUIRES_APPROVAL_MARKERS = {
+    "requires_approval",
+    "approval_required",
+    "separate_approval",
+    "separately_approved",
+    "future_approval",
+    "human_approval",
+}
+DATASET_DEFER_MARKERS = {
+    "deferred",
+    "not_publicly_verified",
+    "public_download_not_verified",
+    "exclude_from_early",
+    "exclude_from_early_subset",
+    "future_baseline",
+    "future_dataset",
+    "p2",
+}
+DATASET_CANDIDATE_MARKERS = {
+    "hf_auth_accepted",
+    "github_conference_set_available",
+    "github_google_drive_candidate",
+    "public_synthetic_candidate",
+    "public_sample",
+    "public_zenodo",
+    "public_with_terms",
+    "download_check_early",
+    "use_early",
+    "use_as",
+    "p0",
+    "p1",
+    "candidate",
+}
+DATASET_DECISION_PRIORITY = {
+    "candidate": 0,
+    "deferred": 1,
+    "requires_approval": 2,
+    "rejected": 3,
+}
 CREATABLE_READINESS_PATH_KEYS = {
     "dataset_root",
     "dataset_path",
@@ -1227,6 +1299,27 @@ def usable_grill_value(value: Any) -> str | None:
     return rendered
 
 
+def normalized_marker_text(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+
+
+def contains_marker(normalized_text: str, markers: set[str]) -> bool:
+    return any(marker in normalized_text for marker in markers)
+
+
+def dataset_access_decision(text: str) -> str:
+    normalized = normalized_marker_text(text)
+    if contains_marker(normalized, DATASET_REJECT_MARKERS):
+        return "rejected"
+    if contains_marker(normalized, DATASET_REQUIRES_APPROVAL_MARKERS):
+        return "requires_approval"
+    if contains_marker(normalized, DATASET_DEFER_MARKERS):
+        return "deferred"
+    if contains_marker(normalized, DATASET_CANDIDATE_MARKERS):
+        return "candidate"
+    return "candidate"
+
+
 def truthy_policy_value(value: str | None) -> bool:
     if value is None:
         return False
@@ -1281,6 +1374,108 @@ def add_bridge_candidate(
             notes=notes,
         ),
     )
+
+
+def markdown_table_header(cells: list[str]) -> list[str] | None:
+    normalized = [normalized_marker_text(cell) for cell in cells]
+    if all(set(cell) <= {"_"} or not cell for cell in normalized):
+        return None
+    if not any("dataset" in cell for cell in normalized):
+        return None
+    if not any(cell in DATASET_TABLE_SOURCE_HEADERS for cell in normalized) and not any(
+        cell in {"access_verdict", "local_status", "first_use", "action"}
+        for cell in normalized
+    ):
+        return None
+    return normalized
+
+
+def table_cell(
+    headers: list[str],
+    cells: list[str],
+    names: set[str],
+) -> str | None:
+    for index, header in enumerate(headers):
+        if header in names and index < len(cells):
+            value = cells[index].strip()
+            if value:
+                return value
+    return None
+
+
+def merge_dataset_candidate(
+    candidates: dict[str, dict[str, str]],
+    *,
+    key: str,
+    update: dict[str, str],
+) -> None:
+    existing = candidates.setdefault(key, {})
+    for field, value in update.items():
+        if value and not existing.get(field):
+            existing[field] = value
+    update_decision = update.get("decision", "candidate")
+    existing_decision = existing.get("decision", "candidate")
+    update_priority = DATASET_DECISION_PRIORITY.get(update_decision, 0)
+    existing_priority = DATASET_DECISION_PRIORITY.get(existing_decision, 0)
+    if update_priority >= existing_priority:
+        existing["decision"] = update_decision
+    if update.get("reason"):
+        reason = update["reason"]
+        existing_reason = existing.get("reason")
+        if existing_reason and reason not in existing_reason:
+            existing["reason"] = f"{existing_reason}; {reason}"
+        elif not existing_reason:
+            existing["reason"] = reason
+
+
+def extract_dataset_candidates_from_packet(
+    text: str,
+    *,
+    source_ref: str,
+) -> list[dict[str, str]]:
+    candidates: dict[str, dict[str, str]] = {}
+    headers: list[str] | None = None
+    for line in text.splitlines():
+        cells = parse_markdown_table_row(line)
+        if not cells:
+            stripped = line.strip()
+            if not stripped.startswith("|") or not stripped.endswith("|"):
+                headers = None
+            continue
+        header = markdown_table_header(cells)
+        if header is not None:
+            headers = header
+            continue
+        if headers is None:
+            continue
+
+        dataset_id = table_cell(headers, cells, {"dataset_id", "id"})
+        dataset_name = table_cell(headers, cells, {"dataset", "name"})
+        source = table_cell(headers, cells, DATASET_TABLE_SOURCE_HEADERS)
+        source = usable_grill_value(source)
+        row_text = " ".join(cells)
+        decision = dataset_access_decision(row_text)
+        key = dataset_id or dataset_name or source
+        if not key:
+            continue
+        update = {
+            "dataset_id": dataset_id or key,
+            "name": dataset_name or dataset_id or key,
+            "decision": decision,
+            "reason": row_text,
+            "source_ref": source_ref,
+        }
+        if source and source_is_remote(source):
+            update["source"] = source
+        elif source and Path(source).is_absolute():
+            update["source"] = source
+        merge_dataset_candidate(candidates, key=key, update=update)
+
+    return [
+        candidate
+        for candidate in candidates.values()
+        if candidate.get("source") or candidate.get("decision") == "rejected"
+    ]
 
 
 def add_readiness_json_bridge_values(
@@ -1413,6 +1608,7 @@ def build_grill_bridge(
     args: argparse.Namespace,
 ) -> tuple[dict[str, Any], str]:
     values: dict[str, dict[str, str]] = {}
+    dataset_candidates: list[dict[str, str]] = []
     input_refs: list[str] = []
     add_readiness_json_bridge_values(workspace_root, values, input_refs)
     for source_ref in GRILL_ARTIFACT_REFS:
@@ -1426,6 +1622,9 @@ def build_grill_bridge(
                 text,
                 source_ref=source_ref,
                 values=values,
+            )
+            dataset_candidates.extend(
+                extract_dataset_candidates_from_packet(text, source_ref=source_ref)
             )
         add_explicit_line_bridge_values(text, source_ref=source_ref, values=values)
         add_contextual_url_bridge_values(text, source_ref=source_ref, values=values)
@@ -1482,11 +1681,17 @@ def build_grill_bridge(
     allow_external = bool(args.allow_external_downloads) or truthy_policy_value(
         allow_policy
     )
+    executable_dataset_sources = [
+        candidate.get("source", "")
+        for candidate in dataset_candidates
+        if candidate.get("decision") == "candidate" and candidate.get("source")
+    ]
     remote_sources = [
         item
         for item in (
             values.get("dataset_source", {}).get("value"),
             values.get("baseline_repo", {}).get("value"),
+            *executable_dataset_sources,
         )
         if item and source_is_remote(item)
     ]
@@ -1512,6 +1717,7 @@ def build_grill_bridge(
         "source": "grill_to_prepare_bridge",
         "input_refs": list(dict.fromkeys(input_refs)),
         "values": values,
+        "dataset_candidates": dataset_candidates,
         "policy": {
             "allow_external_downloads": allow_external,
             "allow_external_downloads_source": (
@@ -1840,6 +2046,104 @@ def dataset_target_from_args(
     return resolve_operator_path(workspace_root, value)
 
 
+def grill_dataset_candidates(args: argparse.Namespace) -> list[dict[str, str]]:
+    bridge = getattr(args, "_grill_bridge", None)
+    if not isinstance(bridge, dict):
+        return []
+    candidates = bridge.get("dataset_candidates")
+    if not isinstance(candidates, list):
+        return []
+    valid: list[dict[str, str]] = []
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        normalized: dict[str, str] = {}
+        for key, value in candidate.items():
+            if isinstance(key, str) and isinstance(value, str):
+                normalized[key] = value
+        valid.append(normalized)
+    return valid
+
+
+def dataset_candidate_target(
+    workspace_root: Path,
+    args: argparse.Namespace,
+    *,
+    source: str | None,
+) -> Path | None:
+    base = dataset_target_from_args(workspace_root, args)
+    if source and base is not None:
+        return base / source_basename(source)
+    if source:
+        return workspace_root / "data" / source_basename(source)
+    return base
+
+
+def dataset_acquisition_entries(
+    workspace_root: Path,
+    args: argparse.Namespace,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    entries: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    bridge_candidates = grill_dataset_candidates(args)
+    source = dataset_source_from_args(workspace_root, args)
+    target = dataset_target_from_args(workspace_root, args)
+
+    if source or (target is not None and not bridge_candidates):
+        entries.append(
+            {
+                "source": source,
+                "target": target,
+                "label": "explicit_dataset",
+                "source_ref": "cli/readiness/grill_bridge",
+            }
+        )
+
+    for candidate in bridge_candidates:
+        decision = candidate.get("decision", "candidate")
+        candidate_source = candidate.get("source")
+        label = candidate.get("dataset_id") or candidate.get("name") or "dataset"
+        if decision != "candidate":
+            skipped.append(
+                {
+                    "label": label,
+                    "source": candidate_source,
+                    "source_ref": candidate.get("source_ref", "grill_bridge"),
+                    "reason": candidate.get(
+                        "reason",
+                        "dataset candidate is not executable under current policy",
+                    ),
+                }
+            )
+            continue
+        candidate_target = dataset_candidate_target(
+            workspace_root,
+            args,
+            source=candidate_source,
+        )
+        entries.append(
+            {
+                "source": candidate_source,
+                "target": candidate_target,
+                "label": label,
+                "source_ref": candidate.get("source_ref", "grill_bridge"),
+            }
+        )
+
+    deduped: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for entry in entries:
+        entry_source = str(entry.get("source") or "")
+        entry_target = entry.get("target")
+        target_key = str(entry_target) if isinstance(entry_target, Path) else ""
+        key = (entry_source, target_key)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(entry)
+    return deduped, skipped
+
+
 def baseline_repos_from_args(
     workspace_root: Path,
     args: argparse.Namespace,
@@ -1873,9 +2177,24 @@ def run_data_prep_worker(
     run_id: str,
     node: dict[str, Any],
 ) -> dict[str, Any]:
-    source = dataset_source_from_args(workspace_root, args)
-    target = dataset_target_from_args(workspace_root, args)
-    if target is None:
+    entries, skipped_candidates = dataset_acquisition_entries(workspace_root, args)
+    skipped_gates = [
+        {
+            "command": "dataset acquisition",
+            "result": "NOT_RUN",
+            "reason": (
+                f"{item['label']} not executable under Grill dataset access verdict: "
+                f"{item['reason']}"
+            ),
+            "artifacts": [
+                str(value)
+                for value in (item.get("source"), item.get("source_ref"))
+                if value
+            ],
+        }
+        for item in skipped_candidates
+    ]
+    if not entries:
         interrupt = {
             "type": "ASK_INPUT",
             "reason": "dataset_input_required",
@@ -1893,10 +2212,13 @@ def run_data_prep_worker(
             summary="dataset target path is missing",
             artifact_refs=[],
             gate_ledger=[
+                *skipped_gates,
                 {
                     "command": "dataset acquisition",
                     "result": "NOT_RUN",
-                    "reason": "dataset target path is missing",
+                    "reason": (
+                        "dataset target path and executable candidates are missing"
+                    ),
                     "artifacts": [],
                 }
             ],
@@ -1904,43 +2226,80 @@ def run_data_prep_worker(
             interrupt_request=interrupt,
         )
 
-    acquisition = acquire_source(
-        workspace_root,
-        source=source,
-        target=target,
-        allow_external_downloads=effective_allow_external_downloads(args),
-        timeout=int(node.get("timeout_seconds", 900)),
-    )
-    if not acquisition["ok"]:
+    gate_ledger: list[dict[str, Any]] = [*skipped_gates]
+    acquisition: dict[str, Any] | None = None
+    target: Path | None = None
+    source: str | None = None
+    for entry in entries:
+        entry_target = entry.get("target")
+        entry_source = entry.get("source")
+        if not isinstance(entry_target, Path):
+            gate_ledger.append(
+                {
+                    "command": "dataset acquisition",
+                    "result": "NOT_RUN",
+                    "reason": f"{entry.get('label', 'dataset')} target path is missing",
+                    "artifacts": [
+                        str(value)
+                        for value in (entry_source, entry.get("source_ref"))
+                        if value
+                    ],
+                }
+            )
+            continue
+        result = acquire_source(
+            workspace_root,
+            source=entry_source if isinstance(entry_source, str) else None,
+            target=entry_target,
+            allow_external_downloads=effective_allow_external_downloads(args),
+            timeout=int(node.get("timeout_seconds", 900)),
+        )
+        gate_ledger.append(
+            {
+                "command": str(result["command"]),
+                "result": "PASS" if result["ok"] else "FAIL",
+                "reason": (
+                    f"{entry.get('label', 'dataset')}: {str(result['reason'])}"
+                ),
+                "artifacts": result.get("artifacts", []),
+            }
+        )
+        if result["ok"]:
+            acquisition = result
+            target = entry_target
+            source = entry_source if isinstance(entry_source, str) else None
+            break
+
+    if acquisition is None:
         interrupt = {
             "type": "ASK_INPUT",
             "reason": "dataset_input_required",
             "question": (
                 "Dataset acquisition could not proceed. Provide an existing "
-                "dataset path, or rerun with --dataset-source, --dataset-target, "
-                "and --allow-external-downloads for remote sources."
+                "dataset path, approve a currently blocked download, or revise "
+                "the Grill dataset candidate order."
             ),
             "allowed_responses": ["provide_dataset_path", "approve_download", "reject"],
         }
+        summary = (
+            "dataset acquisition candidates were exhausted"
+            if gate_ledger
+            else "dataset acquisition could not run"
+        )
         return worker_result_payload(
             run_id=run_id,
             node=node,
             status="interrupt_requested",
             exit_code=1,
-            summary=str(acquisition["reason"]),
+            summary=summary,
             artifact_refs=[],
-            gate_ledger=[
-                {
-                    "command": str(acquisition["command"]),
-                    "result": "FAIL",
-                    "reason": str(acquisition["reason"]),
-                    "artifacts": acquisition.get("artifacts", []),
-                }
-            ],
+            gate_ledger=gate_ledger,
             observed_writes=[],
             interrupt_request=interrupt,
         )
 
+    if target is None:
+        raise RuntimeError("dataset acquisition succeeded without a target")
     docs_dir = workspace_root / "docs"
     evidence_dir = docs_dir / "30_evidence"
     stats = path_stats(target)
@@ -1993,12 +2352,7 @@ def run_data_prep_worker(
         summary="dataset acquired or verified and stats report written",
         artifact_refs=artifacts,
         gate_ledger=[
-            {
-                "command": str(acquisition["command"]),
-                "result": "PASS",
-                "reason": str(acquisition["reason"]),
-                "artifacts": [str(item) for item in acquisition.get("artifacts", [])],
-            },
+            *gate_ledger,
             {
                 "command": f"path_stats {dataset_ref}",
                 "result": "PASS",

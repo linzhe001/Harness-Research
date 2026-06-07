@@ -181,6 +181,13 @@ follow-up stat command. Only mark exact dataset statistics as blocked after
 this gate is attempted, declined, or impossible to execute in the current
 environment.
 
+When multiple dataset candidates are available from Grill or the supervisor
+bridge, do not stop after the first failed download/acquisition. Record the
+failed or skipped candidate in the Gate ledger, then try the next executable
+`candidate` entry. Entries marked `rejected`, `deferred`, or
+`requires_approval` are not executable in unattended data-prep and should be
+recorded as `NOT_RUN` unless the operator separately approves them.
+
 ## Remote Repository Selection
 
 Before downloading from a remote dataset repository, inspect the repository

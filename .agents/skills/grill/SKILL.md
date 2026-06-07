@@ -89,6 +89,16 @@ Exact local paths, commands, budgets, and private values belong in
 values and mark them as candidate inputs until readiness preflight verifies
 them.
 
+When Grill discusses datasets, record a structured `Dataset Access Ledger` or
+equivalent table in `docs/Execution_Readiness_Packet.md` with these fields:
+dataset id, source URL or official entrypoint, access verdict, non-destructive
+download probe result, execution decision, and notes. Execution decision must
+be explicit: `candidate`, `rejected`, `requires_approval`, or `deferred`.
+Use repository/API/README/HTTP HEAD/file-list probes when feasible, but do not
+download large assets, private assets, or non-approved gated datasets during
+Grill. `prepare` / WF4 performs the actual acquisition and records download
+Gate Evidence.
+
 Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
 `iteration_log.json`. Those are canonical research-workspace state files owned
 by later workflow/state tooling, stable build planning, and WF10 iteration.

@@ -51,6 +51,8 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     assert "## Round Contract" in log
     assert "## Current Gap Check" in log
     assert "This packet is not a Review Packet" in packet
+    assert "## Dataset Access Ledger" in packet
+    assert "Execution Decision must be one of" in packet
     assert not (root / ".evidence").exists()
     assert not (root / ".workflow_supervisor").exists()
 

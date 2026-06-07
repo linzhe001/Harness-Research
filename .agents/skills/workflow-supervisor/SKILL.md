@@ -107,8 +107,15 @@ by Grill. Local paths can be copied or verified without that flag. When
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or labeled contextual
 dataset/baseline URLs; redacted or ambiguous values become typed input
-requests. A successful full prepare still pauses for the WF5 approval request
-and resumes to `prepare_complete` only after explicit approval.
+requests. When `docs/Execution_Readiness_Packet.md` contains a Dataset Access
+Ledger or candidate dataset manifest, the Grill bridge must preserve dataset
+access decisions, skip entries marked `rejected`, `deferred`, or
+`requires_approval` for unattended acquisition, and pass only executable
+`candidate` entries to data-prep. Data-prep records every skipped or failed
+candidate in the worker Gate ledger and tries the next executable candidate
+before creating an `ASK_INPUT` pending request. A successful full prepare still
+pauses for the WF5 approval request and resumes to `prepare_complete` only
+after explicit approval.
 `start --segment build` now runs the build node registry through structured
 workers. Use `--auto` to delegate non-deterministic nodes to Codex, or
 `--worker-command` to provide a command template that writes
