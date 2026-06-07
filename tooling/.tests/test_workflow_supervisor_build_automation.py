@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
 import sys
@@ -464,3 +465,82 @@ def test_prepare_complete_bridges_grill_readiness_packet(
         / "grill_baseline_source"
         / "train.py"
     ).exists()
+
+
+def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    dataset_root = tmp_path / "smoke_data"
+    dataset_root.mkdir()
+    readiness_dir = root / ".workflow_supervisor"
+    readiness_dir.mkdir()
+    workflow_ctl.atomic_write_json(
+        readiness_dir / "readiness.json",
+        {
+            "schema_version": 1,
+            "updated_at": "2026-06-07T08:15:07+08:00",
+            "source": "grill",
+            "inputs": [
+                {
+                    "key": "dataset_root_wsl",
+                    "kind": "path",
+                    "value": str(dataset_root),
+                    "redacted_value": "recorded WSL dataset root",
+                    "verification_status": "verified",
+                    "verified_at": "2026-06-07T08:15:07+08:00",
+                    "verification_command": f"test -d {dataset_root}",
+                    "notes": "WSL-visible dataset storage root",
+                }
+            ],
+        },
+    )
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "\n".join(
+            [
+                "# Execution Readiness Packet",
+                "",
+                (
+                    "| Input | Redacted Value | Verification Status | "
+                    "Verification Command |"
+                ),
+                "| --- | --- | --- | --- |",
+                (
+                    "| dataset_root_wsl | Windows F drive dataset root via WSL mount "
+                    "| verified | path check through readiness tooling |"
+                ),
+                "",
+                "## Candidate Dataset Manifest",
+                "",
+                "| Dataset ID | Dataset | Role | Source | Local Status | First Use |",
+                "| --- | --- | --- | --- | --- | --- |",
+                (
+                    "| dataset_selfsvd_lsvd | LSVD / SelfSVD | real pre-smoke "
+                    "video desmoking | https://github.com/ZcsrenlongZ/SelfSVD "
+                    "| operator-reported unavailable; not local | reference only |"
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+
+    assert bridge["values"]["dataset_root"]["value"] == str(dataset_root)
+    assert "dataset_source" not in bridge["values"]
+    assert "baseline_repo" not in bridge["values"]
+    assert "https://github.com/ZcsrenlongZ/SelfSVD" not in bridge["policy"][
+        "remote_sources"
+    ]
+    assert workflow_ctl.dataset_target_from_args(root, args) == dataset_root

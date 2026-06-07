@@ -109,6 +109,7 @@ GRILL_BRIDGE_KEYS = {
     "dataset_source",
     "dataset_remote",
     "dataset_root",
+    "dataset_root_wsl",
     "dataset_path",
     "dataset_target",
     "dataset_download_dir",
@@ -128,6 +129,7 @@ GRILL_KEY_ALIASES = {
     "data_source": "dataset_source",
     "data_url": "dataset_source",
     "dataset_root": "dataset_root",
+    "dataset_root_wsl": "dataset_root",
     "dataset_path": "dataset_root",
     "dataset_target": "dataset_root",
     "dataset_download_dir": "dataset_root",
@@ -160,6 +162,22 @@ GRILL_REDACTED_VALUES = {
     "na",
     "not run",
     "candidate",
+}
+CONTEXTUAL_DATASET_URL_LABELS = {
+    "dataset_source",
+    "dataset_url",
+    "dataset_remote",
+    "dataset_download_url",
+    "data_source",
+    "data_url",
+}
+CONTEXTUAL_BASELINE_URL_LABELS = {
+    "baseline_repo",
+    "baseline_source",
+    "baseline_url",
+    "baseline_git",
+    "baseline_repository",
+    "baseline_clone",
 }
 CREATABLE_READINESS_PATH_KEYS = {
     "dataset_root",
@@ -1359,26 +1377,32 @@ def add_contextual_url_bridge_values(
 ) -> None:
     url_re = re.compile(r"(https?://[^\s`'\"<>]+|git@[^\s`'\"<>]+)")
     for line in text.splitlines():
-        lower = line.lower()
+        normalized_line = re.sub(r"[^a-z0-9]+", "_", line.lower()).strip("_")
+        has_dataset_label = any(
+            label in normalized_line for label in CONTEXTUAL_DATASET_URL_LABELS
+        )
+        has_baseline_label = any(
+            label in normalized_line for label in CONTEXTUAL_BASELINE_URL_LABELS
+        )
         for match in url_re.finditer(line):
             value = match.group(1).rstrip(".,;)")
-            if "dataset" in lower or "data set" in lower:
+            if has_dataset_label:
                 add_bridge_candidate(
                     values,
                     key="dataset_source",
                     value=value,
                     source_ref=source_ref,
                     confidence="contextual_dataset_url",
-                    notes="line mentions dataset and contains a URL",
+                    notes="line labels dataset source and contains a URL",
                 )
-            if "baseline" in lower or "repo" in lower or "clone" in lower:
+            if has_baseline_label:
                 add_bridge_candidate(
                     values,
                     key="baseline_repo",
                     value=value,
                     source_ref=source_ref,
                     confidence="contextual_baseline_url",
-                    notes="line mentions baseline/repo/clone and contains a URL",
+                    notes="line labels baseline source and contains a URL",
                 )
 
 
@@ -1809,6 +1833,7 @@ def dataset_target_from_args(
     value = (
         args.dataset_target
         or readiness_value(workspace_root, "dataset_root")
+        or readiness_value(workspace_root, "dataset_root_wsl")
         or readiness_value(workspace_root, "dataset_path")
         or grill_bridge_value(args, "dataset_root")
     )
