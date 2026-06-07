@@ -200,6 +200,23 @@ DATASET_TABLE_SOURCE_HEADERS = {
     "repo",
 }
 DATASET_TABLE_ID_HEADERS = {"dataset_id", "dataset", "id", "name"}
+BASELINE_TABLE_SOURCE_HEADERS = {
+    "code_repository_or_entrypoint",
+    "code_repository",
+    "repository",
+    "repo",
+    "source",
+    "official_code_entrypoint",
+    "entrypoint",
+    "baseline_repo",
+}
+BASELINE_TABLE_ID_HEADERS = {
+    "baseline_id",
+    "baseline",
+    "baseline_id_name",
+    "id",
+    "name",
+}
 DATASET_REJECT_MARKERS = {
     "operator_reported_unavailable",
     "baidu_request_gated",
@@ -220,6 +237,10 @@ DATASET_REJECT_MARKERS = {
     "not_executable",
     "not_executable_now",
     "no_accessible_source",
+    "baseline_repo_missing",
+    "repo_missing",
+    "code_missing",
+    "reported_method",
     "blocked_do_not",
     "rejected",
 }
@@ -1401,6 +1422,29 @@ def baseline_clone_markers_from_text(text: str) -> list[str]:
     return list(dict.fromkeys(markers))
 
 
+def allowed_baseline_repo_urls_from_text(
+    text: str,
+    *,
+    allowed_markers: list[str],
+) -> list[str]:
+    if not allowed_markers:
+        return []
+    repos: list[str] = []
+    url_re = re.compile(r"(https?://[^\s`'\"<>]+|git@[^\s`'\"<>]+)")
+    for line in text.splitlines():
+        normalized_line = normalized_marker_text(line)
+        if "baseline" not in normalized_line and "code" not in normalized_line:
+            continue
+        for match in url_re.finditer(line):
+            value = match.group(1).rstrip(".,;)")
+            if not source_is_git(value):
+                continue
+            source_name = normalized_marker_text(source_basename(value))
+            if any(marker in source_name for marker in allowed_markers):
+                repos.append(value)
+    return list(dict.fromkeys(repos))
+
+
 def remote_source_allowed_by_policy(policy: dict[str, Any], source: str) -> bool:
     if not source_is_remote(source):
         return True
@@ -1484,6 +1528,17 @@ def markdown_table_header(cells: list[str]) -> list[str] | None:
         cell in {"access_verdict", "local_status", "first_use", "action"}
         for cell in normalized
     ):
+        return None
+    return normalized
+
+
+def baseline_table_header(cells: list[str]) -> list[str] | None:
+    normalized = [normalized_marker_text(cell) for cell in cells]
+    if all(set(cell) <= {"_"} or not cell for cell in normalized):
+        return None
+    if not any("baseline" in cell for cell in normalized):
+        return None
+    if not any(cell in BASELINE_TABLE_SOURCE_HEADERS for cell in normalized):
         return None
     return normalized
 
@@ -1585,6 +1640,60 @@ def extract_dataset_candidates_from_packet(
     ]
 
 
+def extract_baseline_candidates_from_packet(
+    text: str,
+    *,
+    source_ref: str,
+) -> list[dict[str, str]]:
+    candidates: dict[str, dict[str, str]] = {}
+    headers: list[str] | None = None
+    for line in text.splitlines():
+        cells = parse_markdown_table_row(line)
+        if not cells:
+            stripped = line.strip()
+            if not stripped.startswith("|") or not stripped.endswith("|"):
+                headers = None
+            continue
+        header = baseline_table_header(cells)
+        if header is not None:
+            headers = header
+            continue
+        if headers is None:
+            continue
+
+        baseline_id = table_cell(headers, cells, BASELINE_TABLE_ID_HEADERS)
+        role = table_cell(headers, cells, {"role", "purpose"})
+        source = table_cell(headers, cells, BASELINE_TABLE_SOURCE_HEADERS)
+        source = usable_grill_value(source)
+        row_text = " ".join(cells)
+        decision = dataset_access_decision(row_text)
+        key = baseline_id or role or source
+        if not key:
+            continue
+        update = {
+            "baseline_id": baseline_id or key,
+            "role": role or baseline_id or key,
+            "decision": decision,
+            "reason": row_text,
+            "source_ref": source_ref,
+        }
+        if decision == "candidate" and source:
+            if source_is_git(source) or Path(source).is_absolute():
+                update["source"] = source
+            else:
+                update["decision"] = "rejected"
+                update["reason"] = f"{row_text}; source is not cloneable"
+        elif source and (source_is_remote(source) or Path(source).is_absolute()):
+            update["source"] = source
+        merge_dataset_candidate(candidates, key=key, update=update)
+
+    return [
+        candidate
+        for candidate in candidates.values()
+        if candidate.get("source") or candidate.get("decision") == "rejected"
+    ]
+
+
 def add_readiness_json_bridge_values(
     workspace_root: Path,
     values: dict[str, dict[str, str]],
@@ -1679,6 +1788,8 @@ def add_contextual_url_bridge_values(
 ) -> None:
     url_re = re.compile(r"(https?://[^\s`'\"<>]+|git@[^\s`'\"<>]+)")
     for line in text.splitlines():
+        if parse_markdown_table_row(line):
+            continue
         normalized_line = re.sub(r"[^a-z0-9]+", "_", line.lower()).strip("_")
         has_dataset_label = contains_normalized_label(
             normalized_line,
@@ -1718,7 +1829,9 @@ def build_grill_bridge(
 ) -> tuple[dict[str, Any], str]:
     values: dict[str, dict[str, str]] = {}
     dataset_candidates: list[dict[str, str]] = []
+    baseline_candidates: list[dict[str, str]] = []
     allowed_baseline_repo_markers: list[str] = []
+    artifact_texts: list[tuple[str, str]] = []
     input_refs: list[str] = []
     add_readiness_json_bridge_values(workspace_root, values, input_refs)
     for source_ref in GRILL_ARTIFACT_REFS:
@@ -1727,6 +1840,7 @@ def build_grill_bridge(
             continue
         input_refs.append(source_ref)
         text = path.read_text(encoding="utf-8")
+        artifact_texts.append((source_ref, text))
         if source_ref.endswith("Execution_Readiness_Packet.md"):
             add_packet_table_bridge_values(
                 text,
@@ -1735,6 +1849,9 @@ def build_grill_bridge(
             )
             dataset_candidates.extend(
                 extract_dataset_candidates_from_packet(text, source_ref=source_ref)
+            )
+            baseline_candidates.extend(
+                extract_baseline_candidates_from_packet(text, source_ref=source_ref)
             )
         add_explicit_line_bridge_values(text, source_ref=source_ref, values=values)
         add_contextual_url_bridge_values(text, source_ref=source_ref, values=values)
@@ -1813,9 +1930,47 @@ def build_grill_bridge(
     allowed_baseline_repo_markers = list(
         dict.fromkeys(allowed_baseline_repo_markers)
     )
+    if not values.get("baseline_repo"):
+        executable_baselines = [
+            candidate
+            for candidate in baseline_candidates
+            if candidate.get("decision") == "candidate" and candidate.get("source")
+        ]
+        if executable_baselines:
+            values["baseline_repo"] = bridge_candidate(
+                executable_baselines[0]["source"],
+                source_ref=executable_baselines[0].get(
+                    "source_ref", "docs/Execution_Readiness_Packet.md"
+                ),
+                confidence="baseline_source_ledger",
+                notes="parsed from executable Baseline Source Ledger row",
+            )
+        for source_ref, text in artifact_texts:
+            if values.get("baseline_repo"):
+                break
+            allowed_repos = allowed_baseline_repo_urls_from_text(
+                text,
+                allowed_markers=allowed_baseline_repo_markers,
+            )
+            if allowed_repos:
+                values["baseline_repo"] = bridge_candidate(
+                    allowed_repos[0],
+                    source_ref=source_ref,
+                    confidence="explicit_grill_clone_scope_url",
+                    notes=(
+                        "parsed from a Git repository URL matching the allowed "
+                        "first baseline clone scope"
+                    ),
+                )
+                break
     executable_dataset_sources = [
         candidate.get("source", "")
         for candidate in dataset_candidates
+        if candidate.get("decision") == "candidate" and candidate.get("source")
+    ]
+    executable_baseline_sources = [
+        candidate.get("source", "")
+        for candidate in baseline_candidates
         if candidate.get("decision") == "candidate" and candidate.get("source")
     ]
     remote_sources = [
@@ -1824,6 +1979,7 @@ def build_grill_bridge(
             values.get("dataset_source", {}).get("value"),
             values.get("baseline_repo", {}).get("value"),
             *executable_dataset_sources,
+            *executable_baseline_sources,
         )
         if item and source_is_remote(item)
     ]
@@ -1866,6 +2022,7 @@ def build_grill_bridge(
         "input_refs": list(dict.fromkeys(input_refs)),
         "values": values,
         "dataset_candidates": dataset_candidates,
+        "baseline_candidates": baseline_candidates,
         "policy": policy,
         "unresolved": unresolved,
     }
@@ -2205,6 +2362,25 @@ def grill_dataset_candidates(args: argparse.Namespace) -> list[dict[str, str]]:
     return valid
 
 
+def grill_baseline_candidates(args: argparse.Namespace) -> list[dict[str, str]]:
+    bridge = getattr(args, "_grill_bridge", None)
+    if not isinstance(bridge, dict):
+        return []
+    candidates = bridge.get("baseline_candidates")
+    if not isinstance(candidates, list):
+        return []
+    valid: list[dict[str, str]] = []
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        normalized: dict[str, str] = {}
+        for key, value in candidate.items():
+            if isinstance(key, str) and isinstance(value, str):
+                normalized[key] = value
+        valid.append(normalized)
+    return valid
+
+
 def dataset_candidate_target(
     workspace_root: Path,
     args: argparse.Namespace,
@@ -2296,6 +2472,12 @@ def baseline_repos_from_args(
     bridge_value = grill_bridge_value(args, "baseline_repo")
     if bridge_value:
         repos.append(bridge_value)
+    for candidate in grill_baseline_candidates(args):
+        if candidate.get("decision") != "candidate":
+            continue
+        source = candidate.get("source")
+        if source:
+            repos.append(source)
     return list(dict.fromkeys(repos))
 
 

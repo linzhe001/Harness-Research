@@ -57,6 +57,8 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     assert "direct acquisition source" in packet
     assert "code repository URL" in packet
     assert "Execution Decision must be one of" in packet
+    assert "| pending | pending | pending | not run | deferred | pending |" in packet
+    assert "baseline_repo_missing" in packet
     assert not (root / ".evidence").exists()
     assert not (root / ".workflow_supervisor").exists()
 

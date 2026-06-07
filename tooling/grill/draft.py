@@ -426,7 +426,7 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
                 "Execution Decision | Notes |"
             ),
             "| --- | --- | --- | --- | --- | --- |",
-            "| pending | pending | candidate | not run | candidate | pending |",
+            "| pending | pending | pending | not run | deferred | pending |",
             "",
             "Execution Decision must be one of: `candidate`, `rejected`,",
             "`requires_approval`, or `deferred`.",
@@ -446,7 +446,13 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
                 "Repo Probe | Execution Decision | Notes |"
             ),
             "| --- | --- | --- | --- | --- | --- |",
-            "| pending | pending | pending | not run | candidate | pending |",
+            (
+                "| pending | pending | pending | not run | "
+                "baseline_repo_missing | pending |"
+            ),
+            "",
+            "Execution Decision must be one of: `candidate`, `rejected`,",
+            "`requires_approval`, `deferred`, or `baseline_repo_missing`.",
             "",
             "## Verified Facts",
             "",

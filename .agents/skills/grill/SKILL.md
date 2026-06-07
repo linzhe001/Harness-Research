@@ -54,6 +54,13 @@ and the remaining uncertainty is explicit:
 
 If any of these are missing, continue discussion or record the missing item as
 an unresolved question. Do not hide the gap by writing a polished draft.
+Before recommending or accepting `grill_draft_ready`, make sure
+`docs/Execution_Readiness_Packet.md` has a non-placeholder Execution Intent
+Ledger, Dataset Access Ledger, and Baseline Source Ledger. Every active dataset
+and every executable baseline/negative control must have either a concrete
+acquisition source plus `Execution Decision: candidate`, or an explicit
+non-executable decision such as `deferred`, `requires_approval`, `rejected`, or
+`baseline_repo_missing`.
 
 ## Question Policy
 
@@ -152,6 +159,13 @@ readiness policy, not Approval Evidence or Approved Contracts. Deferred,
 rejected, or `requires_approval` dataset rows remain non-executable until a
 later explicit operator approval expands scope.
 
+At Grill handoff, do not leave active acquisition rows as `pending`. If an
+active source is unknown, record the blocker as `baseline_repo_missing`,
+`missing_dataset_source`, `requires_approval`, or `deferred`; if the source is
+known, record the exact URL/id/local-path class and the intended acquisition
+mode, such as Hugging Face auth download, local path verification, Git clone,
+release/archive download, or no-download reference inspection.
+
 Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
 `iteration_log.json`. Those are canonical research-workspace state files owned
 by later workflow/state tooling, stable build planning, and WF10 iteration.
@@ -220,7 +234,9 @@ and must not mark WF1-WF3 complete. It does not create `PROJECT_STATE.json`,
 Return one of:
 - `continue_grill`: blocking gaps remain and the next question is clear.
 - `grill_draft_ready`: draft artifacts exist, unresolved questions are clear,
-  the operator chose to hand off the draft, and
+  Execution Intent, Dataset Access, and Baseline Source ledgers separate
+  executable sources from deferred/missing/approval-required sources, the
+  operator chose to hand off the draft, and
   `$init-project update-from-grill` has run or is reported as `NOT_RUN`.
 - `grill_bridge_complete`: canonical WF1-WF3 artifacts and Gate ledger exist.
 - `pivot` or `abandon`: operator chose not to proceed with the draft.

@@ -703,7 +703,6 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
         ),
         encoding="utf-8",
     )
-
     args = argparse.Namespace(
         allow_external_downloads=False,
         baseline_repo=[],
@@ -739,6 +738,215 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
     assert deferred[0]["decision"] == "deferred"
     assert "https://example.com/stsvd" not in bridge["policy"]["remote_sources"]
     assert workflow_ctl.dataset_target_from_args(root, args) == dataset_root
+
+
+def test_grill_bridge_does_not_promote_deferred_table_urls_to_values(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    dataset_root = tmp_path / "smoke_data"
+    dataset_root.mkdir()
+    readiness_dir = root / ".workflow_supervisor"
+    readiness_dir.mkdir()
+    workflow_ctl.atomic_write_json(
+        readiness_dir / "readiness.json",
+        {
+            "schema_version": 1,
+            "inputs": [
+                {
+                    "key": "dataset_root_wsl",
+                    "kind": "path",
+                    "value": str(dataset_root),
+                    "redacted_value": "recorded WSL dataset root",
+                    "verification_status": "verified",
+                    "verification_command": f"test -d {dataset_root}",
+                },
+            ],
+        },
+    )
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "\n".join(
+            [
+                "# Execution Readiness Packet",
+                "",
+                "| Intent Key | Redacted Policy Or Scope | Status | Notes |",
+                "| --- | --- | --- | --- |",
+                (
+                    "| `hf_access_policy` | Use operator Hugging Face auth "
+                    "for RealX3D and SeeThroughSmoke | candidate-clear | "
+                    "Source-specific HF allowance only. |"
+                ),
+                (
+                    "| `baseline_clone_policy` | Clone only the first baseline "
+                    "set under `baselines/` during prepare | candidate-clear | "
+                    "Does not authorize extra 2D/deferred baselines. |"
+                ),
+                (
+                    "| `baseline_clone_scope` | Free-SurGS and Feature 3DGS | "
+                    "candidate-clear | First baseline set only. |"
+                ),
+                "",
+                "## Dataset Access Ledger",
+                "",
+                (
+                    "| Dataset ID | Source URL Or Official Entrypoint | "
+                    "Access Verdict | Non-Destructive Download Probe Result | "
+                    "Execution Decision | Notes |"
+                ),
+                "| --- | --- | --- | --- | --- | --- |",
+                (
+                    "| `dataset_realx3d` | "
+                    "https://huggingface.co/datasets/ToferFish/RealX3D | "
+                    "`hf_page_reachable_not_verified_local` | HTTP 200 | "
+                    "`candidate` | Future required HF download/check item. |"
+                ),
+                (
+                    "| `dataset_see_through_smoke` | "
+                    "https://huggingface.co/datasets/artJiang20/SeeThroughSmoke | "
+                    "`hf_auth_accepted_not_local` | HTTP 200 | "
+                    "`candidate` | Use operator HF auth only. |"
+                ),
+                (
+                    "| `dataset_selfsvd_lsvd` | "
+                    "https://github.com/ZcsrenlongZ/SelfSVD | "
+                    "`operator_reported_unavailable` + `baidu_request_gated` | "
+                    "Not reprobed. | `deferred` | Method reference only; "
+                    "do not download in early plan. |"
+                ),
+                (
+                    "| `dataset_desmoke_lap` | "
+                    "https://github.com/yiroup20/DeSmoke-LAP | "
+                    "`not_active_after_round16` | Not reprobed. | "
+                    "`deferred` | Keep as baseline context; "
+                    "do not download now. |"
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "docs" / "Research_Intent_Draft.md").write_text(
+        "\n".join(
+            [
+                "# Research Intent Draft",
+                "",
+                (
+                    "| SfM-free surgical cold start | "
+                    "[Free-SurGS](https://papers.miccai.org/miccai-2024/"
+                    "341-Paper1818.html), "
+                    "[code](https://github.com/wrld/Free-SurGS) | "
+                    "baseline support |"
+                ),
+                (
+                    "Clone only first baseline set under `baselines/`: "
+                    "Free-SurGS and Feature 3DGS."
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+
+    assert "dataset_source" not in bridge["values"]
+    assert (
+        bridge["values"]["baseline_repo"]["value"]
+        == "https://github.com/wrld/Free-SurGS"
+    )
+    remote_sources = bridge["policy"]["remote_sources"]
+    assert "https://huggingface.co/datasets/ToferFish/RealX3D" in remote_sources
+    assert (
+        "https://huggingface.co/datasets/artJiang20/SeeThroughSmoke"
+        in remote_sources
+    )
+    assert "https://github.com/wrld/Free-SurGS" in remote_sources
+    assert "https://github.com/ZcsrenlongZ/SelfSVD" not in remote_sources
+    assert "https://github.com/yiroup20/DeSmoke-LAP" not in remote_sources
+    assert bridge["unresolved"] == []
+
+
+def test_grill_bridge_uses_executable_baseline_source_ledger(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "\n".join(
+            [
+                "# Execution Readiness Packet",
+                "",
+                "| Intent Key | Redacted Policy Or Scope | Status | Notes |",
+                "| --- | --- | --- | --- |",
+                (
+                    "| `baseline_clone_scope` | Free-SurGS and Feature 3DGS | "
+                    "candidate-clear | First baseline set only. |"
+                ),
+                "",
+                "## Baseline Source Ledger",
+                "",
+                (
+                    "| Baseline ID | Role | Code Repository Or Entrypoint | "
+                    "Repo Probe | Execution Decision | Notes |"
+                ),
+                "| --- | --- | --- | --- | --- | --- |",
+                (
+                    "| `baseline_free_surgs` | SfM-free cold start | "
+                    "https://github.com/wrld/Free-SurGS | HEAD not run | "
+                    "`candidate` | First baseline set. |"
+                ),
+                (
+                    "| `baseline_selfsvd` | 2D video desmoking reference | "
+                    "https://github.com/ZcsrenlongZ/SelfSVD | not run | "
+                    "`deferred` | Data access separately required. |"
+                ),
+                (
+                    "| `baseline_mars_gan` | reported method | pending | "
+                    "not run | baseline_repo_missing | no code repo found. |"
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+    setattr(args, "_grill_bridge", bridge)
+
+    assert (
+        bridge["values"]["baseline_repo"]["value"]
+        == "https://github.com/wrld/Free-SurGS"
+    )
+    candidates = bridge["baseline_candidates"]
+    assert [
+        item["source"]
+        for item in candidates
+        if item.get("decision") == "candidate"
+    ] == ["https://github.com/wrld/Free-SurGS"]
+    assert "https://github.com/ZcsrenlongZ/SelfSVD" not in bridge["policy"][
+        "remote_sources"
+    ]
+    assert workflow_ctl.baseline_repos_from_args(root, args) == [
+        "https://github.com/wrld/Free-SurGS"
+    ]
 
 
 def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(

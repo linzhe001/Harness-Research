@@ -61,6 +61,12 @@ or as a `baseline_repo_missing` / dataset-source blocker until the acquisition
 source is found. Record baseline candidates in a `Baseline Source Ledger` or
 equivalent table with baseline id/name, role, code repository URL or official
 code entrypoint, repo/code probe result, execution decision, and notes.
+Before recommending or accepting `grill_draft_ready`, make sure
+`docs/Execution_Readiness_Packet.md` has non-placeholder Execution Intent,
+Dataset Access, and Baseline Source ledgers. Every active dataset and executable
+baseline/negative control must have either a concrete acquisition source plus
+`Execution Decision: candidate`, or an explicit non-executable decision such as
+`deferred`, `requires_approval`, `rejected`, or `baseline_repo_missing`.
 
 When external acquisition, clone, or access intent is discussed, also record an
 `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror the
@@ -76,6 +82,10 @@ intentionally broad global external download/clone policy. Use readiness input
 `kind: policy`. These rows are candidate readiness policy, not Approval
 Evidence or Approved Contracts; deferred, rejected, or `requires_approval`
 dataset rows remain non-executable until later explicit approval expands scope.
+Do not leave active acquisition rows as `pending` at handoff; record the
+intended acquisition mode such as Hugging Face auth download, local path
+verification, Git clone, release/archive download, or no-download reference
+inspection.
 
 Outputs:
 - `docs/Research_Intent_Draft.md`
@@ -113,5 +123,6 @@ handoff, and do not create `PROJECT_STATE.json`, `project_map.json`, or
 
 Exit with `grill_draft_ready`, `grill_bridge_complete`, `pivot`, or `abandon`,
 and report Gate Evidence for durable writes or skipped checks. A
-`grill_draft_ready` exit requires `/init-project update-from-grill` to have run
-or to be reported as `NOT_RUN`.
+`grill_draft_ready` exit requires executable and non-executable acquisition
+sources to be separated in the readiness ledgers, and
+`/init-project update-from-grill` to have run or to be reported as `NOT_RUN`.
