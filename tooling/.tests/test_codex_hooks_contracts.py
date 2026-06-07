@@ -273,6 +273,22 @@ def test_grill_skill_requires_execution_intent_ledger() -> None:
         assert "kind: policy" in text
 
 
+def test_grill_skill_requires_executable_source_provenance() -> None:
+    agents_skill = (REPO_ROOT / ".agents/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    claude_skill = (REPO_ROOT / ".claude/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    for text in [agents_skill, claude_skill]:
+        assert "code repository URL" in text
+        assert "direct downloadable" in text
+        assert "Baseline Source Ledger" in text
+        assert "baseline_repo_missing" in text
+        assert "non-executable" in text
+
+
 def test_init_project_contract_supports_grill_handoff() -> None:
     contract = contract_by_skill(REPO_ROOT, "init-project")
     assert contract is not None

@@ -42,8 +42,12 @@ and the remaining uncertainty is explicit:
 - candidate claim
 - falsifier or not-worth-continuing result
 - target metric or evaluation signal
-- expected baseline or negative control
-- dataset / compute assumptions
+- expected baseline or negative control, including a code repository URL or an
+  explicit missing-repo blocker for each executable baseline
+- dataset / compute assumptions, including a direct downloadable source,
+  official dataset API, Hugging Face dataset id, release/archive URL, exact
+  local path in private readiness, or an explicit gated/missing-source decision
+  for each active dataset
 - maximum claim boundary and forbidden claims
 - pivot / abort condition
 - execution readiness inputs that would otherwise stop `prepare`
@@ -58,6 +62,15 @@ the repository, broad survey prompts, generic approvals, and long intake forms.
 Prefer questions that force a decision about claim shape, failure criteria,
 baseline risk, metric validity, data/compute readiness, or what should happen
 if the first experiment fails.
+
+When data or baseline readiness is unclear, ask for executable source
+provenance instead of accepting method names. For baselines, ask for the code
+repository URL or official code entrypoint that `prepare` may clone, plus the
+intended clone scope. For datasets, ask for a direct downloadable link,
+official dataset API, Hugging Face dataset id, release/archive URL, or exact
+local path to keep in private readiness. If only a paper page, project page,
+method name, or benchmark name is known, record that source as contextual only
+and keep it non-executable until the concrete acquisition source is found.
 
 ## References
 
@@ -94,10 +107,26 @@ equivalent table in `docs/Execution_Readiness_Packet.md` with these fields:
 dataset id, source URL or official entrypoint, access verdict, non-destructive
 download probe result, execution decision, and notes. Execution decision must
 be explicit: `candidate`, `rejected`, `requires_approval`, or `deferred`.
-Use repository/API/README/HTTP HEAD/file-list probes when feasible, but do not
+For a dataset row to be executable by `prepare`, the source must be a direct
+download/acquisition source such as a Hugging Face dataset id, official dataset
+API, repository/release/archive URL, Zenodo record, or private exact local path
+stored in readiness JSON. Paper pages, method pages, and project pages are
+contextual support only unless they expose that acquisition source. Use
+repository/API/README/HTTP HEAD/file-list probes when feasible, but do not
 download large assets, private assets, or non-approved gated datasets during
 Grill. `prepare` / WF4 performs the actual acquisition and records download
 Gate Evidence.
+
+When Grill discusses baselines or negative controls, record a structured
+`Baseline Source Ledger` or equivalent table in
+`docs/Execution_Readiness_Packet.md` with these fields: baseline id/name,
+role, code repository URL or official code entrypoint, repo/code probe result,
+execution decision, and notes. For a baseline row to be executable by
+`prepare`, the source must be a concrete code repository URL, official code
+entrypoint, or exact local path stored in private readiness. Method names,
+paper URLs, project pages without code, and reported-method baselines are not
+cloneable sources; mark them `deferred`, `requires_approval`, or as a
+`baseline_repo_missing` blocker instead of recording them as `baseline_repo`.
 
 When Grill discusses external acquisition, clone, or access intent, also record
 an `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror

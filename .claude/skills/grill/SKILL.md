@@ -29,7 +29,11 @@ The handoff target is candidate-clear intent: concrete observation, candidate
 claim, falsifier, metric/evaluation signal, baseline or negative control,
 dataset/compute assumptions, maximum claim boundary, forbidden claims,
 pivot/abort condition, and execution readiness inputs that would otherwise
-stop `prepare`. Missing items stay as unresolved questions.
+stop `prepare`. Executable baselines need a code repository URL, official code
+entrypoint, or exact local path; executable datasets need a direct downloadable
+source, official dataset API, Hugging Face dataset id, release/archive URL, or
+exact local path in private readiness. Missing items stay as unresolved
+questions.
 
 Read the mechanism and implementation plan, workflow guide, context layering,
 contract gating, documentation rules, language policy, and ubiquitous language
@@ -44,6 +48,19 @@ API, README, HTTP HEAD, or file-list probes when feasible, but do not download
 large assets, private assets, or non-approved gated datasets during Grill;
 `prepare` / WF4 performs actual acquisition and records download Gate
 Evidence.
+
+For active data or baseline readiness, ask for executable source provenance
+instead of accepting method names. A dataset is executable only when Grill has
+found a direct download/acquisition source such as a Hugging Face dataset id,
+official dataset API, repository/release/archive URL, Zenodo record, or exact
+local path kept in readiness JSON. A baseline is executable only when Grill has
+found a concrete code repository URL, official code entrypoint, or exact local
+path. Paper pages, method pages, project pages without code, benchmark names,
+and reported-method baselines are contextual only; record them as non-executable
+or as a `baseline_repo_missing` / dataset-source blocker until the acquisition
+source is found. Record baseline candidates in a `Baseline Source Ledger` or
+equivalent table with baseline id/name, role, code repository URL or official
+code entrypoint, repo/code probe result, execution decision, and notes.
 
 When external acquisition, clone, or access intent is discussed, also record an
 `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror the

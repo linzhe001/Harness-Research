@@ -415,7 +415,11 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
             "non-destructive probes such as official pages, repository trees,",
             "dataset APIs, HTTP HEAD checks, or file listings. Do not download",
             "large assets, private data, or non-approved gated datasets during",
-            "Grill.",
+            "Grill. Active executable datasets need a direct acquisition source",
+            "such as a Hugging Face dataset id, official dataset API,",
+            "repository/release/archive URL, Zenodo record, or private exact",
+            "local path stored in readiness JSON. Paper or project pages are",
+            "contextual only unless they expose that source.",
             "",
             (
                 "| Dataset ID | Source | Access Verdict | Download Probe | "
@@ -426,6 +430,23 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
             "",
             "Execution Decision must be one of: `candidate`, `rejected`,",
             "`requires_approval`, or `deferred`.",
+            "",
+            "## Baseline Source Ledger",
+            "",
+            "Use this table when baseline or negative-control sources are",
+            "discussed during Grill. Executable baselines need a concrete",
+            "code repository URL, official code entrypoint, or private exact local",
+            "path stored in readiness JSON. Method names, paper URLs, project",
+            "pages without code, and reported-method baselines are contextual",
+            "only; record them as deferred or as `baseline_repo_missing` until",
+            "the cloneable source is found.",
+            "",
+            (
+                "| Baseline ID | Role | Code Repository Or Entrypoint | "
+                "Repo Probe | Execution Decision | Notes |"
+            ),
+            "| --- | --- | --- | --- | --- | --- |",
+            "| pending | pending | pending | not run | candidate | pending |",
             "",
             "## Verified Facts",
             "",
