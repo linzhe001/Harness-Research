@@ -55,6 +55,40 @@ def test_readiness_helper_rejects_invalid_payload(tmp_path: Path) -> None:
     assert code == 2
 
 
+def test_readiness_helper_accepts_policy_inputs(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+    payload = root / "readiness.json"
+    payload.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "updated_at": "2026-06-07T00:00:00Z",
+                "source": "grill",
+                "inputs": [
+                    {
+                        "key": "baseline_clone_policy",
+                        "kind": "policy",
+                        "value": "clone_first_baseline_set_only",
+                        "redacted_value": "clone first baseline set only",
+                        "verification_status": "candidate",
+                        "verified_at": None,
+                        "verification_command": "operator input",
+                        "notes": "source-specific baseline clone policy",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    code = readiness.main(
+        ["--workspace-root", str(root), "--input-json", str(payload), "--check"]
+    )
+
+    assert code == 0
+
+
 def test_readiness_helper_verifies_synthetic_path(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

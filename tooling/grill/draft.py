@@ -34,6 +34,15 @@ ROUND_TABLE_MARKER = "| --- | --- | --- | --- | --- | --- |"
 LEGACY_ROUND_TABLE_MARKER = "| --- | --- | --- | --- |"
 HUMAN_EXIT_PENDING = "pending"
 HUMAN_EXIT_OPTIONS = [HUMAN_EXIT_PENDING, *EXIT_OPTIONS]
+EXECUTION_INTENT_KEYS = {
+    "hf_access_policy",
+    "non_hf_registration_policy",
+    "external_download_policy",
+    "allow_external_downloads",
+    "baseline_clone_policy",
+    "baseline_clone_scope",
+    "dataset_acquisition_scope",
+}
 
 
 def markdown_escape_table(value: str) -> str:
@@ -317,6 +326,33 @@ def redacted_command(item: dict[str, Any]) -> str:
     return command.replace(raw_text, replacement)
 
 
+def is_execution_intent_input(item: dict[str, Any]) -> bool:
+    key = str(item.get("key", ""))
+    kind = str(item.get("kind", ""))
+    return key in EXECUTION_INTENT_KEYS or kind in {"policy", "approval_source"}
+
+
+def render_execution_intent_rows(readiness: dict[str, Any]) -> list[str]:
+    rows: list[str] = []
+    for item in readiness.get("inputs", []):
+        if not isinstance(item, dict) or not is_execution_intent_input(item):
+            continue
+        rows.append(
+            "| {key} | {value} | {status} | {source} | {notes} |".format(
+                key=markdown_escape_table(str(item.get("key", "unknown"))),
+                value=markdown_escape_table(redacted_value(item)),
+                status=markdown_escape_table(
+                    str(item.get("verification_status", "candidate"))
+                ),
+                source=markdown_escape_table(redacted_command(item)),
+                notes=markdown_escape_table(str(item.get("notes", ""))),
+            )
+        )
+    if not rows:
+        rows.append("| pending | pending | candidate | not run | pending |")
+    return rows
+
+
 def render_readiness_packet(readiness: dict[str, Any]) -> str:
     rows = []
     for item in readiness.get("inputs", []):
@@ -352,6 +388,26 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
             "| Input | Redacted Value | Verification Status | Verification Command |",
             "| --- | --- | --- | --- |",
             *rows,
+            "",
+            "## Execution Intent Ledger",
+            "",
+            "Use this table when Grill records operator intent that controls",
+            "whether `prepare` may acquire data, clone baselines, or skip gated",
+            "sources. These rows are candidate readiness policy, not Approval",
+            "Evidence and not Approved Contracts.",
+            "",
+            (
+                "| Intent Key | Redacted Policy Or Scope | Status | Source / "
+                "Verification | Notes |"
+            ),
+            "| --- | --- | --- | --- | --- |",
+            *render_execution_intent_rows(readiness),
+            "",
+            "Expected keys include `hf_access_policy`,",
+            "`non_hf_registration_policy`, `baseline_clone_policy`,",
+            "`baseline_clone_scope`, and `external_download_policy` only when a",
+            "global external-download policy is intentionally approved. Do not",
+            "record Hugging Face credentials or tokens.",
             "",
             "## Dataset Access Ledger",
             "",

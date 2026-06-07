@@ -53,6 +53,17 @@ Top-level modes define the operator surface:
 | `grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
 | `execution supervisor` | intent 已经能进入执行、验证、迭代、release，或成熟代码库出现新请求 | pending request、worker result JSON、Gate ledger、controller status |
 
+When Grill discusses external data access, dataset acquisition, or baseline
+clone intent, it must record that intent in the `Execution Intent Ledger` inside
+`docs/Execution_Readiness_Packet.md`. If Grill writes
+`.workflow_supervisor/readiness.json` through tooling, it should mirror the same
+intent as `kind: policy` readiness inputs with stable keys such as
+`hf_access_policy`, `non_hf_registration_policy`, `baseline_clone_policy`,
+`baseline_clone_scope`, and `external_download_policy` only for an intentionally
+broad external-download policy. These rows are candidate readiness policy, not
+Approval Evidence or Approved Contracts, and they must not contain Hugging Face
+credentials or tokens.
+
 Execution Supervisor actions are scoped commands under the second mode:
 
 | Supervisor action | 什么时候用 | 主要状态面 |
@@ -107,9 +118,16 @@ can be copied directly. On start it writes
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or labeled contextual
 dataset/baseline URLs. Dataset downloads and remote baseline clones require
-`--allow-external-downloads` or an explicit Grill readiness policy such as
-`external_download_policy: allow`. Redacted or ambiguous values become typed
-input requests. The segment still pauses for Human Approval before recording
+`--allow-external-downloads`, an explicit Grill readiness policy such as
+`external_download_policy: allow`, or a narrower source-specific Grill policy.
+Current source-specific handoff supports Hugging Face dataset downloads when
+Grill records `hf_access_policy`, and first-baseline clone when Grill explicitly
+says to clone the first baseline set; this does not authorize deferred,
+rejected, or requires-approval sources. Redacted or ambiguous values become
+typed input requests. `status --json` includes the active pending request
+question, allowed responses, reason, node id, gate refs, and snapshot hash so
+the operator can see the exact HITL prompt without reading supervisor runtime
+files by hand. The segment still pauses for Human Approval before recording
 `prepare_complete`.
 
 `build` runs registry nodes in order through deterministic checks or structured

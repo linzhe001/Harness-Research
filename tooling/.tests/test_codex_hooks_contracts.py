@@ -256,6 +256,23 @@ def test_grill_hands_accepted_draft_to_init_project() -> None:
         assert "README.md" in text
 
 
+def test_grill_skill_requires_execution_intent_ledger() -> None:
+    agents_skill = (REPO_ROOT / ".agents/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    claude_skill = (REPO_ROOT / ".claude/skills/grill/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    for text in [agents_skill, claude_skill]:
+        assert "Execution Intent Ledger" in text
+        assert "hf_access_policy" in text
+        assert "non_hf_registration_policy" in text
+        assert "baseline_clone_policy" in text
+        assert "baseline_clone_scope" in text
+        assert "kind: policy" in text
+
+
 def test_init_project_contract_supports_grill_handoff() -> None:
     contract = contract_by_skill(REPO_ROOT, "init-project")
     assert contract is not None

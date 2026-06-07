@@ -99,6 +99,30 @@ download large assets, private assets, or non-approved gated datasets during
 Grill. `prepare` / WF4 performs the actual acquisition and records download
 Gate Evidence.
 
+When Grill discusses external acquisition, clone, or access intent, also record
+an `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror
+the same intent as machine-readable readiness inputs when
+`.workflow_supervisor/readiness.json` is written through Grill tooling. Use
+stable keys so `prepare --complete` can consume them without guessing from
+prose:
+
+- `hf_access_policy`: source-specific Hugging Face allowance, with no
+  credentials or tokens recorded.
+- `non_hf_registration_policy`: explicit exclusion or later-approval rule for
+  non-HF registration/request/challenge-gated sources.
+- `baseline_clone_policy`: whether baseline clone is allowed, and whether it is
+  source-specific or global.
+- `baseline_clone_scope`: the concrete allowed first baseline set, such as
+  `Free-SurGS, Feature 3DGS`.
+- `external_download_policy`: use only for an intentionally broad global
+  external download/clone policy; do not use it for narrow HF-only or
+  baseline-specific intent.
+
+Use readiness input `kind: policy` for these entries. These rows are candidate
+readiness policy, not Approval Evidence or Approved Contracts. Deferred,
+rejected, or `requires_approval` dataset rows remain non-executable until a
+later explicit operator approval expands scope.
+
 Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
 `iteration_log.json`. Those are canonical research-workspace state files owned
 by later workflow/state tooling, stable build planning, and WF10 iteration.

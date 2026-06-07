@@ -741,6 +741,144 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
     assert workflow_ctl.dataset_target_from_args(root, args) == dataset_root
 
 
+def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "\n".join(
+            [
+                "# Execution Readiness Packet",
+                "",
+                (
+                    "| Input | Redacted Value | Verification Status | "
+                    "Verification Command |"
+                ),
+                "| --- | --- | --- | --- |",
+                (
+                    "| hf_access_policy | Use operator HF auth for RealX3D "
+                    "and SeeThroughSmoke | candidate-clear | operator input |"
+                ),
+                "| dataset_target | data/from_grill | candidate | not run |",
+                (
+                    "| baseline_repo | https://github.com/wrld/Free-SurGS "
+                    "| candidate | not run |"
+                ),
+                "| baseline_target | baselines/from_grill | candidate | not run |",
+                "",
+                "## Dataset Access Ledger",
+                "",
+                (
+                    "| Dataset ID | Source URL Or Official Entrypoint | Access "
+                    "Verdict | Non-Destructive Download Probe Result | "
+                    "Execution Decision | Notes |"
+                ),
+                "| --- | --- | --- | --- | --- | --- |",
+                (
+                    "| dataset_realx3d | "
+                    "https://huggingface.co/datasets/ToferFish/RealX3D "
+                    "| hf_page_reachable_not_verified_local | HTTP 200 | "
+                    "candidate | Future required HF download/check item. |"
+                ),
+                (
+                    "| dataset_selfsvd_lsvd | "
+                    "https://github.com/ZcsrenlongZ/SelfSVD | "
+                    "operator_reported_unavailable | not reprobed | "
+                    "deferred | Method reference only. |"
+                ),
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "docs" / "Research_Intent_Draft.md").write_text(
+        "\n".join(
+            [
+                "# Research Intent Draft",
+                "",
+                (
+                    "8. Clone only first baseline set under `baselines/`: "
+                    "Free-SurGS and Feature 3DGS; clone extra 2D baselines "
+                    "only after active HF dataset cards clarify the benchmark task."
+                ),
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "docs" / "Grill_Round_Log.md").write_text(
+        "# Grill Round Log\n",
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+    setattr(args, "_grill_bridge", bridge)
+
+    policy = bridge["policy"]
+    assert policy["allow_external_downloads"] is False
+    assert policy["allowed_remote_hosts"] == ["huggingface.co"]
+    assert "free_surgs" in policy["allowed_baseline_repo_markers"]
+    assert "feature_3dgs" in policy["allowed_baseline_repo_markers"]
+    assert bridge["unresolved"] == []
+    assert workflow_ctl.external_source_allowed(
+        args,
+        "https://huggingface.co/datasets/ToferFish/RealX3D",
+    )
+    assert workflow_ctl.external_source_allowed(
+        args,
+        "https://github.com/wrld/Free-SurGS",
+    )
+    assert not workflow_ctl.external_source_allowed(
+        args,
+        "https://github.com/ZcsrenlongZ/SelfSVD",
+    )
+
+
+def test_resume_args_approve_clone_sets_external_download_permission(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    run_id = "sup_test"
+    manifest = workflow_ctl.run_manifest(
+        workspace_root=root,
+        run_id=run_id,
+        segment="prepare",
+        goal="resume baseline clone",
+        entrypoint="harness prepare",
+        allow_external_downloads=False,
+        complete_prepare=True,
+    )
+    workflow_ctl.write_run_manifest(root, manifest)
+    state = {"active_run_id": run_id}
+    answer_record = {
+        "answer": {
+            "answers": {
+                "decision": "approve_clone",
+            }
+        }
+    }
+
+    args = workflow_ctl.resume_args_from_answer(
+        root,
+        state=state,
+        answer_record=answer_record,
+        as_json=True,
+    )
+
+    assert args.allow_external_downloads is True
+
+
 def test_data_prep_records_failed_candidate_and_tries_next(
     tmp_path: Path,
 ) -> None:

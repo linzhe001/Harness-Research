@@ -45,6 +45,21 @@ large assets, private assets, or non-approved gated datasets during Grill;
 `prepare` / WF4 performs actual acquisition and records download Gate
 Evidence.
 
+When external acquisition, clone, or access intent is discussed, also record an
+`Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror the
+same intent as machine-readable readiness inputs when
+`.workflow_supervisor/readiness.json` is written through Grill tooling. Use
+stable keys so `prepare --complete` can consume them without guessing from
+prose: `hf_access_policy` for source-specific Hugging Face allowance with no
+credentials or tokens, `non_hf_registration_policy` for non-HF gated-source
+exclusion or later-approval rules, `baseline_clone_policy` for clone allowance,
+`baseline_clone_scope` for the concrete first baseline set such as
+`Free-SurGS, Feature 3DGS`, and `external_download_policy` only for an
+intentionally broad global external download/clone policy. Use readiness input
+`kind: policy`. These rows are candidate readiness policy, not Approval
+Evidence or Approved Contracts; deferred, rejected, or `requires_approval`
+dataset rows remain non-executable until later explicit approval expands scope.
+
 Outputs:
 - `docs/Research_Intent_Draft.md`
 - `docs/Grill_Round_Log.md`

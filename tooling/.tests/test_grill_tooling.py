@@ -52,6 +52,7 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     assert "## Current Gap Check" in log
     assert "This packet is not a Review Packet" in packet
     assert "## Dataset Access Ledger" in packet
+    assert "## Execution Intent Ledger" in packet
     assert "Execution Decision must be one of" in packet
     assert not (root / ".evidence").exists()
     assert not (root / ".workflow_supervisor").exists()
@@ -124,6 +125,32 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
                         "verified_at": None,
                         "verification_command": "test -d /secret/data/root",
                         "notes": "local path",
+                    },
+                    {
+                        "key": "hf_access_policy",
+                        "kind": "policy",
+                        "value": (
+                            "use operator HF auth for RealX3D and "
+                            "SeeThroughSmoke"
+                        ),
+                        "redacted_value": (
+                            "Use operator HF auth for RealX3D and "
+                            "SeeThroughSmoke; no credentials recorded"
+                        ),
+                        "verification_status": "candidate",
+                        "verified_at": None,
+                        "verification_command": "operator input",
+                        "notes": "source-specific HF allowance",
+                    },
+                    {
+                        "key": "baseline_clone_scope",
+                        "kind": "policy",
+                        "value": "Free-SurGS, Feature 3DGS",
+                        "redacted_value": "Free-SurGS, Feature 3DGS",
+                        "verification_status": "candidate",
+                        "verified_at": None,
+                        "verification_command": "operator input",
+                        "notes": "first baseline set only",
                     }
                 ],
             }
@@ -149,6 +176,10 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
     )
     assert "/data/<redacted>" in packet
     assert "/secret/data/root" not in packet
+    assert "hf_access_policy" in packet
+    assert "baseline_clone_scope" in packet
+    assert "Free-SurGS, Feature 3DGS" in packet
+    assert "no credentials recorded" in packet
 
 
 def test_questions_render_known_lens() -> None:

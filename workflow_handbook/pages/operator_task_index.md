@@ -53,7 +53,7 @@ what you want
 
 | 我想做什么 | 顶层入口 | 具体动作 | 先看什么状态或产物 | 什么时候停下来 |
 | --- | --- | --- | --- | --- |
-| 澄清粗糙 research idea | Grill | `harness grill` 或 `$grill` | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
+| 澄清粗糙 research idea | Grill | `harness grill` 或 `$grill` | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
 | 获取或验证数据集和 baseline | Execution Supervisor | `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、contract approval decision |
 | 判断能否进入执行 | Execution Supervisor | `prepare --dry-run` | Review Packet、readiness preflight、pending request JSON | 需要 contract、缺失事实或 approval decision |
 | 处理 pending request | Execution Supervisor | `workflow_ctl status --json`，然后 `workflow_ctl approve ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
@@ -64,6 +64,11 @@ what you want
 | 排查内部 node 失败 | Detailed Reference | Stage / Skill lookup | Stage page、Skill page、declared artifacts、Gate ledger | 失败需要 human steering 或 contract change |
 
 常用状态命令：
+
+Grill 中讨论过的数据下载、HF access、baseline clone 或跳过 gated source 的
+意图，应先看 `docs/Execution_Readiness_Packet.md` 的
+`Execution Intent Ledger`。这些行只是 candidate readiness policy；真正执行时仍由
+Execution Supervisor 在 `prepare` 中验证并形成 Gate ledger。
 
 ```bash
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json

@@ -35,8 +35,12 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --go
 
 Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
 operator to hand-build CLI arguments. First run
-`tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. If a run
-or pending request is active, immediately run
+`tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. The JSON
+status includes the pending request `question`, `allowed_responses`, `reason`,
+`node_id`, `gate_status_refs`, and `request_snapshot_hash` when a request is
+active; report those fields so the operator can see what is being asked without
+manually reading `.workflow_supervisor/pending_request.json`. If a run or
+pending request is active, immediately run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh recover --repair-stale-running --auto-resume-answered --json`.
 If this resumes an already answered request, continue from the returned
 supervisor status and report the recovery Gate ledger. If the recover payload
@@ -81,9 +85,13 @@ and worker Gate ledger.
 `start --segment prepare --complete` runs readiness preflight, deterministic
 dataset acquisition or verification, baseline clone/acquisition, protocol
 compiler, and WF5 Review Packet generation. External dataset downloads or
-baseline clones require either `--allow-external-downloads` or an explicit
+baseline clones require either `--allow-external-downloads`, an explicit
 `external_download_policy` / `allow_external_downloads` readiness value captured
-by Grill. When `--complete` starts, the supervisor writes
+by Grill, or a narrower Grill source-specific policy. Current source-specific
+handoff supports Hugging Face dataset downloads when Grill records
+`hf_access_policy`, and first-baseline clone when Grill explicitly says to clone
+the first baseline set; this does not authorize deferred, rejected, or
+requires-approval sources. When `--complete` starts, the supervisor writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only

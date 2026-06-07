@@ -20,6 +20,7 @@
               "path",
               "command",
               "budget",
+              "policy",
               "approval_source",
               "local_value",
               "open_question"

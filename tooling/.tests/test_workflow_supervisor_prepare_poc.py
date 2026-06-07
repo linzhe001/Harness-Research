@@ -226,6 +226,64 @@ def test_prepare_readiness_preflight_rejects_missing_path_before_evidence(
     assert not (root / ".evidence").exists()
 
 
+def test_status_json_includes_pending_request_details(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs").mkdir()
+    config_dir = root / "tooling" / "workflow_supervisor" / "config"
+    config_dir.mkdir(parents=True)
+    shutil.copy2(
+        REPO_ROOT / "tooling" / "workflow_supervisor" / "config" / "default_nodes.json",
+        config_dir / "default_nodes.json",
+    )
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "# Readiness\n",
+        encoding="utf-8",
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "prepare",
+            "--goal",
+            "prepare waits for dataset input",
+            "--complete",
+            "--json",
+        ]
+    )
+    assert code == workflow_ctl.EXIT_MANUAL_ACTION
+    capsys.readouterr()
+
+    status_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "status",
+            "--json",
+        ]
+    )
+
+    assert status_code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    pending = payload["pending_request_ref"]
+    assert pending["request_id"] == payload["state"]["pending_request_id"]
+    assert pending["type"] == "ASK_INPUT"
+    assert pending["node_id"] == "prepare_data_prep"
+    assert pending["reason"] == "dataset_input_required"
+    assert "Provide --dataset-target" in pending["question"]
+    assert pending["allowed_responses"] == [
+        "provide_dataset_path",
+        "revise",
+        "reject",
+    ]
+    assert pending["request_snapshot_hash"]
+
+
 def test_prepare_approve_resume_records_contract_and_reruns_gate(
     tmp_path: Path,
     capsys,

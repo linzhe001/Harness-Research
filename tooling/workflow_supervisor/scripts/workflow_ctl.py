@@ -120,6 +120,8 @@ GRILL_BRIDGE_KEYS = {
     "baseline_download_dir",
     "external_download_policy",
     "allow_external_downloads",
+    "hf_access_policy",
+    "baseline_clone_policy",
 }
 GRILL_KEY_ALIASES = {
     "dataset_url": "dataset_source",
@@ -150,6 +152,12 @@ GRILL_KEY_ALIASES = {
     "external_download_policy": "external_download_policy",
     "allow_external_downloads": "external_download_policy",
     "download_policy": "external_download_policy",
+    "hf_access_policy": "hf_access_policy",
+    "hf_auth_policy": "hf_access_policy",
+    "hugging_face_access_policy": "hf_access_policy",
+    "huggingface_access_policy": "hf_access_policy",
+    "baseline_clone_policy": "baseline_clone_policy",
+    "baseline_download_policy": "baseline_clone_policy",
 }
 GRILL_REDACTED_VALUES = {
     "",
@@ -1349,6 +1357,70 @@ def truthy_policy_value(value: str | None) -> bool:
     }
 
 
+def hf_policy_allows_download(value: str | None) -> bool:
+    if value is None:
+        return False
+    normalized = normalized_marker_text(value)
+    if any(marker in normalized for marker in {"do_not_download", "no_download"}):
+        return False
+    has_hf = any(
+        marker in normalized
+        for marker in {"hf", "hugging_face", "huggingface"}
+    )
+    has_allowance = any(
+        marker in normalized
+        for marker in {"auth", "account", "allow", "accepted", "download", "use"}
+    )
+    return has_hf and has_allowance
+
+
+def baseline_clone_markers_from_text(text: str) -> list[str]:
+    markers: list[str] = []
+    for line in text.splitlines():
+        normalized = normalized_marker_text(line)
+        if "clone" not in normalized or "baseline" not in normalized:
+            continue
+        if "free_surgs" in normalized:
+            markers.append("free_surgs")
+        if "feature_3dgs" in normalized:
+            markers.append("feature_3dgs")
+    return list(dict.fromkeys(markers))
+
+
+def remote_source_allowed_by_policy(policy: dict[str, Any], source: str) -> bool:
+    if not source_is_remote(source):
+        return True
+    if policy.get("allow_external_downloads"):
+        return True
+    parsed = urllib.parse.urlparse(source)
+    host = parsed.netloc.lower()
+    allowed_hosts = policy.get("allowed_remote_hosts")
+    if isinstance(allowed_hosts, list):
+        for item in allowed_hosts:
+            allowed = str(item).lower()
+            if host == allowed or host.endswith(f".{allowed}"):
+                return True
+    allowed_markers = policy.get("allowed_baseline_repo_markers")
+    if source_is_git(source) and isinstance(allowed_markers, list):
+        source_name = normalized_marker_text(source_basename(source))
+        if any(str(marker) in source_name for marker in allowed_markers):
+            return True
+    return False
+
+
+def external_source_allowed(args: argparse.Namespace, source: str | None) -> bool:
+    if not source or not source_is_remote(source):
+        return True
+    if getattr(args, "allow_external_downloads", False):
+        return True
+    bridge = getattr(args, "_grill_bridge", None)
+    if isinstance(bridge, dict):
+        policy = bridge.get("policy")
+        if isinstance(policy, dict):
+            return remote_source_allowed_by_policy(policy, source)
+    return False
+
+
 def bridge_candidate(
     value: str,
     *,
@@ -1621,6 +1693,7 @@ def build_grill_bridge(
 ) -> tuple[dict[str, Any], str]:
     values: dict[str, dict[str, str]] = {}
     dataset_candidates: list[dict[str, str]] = []
+    allowed_baseline_repo_markers: list[str] = []
     input_refs: list[str] = []
     add_readiness_json_bridge_values(workspace_root, values, input_refs)
     for source_ref in GRILL_ARTIFACT_REFS:
@@ -1640,6 +1713,21 @@ def build_grill_bridge(
             )
         add_explicit_line_bridge_values(text, source_ref=source_ref, values=values)
         add_contextual_url_bridge_values(text, source_ref=source_ref, values=values)
+        clone_markers = baseline_clone_markers_from_text(text)
+        if clone_markers:
+            allowed_baseline_repo_markers.extend(clone_markers)
+            values.setdefault(
+                "baseline_clone_policy",
+                bridge_candidate(
+                    ", ".join(clone_markers),
+                    source_ref=source_ref,
+                    confidence="explicit_grill_clone_policy",
+                    notes=(
+                        "parsed from a Grill line that permits cloning the first "
+                        "baseline set"
+                    ),
+                ),
+            )
 
     if args.dataset_source:
         values["dataset_source"] = bridge_candidate(
@@ -1693,6 +1781,13 @@ def build_grill_bridge(
     allow_external = bool(args.allow_external_downloads) or truthy_policy_value(
         allow_policy
     )
+    allowed_remote_hosts: list[str] = []
+    hf_policy = values.get("hf_access_policy", {}).get("value")
+    if hf_policy_allows_download(hf_policy):
+        allowed_remote_hosts.append("huggingface.co")
+    allowed_baseline_repo_markers = list(
+        dict.fromkeys(allowed_baseline_repo_markers)
+    )
     executable_dataset_sources = [
         candidate.get("source", "")
         for candidate in dataset_candidates
@@ -1707,8 +1802,24 @@ def build_grill_bridge(
         )
         if item and source_is_remote(item)
     ]
+    policy = {
+        "allow_external_downloads": allow_external,
+        "allow_external_downloads_source": (
+            "cli:--allow-external-downloads"
+            if args.allow_external_downloads
+            else values.get("external_download_policy", {}).get("source_ref")
+        ),
+        "allowed_remote_hosts": allowed_remote_hosts,
+        "allowed_baseline_repo_markers": allowed_baseline_repo_markers,
+        "remote_sources": remote_sources,
+    }
+    blocked_remote_sources = [
+        source
+        for source in remote_sources
+        if not remote_source_allowed_by_policy(policy, source)
+    ]
     unresolved: list[str] = []
-    if remote_sources and not allow_external:
+    if blocked_remote_sources:
         unresolved.append(
             "remote dataset or baseline source found, but external download "
             "policy is not approved"
@@ -1730,15 +1841,7 @@ def build_grill_bridge(
         "input_refs": list(dict.fromkeys(input_refs)),
         "values": values,
         "dataset_candidates": dataset_candidates,
-        "policy": {
-            "allow_external_downloads": allow_external,
-            "allow_external_downloads_source": (
-                "cli:--allow-external-downloads"
-                if args.allow_external_downloads
-                else values.get("external_download_policy", {}).get("source_ref")
-            ),
-            "remote_sources": remote_sources,
-        },
+        "policy": policy,
         "unresolved": unresolved,
     }
     path = (
@@ -2263,7 +2366,10 @@ def run_data_prep_worker(
             workspace_root,
             source=entry_source if isinstance(entry_source, str) else None,
             target=entry_target,
-            allow_external_downloads=effective_allow_external_downloads(args),
+            allow_external_downloads=external_source_allowed(
+                args,
+                entry_source if isinstance(entry_source, str) else None,
+            ),
             timeout=int(node.get("timeout_seconds", 900)),
         )
         gate_ledger.append(
@@ -2459,7 +2565,7 @@ def run_baseline_repro_worker(
             workspace_root,
             source=repo,
             target=repo_target,
-            allow_external_downloads=effective_allow_external_downloads(args),
+            allow_external_downloads=external_source_allowed(args, repo),
             timeout=int(node.get("timeout_seconds", 1800)),
         )
         gate_ledger.append(
@@ -5873,6 +5979,13 @@ def status_payload(workspace_root: Path) -> dict[str, Any]:
                 "request_id": pending.get("request_id"),
                 "path": f"{SUPERVISOR_DIR}/pending_request.json",
                 "answered": bool(pending.get("answer_record")),
+                "type": pending.get("type"),
+                "node_id": pending.get("node_id"),
+                "reason": pending.get("reason"),
+                "question": pending.get("question"),
+                "allowed_responses": pending.get("allowed_responses"),
+                "gate_status_refs": pending.get("gate_status_refs"),
+                "request_snapshot_hash": pending.get("request_snapshot_hash"),
             }
     return {
         "schema_version": SCHEMA_VERSION,
@@ -6335,6 +6448,9 @@ def resume_args_from_answer(
         "allow_external_downloads",
         "external_download_policy",
     )
+    decision = answer_string(answers, "decision")
+    if decision in {"approve_clone", "approve_download"}:
+        allow_downloads = True
     if allow_downloads is not None:
         args.allow_external_downloads = allow_downloads
     return args

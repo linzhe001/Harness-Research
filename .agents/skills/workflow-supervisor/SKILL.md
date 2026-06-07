@@ -60,6 +60,11 @@ the agent should not ask the operator to hand-build CLI arguments. Do this
 instead:
 
 1. Run `tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`.
+   The JSON status includes the pending request `question`,
+   `allowed_responses`, `reason`, `node_id`, `gate_status_refs`, and
+   `request_snapshot_hash` when a request is active; report those fields so the
+   operator can see what is being asked without manually reading
+   `.workflow_supervisor/pending_request.json`.
 2. If a run or pending request is active, immediately run:
 
 ```bash
@@ -117,9 +122,13 @@ refine-arch/build-plan/code-expert/code-debug, and validate-run nodes.
 `start --segment prepare --complete` runs readiness preflight, deterministic
 dataset acquisition or verification, baseline clone/acquisition, protocol
 compiler, and WF5 review-packet generation. External dataset downloads or
-baseline clones require either `--allow-external-downloads` or an explicit
+baseline clones require either `--allow-external-downloads`, an explicit
 `external_download_policy` / `allow_external_downloads` readiness value captured
-by Grill. Local paths can be copied or verified without that flag. When
+by Grill, or a narrower Grill source-specific policy. Current source-specific
+handoff supports Hugging Face dataset downloads when Grill records
+`hf_access_policy`, and first-baseline clone when Grill explicitly says to
+clone the first baseline set; this does not authorize deferred, rejected, or
+requires-approval sources. Local paths can be copied or verified without that flag. When
 `--complete` starts, the supervisor writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
