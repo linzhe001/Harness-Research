@@ -297,6 +297,12 @@ generation. External dataset downloads and baseline clones require
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`, so a
 conversation-triggered `$workflow-supervisor` can use Grill's structured
 dataset/baseline answers without the operator hand-building CLI arguments.
+For a bare `$workflow-supervisor` after accepted Grill output, the agent should
+first run supervisor `status --json`; if no run is active, it should start full
+prepare with `--goal-file docs/Research_Intent_Draft.md --complete` and let the
+Grill bridge resolve dataset/baseline inputs. The shell CLI still requires an
+explicit segment/goal command; the no-parameter behavior is the conversation
+skill routing behavior.
 Redacted or ambiguous Grill values still become typed input requests. Full
 prepare pauses for Human Approval and only resumes to `prepare_complete` after
 approval.

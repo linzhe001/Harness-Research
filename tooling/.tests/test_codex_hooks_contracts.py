@@ -314,6 +314,23 @@ def test_init_project_skill_describes_update_from_grill_mode() -> None:
         assert "`iteration_log.json`" in lowered
 
 
+def test_workflow_supervisor_skill_describes_bare_post_grill_start() -> None:
+    agents_skill = (
+        REPO_ROOT / ".agents/skills/workflow-supervisor/SKILL.md"
+    ).read_text(encoding="utf-8")
+    claude_skill = (
+        REPO_ROOT / ".claude/skills/workflow-supervisor/SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    for text in [agents_skill, claude_skill]:
+        assert "status --json" in text
+        assert "--segment prepare" in text
+        assert "--complete" in text
+        assert "--goal-file docs/Research_Intent_Draft.md" in text
+        assert "typed pending requests" in text
+        assert "--allow-external-downloads" in text
+
+
 def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
     skills = [
         "doc-compiler",

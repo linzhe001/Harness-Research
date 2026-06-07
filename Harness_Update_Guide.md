@@ -263,6 +263,10 @@ Current expected behavior after this Harness update:
 - the handoff does not create `PROJECT_STATE.json`, `project_map.json`, or
   `iteration_log.json`; missing state/map/iteration JSON immediately after
   `update-from-grill` is expected unless another tool already produced it
+- a bare conversation `$workflow-supervisor` after accepted Grill output should
+  run status first, then start full prepare with
+  `--goal-file docs/Research_Intent_Draft.md --complete` when no run is active;
+  shell CLI commands still require explicit segment/goal arguments
 
 If the project uses the dynamic context layout, also compare the framework
 templates and schemas before refreshing project-owned docs:

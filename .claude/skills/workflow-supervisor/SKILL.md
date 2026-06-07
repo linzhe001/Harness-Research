@@ -33,6 +33,30 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goa
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
 
+Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
+operator to hand-build CLI arguments. First run
+`tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. If a run
+or pending request is active, report it and do not start a new run. If no run
+is active and `docs/Research_Intent_Draft.md` plus either
+`docs/Execution_Readiness_Packet.md` or `docs/Grill_Round_Log.md` exists, start
+full prepare with:
+
+```bash
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start \
+  --segment prepare \
+  --complete \
+  --goal-file docs/Research_Intent_Draft.md \
+  --json
+```
+
+The operator does not need to provide `--dataset-source`, `--dataset-target`,
+or `--baseline-repo` at this point. Full prepare reads Grill artifacts through
+the Grill bridge. Missing, redacted, or ambiguous dataset/baseline values
+become typed pending requests. External downloads or clones still require an
+explicit readiness allow policy from Grill or a later human approval path; do
+not silently add `--allow-external-downloads`. If Grill artifacts are missing,
+report `NOT_RUN` and ask the operator to run `/grill` or provide a goal.
+
 Non-dry-run `prepare` is a v0 HITL PoC. It verifies candidate readiness inputs,
 compiles a draft protocol packet through evidence tooling, generates a WF5
 Review Packet, and pauses as an `APPROVE_ACTION`; resume records
