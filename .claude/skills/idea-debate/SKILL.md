@@ -25,7 +25,7 @@ Read first:
 
 Required work:
 1. Consume the Explore Intake and Explore Synthesis Grill records from WF1; do not repeat a full Grill unless a new contradiction changes Contract or Build boundaries.
-2. Extract 2-6 candidate ideas or variants. If only one idea exists, create conservative, balanced, and aggressive variants.
+2. Extract 2-4 candidate ideas or variants. If only one idea exists, create conservative, balanced, and aggressive variants.
 3. For each candidate, document strongest objection, likely failure mode, minimum viable experiment, kill criteria, compute estimate, fallback/pivot path, and any vocabulary conflict that may need `docs/20_facts/Project_Glossary.md`.
 4. When dynamic context is enabled, refresh draft protocol assumptions without approving contracts.
 5. Write `docs/Idea_Debate.md`.
@@ -34,6 +34,9 @@ Required work:
 Final decision vocabulary: `SELECT`, `PILOT_FIRST`, `MERGE`, `PIVOT`, or `ABANDON`.
 
 Do not design architecture in this stage. The next stage is WF3 refine-idea.
+
+Context budget: compare at most 4 candidates and run at most 1 reviewer round
+unless the operator explicitly expands scope.
 
 ## Durable Docs Render
 

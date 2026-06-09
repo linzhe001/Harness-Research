@@ -631,6 +631,12 @@
         "canonical_state_edit",
         "docs_site_render"
       ],
+      "context_budget": {
+        "source_count_max": 12,
+        "competitor_count_max": 5,
+        "grill_questions_per_round_max": 5,
+        "full_text_allowed": false
+      },
       "sensitive_paths": [
         "docs/Feasibility_Report.md",
         "docs/30_evidence/",
@@ -736,6 +742,11 @@
         "canonical_state_edit",
         "docs_site_render"
       ],
+      "context_budget": {
+        "candidate_count_max": 4,
+        "review_round_max": 1,
+        "full_text_allowed": false
+      },
       "sensitive_paths": [
         "docs/Idea_Debate.md",
         "docs/35_protocol/",
@@ -1394,6 +1405,12 @@
         "contract_conflict",
         "docs_site_render"
       ],
+      "context_budget": {
+        "design_target_count_max": 1,
+        "negative_search_query_max": 4,
+        "review_round_max": 1,
+        "full_text_allowed": false
+      },
       "sensitive_paths": [
         "docs/Sanity_Check_Log.md",
         "docs/35_protocol/",
@@ -1499,6 +1516,11 @@
         "iteration_log_write",
         "docs_site_render"
       ],
+      "context_budget": {
+        "recent_iteration_count_max": 5,
+        "report_word_count_max": 1200,
+        "full_history_by_path": true
+      },
       "sensitive_paths": [
         "iteration_log.json",
         "docs/40_iterations/",
@@ -2721,6 +2743,11 @@
         "WF11_handoff",
         "docs_site_render"
       ],
+      "context_budget": {
+        "recent_iteration_count_max": 5,
+        "gate_ledger_summary_count_max": 5,
+        "full_history_by_path": true
+      },
       "sensitive_paths": [
         "iteration_log.json",
         "docs/40_iterations/",

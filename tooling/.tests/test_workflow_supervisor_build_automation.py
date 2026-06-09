@@ -313,6 +313,7 @@ def test_prepare_complete_acquires_dataset_and_baseline(
     assert code == workflow_ctl.EXIT_MANUAL_ACTION
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
+    run_id = state["active_run_id"]
     assert state["status"] == "paused"
     assert state["segment_status"] == "prepare_waiting_for_approval"
     assert "prepare_data_prep" in state["completed_nodes"]
@@ -327,6 +328,317 @@ def test_prepare_complete_acquires_dataset_and_baseline(
     assert (root / "baselines" / "baseline_source" / "train.py").exists()
     assert (root / "docs" / "Dataset_Stats.md").exists()
     assert (root / "docs" / "Baseline_Report.md").exists()
+    dataset_manifest = json.loads(
+        (root / "data" / "dataset_manifest.json").read_text(encoding="utf-8")
+    )
+    baseline_manifest = json.loads(
+        (root / "baselines" / "baseline_manifest.json").read_text(encoding="utf-8")
+    )
+    run_manifest = json.loads(
+        (
+            root
+            / ".workflow_supervisor"
+            / "runs"
+            / run_id
+            / "run_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert run_manifest["policy"]["gate_profile"] == "automation_prepare"
+    assert run_manifest["policy"]["gate_policy_ref"] == (
+        "tooling/workflow_supervisor/config/gate_policy.yaml"
+    )
+    acquisition_plan = json.loads(
+        (
+            root
+            / ".workflow_supervisor"
+            / "runs"
+            / run_id
+            / "runtime"
+            / "acquisition_plan.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["acquisition_plan_ref"] == (
+        f".workflow_supervisor/runs/{run_id}/runtime/acquisition_plan.json"
+    )
+    assert "prepare_acquisition_plan" in state["completed_nodes"]
+    assert acquisition_plan["kind"] == "prepare_acquisition_plan"
+    assert acquisition_plan["policy"]["blocked_remote_sources"] == []
+    assert (
+        workflow_ctl.validate_schema(
+            root,
+            acquisition_plan,
+            "acquisition_plan.schema.json",
+            "acquisition_plan",
+        )
+        == []
+    )
+    assert dataset_manifest["kind"] == "dataset_acquisition"
+    assert dataset_manifest["dataset_root"] == "data/primary"
+    assert dataset_manifest["verification"]["result"] == "PASS"
+    assert (
+        workflow_ctl.validate_schema(
+            root,
+            dataset_manifest,
+            "dataset_acquisition_manifest.schema.json",
+            "dataset_manifest",
+        )
+        == []
+    )
+    assert baseline_manifest["kind"] == "baseline_acquisition"
+    assert baseline_manifest["baseline_root"] == "baselines"
+    assert str(baseline_source) in baseline_manifest["repos"]
+    assert "baseline_source" in baseline_manifest["baselines"]
+    assert (
+        workflow_ctl.validate_schema(
+            root,
+            baseline_manifest,
+            "baseline_acquisition_manifest.schema.json",
+            "baseline_manifest",
+        )
+        == []
+    )
+
+
+def test_prepare_complete_blocks_unapproved_remote_sources_at_plan(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "# Readiness\n",
+        encoding="utf-8",
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "prepare",
+            "--goal",
+            "prepare with remote inputs",
+            "--complete",
+            "--dataset-source",
+            "https://example.com/dataset.zip",
+            "--dataset-target",
+            "data/remote",
+            "--baseline-repo",
+            "https://github.com/example/baseline",
+            "--baseline-target",
+            "baselines",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_MANUAL_ACTION
+    payload = json.loads(capsys.readouterr().out)
+    state = payload["state"]
+    run_id = state["active_run_id"]
+    pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    plan_ref = f".workflow_supervisor/runs/{run_id}/runtime/acquisition_plan.json"
+    plan = json.loads((root / plan_ref).read_text(encoding="utf-8"))
+    assert state["segment_status"] == "acquisition_policy_approval_required"
+    assert state["current_node_id"] == "prepare_acquisition_plan"
+    assert payload["blocked_by"] == "acquisition_policy_approval_required"
+    assert payload["acquisition_plan_ref"] == plan_ref
+    assert pending["node_id"] == "prepare_acquisition_plan"
+    assert pending["reason"] == "acquisition_policy_approval_required"
+    assert set(plan["policy"]["blocked_remote_sources"]) == {
+        "https://example.com/dataset.zip",
+        "https://github.com/example/baseline",
+    }
+    assert len(plan["blockers"]) == 2
+    assert not (root / "data" / "dataset_manifest.json").exists()
+    assert not (root / "baselines" / "baseline_manifest.json").exists()
+    assert (
+        workflow_ctl.validate_schema(
+            root,
+            plan,
+            "acquisition_plan.schema.json",
+            "acquisition_plan",
+        )
+        == []
+    )
+
+
+def test_resume_acquisition_plan_with_local_answer_overrides_remote_bridge(
+    tmp_path: Path,
+    capsys,
+    monkeypatch,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+        "# Readiness\n",
+        encoding="utf-8",
+    )
+    dataset_source = tmp_path / "answered_dataset"
+    dataset_source.mkdir()
+    (dataset_source / "sample.txt").write_text("data\n", encoding="utf-8")
+    baseline_source = tmp_path / "answered_baseline"
+    baseline_source.mkdir()
+    (baseline_source / "train.py").write_text("print('baseline')\n", encoding="utf-8")
+
+    def fake_protocol(workspace_root: Path, *, build_id: str) -> dict[str, object]:
+        return {
+            "command": "fake compile_protocol.py",
+            "exit_code": 0,
+            "stdout": {
+                "output_root": f".evidence/protocol_compiler/{build_id}",
+                "actions": [
+                    {
+                        "path": (
+                            f".evidence/protocol_compiler/{build_id}/"
+                            "docs/35_protocol/Research_Protocol.md"
+                        )
+                    }
+                ],
+            },
+            "stdout_text": "{}",
+            "stderr": "",
+        }
+
+    def fake_gate(
+        workspace_root: Path,
+        *,
+        stage: str,
+        build_id: str,
+        write_review_packet: bool,
+    ) -> dict[str, object]:
+        packet_dir = (
+            workspace_root
+            / ".evidence"
+            / "review_packets"
+            / stage
+            / build_id
+        )
+        packet_dir.mkdir(parents=True)
+        markdown = packet_dir / "review_packet.md"
+        payload = packet_dir / "review_packet.json"
+        markdown.write_text("# Review\n", encoding="utf-8")
+        payload.write_text("{}\n", encoding="utf-8")
+        return {
+            "command": "fake check_dynamic_context.py",
+            "exit_code": 0,
+            "stdout": {
+                "review_packet": {
+                    "markdown_path": markdown.relative_to(workspace_root).as_posix(),
+                    "json_path": payload.relative_to(workspace_root).as_posix(),
+                    "output_dir": packet_dir.relative_to(workspace_root).as_posix(),
+                }
+            },
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(workflow_ctl, "run_protocol_compiler", fake_protocol)
+    monkeypatch.setattr(workflow_ctl, "run_dynamic_context_gate", fake_gate)
+
+    start_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "prepare",
+            "--goal",
+            "prepare with remote inputs",
+            "--complete",
+            "--dataset-source",
+            "https://example.com/dataset.zip",
+            "--dataset-target",
+            "data/remote",
+            "--baseline-repo",
+            "https://github.com/example/baseline",
+            "--baseline-target",
+            "baselines",
+            "--json",
+        ]
+    )
+    assert start_code == workflow_ctl.EXIT_MANUAL_ACTION
+    start_payload = json.loads(capsys.readouterr().out)
+    pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert start_payload["state"]["segment_status"] == (
+        "acquisition_policy_approval_required"
+    )
+
+    answer_path = tmp_path / "local_acquisition_answer.json"
+    answer_path.write_text(
+        json.dumps(
+            {
+                "request_id": pending["request_id"],
+                "request_snapshot_hash": pending["request_snapshot_hash"],
+                "idempotency_key": "local-acquisition-answer",
+                "answered_by": "Test Operator",
+                "answered_at": "2026-06-07T00:00:00Z",
+                "answers": {
+                    "decision": "provide_local_path",
+                    "dataset_source": str(dataset_source),
+                    "dataset_target": "data/answered",
+                    "baseline_repo": str(baseline_source),
+                    "baseline_target": "baselines",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        workflow_ctl.main(
+            [
+                "--workspace-root",
+                str(root),
+                "answer",
+                "--request-id",
+                pending["request_id"],
+                "--json",
+                str(answer_path),
+            ]
+        )
+        == workflow_ctl.EXIT_OK
+    )
+    capsys.readouterr()
+
+    resume_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "resume",
+            "--request-id",
+            pending["request_id"],
+            "--json",
+        ]
+    )
+
+    assert resume_code == workflow_ctl.EXIT_MANUAL_ACTION
+    payload = json.loads(capsys.readouterr().out)
+    state = payload["state"]
+    run_id = state["active_run_id"]
+    plan = json.loads(
+        (
+            root
+            / ".workflow_supervisor"
+            / "runs"
+            / run_id
+            / "runtime"
+            / "acquisition_plan.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert plan["policy"]["blocked_remote_sources"] == []
+    assert plan["dataset"]["entries"][0]["source"] == str(dataset_source)
+    assert [item["source"] for item in plan["baselines"]["repos"]] == [
+        str(baseline_source)
+    ]
+    assert (root / "data" / "answered" / "sample.txt").exists()
+    assert (root / "baselines" / "answered_baseline" / "train.py").exists()
 
 
 def test_recover_auto_resume_answered_prepare_dataset_request(
@@ -487,6 +799,8 @@ def test_recover_auto_resume_answered_prepare_dataset_request(
     assert new_pending["reason"] == "prepare_complete_approval_required"
     assert (root / "docs" / "Dataset_Stats.md").exists()
     assert (root / "docs" / "Baseline_Report.md").exists()
+    assert (root / "data" / "dataset_manifest.json").exists()
+    assert (root / "baselines" / "baseline_manifest.json").exists()
     events = workflow_ctl.read_events(root)
     assert any(
         event["event"] == "RUN_RESUMED"
@@ -631,6 +945,8 @@ def test_prepare_complete_bridges_grill_readiness_packet(
         / "grill_baseline_source"
         / "train.py"
     ).exists()
+    assert (root / "data" / "dataset_manifest.json").exists()
+    assert (root / "baselines" / "baseline_manifest.json").exists()
 
 
 def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
@@ -947,6 +1263,87 @@ def test_grill_bridge_uses_executable_baseline_source_ledger(
     assert workflow_ctl.baseline_repos_from_args(root, args) == [
         "https://github.com/wrld/Free-SurGS"
     ]
+
+
+def test_grill_bridge_uses_structured_readiness_approvals(
+    tmp_path: Path,
+) -> None:
+    root = make_workspace(tmp_path)
+    readiness_dir = root / ".workflow_supervisor"
+    readiness_dir.mkdir()
+    (readiness_dir / "readiness.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "updated_at": "2026-06-07T00:00:00Z",
+                "source": "grill",
+                "external_download_policy": "allow_if_approved",
+                "approved_datasets": [
+                    {
+                        "id": "realx3d",
+                        "source": "https://huggingface.co/datasets/example/realx3d",
+                        "target": "data/realx3d",
+                        "license": "unknown",
+                        "max_size_gb": 50,
+                        "access_status": "approved",
+                        "source_ref": "operator input",
+                        "notes": "operator selected baseline dataset",
+                    }
+                ],
+                "approved_baselines": [
+                    {
+                        "id": "free_surgs",
+                        "repo": "https://github.com/example/Free-SurGS",
+                        "ref": "main",
+                        "target": "baselines/Free-SurGS",
+                        "access_status": "approved",
+                        "role": "baseline",
+                        "source_ref": "operator input",
+                        "notes": "operator selected first baseline",
+                    }
+                ],
+                "target_paths": {
+                    "dataset_root": "data",
+                    "baseline_cache": "baselines",
+                },
+                "unknowns": [],
+                "operator_approved_at": "2026-06-07T00:00:00Z",
+                "inputs": [],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        allow_external_downloads=False,
+        baseline_repo=[],
+        baseline_target=None,
+        dataset_source=None,
+        dataset_target=None,
+    )
+
+    bridge, _bridge_ref = workflow_ctl.build_grill_bridge(
+        root,
+        run_id="sup_test",
+        args=args,
+    )
+
+    assert bridge["values"]["external_download_policy"]["value"] == (
+        "allow_if_approved"
+    )
+    assert bridge["values"]["dataset_root"]["value"] == "data"
+    assert bridge["values"]["baseline_cache"]["value"] == "baselines"
+    assert bridge["dataset_candidates"][0]["source"] == (
+        "https://huggingface.co/datasets/example/realx3d"
+    )
+    assert bridge["baseline_candidates"][0]["source"] == (
+        "https://github.com/example/Free-SurGS"
+    )
+    assert bridge["policy"]["allowed_remote_sources"] == [
+        "https://huggingface.co/datasets/example/realx3d",
+        "https://github.com/example/Free-SurGS",
+    ]
+    assert bridge["unresolved"] == []
 
 
 def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(

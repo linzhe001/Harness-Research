@@ -64,6 +64,14 @@ broad external-download policy. These rows are candidate readiness policy, not
 Approval Evidence or Approved Contracts, and they must not contain Hugging Face
 credentials or tokens.
 
+Machine-readable readiness JSON also carries top-level structured fields:
+`external_download_policy`, `approved_datasets`, `approved_baselines`,
+`target_paths`, `unknowns`, and `operator_approved_at`. `prepare --complete`
+may use approved sources only when they match those fields; ambiguous prose
+remains a typed input request.
+Dataset approvals may carry `target`, `license`, and `max_size_gb`; baseline
+approvals may carry `repo`, `ref`, and `target`.
+
 Execution Supervisor actions are scoped commands under the second mode:
 
 | Supervisor action | 什么时候用 | 主要状态面 |
@@ -120,9 +128,12 @@ structured readiness rows, explicit `key: value` lines, or exactly labeled
 contextual dataset/baseline URLs. `docs/Research_Intent_Draft.md` is the primary
 narrative intent source for scope and clone intent, but ordinary literature,
 method, or baseline-comparison URLs in that draft are not executable acquisition
-inputs. Dataset downloads and remote baseline clones require
+inputs. Before any download or clone, it writes
+`.workflow_supervisor/runs/<run_id>/runtime/acquisition_plan.json` and pauses
+if that plan contains unapproved remote sources. Dataset downloads and remote
+baseline clones require
 `--allow-external-downloads`, an explicit Grill readiness policy such as
-`external_download_policy: allow`, or a narrower source-specific Grill policy.
+`external_download_policy: allow`, or a narrower structured readiness approval.
 Current source-specific handoff supports Hugging Face dataset downloads when
 Grill records `hf_access_policy`, and first-baseline clone when Grill explicitly
 says to clone the first baseline set; this does not authorize deferred,

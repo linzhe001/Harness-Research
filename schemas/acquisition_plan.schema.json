@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness prepare acquisition plan",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "generated_at",
+    "run_id",
+    "source_refs",
+    "policy",
+    "dataset",
+    "baselines",
+    "blockers",
+    "next_nodes"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "prepare_acquisition_plan" },
+    "generated_at": { "type": "string" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "source_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "gate_policy_ref",
+        "gate_profile",
+        "allow_external_downloads",
+        "allowed_remote_hosts",
+        "allowed_remote_sources",
+        "remote_sources",
+        "blocked_remote_sources"
+      ],
+      "properties": {
+        "gate_policy_ref": { "type": "string", "minLength": 1 },
+        "gate_profile": { "type": "string", "minLength": 1 },
+        "allow_external_downloads": { "type": "boolean" },
+        "allow_external_downloads_source": { "type": ["string", "null"] },
+        "allowed_remote_hosts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_remote_sources": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_baseline_repo_markers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "remote_sources": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blocked_remote_sources": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["entries", "skipped_candidates"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_entry" }
+        },
+        "skipped_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/skipped_candidate" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "baselines": {
+      "type": "object",
+      "required": ["target_root", "existing_target_nonempty", "repos"],
+      "properties": {
+        "target_root": { "type": "string", "minLength": 1 },
+        "existing_target_nonempty": { "type": "boolean" },
+        "repos": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_entry" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "next_nodes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["prepare_data_prep", "prepare_baseline_repro"]
+      }
+    }
+  },
+  "$defs": {
+    "source_entry": {
+      "type": "object",
+      "required": [
+        "label",
+        "source",
+        "target",
+        "source_ref",
+        "source_kind",
+        "remote",
+        "allowed",
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "source": { "type": ["string", "null"] },
+        "target": { "type": ["string", "null"] },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "type": "string",
+          "enum": ["missing", "local_path", "git", "http", "remote", "unknown"]
+        },
+        "remote": { "type": "boolean" },
+        "allowed": { "type": "boolean" },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "blocked", "missing_target", "existing_target"]
+        },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "skipped_candidate": {
+      "type": "object",
+      "required": ["label", "source", "source_ref", "reason"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "source": { "type": ["string", "null"] },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

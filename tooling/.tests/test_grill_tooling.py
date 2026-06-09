@@ -52,6 +52,8 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     assert "## Current Gap Check" in log
     assert "This packet is not a Review Packet" in packet
     assert "## Dataset Access Ledger" in packet
+    assert "## Structured Readiness" in packet
+    assert "external_download_policy: `unset`" in packet
     assert "## Execution Intent Ledger" in packet
     assert "## Baseline Source Ledger" in packet
     assert "direct acquisition source" in packet
@@ -120,6 +122,23 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
                 "schema_version": 1,
                 "updated_at": "2026-06-05T00:00:00Z",
                 "source": "test",
+                "external_download_policy": "allow_if_approved",
+                "approved_datasets": [
+                    {
+                        "id": "realx3d",
+                        "source": "https://huggingface.co/datasets/example/realx3d",
+                        "target": "data/realx3d",
+                        "license": "unknown",
+                        "max_size_gb": 50,
+                        "access_status": "approved",
+                        "source_ref": "operator input",
+                        "notes": "approved first dataset",
+                    }
+                ],
+                "approved_baselines": [],
+                "target_paths": {"dataset_root": "data"},
+                "unknowns": ["private auth token not recorded"],
+                "operator_approved_at": "2026-06-05T00:00:00Z",
                 "inputs": [
                     {
                         "key": "dataset_root",
@@ -183,6 +202,11 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
     assert "/secret/data/root" not in packet
     assert "hf_access_policy" in packet
     assert "baseline_clone_scope" in packet
+    assert "| realx3d | https://huggingface.co/datasets/example/realx3d |" in packet
+    assert "| dataset_root | data |" in packet
+    assert "license=unknown" in packet
+    assert "max_size_gb=50" in packet
+    assert "private auth token not recorded" in packet
     assert "Free-SurGS, Feature 3DGS" in packet
     assert "no credentials recorded" in packet
 

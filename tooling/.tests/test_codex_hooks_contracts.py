@@ -54,6 +54,7 @@ from harness_contracts import (  # noqa: E402
     save_session,
     stop_decision,
     tool_owned_output_paths,
+    truncate_user_prompt_context,
     validate_contract_files,
 )
 from hook_status import (  # noqa: E402
@@ -154,6 +155,68 @@ def test_harness_maintenance_contract_covers_guardrail_paths() -> None:
     )
 
 
+def test_workflow_gate_optimization_routes_to_harness_maintenance() -> None:
+    prompt = (
+        "根据 优化workflow建议.pdf 看看怎么优化我的workflow。"
+        "gate 设置很多导致自动 supervisor 下载 baseline 和 dataset 经常被阻拦，"
+        "而且 token 消耗很快，可能和提示词注入或 context budget 有关。"
+    )
+
+    match = detect_skill_match(REPO_ROOT, prompt)
+
+    assert match is not None
+    assert match["candidate_skill"] == "harness-maintenance"
+    assert match["candidate_trigger"] == "inferred_harness_maintenance"
+
+
+def test_high_frequency_skill_bodies_stay_compact() -> None:
+    high_frequency_skills = {
+        ".claude/skills/iterate/SKILL.md": 250,
+        ".claude/skills/orchestrator/SKILL.md": 250,
+        ".claude/skills/init-project/SKILL.md": 250,
+        ".claude/skills/validate-run/SKILL.md": 250,
+        ".agents/skills/workflow-supervisor/SKILL.md": 250,
+        ".agents/skills/grill/SKILL.md": 250,
+    }
+
+    for relative_path, hard_limit in high_frequency_skills.items():
+        lines = (REPO_ROOT / relative_path).read_text(encoding="utf-8").splitlines()
+        assert len(lines) <= hard_limit, relative_path
+
+
+def test_codex_skill_bodies_stay_under_compact_budget() -> None:
+    hard_limit = 130
+
+    for path in sorted((REPO_ROOT / ".agents" / "skills").glob("*/SKILL.md")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        assert len(lines) <= hard_limit, path.relative_to(REPO_ROOT).as_posix()
+
+
+def test_claude_skill_bodies_stay_under_compact_budget() -> None:
+    hard_limit = 160
+
+    for path in sorted((REPO_ROOT / ".claude" / "skills").glob("*/SKILL.md")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        assert len(lines) <= hard_limit, path.relative_to(REPO_ROOT).as_posix()
+
+
+def test_heavy_workflow_skills_have_context_budgets() -> None:
+    expected = {
+        "survey-idea": "source_count_max",
+        "idea-debate": "candidate_count_max",
+        "deep-check": "design_target_count_max",
+        "iterate": "recent_iteration_count_max",
+        "evaluate": "report_word_count_max",
+    }
+
+    for skill, key in expected.items():
+        budget = contract_by_skill(REPO_ROOT, skill).get("context_budget", {})
+        assert budget.get(key), skill
+    assert contract_by_skill(REPO_ROOT, "iterate")["context_budget"][
+        "gate_ledger_summary_count_max"
+    ] == 5
+
+
 def test_framework_design_docs_are_not_gitignored() -> None:
     paths = [
         "docs/grill_execution_supervisor.md",
@@ -172,6 +235,21 @@ def test_framework_design_docs_are_not_gitignored() -> None:
             check=False,
         )
         assert result.returncode == 1, path
+
+
+def test_core_documented_harness_paths_exist() -> None:
+    paths = [
+        "tooling/codex_hooks",
+        "tooling/evidence",
+        "tooling/workflow_supervisor",
+        ".agents/skills/grill/SKILL.md",
+        ".agents/skills/workflow-supervisor/SKILL.md",
+        ".claude/skills/grill/SKILL.md",
+        ".claude/skills/workflow-supervisor/SKILL.md",
+    ]
+
+    for path in paths:
+        assert (REPO_ROOT / path).exists(), path
 
 
 def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
@@ -1261,6 +1339,13 @@ def test_daily_context_lists_repo_guidance_files(tmp_path: Path) -> None:
     assert "Harness workspace capsule" in context
     assert "AGENTS.md" in context
     assert "CLAUDE.md" in context
+
+
+def test_user_prompt_context_is_capped() -> None:
+    context = truncate_user_prompt_context("x" * 5000)
+
+    assert len(context) <= harness_contracts.USER_PROMPT_CONTEXT_MAX_CHARS
+    assert "truncated Harness route context" in context
 
 
 def test_command_reads_track_sliced_commit_rule_without_active_contract() -> None:

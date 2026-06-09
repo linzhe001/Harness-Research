@@ -5,95 +5,57 @@ description: "Clarify early research intent through hard questions and produce d
 
 # Grill
 
-## Purpose
+Use Grill before execution automation when the idea, baseline set, dataset set,
+claim boundary, or failure condition is not yet clear. Grill is
+conversation-first and draft-only.
 
-Use Grill to make the operator's research intent explicit before execution
-automation starts. Grill is high-interaction and draft-only: it challenges the
-idea, records candidate readiness inputs, and helps the operator decide whether
-to bridge into canonical WF1-WF3 Skills.
+## Read First
 
-## Conversation Contract
-
-Grill is conversation-first. Do not begin by producing a completed draft,
-approval, or long questionnaire. Start by restating the current intent in one
-short paragraph, then ask 3-5 blocking questions that would change the next
-safe action. Each question must include why it matters.
-
-Every Grill round must leave:
-
-- operator answer summary
-- skeptic, methodologist, implementation, or claim-boundary critique
-- current gap check
-- next blocking question or explicit exit choice
-- exit recommendation
-- human exit decision status
-
-The operator owns the exit decision. The agent may recommend
-`continue_grill`, `grill_draft_ready`, `bridge_wf1_wf3`, `pivot`, or
-`abandon`, but must not declare an exit decision unless the operator made that
-decision in the current conversation or an auditable artifact.
-
-## Maturity Target
-
-Grill is ready to hand off only when these fields are at least candidate-clear
-and the remaining uncertainty is explicit:
-
-- concrete operator observation
-- candidate claim
-- falsifier or not-worth-continuing result
-- target metric or evaluation signal
-- expected baseline or negative control, including a code repository URL or an
-  explicit missing-repo blocker for each executable baseline
-- dataset / compute assumptions, including a direct downloadable source,
-  official dataset API, Hugging Face dataset id, release/archive URL, exact
-  local path in private readiness, or an explicit gated/missing-source decision
-  for each active dataset
-- maximum claim boundary and forbidden claims
-- pivot / abort condition
-- execution readiness inputs that would otherwise stop `prepare`
-
-If any of these are missing, continue discussion or record the missing item as
-an unresolved question. Do not hide the gap by writing a polished draft.
-Before recommending or accepting `grill_draft_ready`, make sure
-`docs/Execution_Readiness_Packet.md` has a non-placeholder Execution Intent
-Ledger, Dataset Access Ledger, and Baseline Source Ledger. Every active dataset
-and every executable baseline/negative control must have either a concrete
-acquisition source plus `Execution Decision: candidate`, or an explicit
-non-executable decision such as `deferred`, `requires_approval`, `rejected`, or
-`baseline_repo_missing`.
-
-## Question Policy
-
-Ask fewer, harder questions. Avoid questions that can be answered by reading
-the repository, broad survey prompts, generic approvals, and long intake forms.
-Prefer questions that force a decision about claim shape, failure criteria,
-baseline risk, metric validity, data/compute readiness, or what should happen
-if the first experiment fails.
-
-When data or baseline readiness is unclear, ask for executable source
-provenance instead of accepting method names. For baselines, ask for the code
-repository URL or official code entrypoint that `prepare` may clone, plus the
-intended clone scope. For datasets, ask for a direct downloadable link,
-official dataset API, Hugging Face dataset id, release/archive URL, or exact
-local path to keep in private readiness. If only a paper page, project page,
-method name, or benchmark name is known, record that source as contextual only
-and keep it non-executable until the concrete acquisition source is found.
-
-## References
-
-Read these first:
-- `../../../AGENTS.md`
-- `../../../CLAUDE.md`
+- `../../../AGENTS.md`, `../../../CLAUDE.md`
 - `../../../docs/grill_execution_supervisor.md`
 - `../../../docs/grill_execution_supervisor_implementation_plan.md`
 - `../../../.agents/skills/init-project/SKILL.md`
-- `../../../.agents/references/workflow-guide.md`
-- `../../../.agents/references/context-layering-policy.md`
-- `../../../.agents/references/contract-gating-rule.md`
-- `../../../.agents/references/documentation-evidence-rule.md`
-- `../../../.agents/references/documentation-style.md`
-- `../../../.agents/references/language-policy.md`
-- `../../../.agents/references/ubiquitous-language.md`
+- Workflow/context/documentation/language rules under
+  `../../../.agents/references/`
+
+## Conversation Contract
+
+Start with one short restatement of the current intent, then ask 3-5 blocking
+questions that would change the next safe action. Do not start with a finished
+draft, approval, or long questionnaire.
+
+Each round records:
+- operator answer summary
+- critique lens: skeptic, methodologist, implementation, or claim-boundary
+- current gap check
+- next blocking question or explicit exit choice
+- exit recommendation and human exit decision status
+
+The agent may recommend `continue_grill`, `grill_draft_ready`,
+`bridge_wf1_wf3`, `pivot`, or `abandon`, but the operator owns the exit
+decision.
+
+## Readiness Target
+
+Before recommending `grill_draft_ready`, make these candidate-clear or record
+the blocker explicitly:
+- concrete operator observation, candidate claim, falsifier, metric/signal
+- maximum claim boundary and forbidden claims
+- pivot / abort condition
+- dataset source, access status, and local/private target when known
+- baseline or negative-control source, including a code repository URL or
+  `baseline_repo_missing`
+- compute, budget, registration, and approval assumptions that would stop
+  `prepare`
+
+For datasets, require a direct downloadable source, official dataset API,
+Hugging Face dataset id, release/archive URL, or private exact local path.
+Paper pages, method pages, and project pages are contextual unless they expose
+an acquisition source.
+
+For baselines, require a concrete code repository URL, official code
+entrypoint, or private exact local path. Method names and paper URLs are
+non-executable until source provenance is known.
 
 ## Outputs
 
@@ -101,144 +63,68 @@ Grill may create or refresh:
 - `docs/Research_Intent_Draft.md`
 - `docs/Grill_Round_Log.md`
 - `docs/Execution_Readiness_Packet.md`
-- `.workflow_supervisor/readiness.json` only when Grill readiness tooling is
-  run with a write action, or when supervisor tooling produces it
+- `.workflow_supervisor/readiness.json` only through Grill/supervisor tooling
 
-Exact local paths, commands, budgets, and private values belong in
-`.workflow_supervisor/readiness.json`. Public Markdown should redact sensitive
-values and mark them as candidate inputs until readiness preflight verifies
-them.
+In `docs/Execution_Readiness_Packet.md`, keep three compact ledgers:
 
-When Grill discusses datasets, record a structured `Dataset Access Ledger` or
-equivalent table in `docs/Execution_Readiness_Packet.md` with these fields:
-dataset id, source URL or official entrypoint, access verdict, non-destructive
-download probe result, execution decision, and notes. Execution decision must
-be explicit: `candidate`, `rejected`, `requires_approval`, or `deferred`.
-For a dataset row to be executable by `prepare`, the source must be a direct
-download/acquisition source such as a Hugging Face dataset id, official dataset
-API, repository/release/archive URL, Zenodo record, or private exact local path
-stored in readiness JSON. Paper pages, method pages, and project pages are
-contextual support only unless they expose that acquisition source. Use
-repository/API/README/HTTP HEAD/file-list probes when feasible, but do not
-download large assets, private assets, or non-approved gated datasets during
-Grill. `prepare` / WF4 performs the actual acquisition and records download
-Gate Evidence.
+- `Dataset Access Ledger`: dataset id, source/entrypoint, access verdict,
+  probe result, execution decision, notes.
+- `Baseline Source Ledger`: baseline id/name, role, code repository URL or
+  official code entrypoint, probe result, execution decision, notes.
+- `Execution Intent Ledger`: acquisition and clone policy rows.
 
-When Grill discusses baselines or negative controls, record a structured
-`Baseline Source Ledger` or equivalent table in
-`docs/Execution_Readiness_Packet.md` with these fields: baseline id/name,
-role, code repository URL or official code entrypoint, repo/code probe result,
-execution decision, and notes. For a baseline row to be executable by
-`prepare`, the source must be a concrete code repository URL, official code
-entrypoint, or exact local path stored in private readiness. Method names,
-paper URLs, project pages without code, and reported-method baselines are not
-cloneable sources; mark them `deferred`, `requires_approval`, or as a
-`baseline_repo_missing` blocker instead of recording them as `baseline_repo`.
+Execution decisions are `candidate`, `rejected`, `requires_approval`, or
+`deferred`. Active rows must not remain `pending`; use blockers such as
+`baseline_repo_missing`, `missing_dataset_source`, `requires_approval`, or
+`deferred`.
 
-When Grill discusses external acquisition, clone, or access intent, also record
-an `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror
-the same intent as machine-readable readiness inputs when
-`.workflow_supervisor/readiness.json` is written through Grill tooling. Use
-stable keys so `prepare --complete` can consume them without guessing from
-prose:
-
-- `hf_access_policy`: source-specific Hugging Face allowance, with no
-  credentials or tokens recorded.
-- `non_hf_registration_policy`: explicit exclusion or later-approval rule for
-  non-HF registration/request/challenge-gated sources.
-- `baseline_clone_policy`: whether baseline clone is allowed, and whether it is
-  source-specific or global.
-- `baseline_clone_scope`: the concrete allowed first baseline set, such as
-  `Free-SurGS, Feature 3DGS`.
-- `external_download_policy`: use only for an intentionally broad global
-  external download/clone policy; do not use it for narrow HF-only or
-  baseline-specific intent.
-
-Use readiness input `kind: policy` for these entries. These rows are candidate
-readiness policy, not Approval Evidence or Approved Contracts. Deferred,
-rejected, or `requires_approval` dataset rows remain non-executable until a
-later explicit operator approval expands scope.
-
-At Grill handoff, do not leave active acquisition rows as `pending`. If an
-active source is unknown, record the blocker as `baseline_repo_missing`,
-`missing_dataset_source`, `requires_approval`, or `deferred`; if the source is
-known, record the exact URL/id/local-path class and the intended acquisition
-mode, such as Hugging Face auth download, local path verification, Git clone,
-release/archive download, or no-download reference inspection.
-
-Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
-`iteration_log.json`. Those are canonical research-workspace state files owned
-by later workflow/state tooling, stable build planning, and WF10 iteration.
+For policy rows, use readiness input `kind: policy` and stable keys:
+`hf_access_policy`, `non_hf_registration_policy`, `baseline_clone_policy`,
+`baseline_clone_scope`, and `external_download_policy`. These are candidate
+readiness inputs, not Approval Evidence or Approved Contracts.
+When readiness JSON is written, also keep top-level structured fields:
+`external_download_policy`, `approved_datasets`, `approved_baselines`,
+`target_paths`, `unknowns`, and `operator_approved_at`.
+Dataset rows may include `target`, `license`, and `max_size_gb`; baseline rows
+may include `repo`, `ref`, and `target`.
 
 ## Tooling
 
-Prefer the Grill helpers for durable draft writes:
-- `python tooling/grill/questions.py --lens intake` prints a reusable question
-  round contract with gap template and exit options. Lenses: `facilitator`,
-  `intake`, `skeptic`, `methodologist`, `implementation`, `claim_boundary`.
-- `python tooling/grill/draft.py --workspace-root . init --seed "<idea>"`
-  initializes draft Markdown artifacts without overwriting existing drafts.
-- `python tooling/grill/draft.py --workspace-root . round --lens skeptic \
-  --answer-summary "<summary>" --gap-check "<gap>" \
-  --next-question "<question>" --exit-recommendation continue_grill`
-  appends a Grill round contract.
-- `python tooling/grill/draft.py --workspace-root . packet \
-  --readiness-json <path>` renders the public readiness packet with local
-  values redacted.
-- `python tooling/grill/readiness.py --workspace-root . --check \
-  --verify-paths --json` validates readiness shape and path-kind inputs
-  without writing runtime state.
-- `python tooling/grill/readiness.py --workspace-root . --write-readiness \
-  --input-json <path> --json` writes supervisor-owned
-  `.workflow_supervisor/readiness.json` after validation.
+Prefer helpers for durable writes:
 
-Use `--write-readiness` only when intentionally writing supervisor-owned
-`.workflow_supervisor/readiness.json` through tooling.
+```bash
+python tooling/grill/questions.py --lens intake
+python tooling/grill/draft.py --workspace-root . init --seed "<idea>"
+python tooling/grill/draft.py --workspace-root . round --lens skeptic --answer-summary "<summary>" --gap-check "<gap>" --next-question "<question>" --exit-recommendation continue_grill
+python tooling/grill/draft.py --workspace-root . packet --readiness-json <path>
+python tooling/grill/readiness.py --workspace-root . --check --verify-paths --json
+python tooling/grill/readiness.py --workspace-root . --write-readiness --input-json <path> --json
+```
+
+Use `--write-readiness` only for intentional tooling-owned writes to
+`.workflow_supervisor/readiness.json`.
 
 ## Boundaries
 
-- Do not mark WF1, WF2, or WF3 complete from Grill output alone.
+- Do not mark WF1-WF3 complete from Grill output alone.
 - Do not create Approved Contracts or Approval Evidence.
-- Do not write `.evidence/**` directly.
-- Do not write `.workflow_supervisor/**` by hand; use tooling.
-- Do not promote Grill draft facts into current docs without the relevant
-  Stage Skill, Evidence Chain tooling, or explicit bridge path.
+- Do not write `.evidence/**` or `.workflow_supervisor/**` by hand.
+- Do not create `PROJECT_STATE.json`, `project_map.json`, or
+  `iteration_log.json`.
+- Do not promote Grill draft facts into current docs without the owning Stage
+  Skill, Evidence Chain tooling, or explicit bridge path.
 
-## Bridge Rule
+## Handoff
 
-`harness grill --bridge-stages` may use an accepted Research Intent Draft as
-context for `$survey-idea`, `$idea-debate`, and `$refine-idea`. A Stage is
-complete only when its canonical artifact and Gate ledger exist.
-
-## Init Handoff Rule
-
-When the operator explicitly confirms `grill_draft_ready` or asks to proceed
-from an accepted Grill draft, continue in the same turn with
-`$init-project update-from-grill` unless the operator asks to skip guidance
-initialization. The handoff inputs are:
-
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
-- `.workflow_supervisor/readiness.json` when supervisor tooling has produced it
+When the operator confirms `grill_draft_ready` or asks to proceed from an
+accepted draft, continue with `$init-project update-from-grill` unless the
+operator asks to skip guidance initialization. Inputs are the three Grill docs
+and `.workflow_supervisor/readiness.json` when supervisor tooling produced it.
 
 The handoff initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md`
-from candidate Grill context only. It must preserve `## Custom`, keep dataset
-and baseline items marked as candidate until `prepare` / WF4-WF5 verify them,
-and must not mark WF1-WF3 complete. It does not create `PROJECT_STATE.json`,
-`project_map.json`, or `iteration_log.json`. If the handoff is not run, report
-`init_project_update_from_grill_or_NOT_RUN` with the reason.
+from candidate Grill context only, preserves `## Custom`, keeps dataset and
+baseline items candidate until `prepare` / WF4-WF5 verify them, and must not
+mark WF1-WF3 complete. If not run, report
+`init_project_update_from_grill_or_NOT_RUN`.
 
-## Exit Condition
-
-Return one of:
-- `continue_grill`: blocking gaps remain and the next question is clear.
-- `grill_draft_ready`: draft artifacts exist, unresolved questions are clear,
-  Execution Intent, Dataset Access, and Baseline Source ledgers separate
-  executable sources from deferred/missing/approval-required sources, the
-  operator chose to hand off the draft, and
-  `$init-project update-from-grill` has run or is reported as `NOT_RUN`.
-- `grill_bridge_complete`: canonical WF1-WF3 artifacts and Gate ledger exist.
-- `pivot` or `abandon`: operator chose not to proceed with the draft.
-
-Report a Gate ledger for any durable writes or skipped checks.
+Report a Gate ledger for durable writes or skipped checks.

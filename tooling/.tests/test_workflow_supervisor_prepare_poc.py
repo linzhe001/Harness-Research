@@ -282,6 +282,22 @@ def test_status_json_includes_pending_request_details(
         "reject",
     ]
     assert pending["request_snapshot_hash"]
+    assert payload["blocked_by"] == "dataset_input_required"
+    assert payload["acquisition_plan_ref"].endswith(
+        "/runtime/acquisition_plan.json"
+    )
+    assert payload["resume_command"] == (
+        "tooling/workflow_supervisor/scripts/workflow_ctl.sh "
+        f"answer --request-id {pending['request_id']} --json <answer.json>"
+    )
+    assert payload["recovery"]["after_answer_command"] == (
+        "tooling/workflow_supervisor/scripts/workflow_ctl.sh "
+        f"resume --request-id {pending['request_id']} --json"
+    )
+    assert payload["recovery"]["recover_command"] == (
+        "tooling/workflow_supervisor/scripts/workflow_ctl.sh "
+        "recover --repair-stale-running --auto-resume-answered --json"
+    )
 
 
 def test_prepare_approve_resume_records_contract_and_reruns_gate(

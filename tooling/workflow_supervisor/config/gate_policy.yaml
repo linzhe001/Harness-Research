@@ -1,0 +1,72 @@
+schema_version: 1
+profiles:
+  default:
+    missing_recommended_reads: warn_once
+    mixed_owner_writes: warn_once
+    normal_research_writes: allow
+    tool_owned_runtime_writes: block
+    external_downloads: require_run_policy
+    release_actions: require_human_approval
+    claim_boundary_changes: require_human_approval
+    block_write_globs:
+      - .workflow_supervisor/**
+      - .evidence/**
+      - .auto_iterate/**
+      - docs/_views/**
+      - docs/_site/**
+      - .git/**
+    one_time_warnings:
+      - missing_recommended_reads
+      - mixed_owner_write
+  automation_prepare:
+    inherits: default
+    external_downloads: allow_if_readiness_approved
+    allow_write_globs:
+      - data/**
+      - datasets/**
+      - baselines/**
+      - docs/Dataset_Stats.md
+      - docs/Baseline_Report.md
+      - docs/30_evidence/**
+      - docs/35_protocol/**
+      - PROJECT_STATE.json
+      - project_map.json
+    require_postconditions:
+      - .workflow_supervisor/runs/<run_id>/runtime/acquisition_plan.json
+      - data/dataset_manifest.json
+      - baselines/baseline_manifest.json
+      - wf5_review_packet
+  automation_build:
+    inherits: default
+    external_downloads: require_run_policy
+    allow_write_globs:
+      - src/**
+      - scripts/**
+      - configs/**
+      - docs/20_facts/**
+      - docs/30_evidence/**
+      - docs/Implementation_Roadmap.md
+      - docs/Technical_Spec.md
+      - docs/Validate_Run_Report.md
+      - PROJECT_STATE.json
+      - project_map.json
+  automation_iterate:
+    inherits: default
+    external_downloads: require_run_policy
+    allow_write_globs:
+      - src/**
+      - scripts/**
+      - configs/**
+      - docs/40_iterations/**
+      - docs/iterations/**
+      - iteration_log.json
+      - project_map.json
+  conservative_release:
+    inherits: default
+    external_downloads: block
+    release_actions: require_human_approval
+    claim_boundary_changes: require_human_approval
+  change_intake:
+    inherits: default
+    external_downloads: require_run_policy
+    normal_research_writes: classify_then_route

@@ -94,6 +94,95 @@ def test_reference_index_resolves_handbook_markers() -> None:
     )
 
 
+def test_reference_index_cli_json_is_concise(capsys) -> None:
+    builder = load_evidence_tool("build_workflow_handbook_reference_index")
+
+    code = builder.main(
+        [
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--dry-run",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert payload["ok"] is True
+    assert payload["entry_count"] > 0
+    assert "entries" not in payload
+    assert len(json.dumps(payload)) < 500
+
+
+def test_reference_index_cli_json_full_keeps_manifest(capsys) -> None:
+    builder = load_evidence_tool("build_workflow_handbook_reference_index")
+
+    code = builder.main(
+        [
+            "--workspace-root",
+            str(REPO_ROOT),
+            "--dry-run",
+            "--json-full",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert "entries" in payload
+    assert "links_by_doc" in payload
+
+
+def test_docs_site_cli_json_is_concise(tmp_path: Path, capsys) -> None:
+    site_builder = load_evidence_tool("build_docs_site")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "Index.md").write_text("# Index\n\nBody.\n", encoding="utf-8")
+
+    code = site_builder.main(
+        [
+            "--workspace-root",
+            str(tmp_path),
+            "--source-root",
+            "docs",
+            "--output-root",
+            "docs/_site",
+            "--dry-run",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert payload["ok"] is True
+    assert payload["page_count"] == 1
+    assert "pages" not in payload
+    assert len(json.dumps(payload)) < 500
+
+
+def test_docs_site_cli_json_full_keeps_manifest(tmp_path: Path, capsys) -> None:
+    site_builder = load_evidence_tool("build_docs_site")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "Index.md").write_text("# Index\n\nBody.\n", encoding="utf-8")
+
+    code = site_builder.main(
+        [
+            "--workspace-root",
+            str(tmp_path),
+            "--source-root",
+            "docs",
+            "--output-root",
+            "docs/_site",
+            "--dry-run",
+            "--json-full",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert payload["pages"][0]["source_path"] == "docs/Index.md"
+
+
 def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     builder = load_evidence_tool("build_workflow_handbook_reference_index")
     site_builder = load_evidence_tool("build_docs_site")

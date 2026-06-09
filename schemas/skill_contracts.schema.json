@@ -72,6 +72,16 @@
             "type": "array",
             "items": { "type": "string" }
           },
+          "context_budget": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "string", "minLength": 1 },
+                { "type": "boolean" }
+              ]
+            }
+          },
           "write_scope": {
             "type": "object",
             "required": ["allowed_paths"],

@@ -15,7 +15,7 @@ from questions import (
     question_round,
     render_markdown,
 )
-from readiness import empty_readiness, validate_readiness
+from readiness import empty_readiness, normalize_readiness, validate_readiness
 from state import (
     atomic_write_json,
     atomic_write_text,
@@ -354,6 +354,7 @@ def render_execution_intent_rows(readiness: dict[str, Any]) -> list[str]:
 
 
 def render_readiness_packet(readiness: dict[str, Any]) -> str:
+    readiness = normalize_readiness(readiness)
     rows = []
     for item in readiness.get("inputs", []):
         if not isinstance(item, dict):
@@ -370,6 +371,63 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
         )
     if not rows:
         rows.append("| pending | pending | candidate | not run |")
+    dataset_rows = []
+    for item in readiness.get("approved_datasets", []):
+        if not isinstance(item, dict):
+            continue
+        source = str(item.get("source", ""))
+        target = item.get("target_path") or item.get("target") or ""
+        notes = str(item.get("notes", ""))
+        if item.get("license"):
+            notes = (notes + "; ").lstrip("; ") + f"license={item['license']}"
+        if item.get("max_size_gb") is not None:
+            notes = (notes + "; ").lstrip("; ") + f"max_size_gb={item['max_size_gb']}"
+        dataset_rows.append(
+            "| {id} | {source} | {target} | {status} | {notes} |".format(
+                id=markdown_escape_table(str(item.get("id") or source or "unknown")),
+                source=markdown_escape_table(source),
+                target=markdown_escape_table(str(target)),
+                status=markdown_escape_table(
+                    str(item.get("access_status", "approved"))
+                ),
+                notes=markdown_escape_table(notes),
+            )
+        )
+    if not dataset_rows:
+        dataset_rows.append("| pending | pending | pending | candidate | pending |")
+    baseline_rows = []
+    for item in readiness.get("approved_baselines", []):
+        if not isinstance(item, dict):
+            continue
+        source = str(item.get("source") or item.get("repo") or "")
+        target = item.get("target_path") or item.get("target") or ""
+        notes = str(item.get("notes", ""))
+        if item.get("ref"):
+            notes = (notes + "; ").lstrip("; ") + f"ref={item['ref']}"
+        baseline_rows.append(
+            "| {id} | {source} | {target} | {status} | {notes} |".format(
+                id=markdown_escape_table(str(item.get("id") or source or "unknown")),
+                source=markdown_escape_table(source),
+                target=markdown_escape_table(str(target)),
+                status=markdown_escape_table(
+                    str(item.get("access_status", "approved"))
+                ),
+                notes=markdown_escape_table(notes),
+            )
+        )
+    if not baseline_rows:
+        baseline_rows.append("| pending | pending | pending | candidate | pending |")
+    target_rows = [
+        f"| {markdown_escape_table(str(key))} | {markdown_escape_table(str(value))} |"
+        for key, value in readiness.get("target_paths", {}).items()
+    ]
+    if not target_rows:
+        target_rows.append("| pending | pending |")
+    unknown_rows = [
+        f"- {item}" for item in readiness.get("unknowns", []) if str(item).strip()
+    ]
+    if not unknown_rows:
+        unknown_rows.append("- None recorded.")
     return "\n".join(
         [
             "# Execution Readiness Packet",
@@ -388,6 +446,27 @@ def render_readiness_packet(readiness: dict[str, Any]) -> str:
             "| Input | Redacted Value | Verification Status | Verification Command |",
             "| --- | --- | --- | --- |",
             *rows,
+            "",
+            "## Structured Readiness",
+            "",
+            f"- external_download_policy: `{readiness['external_download_policy']}`",
+            f"- operator_approved_at: `{readiness['operator_approved_at']}`",
+            "",
+            "| Target Key | Path |",
+            "| --- | --- |",
+            *target_rows,
+            "",
+            "| Approved Dataset | Source | Target Path | Status | Notes |",
+            "| --- | --- | --- | --- | --- |",
+            *dataset_rows,
+            "",
+            "| Approved Baseline | Source | Target Path | Status | Notes |",
+            "| --- | --- | --- | --- | --- |",
+            *baseline_rows,
+            "",
+            "Open unknowns:",
+            "",
+            *unknown_rows,
             "",
             "## Execution Intent Ledger",
             "",
@@ -549,6 +628,7 @@ def command_init(args: argparse.Namespace) -> int:
         if args.readiness_json
         else empty_readiness("grill")
     )
+    readiness = normalize_readiness(readiness)
     errors = validate_readiness(root, readiness)
     if errors:
         raise ValueError("; ".join(errors))
@@ -592,6 +672,7 @@ def command_round(args: argparse.Namespace) -> int:
 def command_packet(args: argparse.Namespace) -> int:
     root = repo_root(args.workspace_root)
     readiness = load_json(resolve_path(root, args.readiness_json))
+    readiness = normalize_readiness(readiness)
     errors = validate_readiness(root, readiness)
     if errors:
         raise ValueError("; ".join(errors))

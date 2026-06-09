@@ -53,6 +53,12 @@ Use this skill for WF1 when the user wants to know whether a research idea is wo
 7. Write `docs/Feasibility_Report.md` using the canonical template.
 8. Update `PROJECT_STATE.json` if the user wants stage-state synchronization.
 
+## Context Budget
+
+- Use 8-12 source artifacts by default; store extra candidates by path instead
+  of pasting full text.
+- Limit competitor analysis to Top 5 and Grill rounds to 3-5 questions.
+
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

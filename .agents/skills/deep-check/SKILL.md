@@ -44,6 +44,12 @@ Use this skill after WF6 `$refine-arch` and before WF7 `$build-plan` when the ar
    - `CONDITIONAL GO`
    - `NO-GO`
 
+## Context Budget
+
+- Review 1 design target per invocation; split unrelated architecture choices.
+- Run at most 4 negative-search queries and 1 reviewer round unless the
+  operator explicitly expands scope.
+
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

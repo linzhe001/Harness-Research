@@ -23,6 +23,7 @@ READ_LEDGERS_DIR = RUNTIME_DIR / "read_ledgers"
 READ_LEDGER_LOCK_PATH = RUNTIME_DIR / "read_ledger.lock"
 PENDING_PATH = RUNTIME_DIR / "pending_actions.json"
 NOTICES_PATH = RUNTIME_DIR / "notices.json"
+USER_PROMPT_CONTEXT_MAX_CHARS = 2500
 
 IGNORE_GIT_ADD_PATTERNS = [
     "ref/",
@@ -387,7 +388,10 @@ HARNESS_MAINTENANCE_RE = re.compile(
     r"skill[- ]?(?:maintenance|contract|detection|routing|trigger|permission)|"
     r"prompt[- ]?(?:routing|trigger|detection|classification)|"
     r"(?:ubiquitous[- ]?language|operator[- ]?handbook|stage[- ]?cards?|"
-    r"stage[- ]?card[- ]?generator|workflow[- ]?(?:vocabulary|terms|language)|"
+    r"stage[- ]?card[- ]?generator|"
+    r"workflow[- ]?(?:vocabulary|terms|language|routing|trigger|maintenance|"
+    r"stage|permission|gate|guardrail|supervisor|budget|context|token|"
+    r"optimization|policy)|"
     r"project_glossary)|"
     r"permission[- ]?(?:policy|boundary|elevation|scope|model)|"
     r"tooling/codex_hooks|AI_AGENT_SETUP\.md|"
@@ -396,7 +400,14 @@ HARNESS_MAINTENANCE_RE = re.compile(
     r"\.claude/skills)(?![A-Za-z0-9_])|"
     r"hook\s*的?\s*(?:判断|触发|路由|信任|状态)|"
     r"(?:判断|触发|路由|信任|状态).{0,12}hook|"
-    r"workflow\s*(?:语言|词汇|术语|路由|触发|维护|阶段|权限)|"
+    r"(?:workflow|gate|supervisor|hook|skill).{0,24}"
+    r"(?:优化|轻量|卡点|阻拦|阻断|自动化|预算|消耗|提示词注入|token|"
+    r"context|gate|supervisor|policy)|"
+    r"(?:优化|轻量|卡点|阻拦|阻断|自动化|预算|消耗|提示词注入|token|"
+    r"context|gate|supervisor|policy).{0,24}"
+    r"(?:workflow|gate|supervisor|hook|skill)|"
+    r"workflow\s*(?:语言|词汇|术语|路由|触发|维护|阶段|权限|优化|轻量|"
+    r"卡点|阻拦|阻断|自动化|预算|消耗|提示词注入|token)|"
     r"(?:prompt|skill|hook).{0,16}(?:误归|误判|错归|归到|路由|触发)|"
     r"(?:误归|误判|错归|归到).{0,16}(?:code-debug|code-expert|harness-maintenance)|"
     r"(?:权限|提权).{0,8}(?:策略|模型|边界|范围|细化)|"
@@ -1100,6 +1111,16 @@ def daily_context_for_workspace(root: Path) -> str:
         ".workflow_supervisor/**, docs/_views/**, and docs/_site/** are "
         "blocked; use the owning tools."
     )
+
+
+def truncate_user_prompt_context(context: str) -> str:
+    if len(context) <= USER_PROMPT_CONTEXT_MAX_CHARS:
+        return context
+    marker = (
+        "\n[truncated Harness route context; read referenced local files for "
+        "details]"
+    )
+    return context[: USER_PROMPT_CONTEXT_MAX_CHARS - len(marker)] + marker
 
 
 def validate_contract_files(root: Path) -> list[str]:

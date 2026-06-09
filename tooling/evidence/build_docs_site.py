@@ -1439,6 +1439,25 @@ def build_docs_site(
     return manifest
 
 
+def docs_site_summary(
+    manifest: dict[str, Any],
+    *,
+    dry_run: bool,
+) -> dict[str, Any]:
+    output_root = str(manifest.get("output_root") or "")
+    manifest_path = (Path(output_root) / MANIFEST_NAME).as_posix()
+    return {
+        "ok": True,
+        "manifest": manifest_path,
+        "dry_run": dry_run,
+        "source_root": manifest.get("source_root"),
+        "output_root": manifest.get("output_root"),
+        "reference_mode": manifest.get("reference_mode"),
+        "page_count": len(manifest.get("pages", [])),
+        "navigation_group_count": len(manifest.get("navigation", [])),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Render source Markdown docs into docs/_site HTML."
@@ -1456,6 +1475,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--json-full",
+        action="store_true",
+        help=(
+            "Print the full generated docs-site manifest instead of a concise "
+            "summary."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -1473,8 +1500,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    if args.json:
+    if args.json_full:
         print(json.dumps(manifest, indent=2, ensure_ascii=False))
+    elif args.json:
+        print(
+            json.dumps(
+                docs_site_summary(manifest, dry_run=args.dry_run),
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
     else:
         print(f"PASS {Path(args.output_root) / MANIFEST_NAME}")
     return 0

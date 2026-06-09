@@ -1,11 +1,11 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-07T02:01:08Z",
+  "generated_at": "2026-06-09T08:33:47Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
-  "site_title": "Harness Workflow Handbook",
+  "site_title": "Workflow Handbook",
   "reference_mode": "workflow-handbook",
-  "nav_config_path": "workflow_handbook/config/navigation.json",
+  "nav_config_path": null,
   "pages": [
     {
       "doc_id": "Workflow_Operator_Handbook",
@@ -15,7 +15,7 @@
       "html_path": "docs/_site/workflow_handbook/Workflow_Operator_Handbook.html",
       "status": null,
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": null,
       "page_kind": null,
@@ -31,7 +31,7 @@
       "html_path": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html",
       "status": null,
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": null,
       "page_kind": null,
@@ -47,7 +47,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "markdown_to_html_preview_chain",
       "page_kind": "concept",
@@ -72,7 +72,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/auto_iterate_model.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto_iterate_model",
       "page_kind": "concept",
@@ -93,7 +93,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/evidence_approval_model.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "evidence_approval_model",
       "page_kind": "concept",
@@ -114,7 +114,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "hooks_permissions_model",
       "page_kind": "concept",
@@ -135,7 +135,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/layer_build_validate.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "layer_build_validate",
       "page_kind": "concept",
@@ -156,7 +156,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/layer_contract_plan.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "layer_contract_plan",
       "page_kind": "concept",
@@ -177,7 +177,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/layer_explore.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "layer_explore",
       "page_kind": "concept",
@@ -199,7 +199,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/layer_iterate_release.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "layer_iterate_release",
       "page_kind": "concept",
@@ -220,7 +220,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/operator_task_index.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "operator_task_index",
       "page_kind": "concept",
@@ -242,7 +242,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/skill_reference.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "skill_reference",
       "page_kind": "reference",
@@ -263,7 +263,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/workflow_layers.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "workflow_layers",
       "page_kind": "concept",
@@ -284,7 +284,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "workflow_supervisor_model",
       "page_kind": "concept",
@@ -306,7 +306,7 @@
       "html_path": "docs/_site/workflow_handbook/pages/workflow_terms.html",
       "status": "current",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "workflow_terms",
       "page_kind": "reference",
@@ -329,7 +329,7 @@
       "html_path": "docs/_site/workflow_handbook/plans/HTML_Rendering_Handbook_Plan.html",
       "status": "draft implementation plan",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": null,
       "page_kind": null,
@@ -345,7 +345,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-iterate-goal.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-iterate-goal",
       "page_kind": "skill",
@@ -365,7 +365,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-argument.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-argument",
       "page_kind": "skill",
@@ -385,7 +385,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-citation.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-citation",
       "page_kind": "skill",
@@ -405,7 +405,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-data.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-data",
       "page_kind": "skill",
@@ -425,7 +425,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-figure.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-figure",
       "page_kind": "skill",
@@ -445,7 +445,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-harden.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-harden",
       "page_kind": "skill",
@@ -465,7 +465,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-intake.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-intake",
       "page_kind": "skill",
@@ -485,7 +485,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-layout.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-layout",
       "page_kind": "skill",
@@ -505,7 +505,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-patch.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-patch",
       "page_kind": "skill",
@@ -525,7 +525,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-research.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-research",
       "page_kind": "skill",
@@ -545,7 +545,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper-response.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper-response",
       "page_kind": "skill",
@@ -565,7 +565,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/auto-paper.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "auto-paper",
       "page_kind": "skill",
@@ -585,7 +585,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/baseline-repro.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "baseline-repro",
       "page_kind": "skill",
@@ -605,7 +605,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/build-plan.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "build-plan",
       "page_kind": "skill",
@@ -625,7 +625,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/change-intake.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "change-intake",
       "page_kind": "skill",
@@ -645,7 +645,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/code-debug.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "code-debug",
       "page_kind": "skill",
@@ -665,7 +665,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/code-expert.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "code-expert",
       "page_kind": "skill",
@@ -685,7 +685,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/code-review.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "code-review",
       "page_kind": "skill",
@@ -705,7 +705,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/data-prep.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "data-prep",
       "page_kind": "skill",
@@ -725,7 +725,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/deep-check.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "deep-check",
       "page_kind": "skill",
@@ -745,7 +745,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/doc-compiler.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "doc-compiler",
       "page_kind": "skill",
@@ -765,7 +765,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/docs-site.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "docs-site",
       "page_kind": "skill",
@@ -785,7 +785,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/env-setup.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "env-setup",
       "page_kind": "skill",
@@ -805,7 +805,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/evaluate.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "evaluate",
       "page_kind": "skill",
@@ -825,7 +825,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/final-exp.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "final-exp",
       "page_kind": "skill",
@@ -845,7 +845,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/grill.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "grill",
       "page_kind": "skill",
@@ -865,7 +865,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/harness-maintenance.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "harness-maintenance",
       "page_kind": "skill",
@@ -885,7 +885,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/idea-debate.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "idea-debate",
       "page_kind": "skill",
@@ -905,7 +905,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/init-project.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "init-project",
       "page_kind": "skill",
@@ -925,7 +925,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/iterate.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "iterate",
       "page_kind": "skill",
@@ -945,7 +945,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/orchestrator.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "orchestrator",
       "page_kind": "skill",
@@ -965,7 +965,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/protocol-compiler.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "protocol-compiler",
       "page_kind": "skill",
@@ -985,7 +985,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/protocol-drift-check.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "protocol-drift-check",
       "page_kind": "skill",
@@ -1005,7 +1005,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/refine-arch.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "refine-arch",
       "page_kind": "skill",
@@ -1025,7 +1025,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/refine-idea.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "refine-idea",
       "page_kind": "skill",
@@ -1045,7 +1045,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/release.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "release",
       "page_kind": "skill",
@@ -1065,7 +1065,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/review-packet.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "review-packet",
       "page_kind": "skill",
@@ -1085,7 +1085,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/survey-idea.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "survey-idea",
       "page_kind": "skill",
@@ -1105,7 +1105,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/validate-run.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "validate-run",
       "page_kind": "skill",
@@ -1125,7 +1125,7 @@
       "html_path": "docs/_site/workflow_handbook/skills/workflow-supervisor.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "workflow-supervisor",
       "page_kind": "skill",
@@ -1145,7 +1145,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf0_init.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf0_init",
       "page_kind": "stage",
@@ -1166,7 +1166,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf10_iterate.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf10_iterate",
       "page_kind": "stage",
@@ -1187,7 +1187,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf11_final_exp.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf11_final_exp",
       "page_kind": "stage",
@@ -1208,7 +1208,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf12_release.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf12_release",
       "page_kind": "stage",
@@ -1229,7 +1229,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf1_survey_idea.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf1_survey_idea",
       "page_kind": "stage",
@@ -1250,7 +1250,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf2_idea_debate.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf2_idea_debate",
       "page_kind": "stage",
@@ -1271,7 +1271,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf3_refine_idea.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf3_refine_idea",
       "page_kind": "stage",
@@ -1292,7 +1292,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf4_data_prep.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf4_data_prep",
       "page_kind": "stage",
@@ -1313,7 +1313,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf5_baseline_repro.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf5_baseline_repro",
       "page_kind": "stage",
@@ -1334,7 +1334,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf6_refine_arch.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf6_refine_arch",
       "page_kind": "stage",
@@ -1355,7 +1355,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf7_build_plan.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf7_build_plan",
       "page_kind": "stage",
@@ -1376,7 +1376,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf8_code_expert.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf8_code_expert",
       "page_kind": "stage",
@@ -1397,7 +1397,7 @@
       "html_path": "docs/_site/workflow_handbook/stages/wf9_validate_run.html",
       "status": "generated",
       "evidence_chain_path": null,
-      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "preview_index_path": null,
       "related_pages": [],
       "page_id": "wf9_validate_run",
       "page_kind": "stage",
@@ -1413,81 +1413,88 @@
   ],
   "navigation": [
     {
-      "label": "Start",
+      "label": "workflow_handbook",
       "pages": [
-        "Workflow_Operator_Handbook"
-      ],
-      "section_id": "start",
-      "items": [
-        {
-          "doc_id": "Workflow_Operator_Handbook",
-          "label": "Operator Handbook",
-          "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
-          "children": []
-        }
+        "Workflow_Operator_Handbook",
+        "Workflow_Stage_Cards"
       ]
     },
     {
-      "label": "Operate",
+      "label": "workflow_handbook/pages",
       "pages": [
-        "pages__operator_task_index",
-        "pages__workflow_supervisor_model",
-        "skills__grill",
-        "skills__workflow-supervisor",
+        "pages__04_markdown_to_html_preview_chain",
+        "pages__auto_iterate_model",
         "pages__evidence_approval_model",
-        "pages__auto_iterate_model"
-      ],
-      "section_id": "operate",
-      "items": [
-        {
-          "doc_id": "pages__operator_task_index",
-          "label": "Action Index",
-          "source_path": "workflow_handbook/pages/operator_task_index.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__workflow_supervisor_model",
-          "label": "Modes",
-          "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
-          "children": [
-            {
-              "doc_id": "skills__grill",
-              "label": "grill",
-              "source_path": "workflow_handbook/skills/grill.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__workflow-supervisor",
-              "label": "execution supervisor",
-              "source_path": "workflow_handbook/skills/workflow-supervisor.md",
-              "children": []
-            }
-          ]
-        },
-        {
-          "doc_id": "pages__evidence_approval_model",
-          "label": "Evidence And Approval",
-          "source_path": "workflow_handbook/pages/evidence_approval_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__auto_iterate_model",
-          "label": "Auto-Iterate",
-          "source_path": "workflow_handbook/pages/auto_iterate_model.md",
-          "children": []
-        }
+        "pages__hooks_permissions_model",
+        "pages__layer_build_validate",
+        "pages__layer_contract_plan",
+        "pages__layer_explore",
+        "pages__layer_iterate_release",
+        "pages__operator_task_index",
+        "pages__skill_reference",
+        "pages__workflow_layers",
+        "pages__workflow_supervisor_model",
+        "pages__workflow_terms"
       ]
     },
     {
-      "label": "Detailed Reference",
+      "label": "workflow_handbook/plans",
       "pages": [
-        "pages__workflow_layers",
-        "pages__layer_explore",
-        "pages__layer_contract_plan",
-        "pages__layer_build_validate",
-        "pages__layer_iterate_release",
-        "Workflow_Stage_Cards",
+        "plans__HTML_Rendering_Handbook_Plan"
+      ]
+    },
+    {
+      "label": "workflow_handbook/skills",
+      "pages": [
+        "skills__auto-iterate-goal",
+        "skills__auto-paper-argument",
+        "skills__auto-paper-citation",
+        "skills__auto-paper-data",
+        "skills__auto-paper-figure",
+        "skills__auto-paper-harden",
+        "skills__auto-paper-intake",
+        "skills__auto-paper-layout",
+        "skills__auto-paper-patch",
+        "skills__auto-paper-research",
+        "skills__auto-paper-response",
+        "skills__auto-paper",
+        "skills__baseline-repro",
+        "skills__build-plan",
+        "skills__change-intake",
+        "skills__code-debug",
+        "skills__code-expert",
+        "skills__code-review",
+        "skills__data-prep",
+        "skills__deep-check",
+        "skills__doc-compiler",
+        "skills__docs-site",
+        "skills__env-setup",
+        "skills__evaluate",
+        "skills__final-exp",
+        "skills__grill",
+        "skills__harness-maintenance",
+        "skills__idea-debate",
+        "skills__init-project",
+        "skills__iterate",
+        "skills__orchestrator",
+        "skills__protocol-compiler",
+        "skills__protocol-drift-check",
+        "skills__refine-arch",
+        "skills__refine-idea",
+        "skills__release",
+        "skills__review-packet",
+        "skills__survey-idea",
+        "skills__validate-run",
+        "skills__workflow-supervisor"
+      ]
+    },
+    {
+      "label": "workflow_handbook/stages",
+      "pages": [
         "stages__wf0_init",
+        "stages__wf10_iterate",
+        "stages__wf11_final_exp",
+        "stages__wf12_release",
         "stages__wf1_survey_idea",
         "stages__wf2_idea_debate",
         "stages__wf3_refine_idea",
@@ -1496,424 +1503,7 @@
         "stages__wf6_refine_arch",
         "stages__wf7_build_plan",
         "stages__wf8_code_expert",
-        "stages__wf9_validate_run",
-        "stages__wf10_iterate",
-        "stages__wf11_final_exp",
-        "stages__wf12_release",
-        "pages__skill_reference",
-        "skills__orchestrator",
-        "skills__doc-compiler",
-        "skills__docs-site",
-        "skills__review-packet",
-        "skills__protocol-compiler",
-        "skills__protocol-drift-check",
-        "skills__survey-idea",
-        "skills__idea-debate",
-        "skills__refine-idea",
-        "skills__data-prep",
-        "skills__baseline-repro",
-        "skills__refine-arch",
-        "skills__deep-check",
-        "skills__evaluate",
-        "skills__init-project",
-        "skills__env-setup",
-        "skills__build-plan",
-        "skills__code-expert",
-        "skills__code-debug",
-        "skills__change-intake",
-        "skills__harness-maintenance",
-        "skills__code-review",
-        "skills__validate-run",
-        "skills__iterate",
-        "skills__auto-iterate-goal",
-        "skills__auto-paper",
-        "skills__auto-paper-intake",
-        "skills__auto-paper-research",
-        "skills__auto-paper-argument",
-        "skills__auto-paper-citation",
-        "skills__auto-paper-layout",
-        "skills__auto-paper-patch",
-        "skills__auto-paper-harden",
-        "skills__auto-paper-response",
-        "skills__auto-paper-data",
-        "skills__auto-paper-figure",
-        "skills__final-exp",
-        "skills__release",
-        "pages__hooks_permissions_model",
-        "pages__workflow_terms",
-        "pages__04_markdown_to_html_preview_chain"
-      ],
-      "section_id": "detailed_reference",
-      "items": [
-        {
-          "doc_id": "pages__workflow_layers",
-          "label": "Detailed Workflow Map",
-          "source_path": "workflow_handbook/pages/workflow_layers.md",
-          "children": [
-            {
-              "doc_id": "pages__layer_explore",
-              "label": "Explore Layer",
-              "source_path": "workflow_handbook/pages/layer_explore.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_contract_plan",
-              "label": "Contract And Plan Layer",
-              "source_path": "workflow_handbook/pages/layer_contract_plan.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_build_validate",
-              "label": "Build And Validate Layer",
-              "source_path": "workflow_handbook/pages/layer_build_validate.md",
-              "children": []
-            },
-            {
-              "doc_id": "pages__layer_iterate_release",
-              "label": "Iterate And Release Layer",
-              "source_path": "workflow_handbook/pages/layer_iterate_release.md",
-              "children": []
-            }
-          ]
-        },
-        {
-          "doc_id": "Workflow_Stage_Cards",
-          "label": "Stage Reference",
-          "source_path": "workflow_handbook/Workflow_Stage_Cards.md",
-          "children": [
-            {
-              "doc_id": "stages__wf0_init",
-              "label": "WF0 Init",
-              "source_path": "workflow_handbook/stages/wf0_init.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf1_survey_idea",
-              "label": "WF1 Survey Idea",
-              "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf2_idea_debate",
-              "label": "WF2 Idea Debate",
-              "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf3_refine_idea",
-              "label": "WF3 Refine Idea",
-              "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf4_data_prep",
-              "label": "WF4 Data Prep",
-              "source_path": "workflow_handbook/stages/wf4_data_prep.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf5_baseline_repro",
-              "label": "WF5 Baseline Repro",
-              "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf6_refine_arch",
-              "label": "WF6 Refine Arch",
-              "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf7_build_plan",
-              "label": "WF7 Build Plan",
-              "source_path": "workflow_handbook/stages/wf7_build_plan.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf8_code_expert",
-              "label": "WF8 Code Expert",
-              "source_path": "workflow_handbook/stages/wf8_code_expert.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf9_validate_run",
-              "label": "WF9 Validate Run",
-              "source_path": "workflow_handbook/stages/wf9_validate_run.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf10_iterate",
-              "label": "WF10 Iterate",
-              "source_path": "workflow_handbook/stages/wf10_iterate.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf11_final_exp",
-              "label": "WF11 Final Exp",
-              "source_path": "workflow_handbook/stages/wf11_final_exp.md",
-              "children": []
-            },
-            {
-              "doc_id": "stages__wf12_release",
-              "label": "WF12 Release",
-              "source_path": "workflow_handbook/stages/wf12_release.md",
-              "children": []
-            }
-          ]
-        },
-        {
-          "doc_id": "pages__skill_reference",
-          "label": "Skill Reference",
-          "source_path": "workflow_handbook/pages/skill_reference.md",
-          "children": [
-            {
-              "doc_id": "skills__orchestrator",
-              "label": "orchestrator",
-              "source_path": "workflow_handbook/skills/orchestrator.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__doc-compiler",
-              "label": "doc-compiler",
-              "source_path": "workflow_handbook/skills/doc-compiler.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__docs-site",
-              "label": "docs-site",
-              "source_path": "workflow_handbook/skills/docs-site.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__review-packet",
-              "label": "review-packet",
-              "source_path": "workflow_handbook/skills/review-packet.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__protocol-compiler",
-              "label": "protocol-compiler",
-              "source_path": "workflow_handbook/skills/protocol-compiler.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__protocol-drift-check",
-              "label": "protocol-drift-check",
-              "source_path": "workflow_handbook/skills/protocol-drift-check.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__survey-idea",
-              "label": "survey-idea",
-              "source_path": "workflow_handbook/skills/survey-idea.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__idea-debate",
-              "label": "idea-debate",
-              "source_path": "workflow_handbook/skills/idea-debate.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__refine-idea",
-              "label": "refine-idea",
-              "source_path": "workflow_handbook/skills/refine-idea.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__data-prep",
-              "label": "data-prep",
-              "source_path": "workflow_handbook/skills/data-prep.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__baseline-repro",
-              "label": "baseline-repro",
-              "source_path": "workflow_handbook/skills/baseline-repro.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__refine-arch",
-              "label": "refine-arch",
-              "source_path": "workflow_handbook/skills/refine-arch.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__deep-check",
-              "label": "deep-check",
-              "source_path": "workflow_handbook/skills/deep-check.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__evaluate",
-              "label": "evaluate",
-              "source_path": "workflow_handbook/skills/evaluate.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__init-project",
-              "label": "init-project",
-              "source_path": "workflow_handbook/skills/init-project.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__env-setup",
-              "label": "env-setup",
-              "source_path": "workflow_handbook/skills/env-setup.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__build-plan",
-              "label": "build-plan",
-              "source_path": "workflow_handbook/skills/build-plan.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__code-expert",
-              "label": "code-expert",
-              "source_path": "workflow_handbook/skills/code-expert.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__code-debug",
-              "label": "code-debug",
-              "source_path": "workflow_handbook/skills/code-debug.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__change-intake",
-              "label": "change-intake",
-              "source_path": "workflow_handbook/skills/change-intake.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__harness-maintenance",
-              "label": "harness-maintenance",
-              "source_path": "workflow_handbook/skills/harness-maintenance.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__code-review",
-              "label": "code-review",
-              "source_path": "workflow_handbook/skills/code-review.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__validate-run",
-              "label": "validate-run",
-              "source_path": "workflow_handbook/skills/validate-run.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__iterate",
-              "label": "iterate",
-              "source_path": "workflow_handbook/skills/iterate.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-iterate-goal",
-              "label": "auto-iterate-goal",
-              "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper",
-              "label": "auto-paper",
-              "source_path": "workflow_handbook/skills/auto-paper.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-intake",
-              "label": "auto-paper-intake",
-              "source_path": "workflow_handbook/skills/auto-paper-intake.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-research",
-              "label": "auto-paper-research",
-              "source_path": "workflow_handbook/skills/auto-paper-research.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-argument",
-              "label": "auto-paper-argument",
-              "source_path": "workflow_handbook/skills/auto-paper-argument.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-citation",
-              "label": "auto-paper-citation",
-              "source_path": "workflow_handbook/skills/auto-paper-citation.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-layout",
-              "label": "auto-paper-layout",
-              "source_path": "workflow_handbook/skills/auto-paper-layout.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-patch",
-              "label": "auto-paper-patch",
-              "source_path": "workflow_handbook/skills/auto-paper-patch.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-harden",
-              "label": "auto-paper-harden",
-              "source_path": "workflow_handbook/skills/auto-paper-harden.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-response",
-              "label": "auto-paper-response",
-              "source_path": "workflow_handbook/skills/auto-paper-response.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-data",
-              "label": "auto-paper-data",
-              "source_path": "workflow_handbook/skills/auto-paper-data.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__auto-paper-figure",
-              "label": "auto-paper-figure",
-              "source_path": "workflow_handbook/skills/auto-paper-figure.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__final-exp",
-              "label": "final-exp",
-              "source_path": "workflow_handbook/skills/final-exp.md",
-              "children": []
-            },
-            {
-              "doc_id": "skills__release",
-              "label": "release",
-              "source_path": "workflow_handbook/skills/release.md",
-              "children": []
-            }
-          ]
-        },
-        {
-          "doc_id": "pages__hooks_permissions_model",
-          "label": "Hooks And Permissions",
-          "source_path": "workflow_handbook/pages/hooks_permissions_model.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__workflow_terms",
-          "label": "Workflow Terms",
-          "source_path": "workflow_handbook/pages/workflow_terms.md",
-          "children": []
-        },
-        {
-          "doc_id": "pages__04_markdown_to_html_preview_chain",
-          "label": "HTML Preview Chain",
-          "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
-          "children": []
-        }
+        "stages__wf9_validate_run"
       ]
     }
   ]

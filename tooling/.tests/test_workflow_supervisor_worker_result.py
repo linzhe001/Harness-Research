@@ -109,3 +109,34 @@ def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
     )
     assert not paths["handoff_result"].startswith(".workflow_supervisor/")
     assert "temporary worker handoff" in prompt
+    assert "Automation budget:" in prompt
+    assert '"profile": "default"' in prompt
+
+
+def test_worker_prompt_truncates_large_goal_context() -> None:
+    prompt = workflow_ctl.render_worker_prompt(
+        workspace_root=REPO_ROOT,
+        run_id="sup_20260605_000000",
+        node={
+            "node_id": "prepare_data_prep",
+            "skill": "data-prep",
+            "segment": "prepare",
+            "max_attempts": 1,
+            "postconditions": [],
+            "allowed_worker_write_patterns": ["docs/Dataset_Stats.md"],
+            "automation_policy": {
+                "goal_max_chars": 80,
+                "json_context_max_chars": 500,
+            },
+        },
+        goal="x" * 500,
+        result_ref=(
+            ".agents/state/workflow_supervisor_worker_results/"
+            "sup_20260605_000000/prepare_data_prep.worker_result.json"
+        ),
+    )
+
+    assert "truncated goal" in prompt
+    assert '"profile": "automation_prepare"' in prompt
+    assert '"node_retry_limit": 1' in prompt
+    assert "x" * 200 not in prompt

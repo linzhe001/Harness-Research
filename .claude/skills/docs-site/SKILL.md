@@ -46,6 +46,8 @@ the Markdown is still a draft in progress, leave the HTML stale and report
    `python tooling/evidence/build_evidence_preview_index.py --workspace-root .`
 4. Render the human docs site with:
    `python tooling/evidence/build_docs_site.py --workspace-root .`
+   Use `--json` for concise success summaries and `--json-full` only when
+   debugging the full manifest.
 5. Validate generated JSON artifacts when present:
    - `docs/_views/evidence_preview_index.json` against `schemas/evidence_preview_index.schema.json`
    - `docs/_site/manifest.json` against `schemas/docs_site_manifest.schema.json`

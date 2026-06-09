@@ -2,11 +2,88 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Harness execution readiness candidate inputs",
   "type": "object",
-  "required": ["schema_version", "updated_at", "inputs"],
+  "required": [
+    "schema_version",
+    "updated_at",
+    "external_download_policy",
+    "approved_datasets",
+    "approved_baselines",
+    "target_paths",
+    "unknowns",
+    "operator_approved_at",
+    "inputs"
+  ],
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
     "updated_at": { "type": "string" },
     "source": { "type": "string" },
+    "external_download_policy": {
+      "type": "string",
+      "enum": [
+        "unset",
+        "deny",
+        "allow",
+        "allow_if_approved",
+        "requires_approval"
+      ]
+    },
+    "approved_datasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "target": { "type": ["string", "null"] },
+          "target_path": { "type": ["string", "null"] },
+          "license": { "type": ["string", "null"] },
+          "max_size_gb": { "type": ["number", "null"], "minimum": 0 },
+          "access_status": {
+            "type": "string",
+            "enum": ["candidate", "approved", "rejected", "requires_approval", "deferred"]
+          },
+          "source_ref": { "type": ["string", "null"] },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "approved_baselines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "anyOf": [
+          { "required": ["source"] },
+          { "required": ["repo"] }
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "repo": { "type": "string" },
+          "ref": { "type": ["string", "null"] },
+          "target": { "type": ["string", "null"] },
+          "target_path": { "type": ["string", "null"] },
+          "role": { "type": "string" },
+          "access_status": {
+            "type": "string",
+            "enum": ["candidate", "approved", "rejected", "requires_approval", "deferred"]
+          },
+          "source_ref": { "type": ["string", "null"] },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "target_paths": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "operator_approved_at": { "type": ["string", "null"] },
     "inputs": {
       "type": "array",
       "items": {

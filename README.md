@@ -291,12 +291,16 @@ human approval; `workflow_ctl resume` reruns the gate and records
 baseline clone/acquisition, protocol compilation, and WF5 Review Packet
 generation. External dataset downloads and baseline clones require
 `--allow-external-downloads` or an explicit Grill readiness value such as
-`external_download_policy: allow`. On start, full prepare also writes
+`external_download_policy: allow`. Narrower automation can use structured
+readiness fields: `approved_datasets`, `approved_baselines`, `target_paths`,
+`unknowns`, and `operator_approved_at`. On start, full prepare also writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`, so a
 conversation-triggered `$workflow-supervisor` can use Grill's structured
 dataset/baseline answers without the operator hand-building CLI arguments.
+After readiness preflight, it writes `runtime/acquisition_plan.json` before any
+download or clone and pauses if the plan contains unapproved remote sources.
 For a bare `$workflow-supervisor` after accepted Grill output, the agent should
 first run supervisor `status --json`; if no run is active, it should start full
 prepare with `--goal-file docs/Research_Intent_Draft.md --complete` and let the

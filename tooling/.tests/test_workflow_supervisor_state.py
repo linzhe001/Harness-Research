@@ -72,6 +72,19 @@ def test_start_dry_run_writes_state_manifest_and_events(
         / run_id
         / "run_manifest.json"
     ).exists()
+    manifest = json.loads(
+        (
+            root
+            / ".workflow_supervisor"
+            / "runs"
+            / run_id
+            / "run_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert manifest["policy"]["gate_policy_ref"] == (
+        "tooling/workflow_supervisor/config/gate_policy.yaml"
+    )
+    assert manifest["policy"]["gate_profile"] == "default"
     summary = (
         root
         / ".workflow_supervisor"

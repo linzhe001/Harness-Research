@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness baseline acquisition manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "generated_at",
+    "run_id",
+    "baseline_root",
+    "repos",
+    "acquisition",
+    "baselines",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "baseline_acquisition" },
+    "generated_at": { "type": "string" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "baseline_root": { "type": "string", "minLength": 1 },
+    "repos": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "acquisition": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "result", "reason", "artifacts"],
+        "properties": {
+          "command": { "type": "string" },
+          "result": { "type": "string", "enum": ["PASS", "FAIL", "NOT_RUN"] },
+          "reason": { "type": "string" },
+          "artifacts": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "baselines": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "status"],
+        "properties": {
+          "path": { "type": "string" },
+          "status": { "type": "string" },
+          "entry_point": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

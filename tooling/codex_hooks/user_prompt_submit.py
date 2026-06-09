@@ -18,6 +18,7 @@ from harness_contracts import (
     repo_root,
     reset_read_ledger,
     save_session,
+    truncate_user_prompt_context,
 )
 
 
@@ -87,6 +88,17 @@ def continuation_match(root, prompt: str, event: dict) -> dict | None:
         "continued_from_previous_prompt": True,
         "pending_candidate_activation": True,
     }
+
+
+def emit_user_prompt_context(context: str) -> None:
+    emit(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "UserPromptSubmit",
+                "additionalContext": truncate_user_prompt_context(context),
+            }
+        }
+    )
 
 
 def main() -> int:
@@ -188,14 +200,7 @@ def main() -> int:
             ):
                 contexts.append(daily_context)
             if contexts:
-                emit(
-                    {
-                        "hookSpecificOutput": {
-                            "hookEventName": "UserPromptSubmit",
-                            "additionalContext": "\n\n".join(contexts),
-                        }
-                    }
-                )
+                emit_user_prompt_context("\n\n".join(contexts))
             return 0
         if daily_context and notice_once(
             root,
@@ -204,14 +209,7 @@ def main() -> int:
             ["AGENTS.md", "CLAUDE.md"],
             scope="session",
         ):
-            emit(
-                {
-                    "hookSpecificOutput": {
-                        "hookEventName": "UserPromptSubmit",
-                        "additionalContext": daily_context,
-                    }
-                }
-            )
+            emit_user_prompt_context(daily_context)
         return 0
     if notice_once(
         root,
@@ -229,14 +227,7 @@ def main() -> int:
     ):
         contexts.append(daily_context)
     if contexts:
-        emit(
-            {
-                "hookSpecificOutput": {
-                    "hookEventName": "UserPromptSubmit",
-                    "additionalContext": "\n\n".join(contexts),
-                }
-            }
-        )
+        emit_user_prompt_context("\n\n".join(contexts))
     return 0
 
 

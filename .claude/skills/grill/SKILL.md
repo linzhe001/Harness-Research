@@ -86,6 +86,11 @@ Do not leave active acquisition rows as `pending` at handoff; record the
 intended acquisition mode such as Hugging Face auth download, local path
 verification, Git clone, release/archive download, or no-download reference
 inspection.
+When readiness JSON is written, keep top-level structured fields:
+`external_download_policy`, `approved_datasets`, `approved_baselines`,
+`target_paths`, `unknowns`, and `operator_approved_at`.
+Dataset rows may include `target`, `license`, and `max_size_gb`; baseline rows
+may include `repo`, `ref`, and `target`.
 
 Outputs:
 - `docs/Research_Intent_Draft.md`

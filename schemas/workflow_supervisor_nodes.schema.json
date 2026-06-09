@@ -107,6 +107,23 @@
           "tool_owned_output_refs": {
             "type": "array",
             "items": { "type": "string" }
+          },
+          "automation_policy": {
+            "type": "object",
+            "properties": {
+              "profile": { "type": "string", "minLength": 1 },
+              "worker_prompt_max_chars": { "type": "integer", "minimum": 1 },
+              "goal_max_chars": { "type": "integer", "minimum": 1 },
+              "json_context_max_chars": { "type": "integer", "minimum": 1 },
+              "worker_result_max_chars": { "type": "integer", "minimum": 1 },
+              "gate_ledger_context_max_entries": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "gate_cycle_limit": { "type": "integer", "minimum": 1 },
+              "node_retry_limit": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

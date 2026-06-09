@@ -18,17 +18,36 @@ from state import (
     utc_now,
 )
 
+READINESS_DEFAULTS: dict[str, Any] = {
+    "external_download_policy": "unset",
+    "approved_datasets": [],
+    "approved_baselines": [],
+    "target_paths": {},
+    "unknowns": [],
+    "operator_approved_at": None,
+}
+
 
 def empty_readiness(source: str) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "updated_at": utc_now(),
         "source": source,
+        **READINESS_DEFAULTS,
         "inputs": [],
     }
 
 
+def normalize_readiness(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(data)
+    for key, value in READINESS_DEFAULTS.items():
+        if key not in normalized:
+            normalized[key] = value.copy() if isinstance(value, (dict, list)) else value
+    return normalized
+
+
 def validate_readiness(root: Path, data: dict[str, Any]) -> list[str]:
+    data = normalize_readiness(data)
     schema = load_json(root / "schemas" / "execution_readiness.schema.json")
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(data), key=lambda error: list(error.path))
@@ -95,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.input_json
             else empty_readiness(args.source)
         )
+        data = normalize_readiness(data)
         errors = validate_readiness(root, data)
         if not errors and args.verify_paths:
             errors.extend(verify_path_inputs(root, data))

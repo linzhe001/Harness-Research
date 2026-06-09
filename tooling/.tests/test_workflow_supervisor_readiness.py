@@ -40,6 +40,12 @@ def test_readiness_helper_writes_supervisor_owned_json(tmp_path: Path) -> None:
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["schema_version"] == 1
     assert data["source"] == "grill"
+    assert data["external_download_policy"] == "unset"
+    assert data["approved_datasets"] == []
+    assert data["approved_baselines"] == []
+    assert data["target_paths"] == {}
+    assert data["unknowns"] == []
+    assert data["operator_approved_at"] is None
     assert data["inputs"] == []
 
 
@@ -76,6 +82,59 @@ def test_readiness_helper_accepts_policy_inputs(tmp_path: Path) -> None:
                         "notes": "source-specific baseline clone policy",
                     }
                 ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    code = readiness.main(
+        ["--workspace-root", str(root), "--input-json", str(payload), "--check"]
+    )
+
+    assert code == 0
+
+
+def test_readiness_helper_accepts_structured_approval_fields(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+    payload = root / "readiness.json"
+    payload.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "updated_at": "2026-06-07T00:00:00Z",
+                "source": "grill",
+                "external_download_policy": "allow_if_approved",
+                "approved_datasets": [
+                    {
+                        "source": "https://huggingface.co/datasets/example/realx3d",
+                        "target": "data/realx3d",
+                        "license": "unknown",
+                        "max_size_gb": 50,
+                        "access_status": "approved",
+                        "source_ref": "operator input",
+                        "notes": "first prepare source",
+                    }
+                ],
+                "approved_baselines": [
+                    {
+                        "id": "free_surgs",
+                        "repo": "https://github.com/example/Free-SurGS",
+                        "ref": "main",
+                        "target": "baselines/Free-SurGS",
+                        "access_status": "approved",
+                        "role": "baseline",
+                        "source_ref": "operator input",
+                        "notes": "first baseline set",
+                    }
+                ],
+                "target_paths": {
+                    "dataset_root": "data",
+                    "baseline_cache": "baselines",
+                },
+                "unknowns": ["private credentials are not recorded"],
+                "operator_approved_at": "2026-06-07T00:00:00Z",
+                "inputs": [],
             }
         )
         + "\n",

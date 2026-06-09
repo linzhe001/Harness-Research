@@ -25,6 +25,9 @@ Input: Technical_Spec.md from WF6, plus refined idea, dataset stats, baseline re
 Output: Sanity_Check_Log.md.
 On GO → WF7 (build-plan). On NO-GO → revise architecture or roll back to WF2/WF3.
 
+Context budget: review 1 design target per invocation, run at most 4
+negative-search queries and 1 reviewer round unless the operator expands scope.
+
 For the output format, see [templates/sanity-check.md](templates/sanity-check.md).
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).

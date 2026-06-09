@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness dataset acquisition manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "generated_at",
+    "run_id",
+    "dataset_root",
+    "source",
+    "acquisition",
+    "verification",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "const": "dataset_acquisition" },
+    "generated_at": { "type": "string" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "dataset_root": { "type": "string", "minLength": 1 },
+    "source": { "type": ["string", "null"] },
+    "acquisition": {
+      "type": "object",
+      "required": ["command", "reason", "artifacts"],
+      "properties": {
+        "command": { "type": "string" },
+        "reason": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "object",
+      "required": ["command", "result", "files", "bytes", "stats_truncated"],
+      "properties": {
+        "command": { "type": "string" },
+        "result": { "type": "string", "enum": ["PASS", "FAIL", "NOT_RUN"] },
+        "files": { "type": "integer", "minimum": 0 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "stats_truncated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

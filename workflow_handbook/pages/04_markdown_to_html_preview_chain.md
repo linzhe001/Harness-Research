@@ -51,6 +51,10 @@ workflow_handbook/**/*.md
   -> docs/_site/workflow_handbook/**
 ```
 
+For CLI validation, `--json` prints a concise success summary. Use
+`--json-full` only when a failing or suspicious render needs the full generated
+index or manifest in stdout.
+
 项目 [[term:Conclusion Evidence]] 链路仍然走 `.evidence/**` 和
 [[artifact:.evidence/index.json]]。Handbook hover cards 只解释 framework
 Stage、Skill、Artifact、Term、Source 和 Page。

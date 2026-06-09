@@ -37,9 +37,9 @@ Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
 operator to hand-build CLI arguments. First run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. The JSON
 status includes the pending request `question`, `allowed_responses`, `reason`,
-`node_id`, `gate_status_refs`, and `request_snapshot_hash` when a request is
-active; report those fields so the operator can see what is being asked without
-manually reading `.workflow_supervisor/pending_request.json`. If a run or
+`node_id`, `gate_status_refs`, `request_snapshot_hash`, `blocked_by`,
+`resume_command`, and `recovery` when a request is active; report those fields
+instead of asking the operator to inspect runtime files manually. If a run or
 pending request is active, immediately run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh recover --repair-stale-running --auto-resume-answered --json`.
 If this resumes an already answered request, continue from the returned
@@ -79,20 +79,20 @@ runs the exact `approve_contract.py` action with the recorded
 `approval_source`; revise/reject never mark a contract approved.
 `prepare_hitl_poc` is not `prepare_complete` and must not unlock later segments.
 
-The registry now covers Slice 5 Data/Baseline/Build nodes. Postcondition
-validation records PASS/FAIL/NOT_RUN from artifacts, schemas, worker writes,
-and worker Gate ledger.
-`start --segment prepare --complete` runs readiness preflight, deterministic
-dataset acquisition or verification, baseline clone/acquisition, protocol
-compiler, and WF5 Review Packet generation. External dataset downloads or
-baseline clones require either `--allow-external-downloads`, an explicit
-`external_download_policy` / `allow_external_downloads` readiness value captured
-by Grill, or a narrower Grill source-specific policy. Current source-specific
+The registry covers Data/Baseline/Build nodes; postconditions record
+PASS/FAIL/NOT_RUN from artifacts, schemas, worker writes, and Gate ledger.
+`start --segment prepare --complete` runs readiness preflight, acquisition
+plan schema check, dataset/baseline acquisition, manifests, protocol compiler,
+and WF5 Review Packet.
+External dataset downloads or baseline clones require either
+`--allow-external-downloads`, an explicit `external_download_policy` /
+`allow_external_downloads` readiness value captured by Grill, or a narrower
+Grill source-specific policy. Current source-specific
 handoff supports Hugging Face dataset downloads when Grill records
 `hf_access_policy`, and first-baseline clone when Grill explicitly says to clone
 the first baseline set; this does not authorize deferred, rejected, or
-requires-approval sources. When `--complete` starts, the supervisor writes
-`.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
+requires-approval sources. On `--complete`, the supervisor writes
+runtime `grill_bridge.json` and `acquisition_plan.json` by reading
 `.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
 `docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or exactly labeled
@@ -119,6 +119,14 @@ record PASS/FAIL/NOT_RUN in Gate ledger instead of relying on prose.
 Codex workers write their JSON result to a temporary
 `.agents/state/workflow_supervisor_worker_results/**` handoff path; the
 supervisor validates and adopts that result into `.workflow_supervisor/**`.
+Worker prompts are budgeted by segment. The supervisor truncates long goal
+context before delegation, includes only compact postconditions and write
+patterns, and tells workers to stop at `node_retry_limit` /
+`gate_cycle_limit` with a structured `failed` or `interrupt_requested` result
+instead of repeatedly reading broad context or self-rescuing through more gate
+cycles. If a node needs more context than the prompt contains, the worker must
+read the referenced local artifact path directly and record that command in
+Gate ledger. Runs record their risk profile from `tooling/workflow_supervisor/config/gate_policy.yaml`.
 
 Harness hooks do not block ordinary build writes to declared implementation
 surfaces such as `src/`, `scripts/`, `configs/`, `project_map.json`, and owned

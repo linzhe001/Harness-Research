@@ -48,6 +48,11 @@ Use this skill when the user wants training or evaluation results interpreted an
 9. Include evidence sources and keep unverifiable result interpretations under open questions.
 10. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, or `iteration_log.json` are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
+## Context Budget
+
+- Load active iteration plus 5 recent summaries; reference full history by path.
+- Keep the report under 1200 words unless the operator requests a deep audit.
+
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.

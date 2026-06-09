@@ -46,6 +46,45 @@
       ]
     },
     {
+      "node_id": "prepare_acquisition_plan",
+      "skill": "workflow-supervisor",
+      "segment": "prepare",
+      "stage": "WF4/WF5",
+      "order": 15,
+      "auto_allowed": true,
+      "manual_only": false,
+      "max_attempts": 1,
+      "timeout_seconds": 60,
+      "preconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": ".workflow_supervisor/readiness_preflight.json",
+          "schema": "schemas/execution_readiness.schema.json"
+        }
+      ],
+      "postconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": ".workflow_supervisor/runs/<run_id>/runtime/acquisition_plan.json",
+          "schema": "schemas/acquisition_plan.schema.json"
+        }
+      ],
+      "interrupts": [
+        {
+          "when": "remote_source_not_approved",
+          "type": "ASK_INPUT",
+          "reason": "acquisition_policy_approval_required"
+        }
+      ],
+      "evidence_tools": [],
+      "resume_strategy": "resume_with_answer",
+      "failure_strategy": "pause_on_gate_fail",
+      "allowed_worker_write_patterns": [],
+      "tool_owned_output_refs": [
+        ".workflow_supervisor/runs/<run_id>/runtime/acquisition_plan.json"
+      ]
+    },
+    {
       "node_id": "prepare_review_packet",
       "skill": "review-packet",
       "segment": "prepare",
@@ -166,6 +205,11 @@
       ],
       "postconditions": [
         {
+          "type": "artifact_matches_schema",
+          "path": "data/dataset_manifest.json",
+          "schema": "schemas/dataset_acquisition_manifest.schema.json"
+        },
+        {
           "type": "artifact_exists",
           "path": "docs/Dataset_Stats.md"
         },
@@ -191,6 +235,8 @@
       "resume_strategy": "resume_with_answer",
       "failure_strategy": "pause_on_gate_fail",
       "allowed_worker_write_patterns": [
+        "data/",
+        "datasets/",
         "docs/Dataset_Stats.md",
         "docs/20_facts/",
         "docs/30_evidence/Dataset_Table.md",
@@ -222,6 +268,11 @@
         }
       ],
       "postconditions": [
+        {
+          "type": "artifact_matches_schema",
+          "path": "baselines/baseline_manifest.json",
+          "schema": "schemas/baseline_acquisition_manifest.schema.json"
+        },
         {
           "type": "artifact_exists",
           "path": "docs/Baseline_Report.md"

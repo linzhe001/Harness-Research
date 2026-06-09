@@ -634,6 +634,33 @@ def validate_reference_index(workspace_root: Path, data: dict[str, Any]) -> list
     return errors
 
 
+def reference_index_summary(
+    data: dict[str, Any],
+    *,
+    output_path: Path,
+    dry_run: bool,
+) -> dict[str, Any]:
+    links_by_doc = data.get("links_by_doc", {})
+    links = [
+        link
+        for doc_links in links_by_doc.values()
+        if isinstance(doc_links, list)
+        for link in doc_links
+        if isinstance(link, dict)
+    ] if isinstance(links_by_doc, dict) else []
+    missing = [link for link in links if link.get("status") == "missing"]
+    return {
+        "ok": True,
+        "output": output_path.as_posix(),
+        "dry_run": dry_run,
+        "schema_version": data.get("schema_version"),
+        "generated_at": data.get("generated_at"),
+        "entry_count": len(data.get("entries", {})),
+        "doc_link_count": len(links),
+        "missing_link_count": len(missing),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build workflow handbook framework reference preview index."
@@ -642,6 +669,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--json-full",
+        action="store_true",
+        help="Print the full generated reference index instead of a concise summary.",
+    )
     args = parser.parse_args(argv)
 
     workspace_root = args.workspace_root.resolve()
@@ -662,8 +694,20 @@ def main(argv: list[str] | None = None) -> int:
             args.output if args.output.is_absolute() else workspace_root / args.output
         )
         atomic_write_json(output, data)
-    if args.json:
+    if args.json_full:
         print(json.dumps(data, indent=2, ensure_ascii=False))
+    elif args.json:
+        print(
+            json.dumps(
+                reference_index_summary(
+                    data,
+                    output_path=args.output,
+                    dry_run=args.dry_run,
+                ),
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
     else:
         print(f"PASS {args.output}")
     return 0

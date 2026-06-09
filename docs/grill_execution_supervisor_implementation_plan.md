@@ -111,8 +111,13 @@ slice 重新分叉。冻结决策见下一节。
 | Runtime namespace | Use `.workflow_supervisor/**`; do not extend `.auto_iterate/**`. | Keeps WF10 controller ownership separate from general supervisor state. |
 | Grill artifacts | Write `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, and `docs/Execution_Readiness_Packet.md`. | Preserves current operator-readable Markdown convention while keeping Grill output draft-only. |
 | Exact local readiness values | Store exact paths, commands, budgets, and local/private values in `.workflow_supervisor/readiness.json`; Markdown packet may redact sensitive values. | Prevents local execution details from being promoted into public/current docs before verification. |
+| Structured readiness fields | Require readiness JSON to carry `external_download_policy`, `approved_datasets`, `approved_baselines`, `target_paths`, `unknowns`, and `operator_approved_at`; dataset rows may include `target`, `license`, `max_size_gb`; baseline rows may include `repo`, `ref`, `target`; legacy payloads are normalized before validation. | Lets `prepare --complete` consume approved dataset/baseline sources without scraping long prose. |
 | Grill implementation shape | Add a `grill` Skill plus lightweight `tooling/grill/**` helpers; optional CLI wrapper may call the Skill, but v0 does not implement Grill as a supervisor subgraph. | Keeps early human discussion separate from execution automation. |
 | Node registry | Add `schemas/workflow_supervisor_nodes.schema.json` and `tooling/workflow_supervisor/config/default_nodes.json`; do not modify `schemas/skill_contracts.json` in the first runtime slice. | Avoids destabilizing hook/contract behavior before the registry contract is tested. |
+| Gate policy profile | Store the risk matrix in `tooling/workflow_supervisor/config/gate_policy.yaml`; supervisor run manifests record the active `gate_profile`. | Keeps default, prepare automation, build, iterate, release, and change risk policy out of long Skill prose. |
+| Worker context budget | Render supervisor worker prompts from compact segment budgets; truncate long goal context and require workers to read source artifacts directly when more detail is needed. | Prevents Grill drafts, Review Packets, and repeated gate recovery loops from becoming prompt-context amplification. |
+| Skill body budget | Keep all Codex-facing `.agents/skills/*/SKILL.md` bodies under 130 lines, all Claude-facing `.claude/skills/*/SKILL.md` bodies under 160 lines, and high-frequency control-plane skill bodies under 250 lines across runtimes; move long detail into references, scripts, schemas, and tests. | Prevents route hints and worker startup context from reloading long procedural prompts on every turn. |
+| Validation output budget | Successful renderer CLI `--json` output is a concise summary; full manifests or indexes require `--json-full`. | Keeps routine checks readable while preserving full debug output when a gate fails or looks suspicious. |
 | Human interface | Use CLI + Markdown/Review Packet payloads; no dashboard in v0. | Matches local research workspace usage and keeps implementation auditable. |
 | Change intake action | Add explicit `harness change` / `workflow_ctl start --segment change` as an Execution Supervisor action; later `build` or `iterate` may internally route to it only after classifier tests pass. | Prevents post-codebase requests from silently becoming code edits while keeping only two top-level entrypoints. |
 | Default enablement | Manual Skill workflow remains default until the final default-enablement gate passes. | Preserves existing Harness behavior during rollout. |
@@ -891,7 +896,7 @@ Commands that mutate supervisor state must acquire `.workflow_supervisor/lock.js
 | Command | Required Input | Output | Exit Code | Mutates |
 | --- | --- | --- | --- | --- |
 | `workflow_ctl.py start --segment <segment> --goal <text>` | segment, goal or goal file | run id and status JSON | `0` started, `2` invalid input, `105` manual action required | `state.json`, `lock.json`, `events.jsonl`, `runs/<run_id>/**` |
-| `workflow_ctl.py status --json` | workspace root | current state, pending request ref, last event seq | `0` status available, `3` no supervisor state | none |
+| `workflow_ctl.py status --json` | workspace root | current state, pending request ref, `blocked_by`, `resume_command`, `recovery`, last event seq | `0` status available, `3` no supervisor state | none |
 | `workflow_ctl.py pause --reason <reason>` | active run | paused state JSON | `0` paused, `4` no active run | `state.json`, `events.jsonl` |
 | `workflow_ctl.py stop --reason <reason>` | active run | stopped state JSON | `0` stopped, `4` no active run | `state.json`, `events.jsonl` |
 | `workflow_ctl.py resume --request-id <id>` | matching pending request or recoverable paused run | resumed/adopted/rerun status JSON | `0` resumed, `2` stale request, `105` still blocked | `state.json`, `events.jsonl`, node records |
@@ -1095,8 +1100,11 @@ Current implementation:
 workflow_ctl start --segment prepare --complete
   -> Grill/readiness bridge writes runtime/grill_bridge.json
   -> readiness preflight
+  -> acquisition plan writes runtime/acquisition_plan.json
   -> deterministic dataset acquisition / verification
+  -> data/dataset_manifest.json schema check
   -> deterministic baseline clone / acquisition
+  -> baselines/baseline_manifest.json schema check
   -> protocol-compiler
   -> WF5 Review Packet
   -> APPROVE_ACTION

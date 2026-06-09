@@ -37,7 +37,7 @@ should not skip from WF1 directly to architecture design.
    Consume the Explore Intake and Explore Synthesis Grill records from WF1;
    do not repeat a full Grill unless a new contradiction changes Contract or
    Build boundaries.
-2. Extract 2-6 candidate ideas or variants. If only one idea exists, create conservative/balanced/aggressive variants.
+2. Extract 2-4 candidate ideas or variants. If only one idea exists, create conservative/balanced/aggressive variants.
 3. For each candidate, document:
    - strongest objection
    - most likely failure mode
@@ -51,6 +51,11 @@ should not skip from WF1 directly to architecture design.
 5. When dynamic context is enabled, write or refresh `docs/35_protocol/Research_Protocol.md`, `docs/35_protocol/Protocol_Assumptions.md`, and `docs/35_protocol/Protocol_Changelog.md` with project-local protocol implications.
 6. Write `docs/Idea_Debate.md` using the local template.
 7. Update `PROJECT_STATE.json` when stage-state synchronization is requested or required by the orchestrator.
+
+## Context Budget
+
+- Compare at most 4 candidates and run at most 1 reviewer round unless the
+  operator explicitly expands scope.
 
 ## Durable Docs Render
 

@@ -100,6 +100,58 @@ FORBIDDEN_WORKER_WRITE_PREFIXES = (
     "docs/_site/",
 )
 CODEX_WORKER_SANDBOX_ARGS = ["--full-auto"]
+DEFAULT_AUTOMATION_POLICY = {
+    "profile": "default",
+    "worker_prompt_max_chars": 6000,
+    "goal_max_chars": 1200,
+    "json_context_max_chars": 1800,
+    "worker_result_max_chars": 4000,
+    "gate_ledger_context_max_entries": 5,
+    "gate_cycle_limit": 3,
+}
+GATE_POLICY_REF = "tooling/workflow_supervisor/config/gate_policy.yaml"
+AUTOMATION_POLICY_INT_FIELDS = {
+    "worker_prompt_max_chars",
+    "goal_max_chars",
+    "json_context_max_chars",
+    "worker_result_max_chars",
+    "gate_ledger_context_max_entries",
+    "gate_cycle_limit",
+    "node_retry_limit",
+}
+SEGMENT_AUTOMATION_POLICIES = {
+    "prepare": {
+        "profile": "automation_prepare",
+        "goal_max_chars": 1000,
+        "gate_cycle_limit": 2,
+    },
+    "build": {
+        "profile": "automation_build",
+        "goal_max_chars": 1400,
+        "gate_cycle_limit": 3,
+    },
+    "iterate": {
+        "profile": "automation_iterate",
+        "goal_max_chars": 1200,
+        "gate_cycle_limit": 2,
+    },
+    "release": {
+        "profile": "conservative_release",
+        "goal_max_chars": 1000,
+        "gate_cycle_limit": 1,
+    },
+    "change": {
+        "profile": "change_intake",
+        "goal_max_chars": 1000,
+        "gate_cycle_limit": 1,
+    },
+}
+SEGMENT_GATE_PROFILES = {
+    "build": "automation_build",
+    "iterate": "automation_iterate",
+    "release": "conservative_release",
+    "change": "change_intake",
+}
 GRILL_ARTIFACT_REFS = (
     "docs/Execution_Readiness_Packet.md",
     "docs/Research_Intent_Draft.md",
@@ -122,6 +174,7 @@ GRILL_BRIDGE_KEYS = {
     "allow_external_downloads",
     "hf_access_policy",
     "baseline_clone_policy",
+    "operator_approved_at",
 }
 GRILL_KEY_ALIASES = {
     "dataset_url": "dataset_source",
@@ -158,6 +211,16 @@ GRILL_KEY_ALIASES = {
     "huggingface_access_policy": "hf_access_policy",
     "baseline_clone_policy": "baseline_clone_policy",
     "baseline_download_policy": "baseline_clone_policy",
+    "operator_approved_at": "operator_approved_at",
+    "operator_approval_time": "operator_approved_at",
+}
+STRUCTURED_READINESS_DEFAULTS: dict[str, Any] = {
+    "external_download_policy": "unset",
+    "approved_datasets": [],
+    "approved_baselines": [],
+    "target_paths": {},
+    "unknowns": [],
+    "operator_approved_at": None,
 }
 GRILL_REDACTED_VALUES = {
     "",
@@ -913,8 +976,19 @@ def run_manifest(
             "worker_mode": worker_mode,
             "complete_prepare": complete_prepare,
             "grill_bridge_ref": grill_bridge_ref,
+            "gate_policy_ref": GATE_POLICY_REF,
+            "gate_profile": gate_profile_for_run(
+                segment,
+                complete_prepare=complete_prepare,
+            ),
         },
     }
+
+
+def gate_profile_for_run(segment: str, *, complete_prepare: bool = False) -> str:
+    if segment == "prepare" and complete_prepare:
+        return "automation_prepare"
+    return SEGMENT_GATE_PROFILES.get(segment, "default")
 
 
 def new_run_id() -> str:
@@ -961,6 +1035,23 @@ def write_run_manifest(workspace_root: Path, manifest: dict[str, Any]) -> Path:
     path = supervisor_root(workspace_root) / "runs" / run_id / "run_manifest.json"
     atomic_write_json(path, manifest)
     return path
+
+
+def update_run_manifest_policy(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    updates: dict[str, Any],
+) -> None:
+    path = supervisor_root(workspace_root) / "runs" / run_id / "run_manifest.json"
+    manifest = load_json(path)
+    if not isinstance(manifest, dict):
+        raise ValueError("run manifest must be an object")
+    policy = manifest.setdefault("policy", {})
+    if not isinstance(policy, dict):
+        raise ValueError("run manifest policy must be an object")
+    policy.update(updates)
+    atomic_write_json(path, manifest)
 
 
 def write_node_record(
@@ -1311,6 +1402,14 @@ def resolve_operator_path(workspace_root: Path, value: str | None) -> Path | Non
     return workspace_root / path
 
 
+def normalize_execution_readiness(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(data)
+    for key, value in STRUCTURED_READINESS_DEFAULTS.items():
+        if key not in normalized:
+            normalized[key] = value.copy() if isinstance(value, (dict, list)) else value
+    return normalized
+
+
 def readiness_value(workspace_root: Path, key: str) -> str | None:
     path = supervisor_root(workspace_root) / "readiness.json"
     if not path.exists():
@@ -1318,6 +1417,52 @@ def readiness_value(workspace_root: Path, key: str) -> str | None:
     data = load_json_if_exists(path, {})
     if not isinstance(data, dict):
         return None
+    data = normalize_execution_readiness(data)
+    if key == "external_download_policy":
+        value = data.get("external_download_policy")
+        if isinstance(value, str) and usable_grill_value(value):
+            return value.strip()
+    if key == "operator_approved_at":
+        value = data.get("operator_approved_at")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    target_paths = data.get("target_paths")
+    if isinstance(target_paths, dict):
+        value = target_paths.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    if key in {"dataset_source", "dataset_remote"}:
+        for item in data.get("approved_datasets", []):
+            if not isinstance(item, dict):
+                continue
+            value = item.get("source")
+            status = str(item.get("access_status", "approved"))
+            if status in {"candidate", "approved"} and isinstance(value, str):
+                return value.strip()
+    if key in {"dataset_root", "dataset_path", "dataset_target"}:
+        for item in data.get("approved_datasets", []):
+            if not isinstance(item, dict):
+                continue
+            value = item.get("target_path") or item.get("target")
+            status = str(item.get("access_status", "approved"))
+            if status in {"candidate", "approved"} and isinstance(value, str):
+                return value.strip()
+    if key in {"baseline_repo", "baseline_source"}:
+        for item in data.get("approved_baselines", []):
+            if not isinstance(item, dict):
+                continue
+            value = item.get("source") or item.get("repo")
+            status = str(item.get("access_status", "approved"))
+            if status in {"candidate", "approved"} and isinstance(value, str):
+                return value.strip()
+    if key in {"baseline_cache", "baseline_target"}:
+        for item in data.get("approved_baselines", []):
+            if not isinstance(item, dict):
+                continue
+            value = item.get("target_path") or item.get("target")
+            status = str(item.get("access_status", "approved"))
+            if status in {"candidate", "approved"} and isinstance(value, str):
+                return value.strip()
     for item in data.get("inputs", []):
         if not isinstance(item, dict):
             continue
@@ -1450,6 +1595,11 @@ def remote_source_allowed_by_policy(policy: dict[str, Any], source: str) -> bool
         return True
     if policy.get("allow_external_downloads"):
         return True
+    allowed_sources = policy.get("allowed_remote_sources")
+    if isinstance(allowed_sources, list) and source in {
+        str(item) for item in allowed_sources
+    }:
+        return True
     parsed = urllib.parse.urlparse(source)
     host = parsed.netloc.lower()
     allowed_hosts = policy.get("allowed_remote_hosts")
@@ -1516,6 +1666,15 @@ def add_bridge_candidate(
             notes=notes,
         ),
     )
+
+
+def structured_status_decision(status: Any) -> str:
+    rendered = str(status or "approved").strip().lower()
+    if rendered in {"candidate", "approved"}:
+        return "candidate"
+    if rendered in {"rejected", "requires_approval", "deferred"}:
+        return rendered
+    return "candidate"
 
 
 def markdown_table_header(cells: list[str]) -> list[str] | None:
@@ -1698,6 +1857,8 @@ def add_readiness_json_bridge_values(
     workspace_root: Path,
     values: dict[str, dict[str, str]],
     input_refs: list[str],
+    dataset_candidates: list[dict[str, str]],
+    baseline_candidates: list[dict[str, str]],
 ) -> None:
     path = supervisor_root(workspace_root) / "readiness.json"
     if not path.exists():
@@ -1706,6 +1867,73 @@ def add_readiness_json_bridge_values(
     data = load_json_if_exists(path, {})
     if not isinstance(data, dict):
         return
+    data = normalize_execution_readiness(data)
+    source_ref = path.relative_to(workspace_root).as_posix()
+    add_bridge_candidate(
+        values,
+        key="external_download_policy",
+        value=data.get("external_download_policy"),
+        source_ref=source_ref,
+        confidence="structured_readiness_json",
+        notes="top-level readiness external download policy",
+    )
+    add_bridge_candidate(
+        values,
+        key="operator_approved_at",
+        value=data.get("operator_approved_at"),
+        source_ref=source_ref,
+        confidence="structured_readiness_json",
+        notes="operator approval timestamp recorded in readiness",
+    )
+    target_paths = data.get("target_paths")
+    if isinstance(target_paths, dict):
+        for key, value in target_paths.items():
+            add_bridge_candidate(
+                values,
+                key=str(key),
+                value=value,
+                source_ref=source_ref,
+                confidence="structured_readiness_json",
+                notes="top-level readiness target path",
+            )
+    for item in data.get("approved_datasets", []):
+        if not isinstance(item, dict):
+            continue
+        source = usable_grill_value(item.get("source"))
+        dataset_id = usable_grill_value(item.get("id")) or "dataset"
+        if not source:
+            continue
+        candidate = {
+            "dataset_id": dataset_id,
+            "name": dataset_id,
+            "source": source,
+            "decision": structured_status_decision(item.get("access_status")),
+            "reason": str(item.get("notes", "structured readiness dataset")),
+            "source_ref": source_ref,
+        }
+        target_path = usable_grill_value(item.get("target_path") or item.get("target"))
+        if target_path:
+            candidate["target_path"] = target_path
+        dataset_candidates.append(candidate)
+    for item in data.get("approved_baselines", []):
+        if not isinstance(item, dict):
+            continue
+        source = usable_grill_value(item.get("source") or item.get("repo"))
+        baseline_id = usable_grill_value(item.get("id")) or "baseline"
+        if not source:
+            continue
+        candidate = {
+            "baseline_id": baseline_id,
+            "role": str(item.get("role") or baseline_id),
+            "source": source,
+            "decision": structured_status_decision(item.get("access_status")),
+            "reason": str(item.get("notes", "structured readiness baseline")),
+            "source_ref": source_ref,
+        }
+        target_path = usable_grill_value(item.get("target_path") or item.get("target"))
+        if target_path:
+            candidate["target_path"] = target_path
+        baseline_candidates.append(candidate)
     for item in data.get("inputs", []):
         if not isinstance(item, dict):
             continue
@@ -1833,7 +2061,13 @@ def build_grill_bridge(
     allowed_baseline_repo_markers: list[str] = []
     artifact_texts: list[tuple[str, str]] = []
     input_refs: list[str] = []
-    add_readiness_json_bridge_values(workspace_root, values, input_refs)
+    add_readiness_json_bridge_values(
+        workspace_root,
+        values,
+        input_refs,
+        dataset_candidates,
+        baseline_candidates,
+    )
     for source_ref in GRILL_ARTIFACT_REFS:
         path = workspace_root / source_ref
         if not path.exists():
@@ -1923,6 +2157,7 @@ def build_grill_bridge(
     allow_external = bool(args.allow_external_downloads) or truthy_policy_value(
         allow_policy
     )
+    operator_approved_at = values.get("operator_approved_at", {}).get("value")
     allowed_remote_hosts: list[str] = []
     hf_policy = values.get("hf_access_policy", {}).get("value")
     if hf_policy_allows_download(hf_policy):
@@ -1973,6 +2208,21 @@ def build_grill_bridge(
         for candidate in baseline_candidates
         if candidate.get("decision") == "candidate" and candidate.get("source")
     ]
+    allowed_remote_sources = [
+        source
+        for source in (*executable_dataset_sources, *executable_baseline_sources)
+        if source_is_remote(source)
+        and any(
+            marker in source_ref
+            for source_ref in (
+                candidate.get("source_ref", "")
+                for candidate in (*dataset_candidates, *baseline_candidates)
+                if candidate.get("source") == source
+            )
+            for marker in (".workflow_supervisor/readiness.json", "readiness.json")
+        )
+        and operator_approved_at
+    ]
     remote_sources = [
         item
         for item in (
@@ -1991,6 +2241,7 @@ def build_grill_bridge(
             else values.get("external_download_policy", {}).get("source_ref")
         ),
         "allowed_remote_hosts": allowed_remote_hosts,
+        "allowed_remote_sources": list(dict.fromkeys(allowed_remote_sources)),
         "allowed_baseline_repo_markers": allowed_baseline_repo_markers,
         "remote_sources": remote_sources,
     }
@@ -2401,9 +2652,14 @@ def dataset_acquisition_entries(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     entries: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
-    bridge_candidates = grill_dataset_candidates(args)
     source = dataset_source_from_args(workspace_root, args)
     target = dataset_target_from_args(workspace_root, args)
+    bridge_candidates = (
+        []
+        if (source or target is not None)
+        and getattr(args, "_answer_overrides_dataset_source", False)
+        else grill_dataset_candidates(args)
+    )
 
     if source or (target is not None and not bridge_candidates):
         entries.append(
@@ -2432,7 +2688,10 @@ def dataset_acquisition_entries(
                 }
             )
             continue
-        candidate_target = dataset_candidate_target(
+        candidate_target = resolve_operator_path(
+            workspace_root,
+            candidate.get("target_path"),
+        ) or dataset_candidate_target(
             workspace_root,
             args,
             source=candidate_source,
@@ -2465,6 +2724,8 @@ def baseline_repos_from_args(
     args: argparse.Namespace,
 ) -> list[str]:
     repos = list(args.baseline_repo or [])
+    if repos and getattr(args, "_answer_overrides_baseline_repo", False):
+        return list(dict.fromkeys(repos))
     for key in ("baseline_repo", "baseline_source"):
         value = readiness_value(workspace_root, key)
         if value:
@@ -2490,6 +2751,486 @@ def baseline_target_from_args(workspace_root: Path, args: argparse.Namespace) ->
     return resolve_operator_path(workspace_root, value or "baselines") or (
         workspace_root / "baselines"
     )
+
+
+def acquisition_plan_path(workspace_root: Path, run_id: str) -> Path:
+    return (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "runtime"
+        / "acquisition_plan.json"
+    )
+
+
+def source_kind(workspace_root: Path, source: str | None) -> str:
+    if not source:
+        return "missing"
+    if source_is_git(source):
+        return "git"
+    scheme = urllib.parse.urlparse(source).scheme
+    if scheme in {"http", "https"}:
+        return "http"
+    if source_is_remote(source):
+        return "remote"
+    local_source = resolve_operator_path(workspace_root, source)
+    if local_source is not None:
+        return "local_path"
+    return "unknown"
+
+
+def planned_source_entry(
+    workspace_root: Path,
+    *,
+    label: str,
+    source: str | None,
+    target: Path | None,
+    source_ref: str,
+    allowed: bool,
+) -> dict[str, Any]:
+    remote = bool(source and source_is_remote(source))
+    target_ref = relpath_or_abs(target, workspace_root) if target is not None else None
+    if target is not None and target.exists() and nonempty_path(target):
+        status = "existing_target"
+        reason = "target already exists and is non-empty"
+    elif target is None:
+        status = "missing_target"
+        reason = "target path is not explicit"
+    elif remote and not allowed:
+        status = "blocked"
+        reason = "remote source is not approved by the run policy"
+    else:
+        status = "planned"
+        reason = "source can be attempted by the acquisition node"
+    return {
+        "label": label,
+        "source": source,
+        "target": target_ref,
+        "source_ref": source_ref,
+        "source_kind": source_kind(workspace_root, source),
+        "remote": remote,
+        "allowed": allowed,
+        "status": status,
+        "reason": reason,
+    }
+
+
+def baseline_source_ref(args: argparse.Namespace, repo: str) -> str:
+    for candidate in grill_baseline_candidates(args):
+        if candidate.get("source") == repo:
+            return candidate.get("source_ref", "grill_bridge")
+    if repo in (args.baseline_repo or []):
+        return "cli:--baseline-repo"
+    return "readiness/grill_bridge"
+
+
+def bridge_policy(args: argparse.Namespace) -> dict[str, Any]:
+    bridge = getattr(args, "_grill_bridge", None)
+    if not isinstance(bridge, dict):
+        return {}
+    policy = bridge.get("policy")
+    return policy if isinstance(policy, dict) else {}
+
+
+def policy_string_list(policy: dict[str, Any], key: str) -> list[str]:
+    value = policy.get(key)
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
+
+
+def prepare_acquisition_plan_source_refs(
+    *,
+    readiness_ref: str,
+    args: argparse.Namespace,
+) -> list[str]:
+    refs = [readiness_ref]
+    bridge_ref = getattr(args, "_grill_bridge_ref", None)
+    if isinstance(bridge_ref, str) and bridge_ref:
+        refs.append(bridge_ref)
+    bridge = getattr(args, "_grill_bridge", None)
+    if isinstance(bridge, dict):
+        input_refs = bridge.get("input_refs")
+        if isinstance(input_refs, list):
+            refs.extend(str(item) for item in input_refs if item)
+    return list(dict.fromkeys(refs))
+
+
+def build_prepare_acquisition_plan(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    readiness_ref: str,
+) -> dict[str, Any]:
+    dataset_entries, skipped_datasets = dataset_acquisition_entries(
+        workspace_root,
+        args,
+    )
+    dataset_plan = [
+        planned_source_entry(
+            workspace_root,
+            label=str(entry.get("label") or "dataset"),
+            source=(
+                entry.get("source") if isinstance(entry.get("source"), str) else None
+            ),
+            target=(
+                entry.get("target") if isinstance(entry.get("target"), Path) else None
+            ),
+            source_ref=str(entry.get("source_ref") or "readiness/grill_bridge"),
+            allowed=external_source_allowed(
+                args,
+                entry.get("source") if isinstance(entry.get("source"), str) else None,
+            ),
+        )
+        for entry in dataset_entries
+    ]
+    skipped_plan = [
+        {
+            "label": str(item.get("label") or "dataset"),
+            "source": (
+                item.get("source") if isinstance(item.get("source"), str) else None
+            ),
+            "source_ref": str(item.get("source_ref") or "grill_bridge"),
+            "reason": str(item.get("reason") or "candidate is not executable"),
+        }
+        for item in skipped_datasets
+    ]
+    baseline_target = baseline_target_from_args(workspace_root, args)
+    baseline_plan = []
+    for repo in baseline_repos_from_args(workspace_root, args):
+        target = baseline_target / source_basename(repo)
+        baseline_plan.append(
+            planned_source_entry(
+                workspace_root,
+                label=source_basename(repo),
+                source=repo,
+                target=target,
+                source_ref=baseline_source_ref(args, repo),
+                allowed=external_source_allowed(args, repo),
+            )
+        )
+    remote_sources = [
+        str(entry["source"])
+        for entry in [*dataset_plan, *baseline_plan]
+        if entry.get("remote") and entry.get("source")
+    ]
+    blocked_remote_sources = [
+        str(entry["source"])
+        for entry in [*dataset_plan, *baseline_plan]
+        if entry.get("status") == "blocked" and entry.get("source")
+    ]
+    policy = bridge_policy(args)
+    allow_source = getattr(args, "_allow_external_downloads_source", None)
+    if not allow_source and getattr(args, "allow_external_downloads", False):
+        allow_source = "cli:--allow-external-downloads"
+    if not allow_source:
+        allow_source = policy.get("allow_external_downloads_source")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "prepare_acquisition_plan",
+        "generated_at": utc_now(),
+        "run_id": run_id,
+        "source_refs": prepare_acquisition_plan_source_refs(
+            readiness_ref=readiness_ref,
+            args=args,
+        ),
+        "policy": {
+            "gate_policy_ref": GATE_POLICY_REF,
+            "gate_profile": "automation_prepare",
+            "allow_external_downloads": effective_allow_external_downloads(args),
+            "allow_external_downloads_source": (
+                str(allow_source) if allow_source else None
+            ),
+            "allowed_remote_hosts": policy_string_list(
+                policy,
+                "allowed_remote_hosts",
+            ),
+            "allowed_remote_sources": policy_string_list(
+                policy,
+                "allowed_remote_sources",
+            ),
+            "allowed_baseline_repo_markers": policy_string_list(
+                policy,
+                "allowed_baseline_repo_markers",
+            ),
+            "remote_sources": list(dict.fromkeys(remote_sources)),
+            "blocked_remote_sources": list(dict.fromkeys(blocked_remote_sources)),
+        },
+        "dataset": {
+            "entries": dataset_plan,
+            "skipped_candidates": skipped_plan,
+        },
+        "baselines": {
+            "target_root": relpath_or_abs(baseline_target, workspace_root),
+            "existing_target_nonempty": nonempty_path(baseline_target),
+            "repos": baseline_plan,
+        },
+        "blockers": [
+            f"remote source requires approval: {source}"
+            for source in list(dict.fromkeys(blocked_remote_sources))
+        ],
+        "next_nodes": ["prepare_data_prep", "prepare_baseline_repro"],
+    }
+
+
+def write_prepare_acquisition_plan(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    readiness_ref: str,
+) -> tuple[dict[str, Any], str, list[str]]:
+    plan = build_prepare_acquisition_plan(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        readiness_ref=readiness_ref,
+    )
+    path = acquisition_plan_path(workspace_root, run_id)
+    atomic_write_json(path, plan)
+    plan_ref = path.relative_to(workspace_root).as_posix()
+    errors = validate_schema(
+        workspace_root,
+        plan,
+        "acquisition_plan.schema.json",
+        plan_ref,
+    )
+    if effective_allow_external_downloads(args):
+        update_run_manifest_policy(
+            workspace_root,
+            run_id=run_id,
+            updates={
+                "allow_external_downloads": True,
+                "allow_external_downloads_source": plan["policy"].get(
+                    "allow_external_downloads_source"
+                ),
+            },
+        )
+    return plan, plan_ref, errors
+
+
+def write_prepare_acquisition_plan_node_record(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    readiness_ref: str,
+    plan_ref: str,
+    plan: dict[str, Any],
+    schema_errors: list[str],
+) -> Path:
+    blockers = [str(item) for item in plan.get("blockers", [])]
+    passed = not schema_errors and not blockers
+    path = (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "node_runs"
+        / "prepare_acquisition_plan.json"
+    )
+    atomic_write_json(
+        path,
+        {
+            "schema_version": SCHEMA_VERSION,
+            "run_id": run_id,
+            "node_id": "prepare_acquisition_plan",
+            "skill": "workflow-supervisor",
+            "stage": "WF4/WF5",
+            "status": "success" if passed else "failed",
+            "attempt": 1,
+            "started_at": utc_now(),
+            "finished_at": utc_now(),
+            "input_refs": list(
+                dict.fromkeys([readiness_ref, *plan.get("source_refs", [])])
+            ),
+            "output_refs": [plan_ref],
+            "evidence_refs": [plan_ref],
+            "gate_refs": [],
+            "worker_result_ref": None,
+            "observed_writes": [plan_ref],
+            "postcondition_result": {
+                "ok": passed,
+                "classification": "prepare_acquisition_plan",
+                "failed_checks": [*schema_errors, *blockers],
+            },
+            "contract_violations": [],
+            "gate_ledger": [
+                {
+                    "command": "validate acquisition_plan.schema.json",
+                    "result": "PASS" if not schema_errors else "FAIL",
+                    "reason": (
+                        "schema validation passed"
+                        if not schema_errors
+                        else "; ".join(schema_errors)
+                    ),
+                    "artifacts": [plan_ref, "schemas/acquisition_plan.schema.json"],
+                },
+                {
+                    "command": "check acquisition plan remote policy",
+                    "result": "PASS" if not blockers else "FAIL",
+                    "reason": (
+                        "planned remote sources are allowed"
+                        if not blockers
+                        else "; ".join(blockers)
+                    ),
+                    "artifacts": plan.get("policy", {}).get(
+                        "blocked_remote_sources",
+                        [],
+                    ),
+                },
+            ],
+            "next_node": "prepare_data_prep" if passed else None,
+            "segment": "prepare",
+        },
+    )
+    return path
+
+
+def create_prepare_acquisition_plan_request(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_record_path: Path,
+    plan_ref: str,
+    blockers: list[str],
+) -> dict[str, Any]:
+    request = create_node_pending_request(
+        workspace_root,
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_acquisition_plan",
+        request_type="ASK_INPUT",
+        reason="acquisition_policy_approval_required",
+        question=(
+            "The acquisition plan contains remote dataset or baseline sources "
+            "that are not approved by the current readiness policy."
+        ),
+        allowed_responses=["approve_download", "provide_local_path", "reject"],
+        evidence_refs=[plan_ref],
+        gate_status_refs=[node_record_path.relative_to(workspace_root).as_posix()],
+        risk_summary=[
+            "No dataset download or baseline clone has started.",
+            "Approve only if these remote sources match the readiness packet.",
+            *blockers,
+        ],
+        resume_strategy="resume_with_answer",
+    )
+    return request
+
+
+def run_prepare_acquisition_plan_gate(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    readiness_ref: str,
+) -> int | None:
+    state["current_node_id"] = "prepare_acquisition_plan"
+    save_state(workspace_root, state)
+    plan, plan_ref, schema_errors = write_prepare_acquisition_plan(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        readiness_ref=readiness_ref,
+    )
+    blockers = [str(item) for item in plan.get("blockers", [])]
+    node_record_path = write_prepare_acquisition_plan_node_record(
+        workspace_root,
+        run_id=run_id,
+        readiness_ref=readiness_ref,
+        plan_ref=plan_ref,
+        plan=plan,
+        schema_errors=schema_errors,
+    )
+    passed = not schema_errors and not blockers
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_acquisition_plan",
+        status="success" if passed else "failed",
+        payload={
+            "postcondition": "PASS" if passed else "FAIL",
+            "mode": "prepare_complete_acquisition_plan",
+            "node_record": node_record_path.relative_to(workspace_root).as_posix(),
+            "acquisition_plan": plan_ref,
+        },
+    )
+    state["acquisition_plan_ref"] = plan_ref
+    if passed:
+        state["completed_nodes"] = list(
+            dict.fromkeys(
+                [*state.get("completed_nodes", []), "prepare_acquisition_plan"]
+            )
+        )
+        state["failed_nodes"] = [
+            failed
+            for failed in state.get("failed_nodes", [])
+            if failed != "prepare_acquisition_plan"
+        ]
+        save_state(workspace_root, state)
+        return None
+
+    request = create_prepare_acquisition_plan_request(
+        workspace_root,
+        run_id=run_id,
+        node_record_path=node_record_path,
+        plan_ref=plan_ref,
+        blockers=[*schema_errors, *blockers],
+    )
+    state["status"] = "paused"
+    state["segment_status"] = "acquisition_policy_approval_required"
+    state["pending_request_id"] = request["request_id"]
+    state["failed_nodes"] = list(
+        dict.fromkeys([*state.get("failed_nodes", []), "prepare_acquisition_plan"])
+    )
+    state["last_failure"] = {
+        "kind": "prepare_acquisition_plan_failed",
+        "node_record": node_record_path.relative_to(workspace_root).as_posix(),
+        "acquisition_plan_ref": plan_ref,
+        "errors": [*schema_errors, *blockers],
+    }
+    save_state(workspace_root, state)
+    return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+
+def write_dataset_acquisition_manifest(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    dataset_ref: str,
+    source: str | None,
+    acquisition: dict[str, Any],
+    stats: dict[str, Any],
+) -> str:
+    manifest_ref = "data/dataset_manifest.json"
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "dataset_acquisition",
+        "generated_at": utc_now(),
+        "run_id": run_id,
+        "dataset_root": dataset_ref,
+        "source": source,
+        "acquisition": {
+            "command": str(acquisition.get("command", "")),
+            "reason": str(acquisition.get("reason", "")),
+            "artifacts": [
+                str(item) for item in acquisition.get("artifacts", []) if item
+            ],
+        },
+        "verification": {
+            "command": f"path_stats {dataset_ref}",
+            "result": "PASS",
+            "files": int(stats["files"]),
+            "bytes": int(stats["bytes"]),
+            "stats_truncated": bool(stats["truncated"]),
+        },
+        "artifacts": [dataset_ref, "docs/Dataset_Stats.md"],
+    }
+    write_json_artifact(workspace_root, manifest_ref, payload)
+    return manifest_ref
 
 
 def run_data_prep_worker(
@@ -2652,6 +3393,14 @@ def run_data_prep_worker(
             ["verification", "path_stats"],
         ],
     )
+    manifest_ref = write_dataset_acquisition_manifest(
+        workspace_root,
+        run_id=run_id,
+        dataset_ref=dataset_ref,
+        source=source,
+        acquisition=acquisition,
+        stats=stats,
+    )
     state_ref = update_project_state(
         workspace_root,
         {
@@ -2660,12 +3409,14 @@ def run_data_prep_worker(
         },
     )
     artifacts = [
+        manifest_ref,
         "docs/Dataset_Stats.md",
         "docs/30_evidence/Dataset_Table.md",
         state_ref,
         *[str(item) for item in acquisition.get("artifacts", [])],
     ]
     observed = [
+        manifest_ref,
         "docs/Dataset_Stats.md",
         "docs/30_evidence/Dataset_Table.md",
         state_ref,
@@ -2683,7 +3434,7 @@ def run_data_prep_worker(
                 "command": f"path_stats {dataset_ref}",
                 "result": "PASS",
                 "reason": "dataset path exists and was summarized",
-                "artifacts": ["docs/Dataset_Stats.md"],
+                "artifacts": ["docs/Dataset_Stats.md", manifest_ref],
             },
         ],
         observed_writes=observed,
@@ -2721,6 +3472,50 @@ def write_minimal_project_map(
         }
     atomic_write_json(path, existing)
     return "project_map.json"
+
+
+def write_baseline_acquisition_manifest(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    target_root: Path,
+    target_ref: str,
+    repos: list[str],
+    gate_ledger: list[dict[str, Any]],
+    baseline_entries: dict[str, dict[str, Any]],
+    artifacts: list[str],
+) -> str:
+    baselines: dict[str, dict[str, str]] = {}
+    for name, entry in baseline_entries.items():
+        baselines[name] = {
+            "path": relpath_or_abs(target_root / name, workspace_root),
+            "status": str(entry.get("status") or "untested"),
+            "entry_point": str(entry.get("entry_point") or ""),
+        }
+    manifest_ref = "baselines/baseline_manifest.json"
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "baseline_acquisition",
+        "generated_at": utc_now(),
+        "run_id": run_id,
+        "baseline_root": target_ref,
+        "repos": repos,
+        "acquisition": [
+            {
+                "command": str(gate.get("command", "")),
+                "result": str(gate.get("result", "NOT_RUN")),
+                "reason": str(gate.get("reason", "")),
+                "artifacts": [
+                    str(item) for item in gate.get("artifacts", []) if item
+                ],
+            }
+            for gate in gate_ledger
+        ],
+        "baselines": baselines,
+        "artifacts": artifacts,
+    }
+    write_json_artifact(workspace_root, manifest_ref, payload)
+    return manifest_ref
 
 
 def run_baseline_repro_worker(
@@ -2860,21 +3655,6 @@ def run_baseline_repro_worker(
             "baseline_metrics": {},
         },
     )
-    artifacts.extend(
-        [
-            "docs/Baseline_Report.md",
-            "docs/30_evidence/Baseline_Table.md",
-            project_map_ref,
-            state_ref,
-        ]
-    )
-    observed = [
-        "docs/Baseline_Report.md",
-        "docs/30_evidence/Baseline_Table.md",
-        project_map_ref,
-        state_ref,
-        relpath_or_abs(target_root, workspace_root),
-    ]
     if not gate_ledger:
         gate_ledger.append(
             {
@@ -2884,6 +3664,33 @@ def run_baseline_repro_worker(
                 "artifacts": [target_ref],
             }
         )
+    artifacts.extend(
+        [
+            "docs/Baseline_Report.md",
+            "docs/30_evidence/Baseline_Table.md",
+            project_map_ref,
+            state_ref,
+        ]
+    )
+    manifest_ref = write_baseline_acquisition_manifest(
+        workspace_root,
+        run_id=run_id,
+        target_root=target_root,
+        target_ref=target_ref,
+        repos=repos,
+        gate_ledger=gate_ledger,
+        baseline_entries=baseline_entries,
+        artifacts=artifacts,
+    )
+    artifacts.insert(0, manifest_ref)
+    observed = [
+        manifest_ref,
+        "docs/Baseline_Report.md",
+        "docs/30_evidence/Baseline_Table.md",
+        project_map_ref,
+        state_ref,
+        relpath_or_abs(target_root, workspace_root),
+    ]
     return worker_result_payload(
         run_id=run_id,
         node=node,
@@ -2896,6 +3703,66 @@ def run_baseline_repro_worker(
     )
 
 
+def automation_policy_for_node(node: dict[str, Any]) -> dict[str, Any]:
+    policy = dict(DEFAULT_AUTOMATION_POLICY)
+    segment_policy = SEGMENT_AUTOMATION_POLICIES.get(str(node.get("segment")), {})
+    policy.update(segment_policy)
+    override = node.get("automation_policy")
+    if isinstance(override, dict):
+        policy.update(override)
+    max_attempts = node.get("max_attempts")
+    if isinstance(max_attempts, int) and max_attempts > 0:
+        policy["node_retry_limit"] = max_attempts
+    else:
+        policy["node_retry_limit"] = 1
+    return policy
+
+
+def positive_policy_int(policy: dict[str, Any], key: str) -> int:
+    default = DEFAULT_AUTOMATION_POLICY[key]
+    value = policy.get(key, default)
+    if isinstance(value, int) and value > 0:
+        return value
+    return int(default)
+
+
+def truncate_context(value: str, *, max_chars: int, label: str) -> str:
+    if len(value) <= max_chars:
+        return value
+    marker = (
+        f"\n[truncated {label}: {len(value) - max_chars} chars omitted; "
+        "read the source artifact if the node needs more context]"
+    )
+    keep = max(0, max_chars - len(marker))
+    return value[:keep].rstrip() + marker
+
+
+def prompt_json(value: Any, *, max_chars: int, label: str) -> str:
+    rendered = json.dumps(value, indent=2, sort_keys=True)
+    return truncate_context(rendered, max_chars=max_chars, label=label)
+
+
+def enforce_worker_prompt_budget(
+    prompt: str,
+    *,
+    policy: dict[str, Any],
+    goal: str,
+    render_with_goal: Any,
+) -> str:
+    max_chars = positive_policy_int(policy, "worker_prompt_max_chars")
+    if len(prompt) <= max_chars:
+        return prompt
+    overflow = len(prompt) - max_chars
+    goal_limit = positive_policy_int(policy, "goal_max_chars")
+    reduced_goal_limit = max(160, goal_limit - overflow - 120)
+    reduced_goal = truncate_context(
+        goal,
+        max_chars=reduced_goal_limit,
+        label="goal",
+    )
+    return render_with_goal(reduced_goal)
+
+
 def render_worker_prompt(
     *,
     workspace_root: Path,
@@ -2906,60 +3773,89 @@ def render_worker_prompt(
 ) -> str:
     node_id = str(node["node_id"])
     skill = str(node["skill"])
-    postconditions = json.dumps(
+    policy = automation_policy_for_node(node)
+    json_limit = positive_policy_int(policy, "json_context_max_chars")
+    goal_text = truncate_context(
+        goal,
+        max_chars=positive_policy_int(policy, "goal_max_chars"),
+        label="goal",
+    )
+    policy_text = prompt_json(
+        policy,
+        max_chars=json_limit,
+        label="automation policy",
+    )
+    postconditions = prompt_json(
         node.get("postconditions", []),
-        indent=2,
-        sort_keys=True,
+        max_chars=json_limit,
+        label="postconditions",
     )
-    allowed_writes = json.dumps(
+    allowed_writes = prompt_json(
         node.get("allowed_worker_write_patterns", []),
-        indent=2,
-        sort_keys=True,
+        max_chars=json_limit,
+        label="allowed writes",
     )
-    return (
-        "You are a Harness workflow supervisor worker.\n"
-        "\n"
-        f"Workspace: {workspace_root}\n"
-        f"Run ID: {run_id}\n"
-        f"Node ID: {node_id}\n"
-        f"Skill: ${skill}\n"
-        f"Goal: {goal}\n"
-        "\n"
-        "Execute the local Harness skill for this node in auto mode. Do not ask "
-        "the operator directly. If input is missing, write an "
-        "interrupt_requested worker result instead.\n"
-        "\n"
-        "Quality bar:\n"
-        "- Read the relevant local artifacts before editing.\n"
-        "- Make the smallest code/config/doc changes needed for this node.\n"
-        "- Run concrete commands that prove the node postconditions below.\n"
-        "- If a command fails, debug and rerun within the node budget before "
-        "declaring failure.\n"
-        "- For build_validate_run, run the project's actual smoke/validation "
-        "command when one is discoverable; otherwise return interrupt_requested "
-        "with the missing command as the reason.\n"
-        "- Do not report success from prose. Success requires artifacts, "
-        "observed_writes, and PASS gate_ledger entries.\n"
-        "- Treat hook or sandbox write denials as contract_violations and route "
-        "them through the worker result.\n"
-        "\n"
-        "Allowed worker write patterns:\n"
-        f"{allowed_writes}\n"
-        "\n"
-        "Supervisor postconditions for this node:\n"
-        f"{postconditions}\n"
-        "\n"
-        "Write exactly one JSON object matching "
-        "schemas/workflow_supervisor_worker_result.schema.json to:\n"
-        f"{result_ref}\n"
-        "If that path is under `.agents/state/`, treat it as a temporary "
-        "worker handoff. The supervisor will validate and adopt it into "
-        "`.workflow_supervisor/**`; do not write supervisor runtime state "
-        "directly.\n"
-        "\n"
-        "The result must include gate_ledger entries for every command or gate "
-        "that mattered, observed_writes, artifact_refs, and any contract "
-        "violations. The supervisor will reject prose-only completion claims.\n"
+
+    def render_with_goal(current_goal: str) -> str:
+        return (
+            "You are a Harness workflow supervisor worker.\n"
+            "\n"
+            f"Workspace: {workspace_root}\n"
+            f"Run ID: {run_id}\n"
+            f"Node ID: {node_id}\n"
+            f"Skill: ${skill}\n"
+            f"Goal: {current_goal}\n"
+            "\n"
+            "Execute the local Harness skill for this node in auto mode. Do not ask "
+            "the operator directly. If input is missing, write an "
+            "interrupt_requested worker result instead.\n"
+            "\n"
+            "Automation budget:\n"
+            f"{policy_text}\n"
+            "\n"
+            "Quality bar:\n"
+            "- Read the relevant local artifacts before editing.\n"
+            "- Make the smallest code/config/doc changes needed for this node.\n"
+            "- Run concrete commands that prove the node postconditions below.\n"
+            "- If a command fails, debug and rerun within the node budget before "
+            "declaring failure.\n"
+            "- Do not exceed node_retry_limit or gate_cycle_limit; return a compact "
+            "failed or interrupt_requested worker result instead.\n"
+            "- For build_validate_run, run the project's actual smoke/validation "
+            "command when one is discoverable; otherwise return interrupt_requested "
+            "with the missing command as the reason.\n"
+            "- Do not report success from prose. Success requires artifacts, "
+            "observed_writes, and PASS gate_ledger entries.\n"
+            "- Keep summaries and Gate ledger context compact. Include full logs as "
+            "artifact paths rather than inline text.\n"
+            "- Treat hook or sandbox write denials as contract_violations and route "
+            "them through the worker result.\n"
+            "\n"
+            "Allowed worker write patterns:\n"
+            f"{allowed_writes}\n"
+            "\n"
+            "Supervisor postconditions for this node:\n"
+            f"{postconditions}\n"
+            "\n"
+            "Write exactly one JSON object matching "
+            "schemas/workflow_supervisor_worker_result.schema.json to:\n"
+            f"{result_ref}\n"
+            "If that path is under `.agents/state/`, treat it as a temporary "
+            "worker handoff. The supervisor will validate and adopt it into "
+            "`.workflow_supervisor/**`; do not write supervisor runtime state "
+            "directly.\n"
+            "\n"
+            "The result must include gate_ledger entries for every command or gate "
+            "that mattered, observed_writes, artifact_refs, and any contract "
+            "violations. The supervisor will reject prose-only completion claims.\n"
+        )
+
+    prompt = render_with_goal(goal_text)
+    return enforce_worker_prompt_budget(
+        prompt,
+        policy=policy,
+        goal=goal,
+        render_with_goal=render_with_goal,
     )
 
 
@@ -4281,6 +5177,7 @@ def empty_readiness_preflight() -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "updated_at": utc_now(),
         "source": "prepare_preflight",
+        **STRUCTURED_READINESS_DEFAULTS,
         "inputs": [],
     }
 
@@ -4290,6 +5187,7 @@ def rejected_readiness_preflight(errors: list[str]) -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "updated_at": utc_now(),
         "source": "prepare_preflight",
+        **STRUCTURED_READINESS_DEFAULTS,
         "inputs": [
             {
                 "key": "readiness_payload",
@@ -4364,7 +5262,7 @@ def run_prepare_readiness_preflight(
             preflight = rejected_readiness_preflight(errors)
             atomic_write_json(readiness_preflight_path(workspace_root), preflight)
             return preflight, errors, input_refs
-        readiness = copy.deepcopy(loaded)
+        readiness = normalize_execution_readiness(copy.deepcopy(loaded))
     else:
         readiness = empty_readiness_preflight()
 
@@ -5668,6 +6566,17 @@ def start_prepare_complete(
 
     state["completed_nodes"] = ["prepare_readiness_preflight"]
     save_state(workspace_root, state)
+    acquisition_exit = run_prepare_acquisition_plan_gate(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        readiness_ref=readiness_ref,
+    )
+    if acquisition_exit is not None:
+        return acquisition_exit
+
+    save_state(workspace_root, state)
     exit_code = run_supervised_nodes(
         workspace_root,
         args=args,
@@ -6176,6 +7085,69 @@ def command_start(args: argparse.Namespace) -> int:
         release_lock(workspace_root, run_id)
 
 
+def supervisor_command(*parts: str) -> str:
+    base = "tooling/workflow_supervisor/scripts/workflow_ctl.sh"
+    rendered = [
+        part if part.startswith("<") and part.endswith(">") else shlex.quote(part)
+        for part in parts
+    ]
+    return " ".join([base, *rendered])
+
+
+def pending_recovery_commands(pending_ref: dict[str, Any]) -> dict[str, Any]:
+    request_id = pending_ref.get("request_id")
+    if not isinstance(request_id, str) or not request_id:
+        return {}
+    resume = supervisor_command(
+        "resume",
+        "--request-id",
+        request_id,
+        "--json",
+    )
+    answer = supervisor_command(
+        "answer",
+        "--request-id",
+        request_id,
+        "--json",
+        "<answer.json>",
+    )
+    approve = supervisor_command(
+        "approve",
+        "--request-id",
+        request_id,
+        "--decision",
+        "approve",
+        "--approved-by",
+        "<human>",
+        "--json",
+    )
+    recover = supervisor_command(
+        "recover",
+        "--repair-stale-running",
+        "--auto-resume-answered",
+        "--json",
+    )
+    answered = bool(pending_ref.get("answered"))
+    pending_type = pending_ref.get("type")
+    if answered:
+        next_command = resume
+    elif pending_type == "APPROVE_ACTION":
+        next_command = approve
+    else:
+        next_command = answer
+    commands: dict[str, Any] = {
+        "blocked_by": pending_ref.get("reason") or pending_type,
+        "resume_command": next_command,
+        "after_answer_command": resume,
+        "recover_command": recover,
+    }
+    if pending_type == "APPROVE_ACTION":
+        commands["approve_command"] = approve
+    else:
+        commands["answer_command"] = answer
+    return commands
+
+
 def status_payload(workspace_root: Path) -> dict[str, Any]:
     state = load_state(workspace_root)
     pending_ref = None
@@ -6194,12 +7166,22 @@ def status_payload(workspace_root: Path) -> dict[str, Any]:
                 "gate_status_refs": pending.get("gate_status_refs"),
                 "request_snapshot_hash": pending.get("request_snapshot_hash"),
             }
-    return {
+    payload = {
         "schema_version": SCHEMA_VERSION,
         "state": state,
         "pending_request_ref": pending_ref,
         "last_event_seq": latest_event_seq(workspace_root),
     }
+    acquisition_plan_ref = state.get("acquisition_plan_ref")
+    if isinstance(acquisition_plan_ref, str) and acquisition_plan_ref:
+        payload["acquisition_plan_ref"] = acquisition_plan_ref
+    if pending_ref is not None:
+        recovery = pending_recovery_commands(pending_ref)
+        if recovery:
+            payload["blocked_by"] = recovery["blocked_by"]
+            payload["resume_command"] = recovery["resume_command"]
+            payload["recovery"] = recovery
+    return payload
 
 
 def emit_status(
@@ -6636,6 +7618,8 @@ def resume_args_from_answer(
         "dataset_path",
         "path",
     )
+    if args.dataset_source or args.dataset_target:
+        setattr(args, "_answer_overrides_dataset_source", True)
     baseline_repos = answer_string_list(
         answers,
         "baseline_repo",
@@ -6644,6 +7628,7 @@ def resume_args_from_answer(
     )
     if baseline_repos is not None:
         args.baseline_repo = baseline_repos
+        setattr(args, "_answer_overrides_baseline_repo", True)
     args.baseline_target = answer_string(
         answers,
         "baseline_target",
@@ -6733,6 +7718,12 @@ def resume_supervised_node_request(
         answer_record=answer_record,
         as_json=args.json,
     )
+    if resume_args.allow_external_downloads:
+        setattr(
+            resume_args,
+            "_allow_external_downloads_source",
+            answer_record_ref(workspace_root, request),
+        )
     acquire_lock(workspace_root, run_id)
     try:
         state["status"] = "running"
@@ -6752,6 +7743,35 @@ def resume_supervised_node_request(
             },
         )
         save_state(workspace_root, state)
+
+        if segment == "prepare" and node_id == "prepare_acquisition_plan":
+            acquisition_exit = run_prepare_acquisition_plan_gate(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                readiness_ref=f"{SUPERVISOR_DIR}/readiness_preflight.json",
+            )
+            if acquisition_exit is not None:
+                return acquisition_exit
+            exit_code = run_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                segment="prepare",
+                goal=goal,
+                node_ids={"prepare_data_prep", "prepare_baseline_repro"},
+            )
+            if exit_code is not None:
+                return exit_code
+            return continue_prepare_complete_after_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                readiness_ref=f"{SUPERVISOR_DIR}/readiness_preflight.json",
+            )
 
         if segment == "prepare" and node_id in {
             "prepare_data_prep",
@@ -7530,6 +8550,27 @@ def validate_node_registry(
             errors.append(f"{label}: auto_allowed nodes require postconditions")
         if node.get("auto_allowed") is True and not node.get("resume_strategy"):
             errors.append(f"{label}: auto_allowed nodes require resume_strategy")
+        automation_policy = node.get("automation_policy")
+        if automation_policy is not None:
+            if not isinstance(automation_policy, dict):
+                errors.append(f"{label}: automation_policy must be an object")
+            else:
+                for key, value in automation_policy.items():
+                    if key == "profile":
+                        if not isinstance(value, str) or not value:
+                            errors.append(
+                                f"{label}: automation_policy.profile must be a string"
+                            )
+                    elif key in AUTOMATION_POLICY_INT_FIELDS:
+                        if not isinstance(value, int) or value <= 0:
+                            errors.append(
+                                f"{label}: automation_policy.{key} must be "
+                                "a positive integer"
+                            )
+                    else:
+                        errors.append(
+                            f"{label}: unknown automation_policy field {key}"
+                        )
         for field in ("preconditions", "postconditions"):
             values = node.get(field, [])
             if not isinstance(values, list):

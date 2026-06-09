@@ -71,6 +71,8 @@ operator request
 生成 protocol / Review Packet，然后停在需要 Human Approval 的地方。远端数据下载和
 baseline clone 必须显式加 `--allow-external-downloads`，或在 Grill readiness
 中明确 `external_download_policy: allow` / `allow_external_downloads: true`。
+更窄的自动化范围应写入 `approved_datasets`、`approved_baselines`、
+`target_paths`、`unknowns` 和 `operator_approved_at`。
 当 full prepare 从对话启动时，supervisor 会读取 `.workflow_supervisor/readiness.json`、
 `docs/Execution_Readiness_Packet.md`、`docs/Research_Intent_Draft.md` 和
 `docs/Grill_Round_Log.md`，把结构化 dataset / baseline 输入桥接到 prepare。
