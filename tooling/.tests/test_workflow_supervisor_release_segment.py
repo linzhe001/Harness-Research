@@ -437,3 +437,95 @@ def test_release_requires_explicit_action_before_gates(
     assert pending["type"] == "STEER"
     assert pending["reason"] == "release_action_unclear"
     assert pending["allowed_responses"] == workflow_ctl.RELEASE_ACTION_RESPONSES
+
+
+def test_release_resume_after_final_exp_input_continues_to_wf12(
+    tmp_path: Path,
+    capsys,
+    monkeypatch,
+) -> None:
+    root = make_workspace(tmp_path)
+    (root / "iteration_log.json").unlink()
+    worker = write_release_worker(tmp_path)
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        workflow_ctl,
+        "run_dynamic_context_gate",
+        fake_wf12_gate(0, calls),
+    )
+
+    code, payload = start_release(
+        root,
+        "package release artifacts",
+        capsys,
+        worker=worker,
+    )
+    assert code == workflow_ctl.EXIT_MANUAL_ACTION
+    assert payload["state"]["segment_status"] == "node_precondition_failed"
+    original_pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert original_pending["node_id"] == "release_final_exp_matrix"
+    assert calls == []
+
+    (root / "iteration_log.json").write_text("[]\n", encoding="utf-8")
+    answer_path = root / "answer.json"
+    answer_path.write_text(
+        json.dumps(
+            {
+                "request_id": original_pending["request_id"],
+                "request_snapshot_hash": original_pending["request_snapshot_hash"],
+                "idempotency_key": f"{original_pending['request_id']}:ack",
+                "answered_by": "Release Reviewer",
+                "answered_at": "2026-06-11T00:00:00Z",
+                "answers": {"decision": "acknowledge"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    answer_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "answer",
+            "--request-id",
+            original_pending["request_id"],
+            "--json",
+            str(answer_path),
+        ]
+    )
+    assert answer_code == workflow_ctl.EXIT_OK
+    capsys.readouterr()
+
+    resume_code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "resume",
+            "--request-id",
+            original_pending["request_id"],
+            "--json",
+        ]
+    )
+
+    assert resume_code == workflow_ctl.EXIT_MANUAL_ACTION
+    resumed = json.loads(capsys.readouterr().out)
+    state = resumed["state"]
+    assert state["status"] == "paused"
+    assert state["segment_status"] == "release_ready_for_approval"
+    assert state["completed_nodes"] == [
+        "release_final_exp_matrix",
+        "release_claim_approval",
+    ]
+    next_pending = json.loads(
+        (root / ".workflow_supervisor" / "pending_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_pending["request_id"] != original_pending["request_id"]
+    assert next_pending["reason"] == "release_submission_approval_required"
+    assert calls[0]["stage"] == "wf12"
+    assert calls[0]["write_review_packet"] is True

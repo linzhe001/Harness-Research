@@ -149,12 +149,12 @@ high-confidence deltas to the selected Skill entrypoint, and pauses with a
 typed `STEER` request when confidence is low. It does not invoke the routed
 Skill or edit code/contracts by itself.
 
-`start --segment release` is a conservative WF12 approval gate. It requires an
-explicit `validate`, `package`, or `submit` action in the goal, runs the WF12
-dynamic-context Review Packet gate, and pauses with `APPROVE_ACTION` only after
-the gate passes with dynamic context plus approved Project Contract,
-Evaluation Contract, and Claim Boundary. Approval resume reruns the WF12 gate
-and records the approval payload only; it does not package or submit.
+`start --segment release` is a conservative WF11 -> WF12 approval path. It
+requires an explicit `validate`, `package`, or `submit` action in the goal,
+runs the WF11 final experiment matrix first, then runs the WF12 dynamic-context
+Review Packet gate, and pauses with `APPROVE_ACTION` only after it passes with
+dynamic context plus approved Project Contract, Evaluation Contract, and Claim
+Boundary. Approval resume reruns WF12 and records approval only; it does not
+package or submit.
 
-Exit by reporting run id, segment status, pending request, Gate ledger, and the
-next safe action.
+Exit by reporting run id, segment status, pending request, Gate ledger, and the next safe action.

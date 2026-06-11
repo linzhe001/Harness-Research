@@ -434,6 +434,34 @@ def test_build_runs_code_debug_only_after_failure(
         / "node_runs"
         / "build_code_debug.json"
     ).exists()
+    archive_dir = (
+        root
+        / ".workflow_supervisor"
+        / "runs"
+        / run_id
+        / "attempts"
+        / "build_validate_run"
+        / "attempt_1"
+    )
+    archive_manifest = json.loads(
+        (archive_dir / "archive_manifest.json").read_text(encoding="utf-8")
+    )
+    assert archive_manifest["reason"] == "node_postcondition_failed"
+    archived_node = json.loads(
+        (archive_dir / "node_record.json").read_text(encoding="utf-8")
+    )
+    current_node = json.loads(
+        (
+            root
+            / ".workflow_supervisor"
+            / "runs"
+            / run_id
+            / "node_runs"
+            / "build_validate_run.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert archived_node["status"] == "failed"
+    assert current_node["status"] == "success"
     assert (root / "docs" / "Validate_Run_Report.md").exists()
 
 

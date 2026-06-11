@@ -92,8 +92,9 @@ a narrower Grill source-specific policy.
   `status --json`, manual action, or pause into supervisor state.
 - `change`: deterministic Change Intake; writes a Change Request JSON and
   routes or pauses, but does not edit code/contracts by itself.
-- `release`: conservative WF12 gate for explicit `validate`, `package`, or
-  `submit` intent; approval resume records approval only.
+- `release`: conservative WF11 final experiment matrix plus WF12 gate for
+  explicit `validate`, `package`, or `submit` intent; approval resume records
+  approval only.
 
 ## Worker Contract
 

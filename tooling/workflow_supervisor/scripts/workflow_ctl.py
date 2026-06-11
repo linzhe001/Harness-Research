@@ -935,6 +935,8 @@ def run_manifest(
     entrypoint: str,
     allow_external_downloads: bool = False,
     worker_mode: str = "none",
+    worker_command: str | None = None,
+    codex_home: str | None = None,
     complete_prepare: bool = False,
     grill_bridge_ref: str | None = None,
 ) -> dict[str, Any]:
@@ -982,6 +984,8 @@ def run_manifest(
             "pause_on_gate_fail": True,
             "allow_external_downloads": allow_external_downloads,
             "worker_mode": worker_mode,
+            "worker_command": worker_command,
+            "codex_home": codex_home,
             "complete_prepare": complete_prepare,
             "grill_bridge_ref": grill_bridge_ref,
             "gate_policy_ref": GATE_POLICY_REF,
@@ -2574,6 +2578,73 @@ def write_worker_result(
     )
     atomic_write_json(path, result)
     return path.relative_to(workspace_root).as_posix()
+
+
+def archive_node_attempt_artifacts(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+    reason: str,
+    gate_status_refs: list[str],
+) -> list[str]:
+    base = supervisor_root(workspace_root) / "runs" / run_id / "attempts" / node_id
+    attempt = 1
+    while (base / f"attempt_{attempt}").exists():
+        attempt += 1
+    archive_dir = base / f"attempt_{attempt}"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+
+    sources = [
+        (
+            supervisor_root(workspace_root)
+            / "runs"
+            / run_id
+            / "runtime"
+            / f"{node_id}.worker_result.json",
+            "worker_result.json",
+        ),
+        (
+            supervisor_root(workspace_root)
+            / "runs"
+            / run_id
+            / "node_runs"
+            / f"{node_id}.json",
+            "node_record.json",
+        ),
+        (
+            supervisor_root(workspace_root)
+            / "runs"
+            / run_id
+            / "gate_results"
+            / f"{node_id}.postconditions.json",
+            "postconditions.json",
+        ),
+    ]
+    source_refs: list[str] = []
+    artifact_refs: list[str] = []
+    for source, target_name in sources:
+        if not source.exists():
+            continue
+        target = archive_dir / target_name
+        shutil.copy2(source, target)
+        source_refs.append(relpath_or_abs(source, workspace_root))
+        artifact_refs.append(relpath_or_abs(target, workspace_root))
+
+    manifest_path = archive_dir / "archive_manifest.json"
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "node_id": node_id,
+        "attempt": attempt,
+        "archived_at": utc_now(),
+        "reason": reason,
+        "source_refs": source_refs,
+        "artifact_refs": artifact_refs,
+        "gate_status_refs": gate_status_refs,
+    }
+    atomic_write_json(manifest_path, manifest)
+    return [relpath_or_abs(manifest_path, workspace_root), *artifact_refs]
 
 
 def dataset_source_from_args(
@@ -6290,6 +6361,26 @@ def run_failure_recovery_node(
             ),
             gate_status_refs=[worker_result_ref, record_ref, *gate_status_refs],
         )
+    archive_refs = archive_node_attempt_artifacts(
+        workspace_root,
+        run_id=run_id,
+        node_id=failed_node_id,
+        reason=failure_reason,
+        gate_status_refs=gate_status_refs,
+    )
+    append_event(
+        workspace_root,
+        "NODE_ATTEMPT_ARCHIVED",
+        run_id=run_id,
+        segment=segment,
+        node_id=failed_node_id,
+        status="archived",
+        payload={
+            "reason": failure_reason,
+            "artifacts": archive_refs,
+            "recovery_node_id": recovery_node_id,
+        },
+    )
     completed.append(recovery_node_id)
     state["completed_nodes"] = list(dict.fromkeys(completed))
     state["failed_nodes"] = [
@@ -7294,6 +7385,23 @@ def start_release_segment(
     if exit_code is not None:
         return exit_code
 
+    return continue_release_after_final_exp(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        release_action=release_action,
+    )
+
+
+def continue_release_after_final_exp(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    release_action: str,
+) -> int:
     state["current_node_id"] = "release_claim_approval"
     save_state(workspace_root, state)
 
@@ -7390,6 +7498,8 @@ def command_start(args: argparse.Namespace) -> int:
             entrypoint=f"harness {segment}",
             allow_external_downloads=effective_allow_external_downloads(args),
             worker_mode=worker_mode(args),
+            worker_command=args.worker_command,
+            codex_home=args.codex_home,
             complete_prepare=bool(args.complete),
             grill_bridge_ref=grill_bridge_ref,
         )
@@ -8020,8 +8130,17 @@ def resume_args_from_answer(
         json=as_json,
         auto=False,
         worker_mode=str(policy.get("worker_mode") or "none"),
-        worker_command=None,
-        codex_home=None,
+        worker_command=(
+            policy.get("worker_command")
+            if isinstance(policy.get("worker_command"), str)
+            and policy.get("worker_command")
+            else None
+        ),
+        codex_home=(
+            policy.get("codex_home")
+            if isinstance(policy.get("codex_home"), str) and policy.get("codex_home")
+            else None
+        ),
         allow_external_downloads=bool(policy.get("allow_external_downloads")),
         dataset_source=None,
         dataset_target=None,
@@ -8260,6 +8379,41 @@ def resume_supervised_node_request(
                 payload={"mode": "build_ready_for_iterate"},
             )
             return emit_status(workspace_root, args.json)
+
+        if segment == "release" and node_id == "release_final_exp_matrix":
+            release_action = release_action_from_goal(goal)
+            if release_action is None:
+                request = create_release_action_steer_request(
+                    workspace_root,
+                    run_id=run_id,
+                )
+                state["status"] = "paused"
+                state["segment_status"] = "release_action_unclear"
+                state["pending_request_id"] = request["request_id"]
+                save_state(workspace_root, state)
+                return emit_status(
+                    workspace_root,
+                    args.json,
+                    exit_code=EXIT_MANUAL_ACTION,
+                )
+            exit_code = run_supervised_nodes(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                segment="release",
+                goal=goal,
+                node_ids={"release_final_exp_matrix"},
+            )
+            if exit_code is not None:
+                return exit_code
+            return continue_release_after_final_exp(
+                workspace_root,
+                args=resume_args,
+                run_id=run_id,
+                state=state,
+                release_action=release_action,
+            )
     except KeyboardInterrupt:
         mark_answered_resume_failed(
             workspace_root,
