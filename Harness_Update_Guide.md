@@ -157,13 +157,25 @@ That script should check that the harness worktree is clean before pulling.
 
 ## Daily Push Workflow
 
-When you intentionally changed harness-owned files, stay on the harness git
-history for the whole cycle:
+When you intentionally change harness-owned files, stay on the harness git
+history for the whole cycle. Start from a clean, current Harness branch before
+editing:
 
 ```bash
 hgit status --short
 hgit pull --ff-only origin "$(hgit branch --show-current)"
+```
+
+After editing, inspect the diff, stage only intentional framework paths, verify
+the staged set, then commit and push:
+
+```bash
+hgit status --short
+hgit diff -- \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
 hgit add <harness paths>
+hgit diff --cached --name-status
 hgit commit -m "..."
 hgit push origin "$(hgit branch --show-current)"
 ```
@@ -177,6 +189,60 @@ hgit push origin "$(hgit branch --show-current)"
 ```
 
 Do not use normal `git push` for harness-owned files.
+
+### Project-local temporary Harness patches
+
+Some target research workspaces may temporarily modify Harness-owned files while
+debugging a project-specific problem, for example an ad hoc dataset scanner in
+`tooling/workflow_supervisor/**` or a one-off hook/evidence workaround. Treat
+those changes as local patches unless they have been deliberately generalized
+for every Harness consumer.
+
+Before any Harness push, always inspect both unstaged and staged Harness
+changes:
+
+```bash
+hgit status --short
+hgit diff -- \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
+hgit diff --cached -- \
+  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
+```
+
+If the diff contains project-specific logic, local paths, dataset names,
+experiment assumptions, or temporary recovery code, do not commit it to
+Harness-Research. Save it outside the repo if it may be useful later. If the
+same worktree also contains intentional framework edits, split the changes first
+and restore only the temporary paths:
+
+```bash
+hgit diff -- \
+  <temporary-harness-paths> \
+  > /tmp/project_local_harness_patch.diff
+
+hgit restore \
+  --staged --worktree --source=HEAD --ignore-skip-worktree-bits \
+  <temporary-harness-paths>
+```
+
+Use the broad framework restore command from the troubleshooting section only
+when all Harness changes in the worktree are stale or temporary.
+
+Never run `hgit add .` from a target research workspace. Add only explicit
+Harness paths that were intentionally changed as framework code, then verify the
+staged set before committing:
+
+```bash
+hgit add <intentional-harness-path>
+hgit diff --cached --name-status
+```
+
+If a temporary patch should become a real Harness feature, first remove
+project-specific assumptions, move project data rules behind a generic
+configuration or project-owned command interface, add Harness tests, and commit
+it as a separate Harness change.
 
 ## Before Pulling
 
@@ -450,8 +516,9 @@ After every harness pull:
 6. run workflow-supervisor, hook-contract, and handbook checks when those paths
    changed
 
-After every harness push:
+For every harness push:
 
 1. verify `hgit status`
-2. confirm you committed only harness-owned paths
-3. push with `hgit`, not normal `git`
+2. confirm staged diffs contain no project-local temporary Harness patches
+3. confirm you committed only harness-owned paths
+4. push with `hgit`, not normal `git`
