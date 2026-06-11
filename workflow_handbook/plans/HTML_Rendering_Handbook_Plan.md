@@ -1328,7 +1328,7 @@ Report:
 
 - `py_compile_or_NOT_RUN`: no Python changes.
 - `ruff_or_NOT_RUN`: no Python changes.
-- `docs_site_render_or_NOT_RUN`: renderer does not yet support handbook
+- `docs_site_boundary_report`: renderer does not yet support handbook
   navigation and framework reference previews.
 
 ### Slice 2: Schema Files

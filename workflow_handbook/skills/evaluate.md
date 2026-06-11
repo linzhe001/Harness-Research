@@ -47,8 +47,6 @@ Codex wrapper for experiment analysis and decision-making. Use when the user wan
 - `docs/50_memory/`
 - `MEMORY.md`
 - `docs/Stage_Report.md`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -58,8 +56,7 @@ Codex wrapper for experiment analysis and decision-making. Use when the user wan
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -87,12 +84,12 @@ Codex wrapper for experiment analysis and decision-making. Use when the user wan
 - `lesson_quality_check_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `stage_report_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `iteration_log_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

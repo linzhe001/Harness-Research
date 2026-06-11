@@ -47,8 +47,6 @@ Codex wrapper for WF8 first-pass code generation. Use when the user wants implem
 - `project_map.json`
 - `docs/20_facts/Codebase_Map.md`
 - `PROJECT_STATE.json`
-- `docs/_views/`
-- `docs/_site/`
 - `.evidence/chains/`
 - `.evidence/index.json`
 
@@ -60,8 +58,6 @@ Codex wrapper for WF8 first-pass code generation. Use when the user wants implem
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 - `tool_trace: .evidence/chains/`
 - `tool_trace: .evidence/index.json`
 
@@ -94,14 +90,14 @@ Codex wrapper for WF8 first-pass code generation. Use when the user wants implem
 - `semantic_commit_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `compile_doc_or_NOT_RUN`
 - `stable_code_change`
 - `project_map_write`
 - `codebase_map_write`
 - `canonical_state_edit`
-- `docs_site_render`
 - `codebase_map_docchain`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

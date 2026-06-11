@@ -138,7 +138,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    skip it — report the error.
 
    If `docs/20_facts/Codebase_Map.md` was changed and the fix is otherwise
-   validated, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do
+   validated, invoke `/docs-site` or report `docs_site_boundary_report`. Do
    not render after temporary draft edits.
 
 User-facing debugging summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, commit prefixes, paths, and identifiers remain in English.

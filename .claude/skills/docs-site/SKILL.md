@@ -35,6 +35,9 @@ Do not run this skill after every temporary Markdown edit. Run it after the
 Markdown source is accepted for the current turn, stage, or review packet. If
 the Markdown is still a draft in progress, leave the HTML stale and report
 `NOT_RUN` with the reason.
+Do not inspect generated HTML diffs during routine rendering. Report artifact
+paths and concise JSON summaries; use `--json-full` only when debugging the
+renderer itself.
 
 ## Required Work
 

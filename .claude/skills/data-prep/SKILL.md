@@ -94,4 +94,4 @@ archives when a smaller task-valid slice is enough.
 - Report Gate ledger for acquisition, stats, configs, scripts, guidance, and
   state writes.
 - After stable Markdown is finalized, invoke `/docs-site` or report
-  `docs_site_render_or_NOT_RUN`.
+  `docs_site_boundary_report`.

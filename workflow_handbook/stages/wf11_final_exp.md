@@ -54,8 +54,6 @@ Codex wrapper for WF11 final experiment planning. Use when the user wants ablati
 
 - `current_doc: docs/Final_Experiment_Matrix.md`
 - `canonical_state: PROJECT_STATE.json`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -80,10 +78,10 @@ Codex wrapper for WF11 final experiment planning. Use when the user wants ablati
 - `respect_claim_boundary`
 - `check_dynamic_context_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `WF11_readiness`
 - `final_experiment_matrix_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

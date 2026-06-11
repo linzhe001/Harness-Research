@@ -46,8 +46,6 @@ Clarify early research intent through hard questions and produce draft-only Rese
 - `docs/Research_Intent_Draft.md`
 - `docs/Grill_Round_Log.md`
 - `docs/Execution_Readiness_Packet.md`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -56,8 +54,6 @@ Clarify early research intent through hard questions and produce draft-only Rese
 ## Tool-Owned Outputs
 
 - `tool_trace: .workflow_supervisor/readiness.json`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Must Read
 
@@ -88,11 +84,11 @@ Clarify early research intent through hard questions and produce draft-only Rese
 - `grill_round_contract`
 - `gap_check`
 - `human_exit_decision_status`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `grill_draft_write`
 - `readiness_packet_write`
 - `readiness_json_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

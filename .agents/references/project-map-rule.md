@@ -85,7 +85,7 @@ Do not apply this rule for pure internal refactors that preserve the documented 
    or report `compile_doc_or_NOT_RUN`. Evidence artifacts under `.evidence/**`
    are tool-owned; do not edit them by hand.
 6. After the Markdown is finalized for the current slice, invoke `$docs-site`
-   or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft
+   or report `docs_site_boundary_report`. Do not render after temporary draft
    edits.
 7. Keep the detail level policy consistent:
    - `src/`: `exports`, `io`, `dependencies`
@@ -116,7 +116,7 @@ A change satisfies this rule when:
 - the latest `Codebase_Map.md` Evidence Chain exists or `compile_doc_or_NOT_RUN`
   is recorded with a reason
 - `docs/_site/**` was refreshed from Markdown by `$docs-site` or
-  `docs_site_render_or_NOT_RUN` is recorded with a reason
+  `docs_site_boundary_report` is recorded with a reason
 - any changed stable node has updated metadata where needed
 - modified Python files pass `py_compile`
 - modified Python files pass `ruff check --select=E,F,I`

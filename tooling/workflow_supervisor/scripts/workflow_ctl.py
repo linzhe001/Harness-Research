@@ -92,6 +92,7 @@ VALID_CONDITION_TYPES = {
     "auto_iterate_status",
     "no_forbidden_writes",
 }
+VALID_NODE_RUN_WHEN = {"always", "on_failure", "manual"}
 FORBIDDEN_WORKER_WRITE_PREFIXES = (
     ".evidence/",
     ".auto_iterate/",
@@ -957,6 +958,13 @@ def run_manifest(
             check=False,
         )
         dirty = bool(dirty_proc.stdout.strip()) if dirty_proc.returncode == 0 else None
+    expected_llm_calls = 0
+    if worker_mode == "codex":
+        try:
+            registry = load_node_registry(workspace_root)
+            expected_llm_calls = len(ordered_segment_nodes(registry, segment))
+        except ValueError:
+            expected_llm_calls = 1
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -969,7 +977,7 @@ def run_manifest(
         "goal": goal,
         "entrypoint": entrypoint,
         "policy": {
-            "max_llm_calls": 0,
+            "max_llm_calls": expected_llm_calls,
             "max_node_attempts": 1,
             "pause_on_gate_fail": True,
             "allow_external_downloads": allow_external_downloads,
@@ -3581,7 +3589,7 @@ def run_baseline_repro_worker(
         if not result["ok"]:
             interrupt = {
                 "type": "ASK_INPUT",
-                "reason": "baseline_reproduction_decision_required",
+                "reason": "baseline_acquisition_decision_required",
                 "question": (
                     "Baseline acquisition failed. Provide another repo/path or "
                     "approve the external clone/download requirements."
@@ -3773,6 +3781,7 @@ def render_worker_prompt(
 ) -> str:
     node_id = str(node["node_id"])
     skill = str(node["skill"])
+    purpose = str(node.get("purpose") or "").strip()
     policy = automation_policy_for_node(node)
     json_limit = positive_policy_int(policy, "json_context_max_chars")
     goal_text = truncate_context(
@@ -3795,6 +3804,11 @@ def render_worker_prompt(
         max_chars=json_limit,
         label="allowed writes",
     )
+    evidence_tools = prompt_json(
+        node.get("evidence_tools", []),
+        max_chars=json_limit,
+        label="evidence tools",
+    )
 
     def render_with_goal(current_goal: str) -> str:
         return (
@@ -3804,6 +3818,7 @@ def render_worker_prompt(
             f"Run ID: {run_id}\n"
             f"Node ID: {node_id}\n"
             f"Skill: ${skill}\n"
+            f"{'Purpose: ' + purpose + chr(10) if purpose else ''}"
             f"Goal: {current_goal}\n"
             "\n"
             "Execute the local Harness skill for this node in auto mode. Do not ask "
@@ -3815,8 +3830,16 @@ def render_worker_prompt(
             "\n"
             "Quality bar:\n"
             "- Read the relevant local artifacts before editing.\n"
+            "- Do not read historical supervisor design docs, workflow_handbook, "
+            "docs/_site, or docs/_views unless this node explicitly requires "
+            "maintaining those files.\n"
+            "- Do not write docs/_site or docs/_views from ordinary worker nodes; "
+            "report docs_site_boundary_report unless a docs-site boundary render "
+            "is explicitly requested.\n"
             "- Make the smallest code/config/doc changes needed for this node.\n"
             "- Run concrete commands that prove the node postconditions below.\n"
+            "- Run each listed evidence tool exactly when its inputs exist. If a "
+            "tool cannot run, include a NOT_RUN Gate ledger entry with the reason.\n"
             "- If a command fails, debug and rerun within the node budget before "
             "declaring failure.\n"
             "- Do not exceed node_retry_limit or gate_cycle_limit; return a compact "
@@ -3833,6 +3856,9 @@ def render_worker_prompt(
             "\n"
             "Allowed worker write patterns:\n"
             f"{allowed_writes}\n"
+            "\n"
+            "Evidence tools for this node:\n"
+            f"{evidence_tools}\n"
             "\n"
             "Supervisor postconditions for this node:\n"
             f"{postconditions}\n"
@@ -5937,6 +5963,7 @@ def ordered_segment_nodes(
     segment: str,
     *,
     node_ids: set[str] | None = None,
+    run_when: str | None = "always",
 ) -> list[dict[str, Any]]:
     nodes = [
         node
@@ -5944,8 +5971,20 @@ def ordered_segment_nodes(
         if isinstance(node, dict)
         and node.get("segment") == segment
         and (node_ids is None or str(node.get("node_id")) in node_ids)
+        and (
+            node_ids is not None
+            or run_when is None
+            or str(node.get("run_when") or "always") == run_when
+        )
     ]
     return sorted(nodes, key=lambda node: int(node.get("order", 0)))
+
+
+def on_failure_nodes(
+    registry: dict[str, Any],
+    segment: str,
+) -> list[dict[str, Any]]:
+    return ordered_segment_nodes(registry, segment, run_when="on_failure")
 
 
 def run_node_worker(
@@ -6015,6 +6054,253 @@ def pause_for_node_request(
     return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
 
 
+def recovery_goal_context(
+    goal: str,
+    *,
+    failed_node_id: str,
+    failure_reason: str,
+    gate_status_refs: list[str],
+) -> str:
+    refs = "\n".join(f"- {ref}" for ref in gate_status_refs) or "- none"
+    return (
+        f"{goal}\n\n"
+        "Failure recovery context:\n"
+        f"- failed_node_id: {failed_node_id}\n"
+        f"- failure_reason: {failure_reason}\n"
+        "- gate_status_refs:\n"
+        f"{refs}\n"
+        "Fix the smallest issue that can make the failed node pass, then return "
+        "a structured worker result. Do not broaden scope."
+    )
+
+
+def run_failure_recovery_node(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+    registry: dict[str, Any],
+    segment: str,
+    goal: str,
+    failed_node: dict[str, Any],
+    failure_reason: str,
+    gate_status_refs: list[str],
+    recovery_attempted_for: set[str],
+    completed: list[str],
+) -> str | int | None:
+    failed_node_id = str(failed_node["node_id"])
+    if str(failed_node.get("run_when") or "always") == "on_failure":
+        return None
+    if failed_node_id in recovery_attempted_for:
+        return None
+    candidates = [
+        node
+        for node in on_failure_nodes(registry, segment)
+        if str(node.get("node_id")) != failed_node_id
+    ]
+    if not candidates:
+        return None
+    recovery_node = candidates[0]
+    recovery_node_id = str(recovery_node["node_id"])
+    recovery_attempted_for.add(failed_node_id)
+    state["current_node_id"] = recovery_node_id
+    state["current_attempt"] = 1
+    save_state(workspace_root, state)
+    append_event(
+        workspace_root,
+        "NODE_STARTED",
+        run_id=run_id,
+        segment=segment,
+        node_id=recovery_node_id,
+        status="running",
+        payload={
+            "skill": recovery_node.get("skill"),
+            "run_when": "on_failure",
+            "recovery_for": failed_node_id,
+        },
+    )
+    preconditions = node_precondition_result(
+        workspace_root,
+        run_id=run_id,
+        node=recovery_node,
+    )
+    if not preconditions["ok"]:
+        ref = write_json_artifact(
+            workspace_root,
+            (
+                f"{SUPERVISOR_DIR}/runs/{run_id}/gate_results/"
+                f"{recovery_node_id}.preconditions.json"
+            ),
+            preconditions,
+        )
+        return pause_for_node_request(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            state=state,
+            node=recovery_node,
+            reason="failure_recovery_precondition_failed",
+            question=(
+                f"{recovery_node_id} could not run before retrying "
+                f"{failed_node_id}."
+            ),
+            gate_status_refs=[ref, *gate_status_refs],
+        )
+
+    recovery_goal = recovery_goal_context(
+        goal,
+        failed_node_id=failed_node_id,
+        failure_reason=failure_reason,
+        gate_status_refs=gate_status_refs,
+    )
+    worker_result = run_node_worker(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        node=recovery_node,
+        goal=recovery_goal,
+    )
+    worker_result_ref = write_worker_result(
+        workspace_root,
+        run_id=run_id,
+        node_id=recovery_node_id,
+        result=worker_result,
+    )
+    worker_errors = validate_worker_result(workspace_root, worker_result)
+    if worker_errors:
+        postcondition_result = {
+            "schema_version": SCHEMA_VERSION,
+            "run_id": run_id,
+            "node_id": recovery_node_id,
+            "ok": False,
+            "gate_ledger": [
+                {
+                    "command": "validate_worker_result",
+                    "result": "FAIL",
+                    "reason": "; ".join(worker_errors),
+                    "artifacts": [worker_result_ref],
+                }
+            ],
+            "failed_checks": worker_errors,
+        }
+        record_ref = write_supervisor_node_record(
+            workspace_root,
+            run_id=run_id,
+            node=recovery_node,
+            worker_result=worker_result,
+            worker_result_ref=worker_result_ref,
+            postcondition_result=postcondition_result,
+            status="failed",
+            next_node=failed_node_id,
+        )
+        return pause_for_node_request(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            state=state,
+            node=recovery_node,
+            reason="failure_recovery_worker_contract_violation",
+            question=f"{recovery_node_id} returned an invalid worker result.",
+            gate_status_refs=[worker_result_ref, record_ref, *gate_status_refs],
+        )
+    if worker_result.get("status") == "interrupt_requested":
+        interrupt = worker_result.get("interrupt_request")
+        reason = (
+            str(interrupt.get("reason"))
+            if isinstance(interrupt, dict) and interrupt.get("reason")
+            else "failure_recovery_interrupt_requested"
+        )
+        question = (
+            str(interrupt.get("question"))
+            if isinstance(interrupt, dict) and interrupt.get("question")
+            else f"{recovery_node_id} requested interruption."
+        )
+        request_type = (
+            str(interrupt.get("type"))
+            if isinstance(interrupt, dict) and interrupt.get("type")
+            else "STEER"
+        )
+        allowed = (
+            interrupt.get("allowed_responses")
+            if isinstance(interrupt, dict)
+            and isinstance(interrupt.get("allowed_responses"), list)
+            else None
+        )
+        return pause_for_node_request(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            state=state,
+            node=recovery_node,
+            reason=reason,
+            question=question,
+            request_type=request_type,
+            allowed_responses=[str(item) for item in allowed] if allowed else None,
+            gate_status_refs=[worker_result_ref, *gate_status_refs],
+        )
+
+    postcondition_result = evaluate_node_postconditions(
+        workspace_root,
+        recovery_node,
+        run_id=run_id,
+        worker_result=worker_result,
+    )
+    node_status = (
+        "success"
+        if worker_result.get("status") == "success"
+        and postcondition_result["ok"]
+        else "failed"
+    )
+    record_ref = write_supervisor_node_record(
+        workspace_root,
+        run_id=run_id,
+        node=recovery_node,
+        worker_result=worker_result,
+        worker_result_ref=worker_result_ref,
+        postcondition_result=postcondition_result,
+        status=node_status,
+        next_node=failed_node_id,
+    )
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment=segment,
+        node_id=recovery_node_id,
+        status=node_status,
+        payload={
+            "postcondition": "PASS" if postcondition_result["ok"] else "FAIL",
+            "node_record": record_ref,
+            "worker_result": worker_result_ref,
+            "run_when": "on_failure",
+            "recovery_for": failed_node_id,
+        },
+    )
+    if node_status != "success":
+        return pause_for_node_request(
+            workspace_root,
+            args=args,
+            run_id=run_id,
+            state=state,
+            node=recovery_node,
+            reason="failure_recovery_failed",
+            question=(
+                f"{recovery_node_id} ran but did not recover {failed_node_id}."
+            ),
+            gate_status_refs=[worker_result_ref, record_ref, *gate_status_refs],
+        )
+    completed.append(recovery_node_id)
+    state["completed_nodes"] = list(dict.fromkeys(completed))
+    state["failed_nodes"] = [
+        failed
+        for failed in state.get("failed_nodes", [])
+        if failed != recovery_node_id
+    ]
+    save_state(workspace_root, state)
+    return "retry"
+
+
 def run_supervised_nodes(
     workspace_root: Path,
     *,
@@ -6028,9 +6314,13 @@ def run_supervised_nodes(
     registry = load_node_registry(workspace_root)
     nodes = ordered_segment_nodes(registry, segment, node_ids=node_ids)
     completed = list(state.get("completed_nodes", []))
-    for index, node in enumerate(nodes):
+    recovery_attempted_for: set[str] = set()
+    index = 0
+    while index < len(nodes):
+        node = nodes[index]
         node_id = str(node["node_id"])
         if node_id in completed:
+            index += 1
             continue
         state["current_node_id"] = node_id
         state["current_attempt"] = 1
@@ -6106,6 +6396,24 @@ def run_supervised_nodes(
                 status="failed",
                 next_node=None,
             )
+            recovery = run_failure_recovery_node(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                registry=registry,
+                segment=segment,
+                goal=goal,
+                failed_node=node,
+                failure_reason="worker_contract_violation",
+                gate_status_refs=[worker_result_ref, record_ref],
+                recovery_attempted_for=recovery_attempted_for,
+                completed=completed,
+            )
+            if isinstance(recovery, int):
+                return recovery
+            if recovery == "retry":
+                continue
             return pause_for_node_request(
                 workspace_root,
                 args=args,
@@ -6194,6 +6502,24 @@ def run_supervised_nodes(
             },
         )
         if node_status != "success":
+            recovery = run_failure_recovery_node(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+                registry=registry,
+                segment=segment,
+                goal=goal,
+                failed_node=node,
+                failure_reason="node_postcondition_failed",
+                gate_status_refs=[worker_result_ref, record_ref],
+                recovery_attempted_for=recovery_attempted_for,
+                completed=completed,
+            )
+            if isinstance(recovery, int):
+                return recovery
+            if recovery == "retry":
+                continue
             return pause_for_node_request(
                 workspace_root,
                 args=args,
@@ -6215,15 +6541,33 @@ def run_supervised_nodes(
             if failed != node_id
         ]
         save_state(workspace_root, state)
+        index += 1
     return None
 
 
 def guard_segment_start(workspace_root: Path, segment: str) -> None:
-    if segment not in {"build", "iterate", "release"}:
-        return
     if not state_path(workspace_root).exists():
+        if pending_request_path(workspace_root).exists():
+            raise ValueError(
+                "pending supervisor request exists without state; run "
+                "`workflow_ctl status --json` or `workflow_ctl recover --json` "
+                "before starting a new segment"
+            )
         return
     state = load_state(workspace_root)
+    if state.get("status") in {"running", "paused", "recovering"}:
+        raise ValueError(
+            "active supervisor run exists; run `workflow_ctl status --json`, "
+            "`workflow_ctl recover --repair-stale-running --auto-resume-answered "
+            "--json`, or resume/stop the pending request before starting a new run"
+        )
+    if pending_request_path(workspace_root).exists():
+        raise ValueError(
+            "pending supervisor request exists; resolve or recover it before "
+            "starting a new segment"
+        )
+    if segment not in {"build", "iterate", "release"}:
+        return
     if (
         state.get("segment") == "prepare"
         and state.get("segment_status") in PREPARE_NON_UNLOCKING_STATUSES
@@ -6633,6 +6977,70 @@ def start_build_segment(
     return emit_status(workspace_root, args.json)
 
 
+def start_prepare_dry_run(
+    workspace_root: Path,
+    *,
+    args: argparse.Namespace,
+    run_id: str,
+    state: dict[str, Any],
+) -> int:
+    state["current_node_id"] = "prepare_readiness_preflight"
+    save_state(workspace_root, state)
+    _preflight, readiness_errors, readiness_input_refs = (
+        run_prepare_readiness_preflight(workspace_root)
+    )
+    readiness_record_path = write_prepare_readiness_node_record(
+        workspace_root,
+        run_id=run_id,
+        input_refs=readiness_input_refs,
+        errors=readiness_errors,
+    )
+    append_event(
+        workspace_root,
+        "NODE_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        node_id="prepare_readiness_preflight",
+        status="success" if not readiness_errors else "failed",
+        payload={
+            "postcondition": "PASS" if not readiness_errors else "FAIL",
+            "mode": "prepare_dry_run_readiness_preflight",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+        },
+    )
+    state["status"] = "completed"
+    state["segment_status"] = (
+        "dry_run_readiness_passed"
+        if not readiness_errors
+        else "dry_run_readiness_failed"
+    )
+    state["current_node_id"] = None
+    state["current_attempt"] = 0
+    state["pending_request_id"] = None
+    state["completed_nodes"] = ["prepare_readiness_preflight"]
+    if readiness_errors:
+        state["failed_nodes"] = ["prepare_readiness_preflight"]
+        state["last_failure"] = {
+            "kind": "prepare_dry_run_readiness_failed",
+            "node_record": readiness_record_path.relative_to(
+                workspace_root
+            ).as_posix(),
+            "errors": readiness_errors,
+        }
+    save_state(workspace_root, state)
+    append_event(
+        workspace_root,
+        "RUN_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        status="completed",
+        payload={"mode": state["segment_status"]},
+    )
+    return emit_status(workspace_root, args.json)
+
+
 def sync_auto_iterate_status(
     workspace_root: Path,
     *,
@@ -6860,10 +7268,10 @@ def start_release_segment(
     state: dict[str, Any],
     goal: str,
 ) -> int:
-    state["current_node_id"] = "release_claim_approval"
-    save_state(workspace_root, state)
     release_action = release_action_from_goal(goal)
     if release_action is None:
+        state["current_node_id"] = "release_claim_approval"
+        save_state(workspace_root, state)
         request = create_release_action_steer_request(
             workspace_root,
             run_id=run_id,
@@ -6873,6 +7281,21 @@ def start_release_segment(
         state["pending_request_id"] = request["request_id"]
         save_state(workspace_root, state)
         return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+
+    exit_code = run_supervised_nodes(
+        workspace_root,
+        args=args,
+        run_id=run_id,
+        state=state,
+        segment="release",
+        goal=goal,
+        node_ids={"release_final_exp_matrix"},
+    )
+    if exit_code is not None:
+        return exit_code
+
+    state["current_node_id"] = "release_claim_approval"
+    save_state(workspace_root, state)
 
     gate_result = run_dynamic_context_gate(
         workspace_root,
@@ -6931,7 +7354,9 @@ def start_release_segment(
     state["status"] = "paused"
     state["segment_status"] = "release_ready_for_approval"
     state["pending_request_id"] = request["request_id"]
-    state["completed_nodes"] = ["release_claim_approval"]
+    state["completed_nodes"] = list(
+        dict.fromkeys([*state.get("completed_nodes", []), "release_claim_approval"])
+    )
     save_state(workspace_root, state)
     return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
 
@@ -6983,6 +7408,14 @@ def command_start(args: argparse.Namespace) -> int:
         )
         state = base_state(run_id, segment)
         save_state(workspace_root, state)
+
+        if args.dry_run and segment == "prepare":
+            return start_prepare_dry_run(
+                workspace_root,
+                args=args,
+                run_id=run_id,
+                state=state,
+            )
 
         if args.dry_run:
             write_node_record(
@@ -8546,6 +8979,11 @@ def validate_node_registry(
                 errors.append(f"{label}: duplicate node_id {node_id}")
             seen.add(node_id)
         postconditions = node.get("postconditions", [])
+        run_when = str(node.get("run_when") or "always")
+        if run_when not in VALID_NODE_RUN_WHEN:
+            errors.append(
+                f"{label}: run_when must be one of {sorted(VALID_NODE_RUN_WHEN)}"
+            )
         if node.get("auto_allowed") is True and not postconditions:
             errors.append(f"{label}: auto_allowed nodes require postconditions")
         if node.get("auto_allowed") is True and not node.get("resume_strategy"):

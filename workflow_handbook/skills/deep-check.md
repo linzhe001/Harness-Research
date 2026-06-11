@@ -45,8 +45,6 @@ Codex design-review gate for WF6 architecture decisions. Use when the user wants
 - `docs/Sanity_Check_Log.md`
 - `docs/35_protocol/`
 - `docs/10_contract/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -56,8 +54,7 @@ Codex design-review gate for WF6 architecture decisions. Use when the user wants
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -87,11 +84,11 @@ Codex design-review gate for WF6 architecture decisions. Use when the user wants
 - `external_model_review_or_NOT_RUN`
 - `check_protocol_drift_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `sanity_check_write`
 - `review_trace_write`
 - `contract_conflict`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

@@ -15,8 +15,8 @@ nav:
 canonical_sources:
   - path: "workflow_handbook/Workflow_Operator_Handbook.md"
     role: "aggregate_source"
-  - path: "docs/grill_execution_supervisor.md"
-    role: "aggregate_source"
+  - path: ".agents/references/workflow-supervisor-runtime.md"
+    role: "framework_rule"
   - path: "tooling/auto_iterate/docs/cli_control_guide.md"
     role: "tooling"
 references:
@@ -55,7 +55,7 @@ what you want
 | --- | --- | --- | --- | --- |
 | 澄清粗糙 research idea | Grill | `harness grill` 或 `$grill` | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
 | 获取或验证数据集和 baseline | Execution Supervisor | `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、contract approval decision |
-| 判断能否进入执行 | Execution Supervisor | `prepare --dry-run` | Review Packet、readiness preflight、pending request JSON | 需要 contract、缺失事实或 approval decision |
+| 判断能否进入执行 | Execution Supervisor | `prepare --dry-run` | readiness preflight 和 Gate ledger | readiness 输入缺失、无效或过期 |
 | 处理 pending request | Execution Supervisor | `workflow_ctl status --json`，然后 `workflow_ctl approve ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
 | 推进 planned slice 的 build / validate | Execution Supervisor | `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、postcondition validation、Validate Run Report | 缺输入、worker 失败、Gate ledger 无效或 validate-run postconditions 未通过 |
 | 跑多轮实验 | Execution Supervisor | `$auto-iterate-goal check`，然后 `iterate` | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |

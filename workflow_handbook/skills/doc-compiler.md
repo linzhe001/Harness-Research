@@ -46,8 +46,6 @@ Compile current project documents from explicit evidence chains. Use when refres
 - `docs/35_protocol/`
 - `.evidence/chains/`
 - `.evidence/index.json`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -59,8 +57,6 @@ Compile current project documents from explicit evidence chains. Use when refres
 
 - `tool_trace: .evidence/chains/`
 - `tool_trace: .evidence/index.json`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Must Read
 
@@ -80,11 +76,11 @@ Compile current project documents from explicit evidence chains. Use when refres
 - `compile_doc_or_NOT_RUN`
 - `check_docchain_gates_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `current_doc_write`
 - `contract_doc_write`
 - `protocol_doc_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

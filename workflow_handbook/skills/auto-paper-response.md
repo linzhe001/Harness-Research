@@ -44,8 +44,6 @@ Run the optional auto-paper reviewer-response branch. Use when Codex needs to ha
 ## Can Write
 
 - `auto_paper_output/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -53,8 +51,7 @@ Run the optional auto-paper reviewer-response branch. Use when Codex needs to ha
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -77,10 +74,10 @@ Run the optional auto-paper reviewer-response branch. Use when Codex needs to ha
 
 - `smoke_test_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `auto_paper_response`
 - `human_gate`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

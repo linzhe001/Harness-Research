@@ -67,7 +67,7 @@ Report the compile, validation, and docchain-gate commands in a gate ledger.
 
 After the current Markdown is finalized for this turn or stage and docchain
 gates have passed, invoke `/docs-site` to refresh `docs/_views/**` and
-`docs/_site/**`, or report `docs_site_render_or_NOT_RUN` with the reason. This
+`docs/_site/**`, or report `docs_site_boundary_report` with the reason. This
 is a durable-boundary handoff, not a per-keystroke or temporary-draft action.
 
 ## Output Rules

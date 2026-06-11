@@ -42,8 +42,6 @@ Check whether dynamic research protocol drafts are stale before baseline, iterat
 
 - `docs/35_protocol/`
 - `docs/10_contract/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -52,8 +50,7 @@ Check whether dynamic research protocol drafts are stale before baseline, iterat
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -73,12 +70,12 @@ Check whether dynamic research protocol drafts are stale before baseline, iterat
 - `check_protocol_drift_or_NOT_RUN`
 - `docchain_gate_when_current_docs_change`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `protocol_readiness`
 - `WF10_readiness`
 - `WF11_readiness`
 - `WF12_readiness`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

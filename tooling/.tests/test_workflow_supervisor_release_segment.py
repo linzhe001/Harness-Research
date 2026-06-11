@@ -15,6 +15,13 @@ def make_workspace(tmp_path: Path) -> Path:
     root = tmp_path / "workspace"
     root.mkdir()
     shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+    config_dir = root / "tooling" / "workflow_supervisor" / "config"
+    config_dir.mkdir(parents=True)
+    shutil.copy2(
+        REPO_ROOT / "tooling" / "workflow_supervisor" / "config" / "default_nodes.json",
+        config_dir / "default_nodes.json",
+    )
+    (root / "iteration_log.json").write_text("[]\n", encoding="utf-8")
     return root
 
 
@@ -87,19 +94,116 @@ def fake_wf12_gate(
     return _gate
 
 
-def start_release(root: Path, goal: str, capsys) -> tuple[int, dict[str, object]]:
-    code = workflow_ctl.main(
-        [
-            "--workspace-root",
-            str(root),
-            "start",
-            "--segment",
-            "release",
-            "--goal",
-            goal,
-            "--json",
-        ]
+def write_release_worker(tmp_path: Path) -> Path:
+    script = tmp_path / "fixture_release_worker.py"
+    script.write_text(
+        r'''
+from __future__ import annotations
+
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--workspace-root", required=True)
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--node-id", required=True)
+    parser.add_argument("--result", required=True)
+    args = parser.parse_args()
+    root = Path(args.workspace_root)
+    if args.node_id != "release_final_exp_matrix":
+        raise SystemExit(f"unexpected node {args.node_id}")
+    matrix = root / "docs" / "Final_Experiment_Matrix.md"
+    matrix.parent.mkdir(parents=True, exist_ok=True)
+    matrix.write_text("# Final Experiment Matrix\n", encoding="utf-8")
+    now = datetime.now(timezone.utc).isoformat()
+    result = {
+        "schema_version": 1,
+        "run_id": args.run_id,
+        "node_id": args.node_id,
+        "skill": "final-exp",
+        "attempt": 1,
+        "status": "success",
+        "exit_code": 0,
+        "started_at": now,
+        "finished_at": now,
+        "summary": "fixture final experiment matrix",
+        "artifact_refs": ["docs/Final_Experiment_Matrix.md"],
+        "gate_ledger": [
+            {
+                "command": (
+                    "python tooling/evidence/check_dynamic_context.py "
+                    "--workspace-root . --stage wf11 --review-packet"
+                ),
+                "result": "PASS",
+                "reason": "fixture wf11 gate",
+                "artifacts": [".evidence/review_packets/wf11/build/review_packet.md"],
+            },
+            {
+                "command": (
+                    "python tooling/evidence/compile_doc.py --workspace-root . "
+                    "--doc docs/Final_Experiment_Matrix.md "
+                    "--source iteration_log.json docs/10_contract/Claim_Boundary.md"
+                ),
+                "result": "PASS",
+                "reason": "fixture final matrix docchain",
+                "artifacts": [
+                    ".evidence/chains/final_experiment_matrix/evidence_chain.json",
+                ],
+            },
+        ],
+        "postcondition_claims": [],
+        "interrupt_request": None,
+        "observed_writes": ["docs/Final_Experiment_Matrix.md"],
+        "stdout_ref": None,
+        "stderr_ref": None,
+        "contract_violations": [],
+        "worker_warnings": [],
+    }
+    Path(args.result).write_text(json.dumps(result) + "\n", encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''.lstrip(),
+        encoding="utf-8",
     )
+    return script
+
+
+def start_release(
+    root: Path,
+    goal: str,
+    capsys,
+    *,
+    worker: Path | None = None,
+) -> tuple[int, dict[str, object]]:
+    command = [
+        "--workspace-root",
+        str(root),
+        "start",
+        "--segment",
+        "release",
+        "--goal",
+        goal,
+        "--json",
+    ]
+    if worker is not None:
+        command.extend(
+            [
+                "--worker-command",
+                (
+                    f"{sys.executable} {worker} --workspace-root "
+                    "{workspace_root} --run-id {run_id} --node-id {node_id} "
+                    "--result {result_path}"
+                ),
+            ]
+        )
+    code = workflow_ctl.main(command)
     payload = json.loads(capsys.readouterr().out)
     return code, payload
 
@@ -110,6 +214,7 @@ def test_release_start_gate_pass_creates_exact_approval_interrupt(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
+    worker = write_release_worker(tmp_path)
     calls: list[dict[str, object]] = []
     monkeypatch.setattr(
         workflow_ctl,
@@ -117,7 +222,12 @@ def test_release_start_gate_pass_creates_exact_approval_interrupt(
         fake_wf12_gate(0, calls),
     )
 
-    code, payload = start_release(root, "package release artifacts", capsys)
+    code, payload = start_release(
+        root,
+        "package release artifacts",
+        capsys,
+        worker=worker,
+    )
 
     assert code == workflow_ctl.EXIT_MANUAL_ACTION
     state = payload["state"]
@@ -153,6 +263,7 @@ def test_release_start_gate_pass_creates_exact_approval_interrupt(
     assert node_record["release_action"] == "package"
     assert calls[0]["stage"] == "wf12"
     assert calls[0]["write_review_packet"] is True
+    assert "release_final_exp_matrix" in state["completed_nodes"]
 
 
 def test_release_approve_resume_reruns_gate_without_packaging(
@@ -161,13 +272,14 @@ def test_release_approve_resume_reruns_gate_without_packaging(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
+    worker = write_release_worker(tmp_path)
     calls: list[dict[str, object]] = []
     monkeypatch.setattr(
         workflow_ctl,
         "run_dynamic_context_gate",
         fake_wf12_gate(0, calls),
     )
-    _, payload = start_release(root, "submit release package", capsys)
+    _, payload = start_release(root, "submit release package", capsys, worker=worker)
     pending = json.loads(
         (root / ".workflow_supervisor" / "pending_request.json").read_text(
             encoding="utf-8"
@@ -223,6 +335,7 @@ def test_release_gate_failure_fails_closed_to_steer(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
+    worker = write_release_worker(tmp_path)
     calls: list[dict[str, object]] = []
     monkeypatch.setattr(
         workflow_ctl,
@@ -230,7 +343,12 @@ def test_release_gate_failure_fails_closed_to_steer(
         fake_wf12_gate(1, calls),
     )
 
-    code, payload = start_release(root, "package release artifacts", capsys)
+    code, payload = start_release(
+        root,
+        "package release artifacts",
+        capsys,
+        worker=worker,
+    )
 
     assert code == workflow_ctl.EXIT_MANUAL_ACTION
     state = payload["state"]
@@ -265,6 +383,7 @@ def test_release_legacy_context_fails_closed_before_approval(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
+    worker = write_release_worker(tmp_path)
     calls: list[dict[str, object]] = []
     monkeypatch.setattr(
         workflow_ctl,
@@ -272,7 +391,12 @@ def test_release_legacy_context_fails_closed_before_approval(
         fake_wf12_gate(0, calls, dynamic_context=False),
     )
 
-    code, payload = start_release(root, "package release artifacts", capsys)
+    code, payload = start_release(
+        root,
+        "package release artifacts",
+        capsys,
+        worker=worker,
+    )
 
     assert code == workflow_ctl.EXIT_MANUAL_ACTION
     assert payload["state"]["segment_status"] == "release_gate_failed"

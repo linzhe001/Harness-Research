@@ -43,8 +43,6 @@ Run the auto-paper research phase for a LaTeX manuscript. Use to build local sou
 ## Can Write
 
 - `auto_paper_output/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -52,8 +50,7 @@ Run the auto-paper research phase for a LaTeX manuscript. Use to build local sou
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -73,10 +70,10 @@ Run the auto-paper research phase for a LaTeX manuscript. Use to build local sou
 
 - `smoke_test_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `auto_paper_research`
 - `human_gate`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

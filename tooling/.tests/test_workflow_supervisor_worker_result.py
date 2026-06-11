@@ -97,7 +97,17 @@ def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
         node={
             "node_id": "build_validate_run",
             "skill": "validate-run",
+            "segment": "build",
             "postconditions": [],
+            "evidence_tools": [
+                {
+                    "command": (
+                        "python tooling/evidence/check_dynamic_context.py "
+                        "--workspace-root . --stage wf10 --review-packet"
+                    ),
+                    "outputs": [".evidence/review_packets/"],
+                }
+            ],
             "allowed_worker_write_patterns": ["docs/Validate_Run_Report.md"],
         },
         goal="validate runnable build",
@@ -110,7 +120,11 @@ def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
     assert not paths["handoff_result"].startswith(".workflow_supervisor/")
     assert "temporary worker handoff" in prompt
     assert "Automation budget:" in prompt
-    assert '"profile": "default"' in prompt
+    assert "Evidence tools for this node:" in prompt
+    assert "check_dynamic_context.py" in prompt
+    assert '"profile": "automation_build"' in prompt
+    assert "Do not write docs/_site or docs/_views" in prompt
+    assert "docs_site_boundary_report" in prompt
 
 
 def test_worker_prompt_truncates_large_goal_context() -> None:

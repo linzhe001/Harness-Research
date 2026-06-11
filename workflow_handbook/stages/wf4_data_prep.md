@@ -61,8 +61,6 @@ Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis
 - `guidance: AGENTS.md`
 - `implementation: configs/`
 - `implementation: src/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -89,7 +87,7 @@ Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis
 - `dataset_acquisition_or_NOT_RUN`
 - `dataset_acquisition_decision_request_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `data_doc_archive`
 - `dataset_acquisition`
 - `dataset_stats_write`
@@ -97,7 +95,7 @@ Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis
 - `dataset_config_write`
 - `canonical_state_edit`
 - `CLAUDE_dataset_sync`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

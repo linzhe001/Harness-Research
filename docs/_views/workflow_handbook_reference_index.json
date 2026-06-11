@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-09T08:33:47Z",
+  "generated_at": "2026-06-11T10:35:23Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -1495,20 +1495,20 @@
       "ref": "artifact:docs/_site/",
       "kind": "artifact",
       "title": "docs/_site/",
-      "summary": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth.",
+      "summary": "Generated human-readable HTML view from source Markdown; Markdown remains source of truth.",
       "truth_status": "generated_view",
       "owner": "docs-site",
       "source_paths": [
         {
           "path": "schemas/skill_contracts.json",
-          "anchor": "doc-compiler",
+          "anchor": "docs-site",
           "line": null,
           "role": "skill_contract"
         }
       ],
       "preview": {
         "title": "docs/_site/",
-        "body": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth.",
+        "body": "Generated human-readable HTML view from source Markdown; Markdown remains source of truth.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -1561,32 +1561,6 @@
       "preview": {
         "title": "docs/_site/workflow_handbook",
         "body": "Generated HTML view for the workflow handbook.",
-        "format": "plain",
-        "source_excerpt": null,
-        "excerpt_hash": null,
-        "truncated": false
-      },
-      "related_refs": [],
-      "last_validated_by": "build_workflow_handbook_reference_index.py"
-    },
-    "artifact:docs/_views/": {
-      "ref": "artifact:docs/_views/",
-      "kind": "artifact",
-      "title": "docs/_views/",
-      "summary": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth.",
-      "truth_status": "generated_view",
-      "owner": "docs-site",
-      "source_paths": [
-        {
-          "path": "schemas/skill_contracts.json",
-          "anchor": "doc-compiler",
-          "line": null,
-          "role": "skill_contract"
-        }
-      ],
-      "preview": {
-        "title": "docs/_views/",
-        "body": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4062,7 +4036,7 @@
       ],
       "preview": {
         "title": "auto-iterate-goal",
-        "body": "Reads 15 declared paths; writes docs/auto_iterate_goal.md, docs/_views/, docs/_site/; must prove goal_validate_or_init, context_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 15 declared paths; writes docs/auto_iterate_goal.md; must prove goal_validate_or_init, context_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4096,7 +4070,7 @@
       ],
       "preview": {
         "title": "auto-paper",
-        "body": "Reads 20 declared paths; writes auto_paper_log.json, auto_paper_output/, docs/auto_paper_goal.md, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 20 declared paths; writes auto_paper_log.json, auto_paper_output/, docs/auto_paper_goal.md; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4130,7 +4104,7 @@
       ],
       "preview": {
         "title": "auto-paper-argument",
-        "body": "Reads 12 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 12 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4164,7 +4138,7 @@
       ],
       "preview": {
         "title": "auto-paper-citation",
-        "body": "Reads 11 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 11 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4198,7 +4172,7 @@
       ],
       "preview": {
         "title": "auto-paper-data",
-        "body": "Reads 13 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 13 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4232,7 +4206,7 @@
       ],
       "preview": {
         "title": "auto-paper-figure",
-        "body": "Reads 15 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 15 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4266,7 +4240,7 @@
       ],
       "preview": {
         "title": "auto-paper-harden",
-        "body": "Reads 15 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 15 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4300,7 +4274,7 @@
       ],
       "preview": {
         "title": "auto-paper-intake",
-        "body": "Reads 12 declared paths; writes auto_paper_output/, docs/auto_paper_goal.md, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 12 declared paths; writes auto_paper_output/, docs/auto_paper_goal.md; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4334,7 +4308,7 @@
       ],
       "preview": {
         "title": "auto-paper-layout",
-        "body": "Reads 12 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 12 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4368,7 +4342,7 @@
       ],
       "preview": {
         "title": "auto-paper-patch",
-        "body": "Reads 13 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 13 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4402,7 +4376,7 @@
       ],
       "preview": {
         "title": "auto-paper-research",
-        "body": "Reads 11 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 11 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4436,7 +4410,7 @@
       ],
       "preview": {
         "title": "auto-paper-response",
-        "body": "Reads 14 declared paths; writes auto_paper_output/, docs/_views/, docs/_site/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 14 declared paths; writes auto_paper_output/; must prove smoke_test_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4708,7 +4682,7 @@
       ],
       "preview": {
         "title": "deep-check",
-        "body": "Reads 19 declared paths; writes docs/Sanity_Check_Log.md, docs/35_protocol/, docs/10_contract/, docs/_views/, docs/_site/; must prove codex_review_or_NOT_RUN, external_model_review_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 19 declared paths; writes docs/Sanity_Check_Log.md, docs/35_protocol/, docs/10_contract/; must prove codex_review_or_NOT_RUN, external_model_review_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4742,7 +4716,7 @@
       ],
       "preview": {
         "title": "doc-compiler",
-        "body": "Reads 10 declared paths; writes docs/10_contract/, docs/20_facts/, docs/35_protocol/, .evidence/chains/, .evidence/index.json; must prove compile_doc_or_NOT_RUN, check_docchain_gates_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 10 declared paths; writes docs/10_contract/, docs/20_facts/, docs/35_protocol/, .evidence/chains/, .evidence/index.json; must prove compile_doc_or_NOT_RUN, check_docchain_gates_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4844,7 +4818,7 @@
       ],
       "preview": {
         "title": "evaluate",
-        "body": "Reads 17 declared paths; writes iteration_log.json, docs/40_iterations/, docs/iterations/, docs/50_memory/, MEMORY.md; must prove decision_vocabulary, lesson_quality_check_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 17 declared paths; writes iteration_log.json, docs/40_iterations/, docs/iterations/, docs/50_memory/, MEMORY.md; must prove decision_vocabulary, lesson_quality_check_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4878,7 +4852,7 @@
       ],
       "preview": {
         "title": "final-exp",
-        "body": "Reads 14 declared paths; writes docs/Final_Experiment_Matrix.md, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove respect_evaluation_contract, respect_claim_boundary, check_dynamic_context_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 14 declared paths; writes docs/Final_Experiment_Matrix.md, PROJECT_STATE.json; must prove respect_evaluation_contract, respect_claim_boundary, check_dynamic_context_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4912,7 +4886,7 @@
       ],
       "preview": {
         "title": "grill",
-        "body": "Reads 20 declared paths; writes docs/Research_Intent_Draft.md, docs/Grill_Round_Log.md, docs/Execution_Readiness_Packet.md, docs/_views/, docs/_site/; must prove gate_ledger, grill_round_contract, gap_check, human_exit_decision_status, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 20 declared paths; writes docs/Research_Intent_Draft.md, docs/Grill_Round_Log.md, docs/Execution_Readiness_Packet.md; must prove gate_ledger, grill_round_contract, gap_check, human_exit_decision_status, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4980,7 +4954,7 @@
       ],
       "preview": {
         "title": "idea-debate",
-        "body": "Reads 17 declared paths; writes docs/Idea_Debate.md, docs/35_protocol/, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove compile_protocol_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 17 declared paths; writes docs/Idea_Debate.md, docs/35_protocol/, PROJECT_STATE.json; must prove compile_protocol_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5014,7 +4988,7 @@
       ],
       "preview": {
         "title": "init-project",
-        "body": "Reads 21 declared paths; writes CLAUDE.md, AGENTS.md, README.md, OPERATOR_CONTEXT.md, PROJECT_STATE.json; must prove grill_handoff_read_or_NOT_RUN, context_gate_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 21 declared paths; writes CLAUDE.md, AGENTS.md, README.md, OPERATOR_CONTEXT.md, PROJECT_STATE.json; must prove grill_handoff_read_or_NOT_RUN, context_gate_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5048,7 +5022,7 @@
       ],
       "preview": {
         "title": "iterate",
-        "body": "Reads 20 declared paths; writes iteration_log.json, docs/40_iterations/, docs/iterations/, docs/50_memory/, MEMORY.md; must prove iteration_log_update, decision_vocabulary, lesson_quality_check_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 20 declared paths; writes iteration_log.json, docs/40_iterations/, docs/iterations/, docs/50_memory/, MEMORY.md; must prove iteration_log_update, decision_vocabulary, lesson_quality_check_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5116,7 +5090,7 @@
       ],
       "preview": {
         "title": "protocol-compiler",
-        "body": "Reads 10 declared paths; writes .evidence/protocol_compiler/, docs/35_protocol/, docs/_views/, docs/_site/; must prove compile_protocol_or_NOT_RUN, protocol_review_or_NOT_RUN, docchain_gate_when_current_docs_change, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 10 declared paths; writes .evidence/protocol_compiler/, docs/35_protocol/; must prove compile_protocol_or_NOT_RUN, protocol_review_or_NOT_RUN, docchain_gate_when_current_docs_change, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5150,7 +5124,7 @@
       ],
       "preview": {
         "title": "protocol-drift-check",
-        "body": "Reads 10 declared paths; writes docs/35_protocol/, docs/10_contract/, docs/_views/, docs/_site/; must prove check_protocol_drift_or_NOT_RUN, docchain_gate_when_current_docs_change, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 10 declared paths; writes docs/35_protocol/, docs/10_contract/; must prove check_protocol_drift_or_NOT_RUN, docchain_gate_when_current_docs_change, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5184,7 +5158,7 @@
       ],
       "preview": {
         "title": "refine-arch",
-        "body": "Reads 21 declared paths; writes docs/Technical_Spec.md, docs/20_facts/Project_Glossary.md, docs/35_protocol/, PROJECT_STATE.json, docs/_views/; must prove check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 21 declared paths; writes docs/Technical_Spec.md, docs/20_facts/Project_Glossary.md, docs/35_protocol/, PROJECT_STATE.json; must prove check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5218,7 +5192,7 @@
       ],
       "preview": {
         "title": "refine-idea",
-        "body": "Reads 17 declared paths; writes docs/Refined_Idea.md, docs/35_protocol/, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove compile_protocol_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 17 declared paths; writes docs/Refined_Idea.md, docs/35_protocol/, PROJECT_STATE.json; must prove compile_protocol_or_NOT_RUN, check_protocol_drift_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5252,7 +5226,7 @@
       ],
       "preview": {
         "title": "release",
-        "body": "Reads 17 declared paths; writes submission/, docs/, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove check_dynamic_context_wf12_or_NOT_RUN, release_manifest_validation, claim_boundary_check, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 17 declared paths; writes submission/, docs/, PROJECT_STATE.json; must prove check_dynamic_context_wf12_or_NOT_RUN, release_manifest_validation, claim_boundary_check, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5286,11 +5260,11 @@
       ],
       "preview": {
         "title": "review-packet",
-        "body": "Reads 11 declared paths; writes .evidence/review_packets/, docs/10_contract/, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove check_dynamic_context_or_NOT_RUN, build_review_packet_or_NOT_RUN, approval_tool_only_after_explicit_human_approval, gate_ledger, docs_site_re...",
+        "body": "Reads 11 declared paths; writes .evidence/review_packets/, docs/10_contract/, PROJECT_STATE.json; must prove check_dynamic_context_or_NOT_RUN, build_review_packet_or_NOT_RUN, approval_tool_only_after_explicit_human_approval, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
-        "truncated": true
+        "truncated": false
       },
       "related_refs": [
         "term:Gate Evidence"
@@ -5320,7 +5294,7 @@
       ],
       "preview": {
         "title": "survey-idea",
-        "body": "Reads 15 declared paths; writes docs/Feasibility_Report.md, docs/30_evidence/, docs/35_protocol/, PROJECT_STATE.json, docs/_views/; must prove compile_protocol_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_render_or_NOT_RUN.",
+        "body": "Reads 15 declared paths; writes docs/Feasibility_Report.md, docs/30_evidence/, docs/35_protocol/, PROJECT_STATE.json; must prove compile_protocol_or_NOT_RUN, workflow_state_gate_or_NOT_RUN, gate_ledger, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -5354,7 +5328,7 @@
       ],
       "preview": {
         "title": "validate-run",
-        "body": "Reads 22 declared paths; writes docs/Validate_Run_Report.md, docs/30_evidence/Validation_Table.md, PROJECT_STATE.json, docs/_views/, docs/_site/; must prove semantic_review, smoke_test_or_NOT_RUN, write_validate_report, workflow_state_gate_or_NOT_RUN, gate_ledger.",
+        "body": "Reads 22 declared paths; writes docs/Validate_Run_Report.md, docs/30_evidence/Validation_Table.md, PROJECT_STATE.json; must prove semantic_review, smoke_test_or_NOT_RUN, write_validate_report, workflow_state_gate_or_NOT_RUN, gate_ledger.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6681,7 +6655,7 @@
       ],
       "preview": {
         "title": "WF1 Survey Idea",
-        "body": "Primary skill: survey-idea. Gate conditions: evidence_table_write, feasibility_report_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: survey-idea. Gate conditions: evidence_table_write, feasibility_report_write, canonical_state_edit, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6716,7 +6690,7 @@
       ],
       "preview": {
         "title": "WF10 Iterate",
-        "body": "Primary skill: iterate. Gate conditions: iteration_log_write, iteration_report_write, lesson_promotion, WF11_handoff, docs_site_render.",
+        "body": "Primary skill: iterate. Gate conditions: iteration_log_write, iteration_report_write, lesson_promotion, WF11_handoff, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6751,7 +6725,7 @@
       ],
       "preview": {
         "title": "WF11 Final Exp",
-        "body": "Primary skill: final-exp. Gate conditions: WF11_readiness, final_experiment_matrix_write, docs_site_render.",
+        "body": "Primary skill: final-exp. Gate conditions: WF11_readiness, final_experiment_matrix_write, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6786,7 +6760,7 @@
       ],
       "preview": {
         "title": "WF12 Release",
-        "body": "Primary skill: release. Gate conditions: WF12_readiness, release_claim, submission_package_write, docs_site_render.",
+        "body": "Primary skill: release. Gate conditions: WF12_readiness, release_claim, submission_package_write, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6821,7 +6795,7 @@
       ],
       "preview": {
         "title": "WF2 Idea Debate",
-        "body": "Primary skill: idea-debate. Gate conditions: idea_debate_report_write, protocol_doc_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: idea-debate. Gate conditions: idea_debate_report_write, protocol_doc_write, canonical_state_edit, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6856,7 +6830,7 @@
       ],
       "preview": {
         "title": "WF3 Refine Idea",
-        "body": "Primary skill: refine-idea. Gate conditions: refined_idea_write, protocol_assumption_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: refine-idea. Gate conditions: refined_idea_write, protocol_assumption_write, canonical_state_edit, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6961,7 +6935,7 @@
       ],
       "preview": {
         "title": "WF6 Refine Arch",
-        "body": "Primary skill: refine-arch. Gate conditions: technical_spec_write, contract_conflict, project_glossary_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: refine-arch. Gate conditions: technical_spec_write, contract_conflict, project_glossary_write, canonical_state_edit, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -6996,7 +6970,7 @@
       ],
       "preview": {
         "title": "WF7 Build Plan",
-        "body": "Primary skill: build-plan. Gate conditions: project_map_write, project_glossary_write, codebase_map_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: build-plan. Gate conditions: project_map_write, project_glossary_write, codebase_map_write, canonical_state_edit, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7031,7 +7005,7 @@
       ],
       "preview": {
         "title": "WF8 Code Expert",
-        "body": "Primary skill: code-expert. Gate conditions: stable_code_change, project_map_write, codebase_map_write, canonical_state_edit, docs_site_render.",
+        "body": "Primary skill: code-expert. Gate conditions: stable_code_change, project_map_write, codebase_map_write, canonical_state_edit, codebase_map_docchain.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7066,7 +7040,7 @@
       ],
       "preview": {
         "title": "WF9 Validate Run",
-        "body": "Primary skill: validate-run. Gate conditions: WF10_readiness, validate_report_write, evidence_table_write, docs_site_render.",
+        "body": "Primary skill: validate-run. Gate conditions: WF10_readiness, validate_report_write, evidence_table_write, docs_site_boundary_report.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -8687,7 +8661,7 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:operator_task_index|Operator Action Index]]",
-        "line": 218,
+        "line": 216,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
@@ -8695,7 +8669,7 @@
         "ref": "skill:grill",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:grill]]",
-        "line": 219,
+        "line": 217,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/grill.html"
       },
@@ -8703,7 +8677,7 @@
         "ref": "skill:workflow-supervisor",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:workflow-supervisor]]",
-        "line": 220,
+        "line": 218,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
       },
@@ -8711,7 +8685,7 @@
         "ref": "skill:change-intake",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:change-intake]]",
-        "line": 221,
+        "line": 219,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/change-intake.html"
       },
@@ -8719,7 +8693,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval]]",
-        "line": 222,
+        "line": 220,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -8727,7 +8701,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate]]",
-        "line": 223,
+        "line": 221,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       }
@@ -8787,7 +8761,7 @@
         "ref": "skill:auto-iterate-goal",
         "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
         "marker": "[[skill:auto-iterate-goal]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-iterate-goal.html"
       },
@@ -8795,7 +8769,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-iterate-goal",
         "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-iterate-goal]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": null
       },
@@ -8803,7 +8777,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-iterate-goal.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": null
       }
@@ -8813,7 +8787,7 @@
         "ref": "skill:auto-paper-argument",
         "source_path": "workflow_handbook/skills/auto-paper-argument.md",
         "marker": "[[skill:auto-paper-argument]]",
-        "line": 95,
+        "line": 92,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-argument.html"
       },
@@ -8821,7 +8795,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-argument",
         "source_path": "workflow_handbook/skills/auto-paper-argument.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-argument]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       },
@@ -8829,7 +8803,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-argument.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": null
       }
@@ -8839,7 +8813,7 @@
         "ref": "skill:auto-paper-citation",
         "source_path": "workflow_handbook/skills/auto-paper-citation.md",
         "marker": "[[skill:auto-paper-citation]]",
-        "line": 94,
+        "line": 91,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-citation.html"
       },
@@ -8847,7 +8821,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-citation",
         "source_path": "workflow_handbook/skills/auto-paper-citation.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-citation]]",
-        "line": 95,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       },
@@ -8855,7 +8829,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-citation.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       }
@@ -8865,7 +8839,7 @@
         "ref": "skill:auto-paper-data",
         "source_path": "workflow_handbook/skills/auto-paper-data.md",
         "marker": "[[skill:auto-paper-data]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-data.html"
       },
@@ -8873,7 +8847,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-data",
         "source_path": "workflow_handbook/skills/auto-paper-data.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-data]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       },
@@ -8881,7 +8855,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-data.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 100,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       }
@@ -8891,7 +8865,7 @@
         "ref": "skill:auto-paper-figure",
         "source_path": "workflow_handbook/skills/auto-paper-figure.md",
         "marker": "[[skill:auto-paper-figure]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-figure.html"
       },
@@ -8899,7 +8873,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-figure",
         "source_path": "workflow_handbook/skills/auto-paper-figure.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-figure]]",
-        "line": 100,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       },
@@ -8907,7 +8881,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-figure.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 101,
+        "line": 98,
         "status": "resolved",
         "target_html": null
       }
@@ -8917,7 +8891,7 @@
         "ref": "skill:auto-paper-harden",
         "source_path": "workflow_handbook/skills/auto-paper-harden.md",
         "marker": "[[skill:auto-paper-harden]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-harden.html"
       },
@@ -8925,7 +8899,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-harden",
         "source_path": "workflow_handbook/skills/auto-paper-harden.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-harden]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       },
@@ -8933,7 +8907,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-harden.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 100,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       }
@@ -8943,7 +8917,7 @@
         "ref": "skill:auto-paper-intake",
         "source_path": "workflow_handbook/skills/auto-paper-intake.md",
         "marker": "[[skill:auto-paper-intake]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-intake.html"
       },
@@ -8951,7 +8925,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-intake",
         "source_path": "workflow_handbook/skills/auto-paper-intake.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-intake]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": null
       },
@@ -8959,7 +8933,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-intake.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       }
@@ -8969,7 +8943,7 @@
         "ref": "skill:auto-paper-layout",
         "source_path": "workflow_handbook/skills/auto-paper-layout.md",
         "marker": "[[skill:auto-paper-layout]]",
-        "line": 95,
+        "line": 92,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-layout.html"
       },
@@ -8977,7 +8951,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-layout",
         "source_path": "workflow_handbook/skills/auto-paper-layout.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-layout]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       },
@@ -8985,7 +8959,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-layout.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": null
       }
@@ -8995,7 +8969,7 @@
         "ref": "skill:auto-paper-patch",
         "source_path": "workflow_handbook/skills/auto-paper-patch.md",
         "marker": "[[skill:auto-paper-patch]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-patch.html"
       },
@@ -9003,7 +8977,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-patch",
         "source_path": "workflow_handbook/skills/auto-paper-patch.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-patch]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": null
       },
@@ -9011,7 +8985,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-patch.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       }
@@ -9021,7 +8995,7 @@
         "ref": "skill:auto-paper-research",
         "source_path": "workflow_handbook/skills/auto-paper-research.md",
         "marker": "[[skill:auto-paper-research]]",
-        "line": 94,
+        "line": 91,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-research.html"
       },
@@ -9029,7 +9003,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-research",
         "source_path": "workflow_handbook/skills/auto-paper-research.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-research]]",
-        "line": 95,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       },
@@ -9037,7 +9011,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-research.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       }
@@ -9047,7 +9021,7 @@
         "ref": "skill:auto-paper-response",
         "source_path": "workflow_handbook/skills/auto-paper-response.md",
         "marker": "[[skill:auto-paper-response]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper-response.html"
       },
@@ -9055,7 +9029,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper-response",
         "source_path": "workflow_handbook/skills/auto-paper-response.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper-response]]",
-        "line": 99,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       },
@@ -9063,7 +9037,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper-response.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 100,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       }
@@ -9073,7 +9047,7 @@
         "ref": "skill:auto-paper",
         "source_path": "workflow_handbook/skills/auto-paper.md",
         "marker": "[[skill:auto-paper]]",
-        "line": 109,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/auto-paper.html"
       },
@@ -9081,7 +9055,7 @@
         "ref": "source:schemas/skill_contracts.json#auto-paper",
         "source_path": "workflow_handbook/skills/auto-paper.md",
         "marker": "[[source:schemas/skill_contracts.json#auto-paper]]",
-        "line": 110,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       },
@@ -9089,7 +9063,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/auto-paper.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       }
@@ -9099,7 +9073,7 @@
         "ref": "skill:baseline-repro",
         "source_path": "workflow_handbook/skills/baseline-repro.md",
         "marker": "[[skill:baseline-repro]]",
-        "line": 124,
+        "line": 121,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/baseline-repro.html"
       },
@@ -9107,7 +9081,7 @@
         "ref": "source:schemas/skill_contracts.json#baseline-repro",
         "source_path": "workflow_handbook/skills/baseline-repro.md",
         "marker": "[[source:schemas/skill_contracts.json#baseline-repro]]",
-        "line": 125,
+        "line": 122,
         "status": "resolved",
         "target_html": null
       },
@@ -9115,7 +9089,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/baseline-repro.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 126,
+        "line": 123,
         "status": "resolved",
         "target_html": null
       }
@@ -9125,7 +9099,7 @@
         "ref": "skill:build-plan",
         "source_path": "workflow_handbook/skills/build-plan.md",
         "marker": "[[skill:build-plan]]",
-        "line": 109,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/build-plan.html"
       },
@@ -9133,7 +9107,7 @@
         "ref": "source:schemas/skill_contracts.json#build-plan",
         "source_path": "workflow_handbook/skills/build-plan.md",
         "marker": "[[source:schemas/skill_contracts.json#build-plan]]",
-        "line": 110,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       },
@@ -9141,7 +9115,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/build-plan.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       }
@@ -9177,7 +9151,7 @@
         "ref": "skill:code-debug",
         "source_path": "workflow_handbook/skills/code-debug.md",
         "marker": "[[skill:code-debug]]",
-        "line": 112,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/code-debug.html"
       },
@@ -9185,7 +9159,7 @@
         "ref": "source:schemas/skill_contracts.json#code-debug",
         "source_path": "workflow_handbook/skills/code-debug.md",
         "marker": "[[source:schemas/skill_contracts.json#code-debug]]",
-        "line": 113,
+        "line": 109,
         "status": "resolved",
         "target_html": null
       },
@@ -9193,7 +9167,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/code-debug.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 114,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       }
@@ -9203,7 +9177,7 @@
         "ref": "skill:code-expert",
         "source_path": "workflow_handbook/skills/code-expert.md",
         "marker": "[[skill:code-expert]]",
-        "line": 118,
+        "line": 114,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/code-expert.html"
       },
@@ -9211,7 +9185,7 @@
         "ref": "source:schemas/skill_contracts.json#code-expert",
         "source_path": "workflow_handbook/skills/code-expert.md",
         "marker": "[[source:schemas/skill_contracts.json#code-expert]]",
-        "line": 119,
+        "line": 115,
         "status": "resolved",
         "target_html": null
       },
@@ -9219,7 +9193,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/code-expert.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 120,
+        "line": 116,
         "status": "resolved",
         "target_html": null
       }
@@ -9255,7 +9229,7 @@
         "ref": "skill:data-prep",
         "source_path": "workflow_handbook/skills/data-prep.md",
         "marker": "[[skill:data-prep]]",
-        "line": 112,
+        "line": 109,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/data-prep.html"
       },
@@ -9263,7 +9237,7 @@
         "ref": "source:schemas/skill_contracts.json#data-prep",
         "source_path": "workflow_handbook/skills/data-prep.md",
         "marker": "[[source:schemas/skill_contracts.json#data-prep]]",
-        "line": 113,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       },
@@ -9271,7 +9245,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/data-prep.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 114,
+        "line": 111,
         "status": "resolved",
         "target_html": null
       }
@@ -9281,7 +9255,7 @@
         "ref": "skill:deep-check",
         "source_path": "workflow_handbook/skills/deep-check.md",
         "marker": "[[skill:deep-check]]",
-        "line": 107,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/deep-check.html"
       },
@@ -9289,7 +9263,7 @@
         "ref": "source:schemas/skill_contracts.json#deep-check",
         "source_path": "workflow_handbook/skills/deep-check.md",
         "marker": "[[source:schemas/skill_contracts.json#deep-check]]",
-        "line": 108,
+        "line": 105,
         "status": "resolved",
         "target_html": null
       },
@@ -9297,7 +9271,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/deep-check.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 109,
+        "line": 106,
         "status": "resolved",
         "target_html": null
       }
@@ -9307,7 +9281,7 @@
         "ref": "skill:doc-compiler",
         "source_path": "workflow_handbook/skills/doc-compiler.md",
         "marker": "[[skill:doc-compiler]]",
-        "line": 100,
+        "line": 96,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/doc-compiler.html"
       },
@@ -9315,7 +9289,7 @@
         "ref": "source:schemas/skill_contracts.json#doc-compiler",
         "source_path": "workflow_handbook/skills/doc-compiler.md",
         "marker": "[[source:schemas/skill_contracts.json#doc-compiler]]",
-        "line": 101,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       },
@@ -9323,7 +9297,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/doc-compiler.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 102,
+        "line": 98,
         "status": "resolved",
         "target_html": null
       }
@@ -9385,7 +9359,7 @@
         "ref": "skill:evaluate",
         "source_path": "workflow_handbook/skills/evaluate.md",
         "marker": "[[skill:evaluate]]",
-        "line": 109,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/evaluate.html"
       },
@@ -9393,7 +9367,7 @@
         "ref": "source:schemas/skill_contracts.json#evaluate",
         "source_path": "workflow_handbook/skills/evaluate.md",
         "marker": "[[source:schemas/skill_contracts.json#evaluate]]",
-        "line": 110,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       },
@@ -9401,7 +9375,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/evaluate.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       }
@@ -9411,7 +9385,7 @@
         "ref": "skill:final-exp",
         "source_path": "workflow_handbook/skills/final-exp.md",
         "marker": "[[skill:final-exp]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/final-exp.html"
       },
@@ -9419,7 +9393,7 @@
         "ref": "source:schemas/skill_contracts.json#final-exp",
         "source_path": "workflow_handbook/skills/final-exp.md",
         "marker": "[[source:schemas/skill_contracts.json#final-exp]]",
-        "line": 97,
+        "line": 94,
         "status": "resolved",
         "target_html": null
       },
@@ -9427,7 +9401,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/final-exp.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 98,
+        "line": 95,
         "status": "resolved",
         "target_html": null
       }
@@ -9437,7 +9411,7 @@
         "ref": "skill:grill",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[skill:grill]]",
-        "line": 112,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/grill.html"
       },
@@ -9445,7 +9419,7 @@
         "ref": "source:schemas/skill_contracts.json#grill",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[source:schemas/skill_contracts.json#grill]]",
-        "line": 113,
+        "line": 109,
         "status": "resolved",
         "target_html": null
       },
@@ -9453,7 +9427,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/grill.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 114,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       }
@@ -9489,7 +9463,7 @@
         "ref": "skill:idea-debate",
         "source_path": "workflow_handbook/skills/idea-debate.md",
         "marker": "[[skill:idea-debate]]",
-        "line": 103,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/idea-debate.html"
       },
@@ -9497,7 +9471,7 @@
         "ref": "source:schemas/skill_contracts.json#idea-debate",
         "source_path": "workflow_handbook/skills/idea-debate.md",
         "marker": "[[source:schemas/skill_contracts.json#idea-debate]]",
-        "line": 104,
+        "line": 101,
         "status": "resolved",
         "target_html": null
       },
@@ -9505,7 +9479,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/idea-debate.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 105,
+        "line": 102,
         "status": "resolved",
         "target_html": null
       }
@@ -9515,7 +9489,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[skill:init-project]]",
-        "line": 128,
+        "line": 124,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9523,7 +9497,7 @@
         "ref": "source:schemas/skill_contracts.json#init-project",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[source:schemas/skill_contracts.json#init-project]]",
-        "line": 129,
+        "line": 125,
         "status": "resolved",
         "target_html": null
       },
@@ -9531,7 +9505,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/init-project.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 130,
+        "line": 126,
         "status": "resolved",
         "target_html": null
       }
@@ -9541,7 +9515,7 @@
         "ref": "skill:iterate",
         "source_path": "workflow_handbook/skills/iterate.md",
         "marker": "[[skill:iterate]]",
-        "line": 114,
+        "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/iterate.html"
       },
@@ -9549,7 +9523,7 @@
         "ref": "source:schemas/skill_contracts.json#iterate",
         "source_path": "workflow_handbook/skills/iterate.md",
         "marker": "[[source:schemas/skill_contracts.json#iterate]]",
-        "line": 115,
+        "line": 112,
         "status": "resolved",
         "target_html": null
       },
@@ -9557,7 +9531,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/iterate.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 116,
+        "line": 113,
         "status": "resolved",
         "target_html": null
       }
@@ -9593,7 +9567,7 @@
         "ref": "skill:protocol-compiler",
         "source_path": "workflow_handbook/skills/protocol-compiler.md",
         "marker": "[[skill:protocol-compiler]]",
-        "line": 94,
+        "line": 90,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/protocol-compiler.html"
       },
@@ -9601,7 +9575,7 @@
         "ref": "source:schemas/skill_contracts.json#protocol-compiler",
         "source_path": "workflow_handbook/skills/protocol-compiler.md",
         "marker": "[[source:schemas/skill_contracts.json#protocol-compiler]]",
-        "line": 95,
+        "line": 91,
         "status": "resolved",
         "target_html": null
       },
@@ -9609,7 +9583,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/protocol-compiler.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 96,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       }
@@ -9619,7 +9593,7 @@
         "ref": "skill:protocol-drift-check",
         "source_path": "workflow_handbook/skills/protocol-drift-check.md",
         "marker": "[[skill:protocol-drift-check]]",
-        "line": 94,
+        "line": 91,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/protocol-drift-check.html"
       },
@@ -9627,7 +9601,7 @@
         "ref": "source:schemas/skill_contracts.json#protocol-drift-check",
         "source_path": "workflow_handbook/skills/protocol-drift-check.md",
         "marker": "[[source:schemas/skill_contracts.json#protocol-drift-check]]",
-        "line": 95,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       },
@@ -9635,7 +9609,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/protocol-drift-check.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 96,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       }
@@ -9645,7 +9619,7 @@
         "ref": "skill:refine-arch",
         "source_path": "workflow_handbook/skills/refine-arch.md",
         "marker": "[[skill:refine-arch]]",
-        "line": 110,
+        "line": 107,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-arch.html"
       },
@@ -9653,7 +9627,7 @@
         "ref": "source:schemas/skill_contracts.json#refine-arch",
         "source_path": "workflow_handbook/skills/refine-arch.md",
         "marker": "[[source:schemas/skill_contracts.json#refine-arch]]",
-        "line": 111,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       },
@@ -9661,7 +9635,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/refine-arch.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 112,
+        "line": 109,
         "status": "resolved",
         "target_html": null
       }
@@ -9671,7 +9645,7 @@
         "ref": "skill:refine-idea",
         "source_path": "workflow_handbook/skills/refine-idea.md",
         "marker": "[[skill:refine-idea]]",
-        "line": 103,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-idea.html"
       },
@@ -9679,7 +9653,7 @@
         "ref": "source:schemas/skill_contracts.json#refine-idea",
         "source_path": "workflow_handbook/skills/refine-idea.md",
         "marker": "[[source:schemas/skill_contracts.json#refine-idea]]",
-        "line": 104,
+        "line": 101,
         "status": "resolved",
         "target_html": null
       },
@@ -9687,7 +9661,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/refine-idea.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 105,
+        "line": 102,
         "status": "resolved",
         "target_html": null
       }
@@ -9697,7 +9671,7 @@
         "ref": "skill:release",
         "source_path": "workflow_handbook/skills/release.md",
         "marker": "[[skill:release]]",
-        "line": 105,
+        "line": 102,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/release.html"
       },
@@ -9705,7 +9679,7 @@
         "ref": "source:schemas/skill_contracts.json#release",
         "source_path": "workflow_handbook/skills/release.md",
         "marker": "[[source:schemas/skill_contracts.json#release]]",
-        "line": 106,
+        "line": 103,
         "status": "resolved",
         "target_html": null
       },
@@ -9713,7 +9687,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/release.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 107,
+        "line": 104,
         "status": "resolved",
         "target_html": null
       }
@@ -9723,7 +9697,7 @@
         "ref": "skill:review-packet",
         "source_path": "workflow_handbook/skills/review-packet.md",
         "marker": "[[skill:review-packet]]",
-        "line": 99,
+        "line": 95,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/review-packet.html"
       },
@@ -9731,7 +9705,7 @@
         "ref": "source:schemas/skill_contracts.json#review-packet",
         "source_path": "workflow_handbook/skills/review-packet.md",
         "marker": "[[source:schemas/skill_contracts.json#review-packet]]",
-        "line": 100,
+        "line": 96,
         "status": "resolved",
         "target_html": null
       },
@@ -9739,7 +9713,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/review-packet.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 101,
+        "line": 97,
         "status": "resolved",
         "target_html": null
       }
@@ -9749,7 +9723,7 @@
         "ref": "skill:survey-idea",
         "source_path": "workflow_handbook/skills/survey-idea.md",
         "marker": "[[skill:survey-idea]]",
-        "line": 102,
+        "line": 99,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/survey-idea.html"
       },
@@ -9757,7 +9731,7 @@
         "ref": "source:schemas/skill_contracts.json#survey-idea",
         "source_path": "workflow_handbook/skills/survey-idea.md",
         "marker": "[[source:schemas/skill_contracts.json#survey-idea]]",
-        "line": 103,
+        "line": 100,
         "status": "resolved",
         "target_html": null
       },
@@ -9765,7 +9739,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/survey-idea.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 104,
+        "line": 101,
         "status": "resolved",
         "target_html": null
       }
@@ -9775,7 +9749,7 @@
         "ref": "skill:validate-run",
         "source_path": "workflow_handbook/skills/validate-run.md",
         "marker": "[[skill:validate-run]]",
-        "line": 109,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/validate-run.html"
       },
@@ -9783,7 +9757,7 @@
         "ref": "source:schemas/skill_contracts.json#validate-run",
         "source_path": "workflow_handbook/skills/validate-run.md",
         "marker": "[[source:schemas/skill_contracts.json#validate-run]]",
-        "line": 110,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       },
@@ -9791,7 +9765,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/validate-run.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 111,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       }
@@ -9827,7 +9801,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[skill:init-project]]",
-        "line": 122,
+        "line": 120,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9835,7 +9809,7 @@
         "ref": "stage:WF0",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[stage:WF0]]",
-        "line": 126,
+        "line": 124,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf0_init.html"
       },
@@ -9843,7 +9817,7 @@
         "ref": "skill:init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[skill:init-project]]",
-        "line": 127,
+        "line": 125,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/init-project.html"
       },
@@ -9851,7 +9825,7 @@
         "ref": "source:schemas/skill_contracts.json#init-project",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[source:schemas/skill_contracts.json#init-project]]",
-        "line": 128,
+        "line": 126,
         "status": "resolved",
         "target_html": null
       },
@@ -9859,7 +9833,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf0_init.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 129,
+        "line": 127,
         "status": "resolved",
         "target_html": null
       }
@@ -9869,7 +9843,7 @@
         "ref": "skill:iterate",
         "source_path": "workflow_handbook/stages/wf10_iterate.md",
         "marker": "[[skill:iterate]]",
-        "line": 110,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/iterate.html"
       },
@@ -9877,7 +9851,7 @@
         "ref": "stage:WF10",
         "source_path": "workflow_handbook/stages/wf10_iterate.md",
         "marker": "[[stage:WF10]]",
-        "line": 114,
+        "line": 112,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf10_iterate.html"
       },
@@ -9885,7 +9859,7 @@
         "ref": "skill:iterate",
         "source_path": "workflow_handbook/stages/wf10_iterate.md",
         "marker": "[[skill:iterate]]",
-        "line": 115,
+        "line": 113,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/iterate.html"
       },
@@ -9893,7 +9867,7 @@
         "ref": "source:schemas/skill_contracts.json#iterate",
         "source_path": "workflow_handbook/stages/wf10_iterate.md",
         "marker": "[[source:schemas/skill_contracts.json#iterate]]",
-        "line": 116,
+        "line": 114,
         "status": "resolved",
         "target_html": null
       },
@@ -9901,7 +9875,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf10_iterate.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 117,
+        "line": 115,
         "status": "resolved",
         "target_html": null
       }
@@ -9911,7 +9885,7 @@
         "ref": "skill:final-exp",
         "source_path": "workflow_handbook/stages/wf11_final_exp.md",
         "marker": "[[skill:final-exp]]",
-        "line": 94,
+        "line": 92,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/final-exp.html"
       },
@@ -9919,7 +9893,7 @@
         "ref": "stage:WF11",
         "source_path": "workflow_handbook/stages/wf11_final_exp.md",
         "marker": "[[stage:WF11]]",
-        "line": 98,
+        "line": 96,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf11_final_exp.html"
       },
@@ -9927,7 +9901,7 @@
         "ref": "skill:final-exp",
         "source_path": "workflow_handbook/stages/wf11_final_exp.md",
         "marker": "[[skill:final-exp]]",
-        "line": 99,
+        "line": 97,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/final-exp.html"
       },
@@ -9935,7 +9909,7 @@
         "ref": "source:schemas/skill_contracts.json#final-exp",
         "source_path": "workflow_handbook/stages/wf11_final_exp.md",
         "marker": "[[source:schemas/skill_contracts.json#final-exp]]",
-        "line": 100,
+        "line": 98,
         "status": "resolved",
         "target_html": null
       },
@@ -9943,7 +9917,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf11_final_exp.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 101,
+        "line": 99,
         "status": "resolved",
         "target_html": null
       }
@@ -9953,7 +9927,7 @@
         "ref": "skill:release",
         "source_path": "workflow_handbook/stages/wf12_release.md",
         "marker": "[[skill:release]]",
-        "line": 102,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/release.html"
       },
@@ -9961,7 +9935,7 @@
         "ref": "stage:WF12",
         "source_path": "workflow_handbook/stages/wf12_release.md",
         "marker": "[[stage:WF12]]",
-        "line": 106,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf12_release.html"
       },
@@ -9969,7 +9943,7 @@
         "ref": "skill:release",
         "source_path": "workflow_handbook/stages/wf12_release.md",
         "marker": "[[skill:release]]",
-        "line": 107,
+        "line": 105,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/release.html"
       },
@@ -9977,7 +9951,7 @@
         "ref": "source:schemas/skill_contracts.json#release",
         "source_path": "workflow_handbook/stages/wf12_release.md",
         "marker": "[[source:schemas/skill_contracts.json#release]]",
-        "line": 108,
+        "line": 106,
         "status": "resolved",
         "target_html": null
       },
@@ -9985,7 +9959,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf12_release.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 109,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       }
@@ -9995,7 +9969,7 @@
         "ref": "skill:survey-idea",
         "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
         "marker": "[[skill:survey-idea]]",
-        "line": 98,
+        "line": 96,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/survey-idea.html"
       },
@@ -10003,7 +9977,7 @@
         "ref": "stage:WF1",
         "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
         "marker": "[[stage:WF1]]",
-        "line": 102,
+        "line": 100,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf1_survey_idea.html"
       },
@@ -10011,7 +9985,7 @@
         "ref": "skill:survey-idea",
         "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
         "marker": "[[skill:survey-idea]]",
-        "line": 103,
+        "line": 101,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/survey-idea.html"
       },
@@ -10019,7 +9993,7 @@
         "ref": "source:schemas/skill_contracts.json#survey-idea",
         "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
         "marker": "[[source:schemas/skill_contracts.json#survey-idea]]",
-        "line": 104,
+        "line": 102,
         "status": "resolved",
         "target_html": null
       },
@@ -10027,7 +10001,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf1_survey_idea.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 105,
+        "line": 103,
         "status": "resolved",
         "target_html": null
       }
@@ -10037,7 +10011,7 @@
         "ref": "skill:idea-debate",
         "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
         "marker": "[[skill:idea-debate]]",
-        "line": 100,
+        "line": 98,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/idea-debate.html"
       },
@@ -10045,7 +10019,7 @@
         "ref": "stage:WF2",
         "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
         "marker": "[[stage:WF2]]",
-        "line": 104,
+        "line": 102,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf2_idea_debate.html"
       },
@@ -10053,7 +10027,7 @@
         "ref": "skill:idea-debate",
         "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
         "marker": "[[skill:idea-debate]]",
-        "line": 105,
+        "line": 103,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/idea-debate.html"
       },
@@ -10061,7 +10035,7 @@
         "ref": "source:schemas/skill_contracts.json#idea-debate",
         "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
         "marker": "[[source:schemas/skill_contracts.json#idea-debate]]",
-        "line": 106,
+        "line": 104,
         "status": "resolved",
         "target_html": null
       },
@@ -10069,7 +10043,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf2_idea_debate.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 107,
+        "line": 105,
         "status": "resolved",
         "target_html": null
       }
@@ -10079,7 +10053,7 @@
         "ref": "skill:refine-idea",
         "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
         "marker": "[[skill:refine-idea]]",
-        "line": 100,
+        "line": 98,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-idea.html"
       },
@@ -10087,7 +10061,7 @@
         "ref": "stage:WF3",
         "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
         "marker": "[[stage:WF3]]",
-        "line": 104,
+        "line": 102,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf3_refine_idea.html"
       },
@@ -10095,7 +10069,7 @@
         "ref": "skill:refine-idea",
         "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
         "marker": "[[skill:refine-idea]]",
-        "line": 105,
+        "line": 103,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-idea.html"
       },
@@ -10103,7 +10077,7 @@
         "ref": "source:schemas/skill_contracts.json#refine-idea",
         "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
         "marker": "[[source:schemas/skill_contracts.json#refine-idea]]",
-        "line": 106,
+        "line": 104,
         "status": "resolved",
         "target_html": null
       },
@@ -10111,7 +10085,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf3_refine_idea.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 107,
+        "line": 105,
         "status": "resolved",
         "target_html": null
       }
@@ -10121,7 +10095,7 @@
         "ref": "skill:data-prep",
         "source_path": "workflow_handbook/stages/wf4_data_prep.md",
         "marker": "[[skill:data-prep]]",
-        "line": 108,
+        "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/data-prep.html"
       },
@@ -10129,7 +10103,7 @@
         "ref": "stage:WF4",
         "source_path": "workflow_handbook/stages/wf4_data_prep.md",
         "marker": "[[stage:WF4]]",
-        "line": 112,
+        "line": 110,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf4_data_prep.html"
       },
@@ -10137,7 +10111,7 @@
         "ref": "skill:data-prep",
         "source_path": "workflow_handbook/stages/wf4_data_prep.md",
         "marker": "[[skill:data-prep]]",
-        "line": 113,
+        "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/data-prep.html"
       },
@@ -10145,7 +10119,7 @@
         "ref": "source:schemas/skill_contracts.json#data-prep",
         "source_path": "workflow_handbook/stages/wf4_data_prep.md",
         "marker": "[[source:schemas/skill_contracts.json#data-prep]]",
-        "line": 114,
+        "line": 112,
         "status": "resolved",
         "target_html": null
       },
@@ -10153,7 +10127,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf4_data_prep.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 115,
+        "line": 113,
         "status": "resolved",
         "target_html": null
       }
@@ -10163,7 +10137,7 @@
         "ref": "skill:baseline-repro",
         "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
         "marker": "[[skill:baseline-repro]]",
-        "line": 119,
+        "line": 117,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/baseline-repro.html"
       },
@@ -10171,7 +10145,7 @@
         "ref": "stage:WF5",
         "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
         "marker": "[[stage:WF5]]",
-        "line": 123,
+        "line": 121,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf5_baseline_repro.html"
       },
@@ -10179,7 +10153,7 @@
         "ref": "skill:baseline-repro",
         "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
         "marker": "[[skill:baseline-repro]]",
-        "line": 124,
+        "line": 122,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/baseline-repro.html"
       },
@@ -10187,7 +10161,7 @@
         "ref": "source:schemas/skill_contracts.json#baseline-repro",
         "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
         "marker": "[[source:schemas/skill_contracts.json#baseline-repro]]",
-        "line": 125,
+        "line": 123,
         "status": "resolved",
         "target_html": null
       },
@@ -10195,7 +10169,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf5_baseline_repro.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 126,
+        "line": 124,
         "status": "resolved",
         "target_html": null
       }
@@ -10205,7 +10179,7 @@
         "ref": "skill:refine-arch",
         "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
         "marker": "[[skill:refine-arch]]",
-        "line": 106,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-arch.html"
       },
@@ -10213,7 +10187,7 @@
         "ref": "stage:WF6",
         "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
         "marker": "[[stage:WF6]]",
-        "line": 110,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf6_refine_arch.html"
       },
@@ -10221,7 +10195,7 @@
         "ref": "skill:refine-arch",
         "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
         "marker": "[[skill:refine-arch]]",
-        "line": 111,
+        "line": 109,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/refine-arch.html"
       },
@@ -10229,7 +10203,7 @@
         "ref": "source:schemas/skill_contracts.json#refine-arch",
         "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
         "marker": "[[source:schemas/skill_contracts.json#refine-arch]]",
-        "line": 112,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       },
@@ -10237,7 +10211,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf6_refine_arch.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 113,
+        "line": 111,
         "status": "resolved",
         "target_html": null
       }
@@ -10247,7 +10221,7 @@
         "ref": "skill:build-plan",
         "source_path": "workflow_handbook/stages/wf7_build_plan.md",
         "marker": "[[skill:build-plan]]",
-        "line": 105,
+        "line": 103,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/build-plan.html"
       },
@@ -10255,7 +10229,7 @@
         "ref": "stage:WF7",
         "source_path": "workflow_handbook/stages/wf7_build_plan.md",
         "marker": "[[stage:WF7]]",
-        "line": 109,
+        "line": 107,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf7_build_plan.html"
       },
@@ -10263,7 +10237,7 @@
         "ref": "skill:build-plan",
         "source_path": "workflow_handbook/stages/wf7_build_plan.md",
         "marker": "[[skill:build-plan]]",
-        "line": 110,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/build-plan.html"
       },
@@ -10271,7 +10245,7 @@
         "ref": "source:schemas/skill_contracts.json#build-plan",
         "source_path": "workflow_handbook/stages/wf7_build_plan.md",
         "marker": "[[source:schemas/skill_contracts.json#build-plan]]",
-        "line": 111,
+        "line": 109,
         "status": "resolved",
         "target_html": null
       },
@@ -10279,7 +10253,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf7_build_plan.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 112,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       }
@@ -10289,7 +10263,7 @@
         "ref": "skill:code-expert",
         "source_path": "workflow_handbook/stages/wf8_code_expert.md",
         "marker": "[[skill:code-expert]]",
-        "line": 111,
+        "line": 109,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/code-expert.html"
       },
@@ -10297,7 +10271,7 @@
         "ref": "stage:WF8",
         "source_path": "workflow_handbook/stages/wf8_code_expert.md",
         "marker": "[[stage:WF8]]",
-        "line": 115,
+        "line": 113,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf8_code_expert.html"
       },
@@ -10305,7 +10279,7 @@
         "ref": "skill:code-expert",
         "source_path": "workflow_handbook/stages/wf8_code_expert.md",
         "marker": "[[skill:code-expert]]",
-        "line": 116,
+        "line": 114,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/code-expert.html"
       },
@@ -10313,7 +10287,7 @@
         "ref": "source:schemas/skill_contracts.json#code-expert",
         "source_path": "workflow_handbook/stages/wf8_code_expert.md",
         "marker": "[[source:schemas/skill_contracts.json#code-expert]]",
-        "line": 117,
+        "line": 115,
         "status": "resolved",
         "target_html": null
       },
@@ -10321,7 +10295,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf8_code_expert.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 118,
+        "line": 116,
         "status": "resolved",
         "target_html": null
       }
@@ -10331,7 +10305,7 @@
         "ref": "skill:validate-run",
         "source_path": "workflow_handbook/stages/wf9_validate_run.md",
         "marker": "[[skill:validate-run]]",
-        "line": 106,
+        "line": 104,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/validate-run.html"
       },
@@ -10339,7 +10313,7 @@
         "ref": "stage:WF9",
         "source_path": "workflow_handbook/stages/wf9_validate_run.md",
         "marker": "[[stage:WF9]]",
-        "line": 110,
+        "line": 108,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/stages/wf9_validate_run.html"
       },
@@ -10347,7 +10321,7 @@
         "ref": "skill:validate-run",
         "source_path": "workflow_handbook/stages/wf9_validate_run.md",
         "marker": "[[skill:validate-run]]",
-        "line": 111,
+        "line": 109,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/validate-run.html"
       },
@@ -10355,7 +10329,7 @@
         "ref": "source:schemas/skill_contracts.json#validate-run",
         "source_path": "workflow_handbook/stages/wf9_validate_run.md",
         "marker": "[[source:schemas/skill_contracts.json#validate-run]]",
-        "line": 112,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       },
@@ -10363,7 +10337,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/stages/wf9_validate_run.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 113,
+        "line": 111,
         "status": "resolved",
         "target_html": null
       }

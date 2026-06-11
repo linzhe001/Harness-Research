@@ -80,4 +80,4 @@ Refresh only `## Environment`, equivalent to `$env-setup refresh`.
   rendering as `NOT_RUN` when skipped.
 
 After stable Markdown outputs are finalized, invoke `$docs-site` or report
-`docs_site_render_or_NOT_RUN`.
+`docs_site_boundary_report`.

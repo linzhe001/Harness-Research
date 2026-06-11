@@ -12,8 +12,7 @@ conversation-first and draft-only.
 ## Read First
 
 - `../../../AGENTS.md`, `../../../CLAUDE.md`
-- `../../../docs/grill_execution_supervisor.md`
-- `../../../docs/grill_execution_supervisor_implementation_plan.md`
+- `../../../.agents/references/workflow-supervisor-runtime.md`
 - `../../../.agents/skills/init-project/SKILL.md`
 - Workflow/context/documentation/language rules under
   `../../../.agents/references/`

@@ -58,8 +58,6 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 - `PROJECT_STATE.json`
 - `docs/`
 - `.evidence/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -71,8 +69,6 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 ## Tool-Owned Outputs
 
 - `tool_trace: .evidence/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Must Read
 
@@ -104,7 +100,7 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 - `context_gate_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `dynamic_context_init`
 - `CLAUDE_write`
 - `AGENTS_write`
@@ -112,7 +108,7 @@ WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when th
 - `grill_handoff_guidance_write`
 - `operator_context_write`
 - `canonical_state_edit`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

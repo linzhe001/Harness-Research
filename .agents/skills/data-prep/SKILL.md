@@ -77,4 +77,4 @@ conditions.
 - Report Gate ledger for acquisition, stats, configs, pipeline files, guidance,
   and state writes, including `dataset_acquisition_or_NOT_RUN`.
 - After stable Markdown is finalized, invoke `$docs-site` or report
-  `docs_site_render_or_NOT_RUN`.
+  `docs_site_boundary_report`.

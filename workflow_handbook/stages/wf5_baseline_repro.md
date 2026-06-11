@@ -64,8 +64,6 @@ Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline ad
 - `implementation: configs/`
 - `implementation: scripts/`
 - `implementation: src/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -100,7 +98,7 @@ Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline ad
 - `codebase_map_sync_when_baseline_layout_changes`
 - `semantic_commit_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `baseline_report_write`
 - `evidence_table_write`
 - `codebase_map_write`
@@ -108,7 +106,7 @@ Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline ad
 - `evaluation_contract_readiness`
 - `canonical_state_edit`
 - `stable_code_change`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

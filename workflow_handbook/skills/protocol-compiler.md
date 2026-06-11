@@ -42,8 +42,6 @@ Compile Dynamic Research Protocol drafts from current evidence tables without us
 
 - `.evidence/protocol_compiler/`
 - `docs/35_protocol/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -52,8 +50,6 @@ Compile Dynamic Research Protocol drafts from current evidence tables without us
 ## Tool-Owned Outputs
 
 - `tool_trace: .evidence/protocol_compiler/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Must Read
 
@@ -74,11 +70,11 @@ Compile Dynamic Research Protocol drafts from current evidence tables without us
 - `protocol_review_or_NOT_RUN`
 - `docchain_gate_when_current_docs_change`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `protocol_apply`
 - `protocol_doc_write`
 - `contract_readiness`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

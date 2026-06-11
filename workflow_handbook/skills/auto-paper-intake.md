@@ -44,8 +44,6 @@ Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a p
 
 - `auto_paper_output/`
 - `docs/auto_paper_goal.md`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -54,8 +52,7 @@ Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a p
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -76,10 +73,10 @@ Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a p
 
 - `smoke_test_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `auto_paper_intake`
 - `human_gate`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

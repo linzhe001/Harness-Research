@@ -59,4 +59,4 @@ does not approve contracts.
 - Preserve decision vocabulary and template structure; localize prose according
   to language policy.
 - After stable Markdown is finalized, invoke `/docs-site` or report
-  `docs_site_render_or_NOT_RUN`.
+  `docs_site_boundary_report`.

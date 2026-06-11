@@ -16,8 +16,7 @@ the change without silently rerunning WF1-WF12 or making broad edits.
 Read these first:
 - `../../../AGENTS.md`
 - `../../../CLAUDE.md`
-- `../../../docs/grill_execution_supervisor.md`
-- `../../../docs/grill_execution_supervisor_implementation_plan.md`
+- `../../../.agents/references/workflow-supervisor-runtime.md`
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/contract-gating-rule.md`

@@ -50,8 +50,6 @@ Codex wrapper for WF10 structured iteration. Use when the user wants to run `pla
 - `docs/iterations/`
 - `docs/50_memory/`
 - `MEMORY.md`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -60,8 +58,7 @@ Codex wrapper for WF10 structured iteration. Use when the user wants to run `pla
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -92,12 +89,12 @@ Codex wrapper for WF10 structured iteration. Use when the user wants to run `pla
 - `decision_vocabulary`
 - `lesson_quality_check_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `WF11_handoff`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

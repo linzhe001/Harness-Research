@@ -52,7 +52,7 @@ Rule of thumb: if a file is only used in 1-2 iterations, it is volatile.
   plus any explicit stable source files needed to support the changed facts, or
   report `compile_doc_or_NOT_RUN`; do not hand-edit `.evidence/**`
 - **Human docs view** → after the Markdown is finalized for the current slice,
-  invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`; do not render
+  invoke `/docs-site` or report `docs_site_boundary_report`; do not render
   after temporary draft edits
 - **Volatile file added/deleted/renamed** → no update to `project_map.json` or `Codebase_Map.md` needed
 

@@ -68,4 +68,4 @@ Use this Skill only for WF10 experiment-loop state. It owns
 ## Docs
 
 After stable Markdown outputs are finalized, invoke `$docs-site` or report
-`docs_site_render_or_NOT_RUN`.
+`docs_site_boundary_report`.

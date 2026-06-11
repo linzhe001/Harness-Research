@@ -58,8 +58,6 @@ Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF
 - `current_doc: docs/35_protocol/`
 - `fact_doc: docs/20_facts/Project_Glossary.md`
 - `canonical_state: PROJECT_STATE.json`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -90,12 +88,12 @@ Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF
 - `check_protocol_drift_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `technical_spec_write`
 - `contract_conflict`
 - `project_glossary_write`
 - `canonical_state_edit`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

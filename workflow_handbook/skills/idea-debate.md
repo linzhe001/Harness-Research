@@ -44,8 +44,6 @@ Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test cand
 - `docs/Idea_Debate.md`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -54,8 +52,7 @@ Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test cand
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -83,11 +80,11 @@ Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test cand
 - `check_protocol_drift_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `idea_debate_report_write`
 - `protocol_doc_write`
 - `canonical_state_edit`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

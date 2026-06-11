@@ -120,4 +120,4 @@ Use immediately after explicit operator acceptance of a Grill draft or
 ## Durable Docs Render
 
 After stable Markdown outputs are finalized, invoke `/docs-site` or report
-`docs_site_render_or_NOT_RUN`. Do not render for temporary drafts.
+`docs_site_boundary_report`. Do not render for temporary drafts.

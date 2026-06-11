@@ -62,8 +62,6 @@ Codex wrapper for WF10 structured iteration. Use when the user wants to run `pla
 - `canonical_state: iteration_log.json`
 - `canonical_state: MEMORY.md`
 - `legacy_compat: docs/iterations/ -> docs/40_iterations/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -94,12 +92,12 @@ Codex wrapper for WF10 structured iteration. Use when the user wants to run `pla
 - `decision_vocabulary`
 - `lesson_quality_check_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `WF11_handoff`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

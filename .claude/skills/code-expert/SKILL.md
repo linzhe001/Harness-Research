@@ -115,7 +115,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `history` append record
 
    If `docs/20_facts/Codebase_Map.md` was changed and the slice is otherwise
-   validated, invoke `/docs-site` or report `docs_site_render_or_NOT_RUN`. Do
+   validated, invoke `/docs-site` or report `docs_site_boundary_report`. Do
    not render after temporary draft edits.
 
 User-facing progress notes and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while paths, commands, schema keys, and code identifiers remain in English.

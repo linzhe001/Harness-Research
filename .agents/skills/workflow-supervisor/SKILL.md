@@ -13,9 +13,9 @@ Approval.
 ## Read First
 
 - `../../../AGENTS.md`, `../../../CLAUDE.md`
-- `../../../docs/grill_execution_supervisor.md`
-- `../../../docs/grill_execution_supervisor_implementation_plan.md`
+- `../../../.agents/references/workflow-supervisor-runtime.md`
 - `../../../tooling/workflow_supervisor/config/default_nodes.json`
+- `../../../tooling/workflow_supervisor/config/gate_policy.yaml`
 - Workflow, context, contract, evidence, language, and ubiquitous-language
   rules under `../../../.agents/references/`
 
@@ -86,7 +86,8 @@ a narrower Grill source-specific policy.
   pause. It preserves candidate/rejected/deferred/
   requires-approval distinctions from the Grill bridge.
 - `build`: structured node workers. Build becomes `build_ready_for_iterate`
-  only after validate-run postconditions pass.
+  only after validate-run postconditions pass. `code-debug` is failure
+  recovery, not a normal ordered build node.
 - `iterate`: delegates to `auto_iterate_ctl.py`; `monitor-iterate` maps
   `status --json`, manual action, or pause into supervisor state.
 - `change`: deterministic Change Intake; writes a Change Request JSON and
@@ -100,10 +101,10 @@ Workers return schema-validated JSON, not prose decisions. Codex worker result
 handoff lives under `.agents/state/workflow_supervisor_worker_results/**`; the
 supervisor validates and adopts it into `.workflow_supervisor/**`.
 
-Worker prompts are budgeted by segment: compact postconditions, allowed write
-patterns, truncated goal context, and explicit `node_retry_limit` /
-`gate_cycle_limit`. Workers read referenced artifacts directly when more
-context is needed and record those reads in the Gate ledger.
+Worker prompts are budgeted by segment: compact postconditions, evidence
+tools, allowed write patterns, truncated goal context, and explicit
+`node_retry_limit` / `gate_cycle_limit`. Workers read referenced artifacts
+directly when more context is needed and record those reads in the Gate ledger.
 Supervisor runs record their active risk profile from
 `tooling/workflow_supervisor/config/gate_policy.yaml`.
 

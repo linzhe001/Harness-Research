@@ -58,8 +58,6 @@ Codex wrapper for WF12 release and submission packaging. Use when the user wants
 - `current_doc: docs/60_release/`
 - `canonical_state: PROJECT_STATE.json`
 - `operational_scope: docs/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -87,11 +85,11 @@ Codex wrapper for WF12 release and submission packaging. Use when the user wants
 - `release_manifest_validation`
 - `claim_boundary_check`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `WF12_readiness`
 - `release_claim`
 - `submission_package_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

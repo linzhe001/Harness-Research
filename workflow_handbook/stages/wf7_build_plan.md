@@ -58,8 +58,6 @@ Codex wrapper for WF7 implementation planning. Use after WF6 architecture design
 - `fact_doc: docs/20_facts/Codebase_Map.md`
 - `canonical_state: project_map.json`
 - `canonical_state: PROJECT_STATE.json`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Required Reads
 
@@ -89,12 +87,12 @@ Codex wrapper for WF7 implementation planning. Use after WF6 architecture design
 - `update_project_map`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `project_map_write`
 - `project_glossary_write`
 - `codebase_map_write`
 - `canonical_state_edit`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Exit Condition
 

@@ -165,6 +165,180 @@ if __name__ == "__main__":
     return script
 
 
+def write_recovery_fixture_worker(tmp_path: Path) -> Path:
+    script = tmp_path / "fixture_recovery_worker.py"
+    script.write_text(
+        r'''
+from __future__ import annotations
+
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+SKILLS = {
+    "build_refine_arch": "refine-arch",
+    "build_plan": "build-plan",
+    "build_code_expert": "code-expert",
+    "build_code_debug": "code-debug",
+    "build_validate_run": "validate-run",
+}
+
+
+def write_text(root: Path, path: str, text: str) -> None:
+    target = root / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+
+
+def write_project_map(root: Path) -> None:
+    (root / "project_map.json").write_text(
+        json.dumps(
+            {
+                "version": "1.0",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "detail_policy": {},
+                "structure": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    write_text(root, "docs/20_facts/Codebase_Map.md", "# Codebase\n")
+
+
+def result_payload(args: argparse.Namespace, *, status: str, artifacts, gates, writes):
+    now = datetime.now(timezone.utc).isoformat()
+    return {
+        "schema_version": 1,
+        "run_id": args.run_id,
+        "node_id": args.node_id,
+        "skill": SKILLS[args.node_id],
+        "attempt": 1,
+        "status": status,
+        "exit_code": 0 if status == "success" else 1,
+        "started_at": now,
+        "finished_at": now,
+        "summary": f"fixture {args.node_id} {status}",
+        "artifact_refs": list(artifacts),
+        "gate_ledger": list(gates),
+        "postcondition_claims": [],
+        "interrupt_request": None,
+        "observed_writes": list(writes),
+        "stdout_ref": None,
+        "stderr_ref": None,
+        "contract_violations": [],
+        "worker_warnings": [],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--workspace-root", required=True)
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--node-id", required=True)
+    parser.add_argument("--result", required=True)
+    args = parser.parse_args()
+
+    root = Path(args.workspace_root)
+    gates = []
+    artifacts = []
+    writes = []
+    status = "success"
+    marker = root / ".recovery_debug_ran"
+
+    if args.node_id == "build_refine_arch":
+        artifacts = ["docs/Technical_Spec.md"]
+        writes = artifacts
+        write_text(root, "docs/Technical_Spec.md", "# Spec\n")
+    elif args.node_id == "build_plan":
+        write_project_map(root)
+        artifacts = ["docs/Implementation_Roadmap.md", "project_map.json"]
+        writes = [*artifacts, "docs/20_facts/Codebase_Map.md"]
+        write_text(root, "docs/Implementation_Roadmap.md", "# Roadmap\n")
+    elif args.node_id == "build_code_expert":
+        write_project_map(root)
+        artifacts = ["project_map.json", "docs/20_facts/Codebase_Map.md"]
+        writes = artifacts
+        gates.append(
+            {
+                "command": (
+                    "python tooling/evidence/compile_doc.py --workspace-root . "
+                    "--doc docs/20_facts/Codebase_Map.md --source project_map.json"
+                ),
+                "result": "PASS",
+                "reason": "fixture docchain",
+                "artifacts": [".evidence/chains/codebase_map/evidence_chain.json"],
+            }
+        )
+    elif args.node_id == "build_validate_run" and not marker.exists():
+        status = "failed"
+        artifacts = []
+        writes = []
+        gates.append(
+            {
+                "command": "project smoke",
+                "result": "FAIL",
+                "reason": "fixture validation failure before debug",
+                "artifacts": [],
+            }
+        )
+    elif args.node_id == "build_code_debug":
+        marker.write_text("debugged\n", encoding="utf-8")
+        write_project_map(root)
+        artifacts = ["project_map.json", "docs/20_facts/Codebase_Map.md"]
+        writes = artifacts
+        gates.append(
+            {
+                "command": (
+                    "python tooling/evidence/compile_doc.py --workspace-root . "
+                    "--doc docs/20_facts/Codebase_Map.md --source project_map.json"
+                ),
+                "result": "PASS",
+                "reason": "fixture debug docchain",
+                "artifacts": [".evidence/chains/codebase_map/evidence_chain.json"],
+            }
+        )
+    elif args.node_id == "build_validate_run":
+        artifacts = [
+            "docs/Validate_Run_Report.md",
+            "docs/30_evidence/Validation_Table.md",
+        ]
+        writes = artifacts
+        write_text(root, "docs/Validate_Run_Report.md", "# Validate\n")
+        write_text(root, "docs/30_evidence/Validation_Table.md", "# Validation\n")
+        gates.append(
+            {
+                "command": (
+                    "python tooling/evidence/check_dynamic_context.py "
+                    "--workspace-root . --stage wf10 --review-packet"
+                ),
+                "result": "PASS",
+                "reason": "fixture wf10 gate after debug",
+                "artifacts": [".evidence/review_packets/wf10/build/review_packet.md"],
+            }
+        )
+
+    payload = result_payload(
+        args,
+        status=status,
+        artifacts=artifacts,
+        gates=gates,
+        writes=writes,
+    )
+    Path(args.result).write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''.lstrip(),
+        encoding="utf-8",
+    )
+    return script
+
+
 def test_build_runs_all_nodes_until_ready_for_iterate(
     tmp_path: Path,
     capsys,
@@ -200,7 +374,6 @@ def test_build_runs_all_nodes_until_ready_for_iterate(
         "build_refine_arch",
         "build_plan",
         "build_code_expert",
-        "build_code_debug",
         "build_validate_run",
     ]
     run_id = state["active_run_id"]
@@ -211,6 +384,55 @@ def test_build_runs_all_nodes_until_ready_for_iterate(
         / run_id
         / "node_runs"
         / "build_validate_run.json"
+    ).exists()
+    assert (root / "docs" / "Validate_Run_Report.md").exists()
+
+
+def test_build_runs_code_debug_only_after_failure(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = make_workspace(tmp_path)
+    worker = write_recovery_fixture_worker(tmp_path)
+    command = (
+        f"{sys.executable} {worker} --workspace-root {{workspace_root}} "
+        "--run-id {run_id} --node-id {node_id} --result {result_path}"
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "build",
+            "--goal",
+            "build with one validation failure",
+            "--worker-command",
+            command,
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    state = payload["state"]
+    assert state["status"] == "completed"
+    assert state["completed_nodes"] == [
+        "build_refine_arch",
+        "build_plan",
+        "build_code_expert",
+        "build_code_debug",
+        "build_validate_run",
+    ]
+    run_id = state["active_run_id"]
+    assert (
+        root
+        / ".workflow_supervisor"
+        / "runs"
+        / run_id
+        / "node_runs"
+        / "build_code_debug.json"
     ).exists()
     assert (root / "docs" / "Validate_Run_Report.md").exists()
 

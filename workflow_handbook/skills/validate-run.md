@@ -44,8 +44,6 @@ Codex wrapper for WF9 validation. Use when the user wants the training chain rev
 - `docs/Validate_Run_Report.md`
 - `docs/30_evidence/Validation_Table.md`
 - `PROJECT_STATE.json`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -54,8 +52,7 @@ Codex wrapper for WF9 validation. Use when the user wants the training chain rev
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -89,11 +86,11 @@ Codex wrapper for WF9 validation. Use when the user wants the training chain rev
 - `write_validate_report`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `WF10_readiness`
 - `validate_report_write`
 - `evidence_table_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

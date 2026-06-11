@@ -44,8 +44,6 @@ Build concise human review packets for dynamic-context contracts, protocol readi
 - `.evidence/review_packets/`
 - `docs/10_contract/`
 - `PROJECT_STATE.json`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -54,8 +52,6 @@ Build concise human review packets for dynamic-context contracts, protocol readi
 ## Tool-Owned Outputs
 
 - `tool_trace: .evidence/review_packets/`
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 
 ## Must Read
 
@@ -77,13 +73,13 @@ Build concise human review packets for dynamic-context contracts, protocol readi
 - `build_review_packet_or_NOT_RUN`
 - `approval_tool_only_after_explicit_human_approval`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `contract_approval`
 - `review_packet_build`
 - `WF10_readiness`
 - `WF11_readiness`
 - `WF12_readiness`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

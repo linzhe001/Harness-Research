@@ -181,9 +181,10 @@ Tool-time policy is intentionally concrete:
   `.agents/state/review_traces/code-review/**`.
 
 Generated view paths (`docs/_views/**` and `docs/_site/**`) are tool-owned like
-`.evidence/**`. Stage skills may declare those outputs for documentation and
-stage cards, but manual edits remain blocked. Renderer commands may run without
-prompt-time activation; the tool-owned path block still prevents
+`.evidence/**`. Ordinary stage skills should report
+`docs_site_boundary_report` instead of declaring generated view writes. The
+`docs-site` skill remains the generated-view owner, and renderer commands may
+run without prompt-time activation; the tool-owned path block still prevents
 manual tampering with generated views.
 
 This keeps the operator-facing rule simple:
@@ -212,10 +213,11 @@ paths answer "which paths belong to this stage or skill"; `Artifact Output`
 answers "where should final docs, canonical state, tool traces, review traces,
 implementation files, guidance, generated views, or release packages land."
 Tool-owned outputs such as `.evidence/**`, `.workflow_supervisor/**`,
-`docs/_views/**`, and `docs/_site/**` must set `requires_tool=true`, and direct
-manual writes to `.evidence/**`, `.auto_iterate/**`,
-`.workflow_supervisor/**`, `docs/_views/**`, and `docs/_site/**` remain
-blocked.
+`docs/_views/**`, and `docs/_site/**` must set `requires_tool=true` when a
+contract declares them. In normal Markdown-writing skills, generated HTML is a
+boundary report, not a write scope. Direct manual writes to `.evidence/**`,
+`.auto_iterate/**`, `.workflow_supervisor/**`, `docs/_views/**`, and
+`docs/_site/**` remain blocked.
 
 ## Optional: User-Level Install
 

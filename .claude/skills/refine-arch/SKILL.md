@@ -119,7 +119,7 @@ When enabled, read `docs/30_evidence/**`, `docs/10_contract/**`, and `docs/35_pr
 
    After `docs/Technical_Spec.md` or `docs/20_facts/Project_Glossary.md` is
    finalized for the stage, invoke `/docs-site` or report
-   `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits.
+   `docs_site_boundary_report`. Do not render after temporary draft edits.
 	</instructions>
 
 	<constraints>

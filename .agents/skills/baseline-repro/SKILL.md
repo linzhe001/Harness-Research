@@ -49,7 +49,7 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 
 ## Durable Docs Render
 
-After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits; Markdown remains the source of truth.
+After stable Markdown outputs for this skill are finalized, invoke `$docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
 
 ## Output Rules
 

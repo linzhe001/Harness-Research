@@ -11,6 +11,7 @@ Use `/workflow-supervisor` for `harness prepare`, `harness build`,
 `harness iterate`, `harness release`, `harness change`, and direct
 `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**` and must be
 operated through tooling, not manual edits.
+Use `.claude/shared/workflow-supervisor-runtime.md` as the compact runtime reference; skip historical design docs and `workflow_handbook/**` by default.
 
 Core commands:
 
@@ -32,7 +33,6 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh monitor-iterate --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goal "<new request>" --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
-
 Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
 operator to hand-build CLI arguments. First run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. The JSON
@@ -113,7 +113,8 @@ approval.
 Use `--auto` for Codex delegation, or `--worker-command` for a command template
 that writes `schemas/workflow_supervisor_worker_result.schema.json`. Build
 completes only as `build_ready_for_iterate` after validate-run postconditions
-pass. Worker prompts include the node postconditions and allowed write patterns;
+pass. `code-debug` is failure recovery, not a normal ordered build node.
+Worker prompts include the node postconditions, evidence tools, and write patterns;
 workers must run concrete checks, debug failures inside the node budget, and
 record PASS/FAIL/NOT_RUN in Gate ledger instead of relying on prose.
 Codex workers write their JSON result to a temporary

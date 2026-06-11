@@ -45,8 +45,6 @@ Run the optional auto-paper data, code, ethics, and reproducibility branch. Use 
 ## Can Write
 
 - `auto_paper_output/`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -54,8 +52,7 @@ Run the optional auto-paper data, code, ethics, and reproducibility branch. Use 
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -77,10 +74,10 @@ Run the optional auto-paper data, code, ethics, and reproducibility branch. Use 
 
 - `smoke_test_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `auto_paper_data`
 - `human_gate`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

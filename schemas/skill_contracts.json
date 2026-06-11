@@ -114,7 +114,7 @@
         "compile_doc_or_NOT_RUN",
         "check_docchain_gates_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "manual_edit_evidence_chain",
@@ -124,15 +124,13 @@
         "current_doc_write",
         "contract_doc_write",
         "protocol_doc_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/10_contract/",
         "docs/20_facts/",
         "docs/35_protocol/",
-        ".evidence/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -140,9 +138,7 @@
           "docs/20_facts/",
           "docs/35_protocol/",
           ".evidence/chains/",
-          ".evidence/index.json",
-          "docs/_views/",
-          "docs/_site/"
+          ".evidence/index.json"
         ]
       },
       "artifact_outputs": [
@@ -184,17 +180,6 @@
           "owner": "evidence-tooling",
           "is_final": false,
           "requires_tool": true
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -324,7 +309,7 @@
         "build_review_packet_or_NOT_RUN",
         "approval_tool_only_after_explicit_human_approval",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "approve_without_explicit_human_approval",
@@ -336,22 +321,18 @@
         "WF10_readiness",
         "WF11_readiness",
         "WF12_readiness",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/10_contract/",
         "PROJECT_STATE.json",
-        ".evidence/review_packets/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/review_packets/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/review_packets/",
           "docs/10_contract/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -383,17 +364,6 @@
           "is_final": false,
           "requires_tool": true,
           "notes": "Review Packet is decision input, not approval."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -430,7 +400,7 @@
         "protocol_review_or_NOT_RUN",
         "docchain_gate_when_current_docs_change",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -440,20 +410,16 @@
         "protocol_apply",
         "protocol_doc_write",
         "contract_readiness",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/35_protocol/",
-        ".evidence/protocol_compiler/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/protocol_compiler/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/protocol_compiler/",
-          "docs/35_protocol/",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/35_protocol/"
         ]
       },
       "artifact_outputs": [
@@ -475,17 +441,6 @@
           "owner": "evidence-tooling",
           "is_final": false,
           "requires_tool": true
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -521,7 +476,7 @@
         "check_protocol_drift_or_NOT_RUN",
         "docchain_gate_when_current_docs_change",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "ignore_unresolved_protocol_drift",
@@ -532,20 +487,16 @@
         "WF10_readiness",
         "WF11_readiness",
         "WF12_readiness",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/35_protocol/",
-        "docs/10_contract/",
-        "docs/_views/",
-        "docs/_site/"
+        "docs/10_contract/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/35_protocol/",
-          "docs/10_contract/",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/10_contract/"
         ]
       },
       "artifact_outputs": [
@@ -567,17 +518,6 @@
           "is_final": true,
           "requires_tool": false,
           "notes": "Drift notes do not approve contracts."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -619,7 +559,7 @@
         "compile_protocol_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -629,7 +569,7 @@
         "evidence_table_write",
         "feasibility_report_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "context_budget": {
         "source_count_max": 12,
@@ -641,18 +581,14 @@
         "docs/Feasibility_Report.md",
         "docs/30_evidence/",
         "docs/35_protocol/",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Feasibility_Report.md",
           "docs/30_evidence/",
           "docs/35_protocol/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -675,17 +611,6 @@
           "owner": "survey-idea",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -730,7 +655,7 @@
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -740,7 +665,7 @@
         "idea_debate_report_write",
         "protocol_doc_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "context_budget": {
         "candidate_count_max": 4,
@@ -750,17 +675,13 @@
       "sensitive_paths": [
         "docs/Idea_Debate.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Idea_Debate.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -782,17 +703,6 @@
           "owner": "idea-debate",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -837,7 +747,7 @@
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -847,22 +757,18 @@
         "refined_idea_write",
         "protocol_assumption_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Refined_Idea.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Refined_Idea.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -884,17 +790,6 @@
           "owner": "refine-idea",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -937,7 +832,7 @@
         "dataset_acquisition_or_NOT_RUN",
         "dataset_acquisition_decision_request_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -951,7 +846,7 @@
         "dataset_config_write",
         "canonical_state_edit",
         "CLAUDE_dataset_sync",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Dataset_Stats.md",
@@ -961,9 +856,7 @@
         "CLAUDE.md",
         "AGENTS.md",
         "configs/",
-        "src/",
-        "docs/_views/",
-        "docs/_site/"
+        "src/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -974,9 +867,7 @@
           "CLAUDE.md",
           "AGENTS.md",
           "configs/",
-          "src/",
-          "docs/_views/",
-          "docs/_site/"
+          "src/"
         ]
       },
       "artifact_outputs": [
@@ -1036,17 +927,6 @@
           "owner": "data-prep",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1098,7 +978,7 @@
         "codebase_map_sync_when_baseline_layout_changes",
         "semantic_commit_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "training_without_semantic_commit",
@@ -1113,7 +993,7 @@
         "evaluation_contract_readiness",
         "canonical_state_edit",
         "stable_code_change",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Baseline_Report.md",
@@ -1126,9 +1006,7 @@
         "baselines/",
         "configs/",
         "scripts/",
-        "src/",
-        "docs/_views/",
-        "docs/_site/"
+        "src/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1142,9 +1020,7 @@
           "baselines/",
           "configs/",
           "scripts/",
-          "src/",
-          "docs/_views/",
-          "docs/_site/"
+          "src/"
         ]
       },
       "artifact_outputs": [
@@ -1217,17 +1093,6 @@
           "owner": "baseline-repro",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1276,7 +1141,7 @@
         "check_protocol_drift_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -1287,24 +1152,20 @@
         "contract_conflict",
         "project_glossary_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Technical_Spec.md",
         "docs/20_facts/Project_Glossary.md",
         "docs/35_protocol/",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Technical_Spec.md",
           "docs/20_facts/Project_Glossary.md",
           "docs/35_protocol/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -1335,17 +1196,6 @@
           "owner": "refine-arch",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1393,7 +1243,7 @@
         "external_model_review_or_NOT_RUN",
         "check_protocol_drift_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "protocol_as_approved_contract",
@@ -1403,7 +1253,7 @@
         "sanity_check_write",
         "review_trace_write",
         "contract_conflict",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "context_budget": {
         "design_target_count_max": 1,
@@ -1414,17 +1264,13 @@
       "sensitive_paths": [
         "docs/Sanity_Check_Log.md",
         "docs/35_protocol/",
-        "docs/10_contract/",
-        "docs/_views/",
-        "docs/_site/"
+        "docs/10_contract/"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Sanity_Check_Log.md",
           "docs/35_protocol/",
-          "docs/10_contract/",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/10_contract/"
         ]
       },
       "artifact_outputs": [
@@ -1447,17 +1293,6 @@
           "is_final": true,
           "requires_tool": false,
           "notes": "Review notes do not approve contracts."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1502,7 +1337,7 @@
         "lesson_quality_check_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "stage_transition_from_iterate",
@@ -1514,7 +1349,7 @@
         "iteration_report_write",
         "lesson_promotion",
         "iteration_log_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -1527,9 +1362,7 @@
         "docs/iterations/",
         "docs/50_memory/",
         "MEMORY.md",
-        "docs/Stage_Report.md",
-        "docs/_views/",
-        "docs/_site/"
+        "docs/Stage_Report.md"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1538,9 +1371,7 @@
           "docs/iterations/",
           "docs/50_memory/",
           "MEMORY.md",
-          "docs/Stage_Report.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/Stage_Report.md"
         ]
       },
       "artifact_outputs": [
@@ -1575,17 +1406,6 @@
           "requires_tool": false,
           "replacement": "docs/40_iterations/",
           "notes": "Legacy iteration report path; prefer docs/40_iterations/."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1644,7 +1464,7 @@
         "context_gate_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -1658,7 +1478,7 @@
         "grill_handoff_guidance_write",
         "operator_context_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "CLAUDE.md",
@@ -1667,9 +1487,7 @@
         "OPERATOR_CONTEXT.md",
         "PROJECT_STATE.json",
         "docs/",
-        ".evidence/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1679,9 +1497,7 @@
           "OPERATOR_CONTEXT.md",
           "PROJECT_STATE.json",
           "docs/",
-          ".evidence/",
-          "docs/_views/",
-          "docs/_site/"
+          ".evidence/"
         ]
       },
       "artifact_outputs": [
@@ -1725,17 +1541,6 @@
           "is_final": false,
           "requires_tool": true,
           "notes": "Scaffold with evidence tooling; do not hand-edit traces."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -1887,7 +1692,7 @@
         "update_project_map",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "architecture_decision_in_build_plan",
@@ -1898,16 +1703,14 @@
         "project_glossary_write",
         "codebase_map_write",
         "canonical_state_edit",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "project_map.json",
         "PROJECT_STATE.json",
         "docs/20_facts/Project_Glossary.md",
         "docs/20_facts/Codebase_Map.md",
-        "docs/Implementation_Roadmap.md",
-        "docs/_views/",
-        "docs/_site/"
+        "docs/Implementation_Roadmap.md"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1915,9 +1718,7 @@
           "PROJECT_STATE.json",
           "docs/20_facts/Project_Glossary.md",
           "docs/20_facts/Codebase_Map.md",
-          "docs/Implementation_Roadmap.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/Implementation_Roadmap.md"
         ]
       },
       "artifact_outputs": [
@@ -1949,17 +1750,6 @@
           "owner": "build-plan",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -2007,7 +1797,7 @@
         "semantic_commit_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN",
+        "docs_site_boundary_report",
         "compile_doc_or_NOT_RUN"
       ],
       "forbidden_actions": [
@@ -2020,8 +1810,8 @@
         "project_map_write",
         "codebase_map_write",
         "canonical_state_edit",
-        "docs_site_render",
-        "codebase_map_docchain"
+        "codebase_map_docchain",
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "src/",
@@ -2030,8 +1820,6 @@
         "project_map.json",
         "docs/20_facts/Codebase_Map.md",
         "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/",
         ".evidence/chains/",
         ".evidence/index.json"
       ],
@@ -2043,8 +1831,6 @@
           "project_map.json",
           "docs/20_facts/Codebase_Map.md",
           "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/",
           ".evidence/chains/",
           ".evidence/index.json"
         ]
@@ -2080,17 +1866,6 @@
           "owner": "code-expert",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         },
         {
           "kind": "tool_trace",
@@ -2145,7 +1920,7 @@
         "ruff_or_NOT_RUN",
         "semantic_commit_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN",
+        "docs_site_boundary_report",
         "compile_doc_or_NOT_RUN"
       ],
       "forbidden_actions": [
@@ -2157,8 +1932,8 @@
         "stable_code_change",
         "project_map_write",
         "codebase_map_write",
-        "docs_site_render",
-        "codebase_map_docchain"
+        "codebase_map_docchain",
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "src/",
@@ -2166,8 +1941,6 @@
         "configs/",
         "project_map.json",
         "docs/20_facts/Codebase_Map.md",
-        "docs/_views/",
-        "docs/_site/",
         ".evidence/chains/",
         ".evidence/index.json"
       ],
@@ -2178,8 +1951,6 @@
           "configs/",
           "project_map.json",
           "docs/20_facts/Codebase_Map.md",
-          "docs/_views/",
-          "docs/_site/",
           ".evidence/chains/",
           ".evidence/index.json"
         ]
@@ -2214,17 +1985,6 @@
           "owner": "code-debug",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         },
         {
           "kind": "tool_trace",
@@ -2611,7 +2371,7 @@
         "write_validate_report",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "WF9_PASS_without_semantic_review",
@@ -2621,22 +2381,18 @@
         "WF10_readiness",
         "validate_report_write",
         "evidence_table_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Validate_Run_Report.md",
         "docs/30_evidence/Validation_Table.md",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Validate_Run_Report.md",
           "docs/30_evidence/Validation_Table.md",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -2667,17 +2423,6 @@
           "owner": "validate-run",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -2729,7 +2474,7 @@
         "decision_vocabulary",
         "lesson_quality_check_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "auto_observation_direct_to_MEMORY",
@@ -2741,7 +2486,7 @@
         "iteration_report_write",
         "lesson_promotion",
         "WF11_handoff",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -2753,9 +2498,7 @@
         "docs/40_iterations/",
         "docs/iterations/",
         "docs/50_memory/",
-        "MEMORY.md",
-        "docs/_views/",
-        "docs/_site/"
+        "MEMORY.md"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -2763,9 +2506,7 @@
           "docs/40_iterations/",
           "docs/iterations/",
           "docs/50_memory/",
-          "MEMORY.md",
-          "docs/_views/",
-          "docs/_site/"
+          "MEMORY.md"
         ]
       },
       "artifact_outputs": [
@@ -2799,17 +2540,6 @@
           "requires_tool": false,
           "replacement": "docs/40_iterations/",
           "notes": "Legacy iteration report path; prefer docs/40_iterations/."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -2858,7 +2588,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -2870,7 +2600,7 @@
         "auto_paper_gate",
         "latex_patch",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_log.json",
@@ -2878,17 +2608,13 @@
         "docs/auto_paper_goal.md",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "auto_paper_log.json",
           "auto_paper_output/",
-          "docs/auto_paper_goal.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/auto_paper_goal.md"
         ]
       },
       "artifact_outputs": [
@@ -2911,17 +2637,6 @@
           "is_final": false,
           "requires_tool": false,
           "notes": ".auto_paper/ is controller-owned runtime state; manual skill work writes durable artifacts under auto_paper_output/."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -2960,7 +2675,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -2971,23 +2686,19 @@
       "gate_ledger_required_when": [
         "auto_paper_intake",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         "docs/auto_paper_goal.md",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "auto_paper_output/",
-          "docs/auto_paper_goal.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/auto_paper_goal.md"
         ]
       },
       "artifact_outputs": [
@@ -3000,17 +2711,6 @@
           "owner": "auto-paper-intake",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3048,7 +2748,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3059,21 +2759,17 @@
       "gate_ledger_required_when": [
         "auto_paper_research",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3085,17 +2781,6 @@
           "owner": "auto-paper-research",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3134,7 +2819,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3145,21 +2830,17 @@
       "gate_ledger_required_when": [
         "auto_paper_argument",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3171,17 +2852,6 @@
           "owner": "auto-paper-argument",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3219,7 +2889,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3230,21 +2900,17 @@
       "gate_ledger_required_when": [
         "auto_paper_citation",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3256,17 +2922,6 @@
           "owner": "auto-paper-citation",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3305,7 +2960,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3316,21 +2971,17 @@
       "gate_ledger_required_when": [
         "auto_paper_layout",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3342,17 +2993,6 @@
           "owner": "auto-paper-layout",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3392,7 +3032,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3404,21 +3044,17 @@
         "auto_paper_patch",
         "latex_patch",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3430,17 +3066,6 @@
           "owner": "auto-paper-patch",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3482,7 +3107,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3493,21 +3118,17 @@
       "gate_ledger_required_when": [
         "auto_paper_harden",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3519,17 +3140,6 @@
           "owner": "auto-paper-harden",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3571,7 +3181,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3582,21 +3192,17 @@
       "gate_ledger_required_when": [
         "auto_paper_response",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3608,17 +3214,6 @@
           "owner": "auto-paper-response",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3660,7 +3255,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3671,21 +3266,17 @@
       "gate_ledger_required_when": [
         "auto_paper_data",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3697,17 +3288,6 @@
           "owner": "auto-paper-data",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3750,7 +3330,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_auto_iterate",
@@ -3761,21 +3341,17 @@
       "gate_ledger_required_when": [
         "auto_paper_figure",
         "human_gate",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
         ".auto_paper/",
         ".auto_iterate/",
-        "iteration_log.json",
-        "docs/_views/",
-        "docs/_site/"
+        "iteration_log.json"
       ],
       "write_scope": {
         "allowed_paths": [
-          "auto_paper_output/",
-          "docs/_views/",
-          "docs/_site/"
+          "auto_paper_output/"
         ]
       },
       "artifact_outputs": [
@@ -3787,17 +3363,6 @@
           "owner": "auto-paper-figure",
           "is_final": true,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3839,7 +3404,7 @@
         "goal_validate_or_init",
         "context_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "start_auto_iterate_without_goal_validation",
@@ -3848,19 +3413,15 @@
       "gate_ledger_required_when": [
         "WF10_auto_readiness",
         "goal_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/auto_iterate_goal.md",
-        ".auto_iterate/",
-        "docs/_views/",
-        "docs/_site/"
+        ".auto_iterate/"
       ],
       "write_scope": {
         "allowed_paths": [
-          "docs/auto_iterate_goal.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/auto_iterate_goal.md"
         ]
       },
       "artifact_outputs": [
@@ -3873,17 +3434,6 @@
           "is_final": true,
           "requires_tool": false,
           "notes": ".auto_iterate/ is controller-owned runtime state, not a manual Skill output."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -3924,7 +3474,7 @@
         "respect_claim_boundary",
         "check_dynamic_context_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "final_exp_outside_claim_boundary",
@@ -3933,20 +3483,16 @@
       "gate_ledger_required_when": [
         "WF11_readiness",
         "final_experiment_matrix_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Final_Experiment_Matrix.md",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Final_Experiment_Matrix.md",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -3967,17 +3513,6 @@
           "owner": "final-exp",
           "is_final": false,
           "requires_tool": false
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -4023,7 +3558,7 @@
         "release_manifest_validation",
         "claim_boundary_check",
         "gate_ledger",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "release_claim_outside_claim_boundary",
@@ -4034,22 +3569,18 @@
         "WF12_readiness",
         "release_claim",
         "submission_package_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "submission/",
         "docs/",
-        "PROJECT_STATE.json",
-        "docs/_views/",
-        "docs/_site/"
+        "PROJECT_STATE.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "submission/",
           "docs/",
-          "PROJECT_STATE.json",
-          "docs/_views/",
-          "docs/_site/"
+          "PROJECT_STATE.json"
         ]
       },
       "artifact_outputs": [
@@ -4090,17 +3621,6 @@
           "is_final": false,
           "requires_tool": false,
           "notes": "Broad legacy docs write surface; prefer docs/60_release/ for release docs."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true,
-          "notes": "Generated only by the docs-site renderer after stable Markdown is finalized; Markdown remains the source of truth."
         }
       ]
     },
@@ -4150,7 +3670,7 @@
         "grill_round_contract",
         "gap_check",
         "human_exit_decision_status",
-        "docs_site_render_or_NOT_RUN"
+        "docs_site_boundary_report"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -4164,23 +3684,19 @@
         "grill_draft_write",
         "readiness_packet_write",
         "readiness_json_write",
-        "docs_site_render"
+        "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "docs/Research_Intent_Draft.md",
         "docs/Grill_Round_Log.md",
         "docs/Execution_Readiness_Packet.md",
-        ".workflow_supervisor/readiness.json",
-        "docs/_views/",
-        "docs/_site/"
+        ".workflow_supervisor/readiness.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "docs/Research_Intent_Draft.md",
           "docs/Grill_Round_Log.md",
-          "docs/Execution_Readiness_Packet.md",
-          "docs/_views/",
-          "docs/_site/"
+          "docs/Execution_Readiness_Packet.md"
         ]
       },
       "artifact_outputs": [
@@ -4205,16 +3721,6 @@
           "is_final": false,
           "requires_tool": true,
           "notes": "Exact local/private candidate inputs; use tooling and verify before promotion."
-        },
-        {
-          "kind": "generated_view",
-          "paths": [
-            "docs/_views/",
-            "docs/_site/"
-          ],
-          "owner": "docs-site",
-          "is_final": false,
-          "requires_tool": true
         }
       ]
     },

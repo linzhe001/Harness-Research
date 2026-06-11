@@ -13,10 +13,8 @@ nav:
   section: "operate"
   position: 10
 canonical_sources:
-  - path: "docs/grill_execution_supervisor.md"
-    role: "aggregate_source"
-  - path: "docs/grill_execution_supervisor_implementation_plan.md"
-    role: "aggregate_source"
+  - path: ".agents/references/workflow-supervisor-runtime.md"
+    role: "framework_rule"
   - path: "tooling/workflow_supervisor/config/default_nodes.json"
     role: "tooling"
 references: ["skill:grill", "skill:workflow-supervisor", "skill:change-intake", "term:Gate Evidence", "term:Human Approval"]

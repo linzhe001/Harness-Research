@@ -88,4 +88,4 @@ FAIL, or REVIEW without confirmation, list failures and route to `/code-debug`.
 ## Durable Docs Render
 
 After validation Markdown is finalized, invoke `/docs-site` or report
-`docs_site_render_or_NOT_RUN`. Do not render for temporary drafts.
+`docs_site_boundary_report`. Do not render for temporary drafts.

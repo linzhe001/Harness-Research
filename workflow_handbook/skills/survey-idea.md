@@ -45,8 +45,6 @@ Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wa
 - `docs/30_evidence/`
 - `docs/35_protocol/`
 - `PROJECT_STATE.json`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -56,8 +54,7 @@ Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wa
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -82,11 +79,11 @@ Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wa
 - `compile_protocol_or_NOT_RUN`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `evidence_table_write`
 - `feasibility_report_write`
 - `canonical_state_edit`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

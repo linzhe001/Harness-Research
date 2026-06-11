@@ -71,4 +71,4 @@ implementation order, stable file structure, interfaces, tests,
 - Run workflow-state checks when `PROJECT_STATE.json` or `project_map.json`
   changed, or report `NOT_RUN`.
 - After stable Markdown is finalized, invoke `/docs-site` or report
-  `docs_site_render_or_NOT_RUN`.
+  `docs_site_boundary_report`.

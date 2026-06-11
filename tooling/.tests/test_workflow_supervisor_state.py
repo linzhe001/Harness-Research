@@ -62,8 +62,8 @@ def test_start_dry_run_writes_state_manifest_and_events(
     run_id = state["active_run_id"]
     assert state["status"] == "completed"
     assert state["segment"] == "prepare"
-    assert state["segment_status"] == "dry_run_completed"
-    assert state["completed_nodes"] == ["dry_run_bootstrap"]
+    assert state["segment_status"] == "dry_run_readiness_passed"
+    assert state["completed_nodes"] == ["prepare_readiness_preflight"]
     assert not (root / ".workflow_supervisor" / "lock.json").exists()
     assert (
         root
@@ -93,7 +93,7 @@ def test_start_dry_run_writes_state_manifest_and_events(
         / "stage_summary.md"
     )
     assert summary.exists()
-    assert "dry_run_bootstrap" in summary.read_text(encoding="utf-8")
+    assert "prepare_readiness_preflight" in summary.read_text(encoding="utf-8")
     events = workflow_ctl.read_events(root)
     assert [event["seq"] for event in events] == [1, 2, 3]
     assert events[-1]["event"] == "RUN_COMPLETED"
@@ -133,6 +133,49 @@ def test_start_without_dry_run_pauses_with_typed_request(
     assert pending["request_snapshot_hash"] == workflow_ctl.request_snapshot_hash(
         pending
     )
+
+
+def test_start_fails_closed_when_pending_request_exists(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = make_workspace(tmp_path)
+    original_run_id = "sup_20260605_010000"
+    request = workflow_ctl.create_node_pending_request(
+        root,
+        run_id=original_run_id,
+        segment="build",
+        node_id="build_validate_run",
+        request_type="STEER",
+        reason="validation_decision_required",
+        question="Resolve validation failure.",
+    )
+    state = workflow_ctl.base_state(original_run_id, "build")
+    state["status"] = "paused"
+    state["segment_status"] = "validation_decision_required"
+    state["pending_request_id"] = request["request_id"]
+    workflow_ctl.save_state(root, state)
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "start",
+            "--segment",
+            "build",
+            "--goal",
+            "new build should not overwrite pending request",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_INVALID_INPUT
+    capsys.readouterr()
+    loaded = json.loads(
+        (root / ".workflow_supervisor" / "state.json").read_text(encoding="utf-8")
+    )
+    assert loaded["active_run_id"] == original_run_id
+    assert loaded["pending_request_id"] == request["request_id"]
 
 
 def test_state_invariants_reject_paused_without_pending() -> None:

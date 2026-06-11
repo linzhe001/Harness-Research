@@ -46,8 +46,6 @@ Codex wrapper for post-WF8 repository implementation code modification and debug
 - `configs/`
 - `project_map.json`
 - `docs/20_facts/Codebase_Map.md`
-- `docs/_views/`
-- `docs/_site/`
 - `.evidence/chains/`
 - `.evidence/index.json`
 
@@ -59,8 +57,6 @@ Codex wrapper for post-WF8 repository implementation code modification and debug
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
 - `tool_trace: .evidence/chains/`
 - `tool_trace: .evidence/index.json`
 
@@ -89,13 +85,13 @@ Codex wrapper for post-WF8 repository implementation code modification and debug
 - `ruff_or_NOT_RUN`
 - `semantic_commit_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `compile_doc_or_NOT_RUN`
 - `stable_code_change`
 - `project_map_write`
 - `codebase_map_write`
-- `docs_site_render`
 - `codebase_map_docchain`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

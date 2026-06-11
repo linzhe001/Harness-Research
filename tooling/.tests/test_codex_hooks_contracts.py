@@ -217,13 +217,9 @@ def test_heavy_workflow_skills_have_context_budgets() -> None:
     ] == 5
 
 
-def test_framework_design_docs_are_not_gitignored() -> None:
+def test_generated_docs_site_assets_are_not_gitignored() -> None:
     paths = [
-        "docs/grill_execution_supervisor.md",
-        "docs/grill_execution_supervisor_implementation_plan.md",
         "docs/_site/manifest.json",
-        "docs/_site/grill_execution_supervisor.html",
-        "docs/_site/grill_execution_supervisor_implementation_plan.html",
         "docs/_site/assets/site.css",
         "docs/_site/assets/evidence-preview.js",
     ]
@@ -235,6 +231,27 @@ def test_framework_design_docs_are_not_gitignored() -> None:
             check=False,
         )
         assert result.returncode == 1, path
+
+
+def test_historical_supervisor_design_docs_are_not_default_reads() -> None:
+    removed_paths = [
+        "docs/grill_execution_supervisor.md",
+        "docs/grill_execution_supervisor_implementation_plan.md",
+    ]
+
+    for path in removed_paths:
+        assert not (REPO_ROOT / path).exists(), path
+
+    checked_files = [
+        ".agents/skills/grill/SKILL.md",
+        ".agents/skills/workflow-supervisor/SKILL.md",
+        ".agents/skills/change-intake/SKILL.md",
+        "README.md",
+    ]
+    for file_path in checked_files:
+        text = (REPO_ROOT / file_path).read_text(encoding="utf-8")
+        for removed in removed_paths:
+            assert removed not in text, file_path
 
 
 def test_core_documented_harness_paths_exist() -> None:
@@ -472,15 +489,14 @@ def test_markdown_writing_contracts_declare_docs_site_render_boundary() -> None:
     for skill in skills:
         contract = contract_by_skill(REPO_ROOT, skill)
         assert contract is not None
-        assert "docs_site_render_or_NOT_RUN" in contract["required_actions"]
-        assert "docs_site_render" in contract["gate_ledger_required_when"]
-        assert "docs/_views/" in contract["write_scope"]["allowed_paths"]
-        assert "docs/_site/" in contract["write_scope"]["allowed_paths"]
-        assert any(
+        assert "docs_site_boundary_report" in contract["required_actions"]
+        assert "docs_site_boundary_report" in contract["gate_ledger_required_when"]
+        assert "docs_site_render" not in contract["gate_ledger_required_when"]
+        assert "docs/_views/" not in contract["write_scope"]["allowed_paths"]
+        assert "docs/_site/" not in contract["write_scope"]["allowed_paths"]
+        assert not any(
             output["kind"] == "generated_view"
             and output["owner"] == "docs-site"
-            and output["requires_tool"] is True
-            and output["paths"] == ["docs/_views/", "docs/_site/"]
             for output in contract["artifact_outputs"]
         )
 

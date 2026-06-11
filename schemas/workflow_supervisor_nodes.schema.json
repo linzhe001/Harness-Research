@@ -30,6 +30,7 @@
         ],
         "properties": {
           "node_id": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 1 },
           "skill": { "type": "string", "minLength": 1 },
           "segment": {
             "type": "string",
@@ -39,6 +40,10 @@
           "order": { "type": "integer", "minimum": 0 },
           "auto_allowed": { "type": "boolean" },
           "manual_only": { "type": "boolean" },
+          "run_when": {
+            "type": "string",
+            "enum": ["always", "on_failure", "manual"]
+          },
           "max_attempts": { "type": "integer", "minimum": 1 },
           "timeout_seconds": { "type": "integer", "minimum": 1 },
           "preconditions": {

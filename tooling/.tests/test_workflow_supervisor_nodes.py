@@ -115,6 +115,32 @@ def test_prepare_acquisition_nodes_require_machine_manifests() -> None:
         "schema": "schemas/baseline_acquisition_manifest.schema.json",
     } in baseline_conditions
     assert "data/" in nodes["prepare_data_prep"]["allowed_worker_write_patterns"]
+    assert "acquisition evidence" in nodes["prepare_baseline_repro"]["purpose"]
+
+
+def test_supervisor_nodes_do_not_own_docs_site_outputs() -> None:
+    registry = workflow_ctl.load_node_registry(REPO_ROOT)
+
+    for node in registry["nodes"]:
+        owned_outputs = node.get("tool_owned_output_refs", [])
+        assert "docs/_views/" not in owned_outputs
+        assert "docs/_site/" not in owned_outputs
+
+
+def test_build_code_debug_is_failure_recovery_node() -> None:
+    registry = workflow_ctl.load_node_registry(REPO_ROOT)
+    nodes = {node["node_id"]: node for node in registry["nodes"]}
+    normal_build_nodes = [
+        node["node_id"]
+        for node in workflow_ctl.ordered_segment_nodes(registry, "build")
+    ]
+
+    assert nodes["build_code_debug"]["run_when"] == "on_failure"
+    assert "build_code_debug" not in normal_build_nodes
+    assert [
+        node["node_id"]
+        for node in workflow_ctl.on_failure_nodes(registry, "build")
+    ] == ["build_code_debug"]
 
 
 def test_gate_policy_risk_matrix_has_prepare_automation_profile() -> None:

@@ -35,9 +35,9 @@ source, official dataset API, Hugging Face dataset id, release/archive URL, or
 exact local path in private readiness. Missing items stay as unresolved
 questions.
 
-Read the mechanism and implementation plan, workflow guide, context layering,
-contract gating, documentation rules, language policy, and ubiquitous language
-before durable edits. Keep exact local/private values in
+Read the compact workflow/supervisor runtime reference, workflow guide, context
+layering, contract gating, documentation rules, language policy, and
+ubiquitous language before durable edits. Keep exact local/private values in
 `.workflow_supervisor/readiness.json` through tooling; redact public Markdown.
 When datasets are discussed, record a structured `Dataset Access Ledger` or
 equivalent table in `docs/Execution_Readiness_Packet.md`: dataset id, source

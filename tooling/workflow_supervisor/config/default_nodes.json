@@ -246,13 +246,11 @@
         "configs/",
         "src/"
       ],
-      "tool_owned_output_refs": [
-        "docs/_views/",
-        "docs/_site/"
-      ]
+      "tool_owned_output_refs": []
     },
     {
       "node_id": "prepare_baseline_repro",
+      "purpose": "Acquire or verify baseline sources and write acquisition evidence; this node does not prove baseline reproduction or metric parity.",
       "skill": "baseline-repro",
       "segment": "prepare",
       "stage": "WF5",
@@ -290,9 +288,9 @@
       ],
       "interrupts": [
         {
-          "when": "baseline_repro_failed",
+          "when": "baseline_acquisition_failed",
           "type": "STEER",
-          "reason": "baseline_reproduction_decision_required"
+          "reason": "baseline_acquisition_decision_required"
         }
       ],
       "evidence_tools": [],
@@ -311,10 +309,7 @@
         "scripts/",
         "src/"
       ],
-      "tool_owned_output_refs": [
-        "docs/_views/",
-        "docs/_site/"
-      ]
+      "tool_owned_output_refs": []
     },
     {
       "node_id": "build_refine_arch",
@@ -364,10 +359,7 @@
         "docs/35_protocol/",
         "PROJECT_STATE.json"
       ],
-      "tool_owned_output_refs": [
-        "docs/_views/",
-        "docs/_site/"
-      ]
+      "tool_owned_output_refs": []
     },
     {
       "node_id": "build_plan",
@@ -422,10 +414,7 @@
         "docs/20_facts/Codebase_Map.md",
         "docs/Implementation_Roadmap.md"
       ],
-      "tool_owned_output_refs": [
-        "docs/_views/",
-        "docs/_site/"
-      ]
+      "tool_owned_output_refs": []
     },
     {
       "node_id": "build_code_expert",
@@ -491,9 +480,7 @@
       ],
       "tool_owned_output_refs": [
         ".evidence/chains/",
-        ".evidence/index.json",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/index.json"
       ]
     },
     {
@@ -504,6 +491,7 @@
       "order": 35,
       "auto_allowed": true,
       "manual_only": false,
+      "run_when": "on_failure",
       "max_attempts": 2,
       "timeout_seconds": 1800,
       "preconditions": [
@@ -559,9 +547,7 @@
       ],
       "tool_owned_output_refs": [
         ".evidence/chains/",
-        ".evidence/index.json",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/index.json"
       ]
     },
     {
@@ -623,9 +609,7 @@
         "PROJECT_STATE.json"
       ],
       "tool_owned_output_refs": [
-        ".evidence/review_packets/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/review_packets/"
       ]
     },
     {
@@ -786,9 +770,7 @@
       "tool_owned_output_refs": [
         ".evidence/review_packets/",
         ".evidence/chains/",
-        ".evidence/index.json",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/index.json"
       ]
     },
     {
@@ -846,9 +828,7 @@
         "PROJECT_STATE.json"
       ],
       "tool_owned_output_refs": [
-        ".evidence/review_packets/",
-        "docs/_views/",
-        "docs/_site/"
+        ".evidence/review_packets/"
       ]
     }
   ]

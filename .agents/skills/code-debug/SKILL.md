@@ -71,7 +71,7 @@ Use `$harness-maintenance` for those changes.
     `python tooling/evidence/check_workflow_state.py --workspace-root .` and
     report the gate ledger.
 18. If `docs/20_facts/Codebase_Map.md` was changed and the fix is otherwise
-    validated, invoke `$docs-site` or report `docs_site_render_or_NOT_RUN`.
+    validated, invoke `$docs-site` or report `docs_site_boundary_report`.
     Do not render after temporary draft edits.
 
 ## Codex Adaptation

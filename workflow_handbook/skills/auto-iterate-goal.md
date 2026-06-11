@@ -42,8 +42,6 @@ Generate or validate the auto-iterate goal file before launching WF10 auto-itera
 ## Can Write
 
 - `docs/auto_iterate_goal.md`
-- `docs/_views/`
-- `docs/_site/`
 
 ## Final Outputs
 
@@ -51,8 +49,7 @@ Generate or validate the auto-iterate goal file before launching WF10 auto-itera
 
 ## Tool-Owned Outputs
 
-- `generated_view: docs/_views/`
-- `generated_view: docs/_site/`
+- none
 
 ## Must Read
 
@@ -77,10 +74,10 @@ Generate or validate the auto-iterate goal file before launching WF10 auto-itera
 - `goal_validate_or_init`
 - `context_gate_or_NOT_RUN`
 - `gate_ledger`
-- `docs_site_render_or_NOT_RUN`
+- `docs_site_boundary_report`
 - `WF10_auto_readiness`
 - `goal_write`
-- `docs_site_render`
+- `docs_site_boundary_report`
 
 ## Cannot Do
 

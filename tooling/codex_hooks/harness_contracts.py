@@ -106,6 +106,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "dataset_acquisition_decision_request_or_NOT_RUN",
     "dataset_acquisition_or_NOT_RUN",
     "docchain_gate_when_current_docs_change",
+    "docs_site_boundary_report",
     "docs_site_render_or_NOT_RUN",
     "explicit_user_approval_for_transition",
     "external_model_review_or_NOT_RUN",
