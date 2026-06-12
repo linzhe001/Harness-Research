@@ -48,6 +48,12 @@
           "generated": false
         },
         {
+          "page_id": "site_modes",
+          "label": "Site Modes",
+          "source_path": "workflow_handbook/pages/site_modes.md",
+          "generated": false
+        },
+        {
           "page_id": "auto_iterate_model",
           "label": "Auto-Iterate",
           "source_path": "workflow_handbook/pages/auto_iterate_model.md",

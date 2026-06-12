@@ -1,12 +1,56 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="0; url=_site/workflow_handbook/index.html">
   <title>Harness Workflow Handbook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #2e3436;
+      --muted: #61706f;
+      --accent: #244f67;
+      --line: #dbe4df;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px / 1.7 Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+        -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    main {
+      max-width: 760px;
+      margin: 18vh auto;
+      padding: 0 24px;
+    }
+    h1 {
+      font-size: 34px;
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    p {
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    a {
+      color: var(--accent);
+    }
+    .note {
+      border-top: 1px solid var(--line);
+      margin-top: 22px;
+      padding-top: 16px;
+    }
+  </style>
 </head>
 <body>
-  <p><a href="_site/workflow_handbook/index.html">Open the Harness Workflow Handbook.</a></p>
+  <main>
+    <h1>Harness Workflow Handbook</h1>
+    <p>正在打开静态生成的 handbook 视图。</p>
+    <p><a href="_site/workflow_handbook/index.html">Open the Harness Workflow Handbook.</a></p>
+    <p class="note">Terminal 和 live workflow 控制需要本地服务；这个页面只是只读静态入口。</p>
+  </main>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T11:32:15Z",
+  "generated_at": "2026-06-12T11:46:31Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -3485,6 +3485,32 @@
       "preview": {
         "title": "review-packet",
         "body": "review-packet: Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:site_modes": {
+      "ref": "page:site_modes",
+      "kind": "page",
+      "title": "Site Modes",
+      "summary": "Separates the static GitHub Pages handbook view from any future local live service with terminal or rebuild APIs.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/pages/site_modes.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "Site Modes",
+        "body": "Site Modes: Separates the static GitHub Pages handbook view from any future local live service with terminal or rebuild APIs.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7860,10 +7886,18 @@
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
       {
+        "ref": "page:site_modes",
+        "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+        "marker": "[[page:site_modes|Site Modes]]",
+        "line": 41,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/site_modes.html"
+      },
+      {
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate Model]]",
-        "line": 41,
+        "line": 42,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       },
@@ -7871,7 +7905,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 42,
+        "line": 43,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7879,7 +7913,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 42,
+        "line": 43,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7887,7 +7921,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 42,
+        "line": 43,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7895,7 +7929,7 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:operator_task_index|Operator Action Index]]",
-        "line": 57,
+        "line": 58,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
@@ -7903,15 +7937,23 @@
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
-        "line": 77,
+        "line": 78,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
+      },
+      {
+        "ref": "page:site_modes",
+        "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+        "marker": "[[page:site_modes|Site Modes]]",
+        "line": 101,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/site_modes.html"
       },
       {
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 145,
+        "line": 169,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7919,7 +7961,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 151,
+        "line": 175,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7927,7 +7969,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 152,
+        "line": 176,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7935,7 +7977,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 153,
+        "line": 177,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7943,7 +7985,7 @@
         "ref": "page:hooks_permissions_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
-        "line": 154,
+        "line": 178,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
       },
@@ -7951,15 +7993,23 @@
         "ref": "page:workflow_terms",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_terms|Workflow Terms]]",
-        "line": 155,
+        "line": 179,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_terms.html"
+      },
+      {
+        "ref": "page:site_modes",
+        "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+        "marker": "[[page:site_modes|Site Modes]]",
+        "line": 180,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/site_modes.html"
       },
       {
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 156,
+        "line": 181,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       },
@@ -7967,7 +8017,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 172,
+        "line": 199,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       }
@@ -8187,7 +8237,7 @@
         "ref": "artifact:docs/_site/workflow_handbook",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[artifact:docs/_site/workflow_handbook]]",
-        "line": 40,
+        "line": 41,
         "status": "resolved",
         "target_html": null
       },
@@ -8195,7 +8245,7 @@
         "ref": "artifact:docs/_views/workflow_handbook_reference_index.json",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[artifact:docs/_views/workflow_handbook_reference_index.json]]",
-        "line": 41,
+        "line": 42,
         "status": "resolved",
         "target_html": null
       },
@@ -8203,7 +8253,7 @@
         "ref": "term:Conclusion Evidence",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Conclusion Evidence]]",
-        "line": 58,
+        "line": 59,
         "status": "resolved",
         "target_html": null
       },
@@ -8211,7 +8261,7 @@
         "ref": "artifact:.evidence/index.json",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[artifact:.evidence/index.json]]",
-        "line": 59,
+        "line": 60,
         "status": "resolved",
         "target_html": null
       },
@@ -8219,7 +8269,7 @@
         "ref": "skill:docs-site",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[skill:docs-site]]",
-        "line": 64,
+        "line": 70,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/docs-site.html"
       },
@@ -8227,7 +8277,7 @@
         "ref": "source:tooling/evidence/build_docs_site.py",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[source:tooling/evidence/build_docs_site.py]]",
-        "line": 65,
+        "line": 71,
         "status": "resolved",
         "target_html": null
       },
@@ -8235,7 +8285,7 @@
         "ref": "term:Evidence Chain",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Evidence Chain]]",
-        "line": 67,
+        "line": 73,
         "status": "resolved",
         "target_html": null
       },
@@ -8243,7 +8293,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 73,
+        "line": 81,
         "status": "resolved",
         "target_html": null
       },
@@ -8251,15 +8301,23 @@
         "ref": "artifact:.evidence/index.json",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[artifact:.evidence/index.json]]",
-        "line": 75,
+        "line": 83,
         "status": "resolved",
         "target_html": null
+      },
+      {
+        "ref": "page:site_modes",
+        "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
+        "marker": "[[page:site_modes|Site Modes]]",
+        "line": 90,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/site_modes.html"
       },
       {
         "ref": "skill:docs-site",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[skill:docs-site]]",
-        "line": 80,
+        "line": 91,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/docs-site.html"
       },
@@ -8267,7 +8325,7 @@
         "ref": "term:Conclusion Evidence",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Conclusion Evidence]]",
-        "line": 81,
+        "line": 92,
         "status": "resolved",
         "target_html": null
       },
@@ -8275,7 +8333,7 @@
         "ref": "term:Evidence Chain",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Evidence Chain]]",
-        "line": 82,
+        "line": 93,
         "status": "resolved",
         "target_html": null
       },
@@ -8283,7 +8341,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/pages/04_markdown_to_html_preview_chain.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 83,
+        "line": 94,
         "status": "resolved",
         "target_html": null
       }
@@ -8590,6 +8648,72 @@
         "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
+      }
+    ],
+    "workflow_handbook/pages/site_modes.md": [
+      {
+        "ref": "source:tooling/evidence/build_docs_site.py",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[source:tooling/evidence/build_docs_site.py]]",
+        "line": 40,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "artifact:docs/_site/workflow_handbook",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[artifact:docs/_site/workflow_handbook]]",
+        "line": 41,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "artifact:docs/_views/workflow_handbook_reference_index.json",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[artifact:docs/_views/workflow_handbook_reference_index.json]]",
+        "line": 42,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Gate Evidence",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[term:Gate Evidence]]",
+        "line": 80,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "term:Human Approval",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[term:Human Approval]]",
+        "line": 81,
+        "status": "resolved",
+        "target_html": null
+      },
+      {
+        "ref": "page:markdown_to_html_preview_chain",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
+        "line": 97,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
+      },
+      {
+        "ref": "page:hooks_permissions_model",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
+        "line": 98,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
+      },
+      {
+        "ref": "page:evidence_approval_model",
+        "source_path": "workflow_handbook/pages/site_modes.md",
+        "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
+        "line": 99,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       }
     ],
     "workflow_handbook/pages/skill_reference.md": [

@@ -38,6 +38,7 @@ operator intent
 - [[page:operator_task_index|Operator Action Index]]：按“我想做什么”选择可见入口、内部 runtime、状态命令和停点。
 - [[page:workflow_supervisor_model|Runtime Routing Model]]：理解 visible alias 如何路由到内部 runtime 或 Skill Contract source。
 - [[page:evidence_approval_model|Evidence And Approval Model]]：确认什么是 Gate Evidence，什么才是 Human Approval。
+- [[page:site_modes|Site Modes]]：确认 GitHub Pages/static HTML 和 localhost live service 的边界。
 - [[page:auto_iterate_model|Auto-Iterate Model]]：只有进入 WF10 loop 或 delegated iteration 时再读。
 - [[page:workflow_layers|Detailed Workflow Map]]、[[page:stage_cards|Stage Reference]] 和 [[page:skill_reference|Skill Reference]]：只在需要细查内部 artifact、Skill 或 Gate 时打开。
 
@@ -75,6 +76,29 @@ Intent
 | `$write` / `$change` | 需要写论文、文档、release gate，或成熟代码库出现新需求 | auto-paper / docs-site / release gate / change-intake | 不替人批准 claim、release 或高风险方向变更 |
 
 更完整的边界见 [[page:workflow_supervisor_model|Runtime Routing Model]]。
+
+## Site Modes
+
+Handbook HTML 有两个不同的使用边界：
+
+```text
+static view
+  -> generated HTML/CSS/JS
+  -> GitHub Pages or local file
+  -> read-only handbook and hover previews
+
+local live view
+  -> same generated HTML
+  -> localhost service, if implemented
+  -> optional rebuild or terminal APIs
+```
+
+当前 `docs/_site/workflow_handbook/**` 是 static view。它适合 GitHub Pages、
+归档和 review，但不运行 tmux、PTY、Claude Code、Codex、secret resolver 或本地
+写文件 API。若未来加入 browser terminal，它应属于单独的 localhost live service，
+并且必须保留 origin check、local token、profile/env isolation 和 operator control。
+
+详细边界见 [[page:site_modes|Site Modes]]。
 
 ## Daily Run Shape
 
@@ -153,6 +177,7 @@ implementation / validation nodes。
 - [[page:skill_reference|Skill Reference]]：Skill Contract 的 read/write/gate 细节。
 - [[page:hooks_permissions_model|Hooks And Permissions Model]]：为什么某些写入会被拦。
 - [[page:workflow_terms|Workflow Terms]]：Top-level mode、Pending Request、Gate Evidence 等术语。
+- [[page:site_modes|Site Modes]]：GitHub Pages/static view 与 localhost live service 的边界。
 - [[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]：source Markdown 到 HTML view 的生成链路。
 
 不要再在 `workflow_handbook/` 下新增平行叙事文档；新增稳定内容应放进
@@ -169,6 +194,8 @@ workflow_handbook/**/*.md
 ```
 
 hover card 是 preview；链接本身应该能跳转到 stage、skill、page、term 或 source reference。
+这个 generated view 可以作为 GitHub Pages 上的只读 handbook，也可以被未来的本地
+live service 复用；但 generated HTML 本身不拥有终端、文件写入或 approval 权限。
 生成链路见 [[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]。
 
 ## Currentness

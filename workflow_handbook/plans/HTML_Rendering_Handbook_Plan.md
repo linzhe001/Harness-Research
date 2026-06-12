@@ -2,6 +2,24 @@
 
 Status: draft implementation plan
 
+## 0. 2026-06 Design Update
+
+当前方向是保留 Harness 自己的 lightweight Python renderer，而不是迁移到
+Quartz、MkDocs Material、Clarity 或 Node-based micro-SSG。外部站点调研只作为设计
+约束来源：
+
+- Clarity-style reading surface: restrained academic typography, bounded
+  article width, and clear code/table treatment.
+- Quartz/Gwern-style preview model: preview data is built ahead of time, not
+  fetched from target HTML at hover time.
+- Distill-style longform support: keep a stable article column and a page rail
+  for long workflow pages.
+- GitHub Pages/static mode: generated HTML is read-only and should work without
+  a backend.
+- Local live mode: any terminal, PTY, tmux, rebuild API, or agent profile
+  switching belongs to a separate localhost service boundary and is not part of
+  `docs/_site/**`.
+
 ## 1. 目标
 
 把 `workflow_handbook/` 从两个长 Markdown 阅读文件，升级成一个
@@ -117,20 +135,22 @@ framework source files
 --source-root
 --output-root
 --preview-index
-```
-
-但它还缺少：
-
-```text
 --nav-config
 --site-title
+--reference-mode workflow-handbook
+```
+
+Current renderer responsibilities:
+
+```text
 [[...]] framework reference parsing
 workflow_handbook_reference_index.json hover card support
 handbook-specific page metadata in manifest
 ```
 
-所以初期可以 dry-run 或基础渲染，但最终 handbook HTML 必须等这些能力补齐后
-才算完成。
+它仍然只生成 static HTML/CSS/JS。Terminal drawer、session persistence、PTY、
+tmux、profile/env isolation 和 local secret resolution 属于未来 local live service
+设计，不属于 generated handbook HTML。
 
 ## 4. 目标目录结构
 

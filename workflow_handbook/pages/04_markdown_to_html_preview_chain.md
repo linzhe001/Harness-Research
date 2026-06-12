@@ -21,6 +21,7 @@ references:
   - "artifact:docs/_views/workflow_handbook_reference_index.json"
   - "artifact:docs/_site/workflow_handbook"
   - "artifact:.evidence/index.json"
+  - "page:site_modes"
   - "skill:docs-site"
   - "source:tooling/evidence/build_docs_site.py"
   - "term:Conclusion Evidence"
@@ -59,6 +60,11 @@ index or manifest in stdout.
 [[artifact:.evidence/index.json]]。Handbook hover cards 只解释 framework
 Stage、Skill、Artifact、Term、Source 和 Page。
 
+Handbook hover cards use build-time preview data instead of runtime fetches.
+That keeps the generated handbook readable as a local static file or GitHub
+Pages site. Any terminal, rebuild API, or agent session control belongs to a
+separate local live service boundary.
+
 ## Boundaries
 
 - [[skill:docs-site]] 渲染 HTML view，但不把 HTML 变成 source of truth。
@@ -66,6 +72,8 @@ Stage、Skill、Artifact、Term、Source 和 Page。
 - `docs/_views/workflow_handbook_reference_index.json` 不是
   [[term:Evidence Chain]]，也不是 human approval artifact。
 - `docs/_site/workflow_handbook/**` 不应被手写；它由 renderer 重新生成。
+- Static handbook HTML 不应包含 PTY、tmux、agent profile switching、secret
+  resolution 或 filesystem write capability。
 
 ## Common Confusions
 
@@ -74,9 +82,12 @@ Stage、Skill、Artifact、Term、Source 和 Page。
   hover preview 本身不是 Gate Evidence。
 - [[artifact:.evidence/index.json]] 属于项目 docchain tooling；handbook reference
   index 属于 framework docs browsing。
+- GitHub Pages 可以展示 generated handbook view，但不能运行 local terminal
+  service。
 
 ## Related Pages
 
+- [[page:site_modes|Site Modes]]
 - [[skill:docs-site]]
 - [[term:Conclusion Evidence]]
 - [[term:Evidence Chain]]
