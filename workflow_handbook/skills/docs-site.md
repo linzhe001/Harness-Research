@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/docs-site.md"
 source_of_truth: true
 status: "generated"
-summary: "Render source Markdown project docs into human-readable HTML under docs/_site, with Evidence Chain hover previews from docs/_views/evidence_preview_index.json. Use after stable Markdown docs are finalized, before human review or handoff, or when explicitly rebuilding the human docs site."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 20
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Render source Markdown project docs into human-readable HTML under docs/_site, with Evidence Chain hover previews from docs/_views/evidence_preview_index.json. Use after stable Markdown docs are finalized, before human review or handoff, or when explicitly rebuilding the human docs site.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

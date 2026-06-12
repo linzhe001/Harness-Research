@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-figure.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit."
+summary: "Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk."
 nav:
   section: "skills"
   position: 330
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit.
+Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

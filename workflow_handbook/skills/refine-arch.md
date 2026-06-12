@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/refine-arch.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF5 baseline reproduction to convert the refined idea, dataset facts, baseline evidence, and evaluation contract into a technical spec and MVP architecture."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 110
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF5 baseline reproduction to convert the refined idea, dataset facts, baseline evidence, and evaluation contract into a technical spec and MVP architecture.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

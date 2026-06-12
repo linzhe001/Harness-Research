@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-data.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the optional auto-paper data, code, ethics, and reproducibility branch. Use when Codex needs to draft or audit data availability, code availability, ethics boundaries, FAIR metadata, or reproducibility statements for a manuscript."
+summary: "Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence."
 nav:
   section: "skills"
   position: 320
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the optional auto-paper data, code, ethics, and reproducibility branch. Use when Codex needs to draft or audit data availability, code availability, ethics boundaries, FAIR metadata, or reproducibility statements for a manuscript.
+Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

@@ -30,7 +30,10 @@ html:
 
 ## Source Of Truth
 
-Skill detail pages are generated from `schemas/skill_contracts.json` and `.agents/skills/*/SKILL.md`.
+Skill detail pages are generated from `schemas/skill_contracts.json` and
+`.agents/skills/*/SKILL.md`. They describe internal Skill Contracts and hook
+route targets. They are not the autocomplete surface; visible aliases are
+`grill`, `prepare`, `build`, `run`, `analyze`, `write`, and `change`.
 
 ## Fields Or Paths
 
@@ -49,4 +52,3 @@ Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` and focus
 - [[skill:docs-site]]
 - [[skill:iterate]]
 - [[term:Skill Contract]]
-

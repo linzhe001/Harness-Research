@@ -17,6 +17,7 @@ canonical_sources:
     role: "framework_rule"
 references:
   - "term:Entrypoint"
+  - "term:Visible Skill Alias"
   - "term:Stage"
   - "term:Skill"
   - "term:Gate Evidence"
@@ -42,6 +43,14 @@ One of the two human-facing ways to start workflow work: Grill or Execution
 Supervisor. Supervisor actions such as prepare, build, iterate, release, and
 change are scoped actions under Execution Supervisor, not extra top-level
 entrypoints.
+
+### Visible Skill Alias
+
+A small `$` / `/` command surface that routes to an Entrypoint or supervisor
+action without creating a new Skill Contract. Current visible aliases are
+`grill`, `prepare`, `build`, `run`, `analyze`, `write`, and `change`. Internal
+skill sources remain readable by path and may be selected by hook route hints,
+but they should not appear in autocomplete.
 
 ### Stage
 
@@ -93,6 +102,7 @@ If a term changes, update `.agents/references/ubiquitous-language.md`, rebuild t
 ## Related References
 
 - [[term:Entrypoint]]
+- [[term:Visible Skill Alias]]
 - [[term:Stage]]
 - [[term:Skill]]
 - [[term:Gate Evidence]]

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-intake.md"
 source_of_truth: true
 status: "generated"
-summary: "Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a paper directory, draft path, materials, references, target venue, or asks to start auto-paper intake before research, argument, citation, layout, patch, or harden phases."
+summary: "Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake."
 nav:
   section: "skills"
   position: 240
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a paper directory, draft path, materials, references, target venue, or asks to start auto-paper intake before research, argument, citation, layout, patch, or harden phases.
+Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

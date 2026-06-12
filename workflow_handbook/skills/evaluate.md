@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/evaluate.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a NEXT_ROUND, DEBUG, CONTINUE, PIVOT, or ABORT recommendation."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 130
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a NEXT_ROUND, DEBUG, CONTINUE, PIVOT, or ABORT recommendation.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/workflow-supervisor.md"
 source_of_truth: true
 status: "generated"
-summary: "Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation."
+summary: "Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval."
 nav:
   section: "skills"
   position: 380
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation.
+Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

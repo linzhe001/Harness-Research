@@ -39,15 +39,19 @@ WF0-WF12 nodes 和 Skill 是内部执行参考，不是第一层用户界面。
 
 ```text
 Intent
-  -> Grill or Execution Supervisor
+  -> visible alias: grill | prepare | build | run | analyze | write | change
   -> Runtime / Skill worker / Evidence tooling
   -> Gate Evidence / Pending Request / Human Approval
   -> Next safe action
 ```
 
 - Intent 是人的目标，例如“验证这次实现”。
-- 顶层入口只有 Grill 和 Execution Supervisor。`prepare/build/iterate/release/change`
-  是 Execution Supervisor actions，不是额外的第一层入口。
+- Visible aliases 只有 `$grill`, `$prepare`, `$build`, `$run`, `$analyze`,
+  `$write`, `$change`。它们路由到 Grill 或 Execution Supervisor 的内部
+  Skill Contract source，不创建新的 stage ownership。
+- Internal skills such as `workflow-supervisor`, `iterate`, `evaluate`,
+  `auto-paper`, and `change-intake` are detailed references and hook route
+  targets, not autocomplete entries.
 - Runtime / worker / tooling 是执行层，例如 supervisor、auto-iterate、
   evidence tooling 或某个 Skill worker。
 - Gate 是继续前必须能报告的检查，例如 [[term:Gate Evidence]]、Pending

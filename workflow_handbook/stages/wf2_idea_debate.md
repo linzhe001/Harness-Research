@@ -33,7 +33,7 @@ Compare candidate directions and choose the strongest research path.
 
 ## How To Run
 
-`$idea-debate` after WF1 has enough evidence to compare options.
+`$grill` to compare candidate directions and expose tradeoffs.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Compare candidate directions and choose the strongest research path.
 
 ## Contract Detail
 
-Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

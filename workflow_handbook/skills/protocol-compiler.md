@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/protocol-compiler.md"
 source_of_truth: true
 status: "generated"
-summary: "Compile Dynamic Research Protocol drafts from current evidence tables without using pre-baked research profiles."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 40
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Compile Dynamic Research Protocol drafts from current evidence tables without using pre-baked research profiles.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

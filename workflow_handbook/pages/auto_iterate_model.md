@@ -37,8 +37,8 @@ Auto-iterate 减少 WF10 多轮实验的手工摩擦，但不替代 operator 的
 ## Model
 
 ```text
-$auto-iterate-goal
-  -> controller preflight
+$run
+  -> internal auto-iterate goal preflight when delegated looping is requested
   -> plan/code/run/eval phases
   -> iteration_log.json remains experiment source of truth
 ```
@@ -61,4 +61,3 @@ $auto-iterate-goal
 - [[skill:auto-iterate-goal]]
 - [[skill:iterate]]
 - [[term:Human Approval]]
-

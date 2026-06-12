@@ -33,7 +33,7 @@ Validate the implementation before structured iteration.
 
 ## How To Run
 
-`$validate-run` with the acceptance commands and expected behavior.
+`$build` continues through validate-run postconditions.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Validate the implementation before structured iteration.
 
 ## Contract Detail
 
-Codex wrapper for WF9 validation. Use when the user wants the training chain reviewed and smoke-tested before entering WF10.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

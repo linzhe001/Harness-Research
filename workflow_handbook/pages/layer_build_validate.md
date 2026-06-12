@@ -35,7 +35,8 @@ WF8-WF9 把 plan 中的一个 bounded slice 实现出来，并用 Gate Evidence 
 ## Model
 
 ```text
-build --auto / build --worker-command
+$build
+  -> build --auto / build --worker-command
   -> implementation worker nodes
   -> focused checks and Gate ledger
   -> validate-run
@@ -61,7 +62,8 @@ build --auto / build --worker-command
 
 ## Common Confusions
 
-- `$code-debug` 不负责改 hooks 或 skill contracts。
+- Internal `code-debug` 不负责改 hooks 或 skill contracts；hook/contract
+  维护仍走 internal `harness-maintenance` source。
 - 通过语法检查不等于 semantic validation。
 - Worker prose 不等于 postcondition pass。
 - Validation report 不自动推进 WF10。

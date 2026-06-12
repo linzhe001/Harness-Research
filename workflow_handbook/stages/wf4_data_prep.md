@@ -33,7 +33,7 @@ Make data facts explicit before baseline or architecture work starts.
 
 ## How To Run
 
-`$data-prep` after the dataset path and intended evaluation surface are known.
+`$prepare` after Grill readiness records dataset sources and targets.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Dataset stats, data facts, configs, and evidence tables are current.
 
 ## Contract Detail
 
-Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis, subset strategy selection, and `docs/Dataset_Stats.md` produced according to the original workflow.
+Use this Skill for WF4 dataset analysis, subset design, and data-pipeline preparation.
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

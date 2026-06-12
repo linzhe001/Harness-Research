@@ -33,7 +33,7 @@ Collect early Conclusion Evidence and decide whether the idea is worth pursuing.
 
 ## How To Run
 
-`$survey-idea` with the research idea and constraints.
+`$grill` when the idea still needs evidence-backed clarification.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Collect early Conclusion Evidence and decide whether the idea is worth pursuing.
 
 ## Contract Detail
 
-Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wants literature-backed validation of a new research idea and a `docs/Feasibility_Report.md` outcome.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

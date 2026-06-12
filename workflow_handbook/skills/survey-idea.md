@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/survey-idea.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wants literature-backed validation of a new research idea and a `docs/Feasibility_Report.md` outcome."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 60
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF1 idea survey and feasibility analysis. Use when the user wants literature-backed validation of a new research idea and a `docs/Feasibility_Report.md` outcome.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

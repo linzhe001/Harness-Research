@@ -33,7 +33,7 @@ Run final experiment checks against approved contracts and claim boundaries.
 
 ## How To Run
 
-`$final-exp` after WF10 evidence supports a final evaluation.
+`$run` for final experiments and `$analyze` for final interpretation.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Run final experiment checks against approved contracts and claim boundaries.
 
 ## Contract Detail
 
-Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

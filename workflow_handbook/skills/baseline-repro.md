@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/baseline-repro.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline adaptation, reproduction tracking, and `docs/Baseline_Report.md` following the original workflow contract."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 100
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline adaptation, reproduction tracking, and `docs/Baseline_Report.md` following the original workflow contract.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

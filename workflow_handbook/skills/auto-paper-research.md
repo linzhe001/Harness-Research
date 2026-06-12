@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-research.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, summarize author evidence, learn exemplar structure and style, map SOTA gaps, and prepare research artifacts without editing the manuscript."
+summary: "Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence."
 nav:
   section: "skills"
   position: 250
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, summarize author evidence, learn exemplar structure and style, map SOTA gaps, and prepare research artifacts without editing the manuscript.
+Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

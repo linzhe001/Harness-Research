@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-harden.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper harden phase. Use for final manuscript audit, artifact completeness, claim support, logic transfer, revision quality, LaTeX guard, compile report, and reviewer-risk gate routing."
+summary: "Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase."
 nav:
   section: "skills"
   position: 300
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper harden phase. Use for final manuscript audit, artifact completeness, claim support, logic transfer, revision quality, LaTeX guard, compile report, and reviewer-risk gate routing.
+Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

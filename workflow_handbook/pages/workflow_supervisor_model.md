@@ -38,8 +38,8 @@ contracts, claim boundaries, high-risk transitions, and release decisions.
 
 ```text
 Intent
-  -> Grill or Execution Supervisor
-  -> Supervisor action, when applicable
+  -> visible alias: grill | prepare | build | run | analyze | write | change
+  -> internal supervisor action or Skill Contract source
   -> Gate Evidence or typed HITL interrupt
   -> Next safe action
 ```
@@ -48,8 +48,8 @@ Top-level modes define the operator surface:
 
 | Top-level mode | 什么时候用 | 主要状态面 |
 | --- | --- | --- |
-| `grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
-| `execution supervisor` | intent 已经能进入执行、验证、迭代、release，或成熟代码库出现新请求 | pending request、worker result JSON、Gate ledger、controller status |
+| `$grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
+| `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change` | intent 已经能进入执行、验证、迭代、写作，或成熟代码库出现新请求 | pending request、worker result JSON、Gate ledger、controller status |
 
 When Grill discusses external data access, dataset acquisition, or baseline
 clone intent, it must record that intent in the `Execution Intent Ledger` inside
@@ -72,13 +72,14 @@ approvals may carry `repo`, `ref`, and `target`.
 
 Execution Supervisor actions are scoped commands under the second mode:
 
-| Supervisor action | 什么时候用 | 主要状态面 |
-| --- | --- | --- |
-| `prepare` | intent 已存在，需要检查 readiness，或用 `--complete` 获取/验证数据集和 baseline | Dataset Stats、Baseline Report、Review Packet 和 pending request JSON |
-| `build` | 需要推进 bounded implementation 并验证到可运行 | worker result JSON、Gate ledger、Validate Run Report 和 postcondition validation |
-| `iterate` | 需要把 WF10 委托给 auto-iterate | `auto_iterate_ctl.sh status --json` 和 `iteration_log.json` |
-| `release` | validate / package / submit action 需要 claim / approval check | WF12 Review Packet 和 scoped approval request |
-| `change` | 成熟代码库收到新请求 | Change Request JSON 和 route confidence |
+| Visible alias | Internal route | 什么时候用 | 主要状态面 |
+| --- | --- | --- | --- |
+| `$prepare` | workflow-supervisor `prepare` | intent 已存在，需要检查 readiness，或用 `--complete` 获取/验证数据集和 baseline | Dataset Stats、Baseline Report、Review Packet 和 pending request JSON |
+| `$build` | workflow-supervisor `build` | 需要推进 bounded implementation 并验证到可运行 | worker result JSON、Gate ledger、Validate Run Report 和 postcondition validation |
+| `$run` | iterate / auto-iterate | 需要执行 WF10 experiments、调参、消融、可视化或最终实验 | `auto_iterate_ctl.sh status --json` 和 `iteration_log.json` |
+| `$analyze` | evaluate | 需要把 run 结果转成见解、下一轮决策或写作素材 | iteration reports、metrics、decision |
+| `$write` | auto-paper / docs-site / release gate | 需要论文写作、GitHub 文档、release readiness 或 claim gate | manuscript artifacts、WF12 Review Packet、Claim Boundary |
+| `$change` | change-intake | 成熟代码库收到新请求 | Change Request JSON 和 route confidence |
 
 Detailed reference pages are still available, but they are not the first
 question the operator answers. Open them only when you need internal artifact
@@ -105,7 +106,7 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goa
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
 
-Default non-dry-run `prepare` is still the low-risk HITL PoC. It verifies
+Default non-dry-run `prepare` remains the low-risk HITL PoC. It verifies
 candidate readiness inputs, compiles a draft protocol packet under
 `.evidence/protocol_compiler/**`, generates a WF5 Review Packet with
 dynamic-context tooling, writes a pending request under
@@ -139,8 +140,10 @@ rejected, or requires-approval sources. Redacted or ambiguous values become
 typed input requests. `status --json` includes the active pending request
 question, allowed responses, reason, node id, gate refs, and snapshot hash so
 the operator can see the exact HITL prompt without reading supervisor runtime
-files by hand. The segment still pauses for Human Approval before recording
-`prepare_complete`.
+files by hand. Full prepare records `prepare_complete` after readiness,
+acquisition, worker, protocol, Review Packet, and WF5 gates pass. It pauses
+only for missing inputs, policy blockers, worker failures, gate failures, or
+explicit approval/revision checks required by the produced packet.
 
 `build` runs registry nodes in order through deterministic checks or structured
 workers. `--auto` delegates non-deterministic nodes to Codex with full-auto
@@ -203,7 +206,9 @@ artifacts exist and can be used as context for canonical Stage Skills.
 readiness/HITL plumbing only.
 
 `prepare_complete` is the prepare state that later execution can depend on. It
-requires data and baseline artifacts plus the required approval/revision gate.
+requires data and baseline artifacts plus the required gates; it is not an
+ordinary manual approval pause when Grill readiness already approved the
+executable inputs.
 
 `build_ready_for_iterate` means build has reached validate-run and the
 configured runnable postconditions passed. It does not start WF10 by itself.

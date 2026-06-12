@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper.md"
 source_of_truth: true
 status: "generated"
-summary: "Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use when Codex is asked to run an auto-paper loop, rewrite or restructure a paper section, produce citation-supported manuscript edits, harden a submission, audit reviewer risk, or coordinate research to argument to citation to layout to patch to harden writing phases."
+summary: "Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state."
 nav:
   section: "skills"
   position: 230
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use when Codex is asked to run an auto-paper loop, rewrite or restructure a paper section, produce citation-supported manuscript edits, harden a submission, audit reviewer risk, or coordinate research to argument to citation to layout to patch to harden writing phases.
+Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

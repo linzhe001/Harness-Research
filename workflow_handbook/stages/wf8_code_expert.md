@@ -33,7 +33,7 @@ Implement one bounded code slice under the current plan.
 
 ## How To Run
 
-`$code-expert` for first-pass planned work, or `$code-debug` for fixes.
+`$build` for first-pass implementation, or `$change` for later code deltas.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Changed code, focused validation, and map updates are ready for review.
 
 ## Contract Detail
 
-Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

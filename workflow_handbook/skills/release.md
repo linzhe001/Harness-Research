@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/release.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 360
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

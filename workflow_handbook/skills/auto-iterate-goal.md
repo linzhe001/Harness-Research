@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-iterate-goal.md"
 source_of_truth: true
 status: "generated"
-summary: "Generate or validate the auto-iterate goal file before launching WF10 auto-iterate"
+summary: "Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes."
 nav:
   section: "skills"
   position: 340
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Generate or validate the auto-iterate goal file before launching WF10 auto-iterate
+Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

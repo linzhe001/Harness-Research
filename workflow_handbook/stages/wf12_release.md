@@ -33,7 +33,7 @@ Prepare release artifacts while keeping claims inside the approved boundary.
 
 ## How To Run
 
-`$release` after WF11 and release readiness gates are satisfied.
+`$write` for paper, release docs, GitHub readiness, and scoped release gates.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Prepare release artifacts while keeping claims inside the approved boundary.
 
 ## Contract Detail
 
-Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

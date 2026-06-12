@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-patch.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates."
+summary: "Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory."
 nav:
   section: "skills"
   position: 290
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates.
+Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

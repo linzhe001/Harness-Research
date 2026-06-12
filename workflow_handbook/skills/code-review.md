@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/code-review.md"
 source_of_truth: true
 status: "generated"
-summary: "Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report."
+summary: "Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active."
 nav:
   section: "skills"
   position: 200
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report.
+Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

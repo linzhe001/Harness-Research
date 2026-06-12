@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/review-packet.md"
 source_of_truth: true
 status: "generated"
-summary: "Build concise human review packets for dynamic-context contracts, protocol readiness, and release gates."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 30
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Build concise human review packets for dynamic-context contracts, protocol readiness, and release gates.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/orchestrator.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for the canonical WF orchestrator. Use when the user wants project initialization, stage status, gate checks, rollback, or decision logging around `PROJECT_STATE.json`."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 0
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for the canonical WF orchestrator. Use when the user wants project initialization, stage status, gate checks, rollback, or decision logging around `PROJECT_STATE.json`.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

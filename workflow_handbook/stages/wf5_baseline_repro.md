@@ -33,7 +33,7 @@ Reproduce or establish a baseline and prepare approval-facing contracts.
 
 ## How To Run
 
-`$baseline-repro` after data facts and baseline target are clear.
+`$prepare` after executable baseline source provenance is approved.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Baseline report, baseline evidence, and draft or approved contracts are ready fo
 
 ## Contract Detail
 
-Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline adaptation, reproduction tracking, and `docs/Baseline_Report.md` following the original workflow contract.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

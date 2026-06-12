@@ -240,11 +240,11 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert manifest["reference_mode"] == "workflow-handbook"
     assert manifest["navigation"][1]["label"] == "Operate"
     assert manifest["navigation"][1]["items"][0]["label"] == "Action Index"
-    assert manifest["navigation"][1]["items"][1]["label"] == "Modes"
+    assert manifest["navigation"][1]["items"][1]["label"] == "Visible Aliases"
     assert manifest["navigation"][1]["items"][1]["children"]
     assert [
         child["label"] for child in manifest["navigation"][1]["items"][1]["children"]
-    ] == ["grill", "execution supervisor"]
+    ] == ["grill", "internal supervisor contract"]
     assert manifest["navigation"][2]["label"] == "Detailed Reference"
     assert manifest["navigation"][2]["items"][1]["label"] == "Stage Reference"
     assert 'href="assets/site.css"' in index_html

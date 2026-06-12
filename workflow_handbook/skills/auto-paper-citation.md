@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-citation.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper citation phase. Use to segment manuscript claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims before LaTeX patching."
+summary: "Support claims, not reference stuffing. Do not rewrite the manuscript in this phase."
 nav:
   section: "skills"
   position: 270
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper citation phase. Use to segment manuscript claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims before LaTeX patching.
+Support claims, not reference stuffing. Do not rewrite the manuscript in this phase.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

@@ -33,7 +33,7 @@ Turn the selected idea into a tighter research question and execution target.
 
 ## How To Run
 
-`$refine-idea` with the selected direction and unresolved assumptions.
+`$grill` until the selected direction is executable enough for prepare.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Turn the selected idea into a tighter research question and execution target.
 
 ## Contract Detail
 
-Codex wrapper for WF3 idea refinement. Use after WF1 survey and WF2 idea debate to turn the selected direction into a feasible research idea, task framing, success criteria, baseline requirements, and protocol assumptions without designing the architecture.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

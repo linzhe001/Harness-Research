@@ -12,12 +12,23 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "codex_hooks"))
 
+VISIBLE_SKILL_ALIASES = {
+    "analyze",
+    "build",
+    "change",
+    "grill",
+    "prepare",
+    "run",
+    "write",
+}
+
 import check_contracts  # noqa: E402
 import generate_stage_cards  # noqa: E402
 import harness_contracts  # noqa: E402
 import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
     CONTRACTS_PATH,
+    LAST_ROUTE_PATH,
     READ_LEDGER_PATH,
     READ_LEDGERS_DIR,
     RUNTIME_DIR,
@@ -103,15 +114,42 @@ def test_skill_contract_files_are_valid() -> None:
     errors = validate_contract_files(REPO_ROOT)
     assert not errors
 
-    skills = {contract["skill"] for contract in load_contracts(REPO_ROOT)}
-    available_skills = {
-        path.parent.name
-        for path in (REPO_ROOT / ".agents" / "skills").glob("*/SKILL.md")
-    }
-    assert available_skills.issubset(skills)
     for contract in load_contracts(REPO_ROOT):
         assert contract.get("write_scope", {}).get("allowed_paths"), contract["skill"]
         assert contract.get("artifact_outputs"), contract["skill"]
+
+
+def _frontmatter_skill_names(surface: str) -> set[str]:
+    return {
+        path.parent.name
+        for path in (REPO_ROOT / surface / "skills").glob("*/SKILL.md")
+        if path.read_text(encoding="utf-8").startswith("---\n")
+    }
+
+
+def test_only_human_facing_skill_aliases_have_frontmatter() -> None:
+    assert _frontmatter_skill_names(".agents") == VISIBLE_SKILL_ALIASES
+    assert _frontmatter_skill_names(".claude") == VISIBLE_SKILL_ALIASES
+
+
+def test_internal_skill_sources_are_not_autocomplete_entries() -> None:
+    internal_skills = {
+        "auto-paper",
+        "auto-iterate-goal",
+        "change-intake",
+        "code-debug",
+        "docs-site",
+        "evaluate",
+        "harness-maintenance",
+        "iterate",
+        "workflow-supervisor",
+    }
+
+    for surface in [".agents", ".claude"]:
+        for skill in internal_skills:
+            path = REPO_ROOT / surface / "skills" / skill / "SKILL.md"
+            assert path.exists(), path.relative_to(REPO_ROOT).as_posix()
+            assert not path.read_text(encoding="utf-8").startswith("---\n")
 
 
 def test_iterate_contract_covers_eval_iteration_reports() -> None:
@@ -342,8 +380,8 @@ def test_grill_hands_accepted_draft_to_init_project() -> None:
         encoding="utf-8"
     )
 
-    assert "$init-project update-from-grill" in agents_skill
-    assert "/init-project update-from-grill" in claude_skill
+    assert "`init-project update-from-grill`" in agents_skill
+    assert "`init-project update-from-grill`" in claude_skill
     for text in [agents_skill, claude_skill]:
         assert "docs/Research_Intent_Draft.md" in text
         assert "docs/Grill_Round_Log.md" in text
@@ -775,8 +813,12 @@ def test_stage_card_generator_renders_core_skill_boundaries() -> None:
 
     assert "# Detailed Workflow Stage Reference" in rendered
     assert "不是\noperator 的第一层入口" in rendered
-    assert "Grill 或 Execution Supervisor" in rendered
-    assert "`prepare/build/iterate/release/change` 是 supervisor actions" in rendered
+    assert "visible aliases 选择" in rendered
+    assert (
+        "`$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`"
+        in rendered
+    )
+    assert "不是 autocomplete 入口" in rendered
     assert "## Explore" in rendered
     assert "## Contract & Plan" in rendered
     assert "## Build & Validate" in rendered
@@ -852,7 +894,10 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
         "  -> supervisor action / typed request / worker result / Gate ledger\n"
         "  -> Human Approval or next safe action"
     ) in handbook
-    assert "`prepare`、`build`、`iterate`、`release`、`change` actions" in handbook
+    assert (
+        "visible aliases `$prepare`, `$build`, `$run`, `$analyze`, `$write`, "
+        "`$change`"
+    ) in handbook
     assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
     assert "[[page:operator_task_index|Operator Action Index]]" in handbook
     assert "Daily Run Shape" in handbook
@@ -1516,6 +1561,18 @@ def test_detection_treats_hook_design_question_as_context_only() -> None:
     assert match["read_contract_stop_required"] is False
 
 
+def test_intent_router_infers_prepare_stage() -> None:
+    match = detect_skill_match(
+        REPO_ROOT,
+        "prepare 下载数据集并克隆 baseline，然后跑通 baseline smoke check",
+    )
+
+    assert match is not None
+    assert match["candidate_skill"] == "workflow-supervisor"
+    assert match["candidate_trigger_type"] == "intent_router"
+    assert match["intent_route"]["route"] == "prepare"
+
+
 def test_detection_does_not_let_llm_design_question_activate_write_scope() -> None:
     match = detect_skill_match(REPO_ROOT, "是否可以由 LLM 先判断意图然后选择 hook？")
 
@@ -2140,6 +2197,35 @@ def test_user_prompt_context_only_writes_candidate_skill_not_active_skill(
     assert session["enforcement_mode"] == "context_only"
     assert "Harness route hint: harness-maintenance" in output
     assert "Concrete tool calls are checked at tool time" in output
+    _clean_runtime()
+
+
+def test_user_prompt_writes_last_intent_route(monkeypatch, capsys) -> None:
+    _clean_runtime()
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        StringIO(
+            json.dumps(
+                {
+                    "cwd": str(REPO_ROOT),
+                    "prompt": "prepare 下载数据集并克隆 baseline",
+                    "session_id": "session-route",
+                    "turn_id": "turn-route",
+                }
+            )
+        ),
+    )
+
+    assert user_prompt_submit_main() == 0
+    output = capsys.readouterr().out
+
+    session = load_session(REPO_ROOT)
+    route = json.loads((REPO_ROOT / LAST_ROUTE_PATH).read_text(encoding="utf-8"))
+    assert session["candidate_skill"] == "workflow-supervisor"
+    assert session["intent_route"]["route"] == "prepare"
+    assert route["route"] == "prepare"
+    assert "Intent route: prepare" in output
     _clean_runtime()
 
 

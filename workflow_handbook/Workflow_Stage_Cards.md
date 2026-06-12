@@ -1,8 +1,10 @@
 # Detailed Workflow Stage Reference
 
 本文件由 `schemas/skill_contracts.json` 生成，是 detailed reference，不是
-operator 的第一层入口。日常操作先从 Grill 或 Execution Supervisor
-选择顶层入口；`prepare/build/iterate/release/change` 是 supervisor actions。
+operator 的第一层入口。日常操作先从 visible aliases 选择：
+`$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`。
+内部 Skill Contract 仍然存在，但它们是 detailed reference，
+不是 autocomplete 入口。
 
 只有当你需要追踪内部 WF artifact、定位某个 Skill Contract、或排查
 Gate/postcondition 失败时，才使用本页。完整推荐读取、声明路径、
@@ -26,11 +28,11 @@ WF0-WF4: turn an initial idea into scoped direction and data facts.
 
 ### WF0 Init
 
-一句话: Initialize or refresh the workspace guidance and workflow state.
+一句话: Initialize or refresh compact workspace guidance and workflow state.
 
-怎么启动: `$init-project` for guidance setup, or `$orchestrator` for state checks.
+怎么启动: After `$grill` reaches `grill_draft_ready`, run the internal `init-project update-from-grill` mode. For framework setup, use `AI_AGENT_SETUP.md`.
 
-完成后得到: `AGENTS.md`, `CLAUDE.md`, `PROJECT_STATE.json`, and optional scaffold are ready.
+完成后得到: `AGENTS.md`, `CLAUDE.md`, and optional README guidance are refreshed from candidate Grill context without inventing workflow completion.
 
 深入阅读: [[stage:WF0|WF0 details]], [[skill:init-project|init-project Skill]]
 
@@ -38,7 +40,7 @@ WF0-WF4: turn an initial idea into scoped direction and data facts.
 
 一句话: Collect early Conclusion Evidence and decide whether the idea is worth pursuing.
 
-怎么启动: `$survey-idea` with the research idea and constraints.
+怎么启动: `$grill` when the idea still needs evidence-backed clarification.
 
 完成后得到: `docs/Feasibility_Report.md` and evidence tables summarize viability and open questions.
 
@@ -48,7 +50,7 @@ WF0-WF4: turn an initial idea into scoped direction and data facts.
 
 一句话: Compare candidate directions and choose the strongest research path.
 
-怎么启动: `$idea-debate` after WF1 has enough evidence to compare options.
+怎么启动: `$grill` to compare candidate directions and expose tradeoffs.
 
 完成后得到: `docs/Idea_Debate.md` records the selected direction, alternatives, and risks.
 
@@ -58,7 +60,7 @@ WF0-WF4: turn an initial idea into scoped direction and data facts.
 
 一句话: Turn the selected idea into a tighter research question and execution target.
 
-怎么启动: `$refine-idea` with the selected direction and unresolved assumptions.
+怎么启动: `$grill` until the selected direction is executable enough for prepare.
 
 完成后得到: `docs/Refined_Idea.md` defines scope, hypothesis, and known unknowns.
 
@@ -68,7 +70,7 @@ WF0-WF4: turn an initial idea into scoped direction and data facts.
 
 一句话: Make data facts explicit before baseline or architecture work starts.
 
-怎么启动: `$data-prep` after the dataset path and intended evaluation surface are known.
+怎么启动: `$prepare` after Grill readiness records dataset sources and targets.
 
 完成后得到: Dataset stats, data facts, configs, and evidence tables are current.
 
@@ -82,7 +84,7 @@ WF5-WF7: establish baseline, approved boundaries, architecture, and slices.
 
 一句话: Reproduce or establish a baseline and prepare approval-facing contracts.
 
-怎么启动: `$baseline-repro` after data facts and baseline target are clear.
+怎么启动: `$prepare` after executable baseline source provenance is approved.
 
 完成后得到: Baseline report, baseline evidence, and draft or approved contracts are ready for later gates.
 
@@ -92,7 +94,7 @@ WF5-WF7: establish baseline, approved boundaries, architecture, and slices.
 
 一句话: Refine the technical architecture within approved boundaries.
 
-怎么启动: `$refine-arch` after baseline and contract boundaries are available.
+怎么启动: `$build` after prepare has data/baseline facts and boundaries.
 
 完成后得到: `docs/Technical_Spec.md` and glossary updates define the implementation shape.
 
@@ -102,7 +104,7 @@ WF5-WF7: establish baseline, approved boundaries, architecture, and slices.
 
 一句话: Convert the architecture into bounded implementation slices.
 
-怎么启动: `$build-plan` after the technical spec is stable enough to slice.
+怎么启动: `$build` after architecture intent is stable enough to slice.
 
 完成后得到: `docs/Implementation_Roadmap.md`, `project_map.json`, and codebase map guidance align.
 
@@ -116,7 +118,7 @@ WF8-WF9: implement a bounded slice and validate it with Gate Evidence.
 
 一句话: Implement one bounded code slice under the current plan.
 
-怎么启动: `$code-expert` for first-pass planned work, or `$code-debug` for fixes.
+怎么启动: `$build` for first-pass implementation, or `$change` for later code deltas.
 
 完成后得到: Changed code, focused validation, and map updates are ready for review.
 
@@ -126,7 +128,7 @@ WF8-WF9: implement a bounded slice and validate it with Gate Evidence.
 
 一句话: Validate the implementation before structured iteration.
 
-怎么启动: `$validate-run` with the acceptance commands and expected behavior.
+怎么启动: `$build` continues through validate-run postconditions.
 
 完成后得到: `docs/Validate_Run_Report.md` records PASS, REVIEW, or FAIL with Gate Evidence.
 
@@ -140,7 +142,7 @@ WF10-WF12: run iterations, final experiment checks, and release packaging.
 
 一句话: Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.
 
-怎么启动: `$iterate plan`, `$iterate run`, and `$iterate eval`.
+怎么启动: `$run` for experiment execution and `$analyze` for result decisions.
 
 完成后得到: `iteration_log.json` and `docs/40_iterations/**` capture runs, lessons, and decisions.
 
@@ -150,7 +152,7 @@ WF10-WF12: run iterations, final experiment checks, and release packaging.
 
 一句话: Run final experiment checks against approved contracts and claim boundaries.
 
-怎么启动: `$final-exp` after WF10 evidence supports a final evaluation.
+怎么启动: `$run` for final experiments and `$analyze` for final interpretation.
 
 完成后得到: `docs/Final_Experiment_Matrix.md` records the final experiment plan and gate result.
 
@@ -160,7 +162,7 @@ WF10-WF12: run iterations, final experiment checks, and release packaging.
 
 一句话: Prepare release artifacts while keeping claims inside the approved boundary.
 
-怎么启动: `$release` after WF11 and release readiness gates are satisfied.
+怎么启动: `$write` for paper, release docs, GitHub readiness, and scoped release gates.
 
 完成后得到: `submission/**`, release docs, and final Gate Evidence are ready for explicit submit approval.
 

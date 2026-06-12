@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/init-project.md"
 source_of_truth: true
 status: "generated"
-summary: "WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior."
+summary: "Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts."
 nav:
   section: "skills"
   position: 140
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.
+Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

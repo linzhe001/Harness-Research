@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/refine-idea.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF3 idea refinement. Use after WF1 survey and WF2 idea debate to turn the selected direction into a feasible research idea, task framing, success criteria, baseline requirements, and protocol assumptions without designing the architecture."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 80
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF3 idea refinement. Use after WF1 survey and WF2 idea debate to turn the selected direction into a feasible research idea, task framing, success criteria, baseline requirements, and protocol assumptions without designing the architecture.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

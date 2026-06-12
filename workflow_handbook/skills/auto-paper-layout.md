@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-layout.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper layout phase. Use to map current TeX logic, design section and paragraph blueprints, create a writing rationale matrix, citation plan, and LaTeX patch plan before any manuscript edits."
+summary: "Create an executable rewrite plan. Do not edit `.tex` files in layout."
 nav:
   section: "skills"
   position: 280
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper layout phase. Use to map current TeX logic, design section and paragraph blueprints, create a writing rationale matrix, citation plan, and LaTeX patch plan before any manuscript edits.
+Create an executable rewrite plan. Do not edit `.tex` files in layout.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

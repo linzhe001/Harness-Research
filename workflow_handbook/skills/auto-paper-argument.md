@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-argument.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the auto-paper argument phase. Use to define central tension, core contribution, allowed novelty, claim boundaries, claim register, claims to avoid, and motivation surface map before citation or layout work."
+summary: "Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase."
 nav:
   section: "skills"
   position: 260
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the auto-paper argument phase. Use to define central tension, core contribution, allowed novelty, claim boundaries, claim register, claims to avoid, and motivation surface map before citation or layout work.
+Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

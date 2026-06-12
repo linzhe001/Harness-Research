@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/final-exp.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 350
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

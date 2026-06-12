@@ -35,12 +35,16 @@ WF10-WF12 处理多轮实验、final experiment 和 release claim 边界。
 ## Model
 
 ```text
-WF10 iterate -> WF11 final experiment -> WF12 release
+$run -> $analyze -> $write
+  -> internal WF10 iterate / WF11 final-exp / WF12 release gates
 ```
 
 ## Boundaries
 
 - `iteration_log.json` 是 experiment source of truth。
+- `$run` executes or delegates experiments; `$analyze` turns results into
+  decisions; `$write` handles manuscript, release docs, GitHub readiness, and
+  scoped release gates.
 - Final experiment 必须服从 approved contracts 和 Claim Boundary。
 - Release claim 不能超出 Human Approval 和 Evidence Chain 支持。
 

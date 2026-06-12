@@ -33,7 +33,7 @@ Refine the technical architecture within approved boundaries.
 
 ## How To Run
 
-`$refine-arch` after baseline and contract boundaries are available.
+`$build` after prepare has data/baseline facts and boundaries.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Refine the technical architecture within approved boundaries.
 
 ## Contract Detail
 
-Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF5 baseline reproduction to convert the refined idea, dataset facts, baseline evidence, and evaluation contract into a technical spec and MVP architecture.
+Read these first:
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

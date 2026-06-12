@@ -33,7 +33,7 @@ Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.
 
 ## How To Run
 
-`$iterate plan`, `$iterate run`, and `$iterate eval`.
+`$run` for experiment execution and `$analyze` for result decisions.
 
 ## Completion Effect
 
@@ -41,7 +41,11 @@ Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.
 
 ## Contract Detail
 
-Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.
+Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

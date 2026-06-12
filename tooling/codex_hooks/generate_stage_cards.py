@@ -22,6 +22,10 @@ STAGE_SPECS = [
     ("WF12", "wf12_release", "WF12 Release", "release"),
 ]
 
+VISIBLE_ALIAS_TEXT = (
+    "`$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`"
+)
+
 STAGE_GROUPS = [
     (
         "Explore",
@@ -47,14 +51,17 @@ STAGE_GROUPS = [
 
 STAGE_GUIDANCE = {
     "WF0": {
-        "intent": "Initialize or refresh the workspace guidance and workflow state.",
+        "intent": (
+            "Initialize or refresh compact workspace guidance and workflow state."
+        ),
         "start": (
-            "`$init-project` for guidance setup, or `$orchestrator` for "
-            "state checks."
+            "After `$grill` reaches `grill_draft_ready`, run the internal "
+            "`init-project update-from-grill` mode. For framework setup, use "
+            "`AI_AGENT_SETUP.md`."
         ),
         "effect": (
-            "`AGENTS.md`, `CLAUDE.md`, `PROJECT_STATE.json`, and optional "
-            "scaffold are ready."
+            "`AGENTS.md`, `CLAUDE.md`, and optional README guidance are refreshed "
+            "from candidate Grill context without inventing workflow completion."
         ),
     },
     "WF1": {
@@ -62,7 +69,7 @@ STAGE_GUIDANCE = {
             "Collect early Conclusion Evidence and decide whether the idea is "
             "worth pursuing."
         ),
-        "start": "`$survey-idea` with the research idea and constraints.",
+        "start": "`$grill` when the idea still needs evidence-backed clarification.",
         "effect": (
             "`docs/Feasibility_Report.md` and evidence tables summarize "
             "viability and open questions."
@@ -72,7 +79,7 @@ STAGE_GUIDANCE = {
         "intent": (
             "Compare candidate directions and choose the strongest research path."
         ),
-        "start": "`$idea-debate` after WF1 has enough evidence to compare options.",
+        "start": "`$grill` to compare candidate directions and expose tradeoffs.",
         "effect": (
             "`docs/Idea_Debate.md` records the selected direction, alternatives, "
             "and risks."
@@ -84,8 +91,7 @@ STAGE_GUIDANCE = {
             "execution target."
         ),
         "start": (
-            "`$refine-idea` with the selected direction and unresolved "
-            "assumptions."
+            "`$grill` until the selected direction is executable enough for prepare."
         ),
         "effect": (
             "`docs/Refined_Idea.md` defines scope, hypothesis, and known "
@@ -97,8 +103,7 @@ STAGE_GUIDANCE = {
             "Make data facts explicit before baseline or architecture work starts."
         ),
         "start": (
-            "`$data-prep` after the dataset path and intended evaluation "
-            "surface are known."
+            "`$prepare` after Grill readiness records dataset sources and targets."
         ),
         "effect": (
             "Dataset stats, data facts, configs, and evidence tables are current."
@@ -109,7 +114,7 @@ STAGE_GUIDANCE = {
             "Reproduce or establish a baseline and prepare approval-facing "
             "contracts."
         ),
-        "start": "`$baseline-repro` after data facts and baseline target are clear.",
+        "start": "`$prepare` after executable baseline source provenance is approved.",
         "effect": (
             "Baseline report, baseline evidence, and draft or approved contracts "
             "are ready for later gates."
@@ -117,7 +122,7 @@ STAGE_GUIDANCE = {
     },
     "WF6": {
         "intent": "Refine the technical architecture within approved boundaries.",
-        "start": "`$refine-arch` after baseline and contract boundaries are available.",
+        "start": "`$build` after prepare has data/baseline facts and boundaries.",
         "effect": (
             "`docs/Technical_Spec.md` and glossary updates define the "
             "implementation shape."
@@ -125,7 +130,7 @@ STAGE_GUIDANCE = {
     },
     "WF7": {
         "intent": "Convert the architecture into bounded implementation slices.",
-        "start": "`$build-plan` after the technical spec is stable enough to slice.",
+        "start": "`$build` after architecture intent is stable enough to slice.",
         "effect": (
             "`docs/Implementation_Roadmap.md`, `project_map.json`, and "
             "codebase map guidance align."
@@ -134,8 +139,8 @@ STAGE_GUIDANCE = {
     "WF8": {
         "intent": "Implement one bounded code slice under the current plan.",
         "start": (
-            "`$code-expert` for first-pass planned work, or `$code-debug` "
-            "for fixes."
+            "`$build` for first-pass implementation, or `$change` for later "
+            "code deltas."
         ),
         "effect": (
             "Changed code, focused validation, and map updates are ready "
@@ -144,7 +149,7 @@ STAGE_GUIDANCE = {
     },
     "WF9": {
         "intent": "Validate the implementation before structured iteration.",
-        "start": "`$validate-run` with the acceptance commands and expected behavior.",
+        "start": "`$build` continues through validate-run postconditions.",
         "effect": (
             "`docs/Validate_Run_Report.md` records PASS, REVIEW, or FAIL "
             "with Gate Evidence."
@@ -155,7 +160,7 @@ STAGE_GUIDANCE = {
             "Run the Ralph-style loop: plan, code, run, evaluate, and decide "
             "the next round."
         ),
-        "start": "`$iterate plan`, `$iterate run`, and `$iterate eval`.",
+        "start": "`$run` for experiment execution and `$analyze` for result decisions.",
         "effect": (
             "`iteration_log.json` and `docs/40_iterations/**` capture runs, "
             "lessons, and decisions."
@@ -166,7 +171,9 @@ STAGE_GUIDANCE = {
             "Run final experiment checks against approved contracts and "
             "claim boundaries."
         ),
-        "start": "`$final-exp` after WF10 evidence supports a final evaluation.",
+        "start": (
+            "`$run` for final experiments and `$analyze` for final interpretation."
+        ),
         "effect": (
             "`docs/Final_Experiment_Matrix.md` records the final experiment "
             "plan and gate result."
@@ -177,7 +184,10 @@ STAGE_GUIDANCE = {
             "Prepare release artifacts while keeping claims inside the approved "
             "boundary."
         ),
-        "start": "`$release` after WF11 and release readiness gates are satisfied.",
+        "start": (
+            "`$write` for paper, release docs, GitHub readiness, and scoped "
+            "release gates."
+        ),
         "effect": (
             "`submission/**`, release docs, and final Gate Evidence are ready "
             "for explicit submit approval."
@@ -200,6 +210,42 @@ def _frontmatter_description(path: Path) -> str:
             value = line.split(":", 1)[1].strip()
             return value.strip('"').strip("'")
     return ""
+
+
+def _first_markdown_paragraph(path: Path) -> str:
+    if not path.exists():
+        return ""
+    text = path.read_text(encoding="utf-8")
+    if text.startswith("---"):
+        parts = text.split("---", 2)
+        if len(parts) >= 3:
+            text = parts[2]
+    lines = text.splitlines()
+    paragraph: list[str] = []
+    in_fence = False
+    for raw_line in lines:
+        line = raw_line.strip()
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if not line:
+            if paragraph:
+                break
+            continue
+        if line.startswith("#"):
+            continue
+        if line.startswith(("-", "*", "1.")):
+            if paragraph:
+                break
+            continue
+        paragraph.append(line)
+    return " ".join(paragraph)
+
+
+def _skill_description(path: Path, fallback: str) -> str:
+    return _frontmatter_description(path) or _first_markdown_paragraph(path) or fallback
 
 
 def _list_items(values: list[str]) -> str:
@@ -357,8 +403,10 @@ def render_stage_cards(root: Path) -> str:
         "# Detailed Workflow Stage Reference",
         "",
         "本文件由 `schemas/skill_contracts.json` 生成，是 detailed reference，不是",
-        "operator 的第一层入口。日常操作先从 Grill 或 Execution Supervisor",
-        "选择顶层入口；`prepare/build/iterate/release/change` 是 supervisor actions。",
+        "operator 的第一层入口。日常操作先从 visible aliases 选择：",
+        "`$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`。",
+        "内部 Skill Contract 仍然存在，但它们是 detailed reference，",
+        "不是 autocomplete 入口。",
         "",
         "只有当你需要追踪内部 WF artifact、定位某个 Skill Contract、或排查",
         "Gate/postcondition 失败时，才使用本页。完整推荐读取、声明路径、",
@@ -422,7 +470,7 @@ def render_stage_cards(root: Path) -> str:
 def render_skill_page(root: Path, contract: dict[str, Any], position: int) -> str:
     skill = str(contract.get("skill", "<unknown>"))
     skill_file = root / ".agents" / "skills" / skill / "SKILL.md"
-    description = _frontmatter_description(skill_file) or "See the skill file."
+    description = _skill_description(skill_file, "See the internal skill source.")
     source_path = f"workflow_handbook/skills/{skill}.md"
     references = [
         f"skill:{skill}",
@@ -449,6 +497,15 @@ def render_skill_page(root: Path, contract: dict[str, Any], position: int) -> st
         "## Purpose",
         "",
         description,
+        "",
+        "## Visibility",
+        "",
+        (
+            "This page is an internal Skill Contract reference. Contract triggers "
+            "below may include legacy or internal route names from "
+            "`schemas/skill_contracts.json`; they are not the `$` autocomplete "
+            f"surface. Daily operator entry is limited to {VISIBLE_ALIAS_TEXT}."
+        ),
         "",
         "## Triggers",
         "",
@@ -510,7 +567,7 @@ def render_stage_page(
     skill_file = root / ".agents" / "skills" / skill / "SKILL.md"
     guidance = STAGE_GUIDANCE[stage_id]
     description = guidance["intent"]
-    detailed_description = _frontmatter_description(skill_file) or f"{title} stage."
+    detailed_description = _skill_description(skill_file, f"{title} stage.")
     source_path = f"workflow_handbook/stages/{page_id}.md"
     references = [
         f"stage:{stage_id}",
@@ -550,6 +607,14 @@ def render_stage_page(
         "## Contract Detail",
         "",
         detailed_description,
+        "",
+        "## Trigger Visibility",
+        "",
+        (
+            "Inputs below are internal contract triggers or readiness signals. "
+            "For normal operation, start from the stage's visible alias in "
+            f"`How To Run`; the only human-facing `$` entries are {VISIBLE_ALIAS_TEXT}."
+        ),
         "",
         "## Inputs",
         "",

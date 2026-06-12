@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/iterate.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic."
+summary: "Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`."
 nav:
   section: "skills"
   position: 220
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.
+Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

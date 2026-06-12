@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/harness-maintenance.md"
 source_of_truth: true
 status: "generated"
-summary: "Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 190
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 
@@ -75,6 +79,7 @@ Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails,
 - `.claude/rules/`
 - `.claude/shared/`
 - `tooling/codex_hooks/`
+- `tooling/intent_router/`
 - `tooling/evidence/`
 - `tooling/model_api/`
 - `tooling/.tests/`

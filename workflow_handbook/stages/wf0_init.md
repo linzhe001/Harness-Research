@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/stages/wf0_init.md"
 source_of_truth: true
 status: "generated"
-summary: "Initialize or refresh the workspace guidance and workflow state."
+summary: "Initialize or refresh compact workspace guidance and workflow state."
 nav:
   section: "stages"
   position: 0
@@ -29,19 +29,23 @@ html:
 
 ## Purpose
 
-Initialize or refresh the workspace guidance and workflow state.
+Initialize or refresh compact workspace guidance and workflow state.
 
 ## How To Run
 
-`$init-project` for guidance setup, or `$orchestrator` for state checks.
+After `$grill` reaches `grill_draft_ready`, run the internal `init-project update-from-grill` mode. For framework setup, use `AI_AGENT_SETUP.md`.
 
 ## Completion Effect
 
-`AGENTS.md`, `CLAUDE.md`, `PROJECT_STATE.json`, and optional scaffold are ready.
+`AGENTS.md`, `CLAUDE.md`, and optional README guidance are refreshed from candidate Grill context without inventing workflow completion.
 
 ## Contract Detail
 
-WF0/bootstrap wrapper for staged `CLAUDE.md` generation and updates. Use when the user wants the compact project snapshot initialized or refreshed while preserving the original staged template behavior.
+Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.
+
+## Trigger Visibility
+
+Inputs below are internal contract triggers or readiness signals. For normal operation, start from the stage's visible alias in `How To Run`; the only human-facing `$` entries are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Inputs
 

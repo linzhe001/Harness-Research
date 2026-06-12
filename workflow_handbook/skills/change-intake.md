@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/change-intake.md"
 source_of_truth: true
 status: "generated"
-summary: "Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer."
+summary: "Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits."
 nav:
   section: "skills"
   position: 390
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer.
+Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

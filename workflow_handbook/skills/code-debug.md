@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/code-debug.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, project_map, or Codebase_Map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 180
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for post-WF8 repository implementation code modification and debugging. Use for planned iteration changes, bug fixes, or tightly scoped performance edits under src, scripts, configs, project_map, or Codebase_Map. Do not use for Codex hooks, skill contracts, skill routing, or permission policy; use harness-maintenance for those.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

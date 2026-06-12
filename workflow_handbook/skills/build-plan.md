@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/build-plan.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 160
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

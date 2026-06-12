@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/protocol-drift-check.md"
 source_of_truth: true
 status: "generated"
-summary: "Check whether dynamic research protocol drafts are stale before baseline, iteration, final experiment, or release gates."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 50
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Check whether dynamic research protocol drafts are stale before baseline, iteration, final experiment, or release gates.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

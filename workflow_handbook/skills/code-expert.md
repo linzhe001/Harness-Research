@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/code-expert.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 170
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-response.md"
 source_of_truth: true
 status: "generated"
-summary: "Run the optional auto-paper reviewer-response branch. Use when Codex needs to handle rebuttal writing, revision response letters, reviewer comment maps, response strategy, or revision commitment registers for an academic manuscript."
+summary: "Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work."
 nav:
   section: "skills"
   position: 310
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Run the optional auto-paper reviewer-response branch. Use when Codex needs to handle rebuttal writing, revision response letters, reviewer comment maps, response strategy, or revision commitment registers for an academic manuscript.
+Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work.
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

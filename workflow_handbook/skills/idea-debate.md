@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/idea-debate.md"
 source_of_truth: true
 status: "generated"
-summary: "Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 70
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 

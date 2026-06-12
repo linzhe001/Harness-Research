@@ -54,13 +54,13 @@ what you want
 | 我想做什么 | 顶层入口 | 具体动作 | 先看什么状态或产物 | 什么时候停下来 |
 | --- | --- | --- | --- | --- |
 | 澄清粗糙 research idea | Grill | `harness grill` 或 `$grill` | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
-| 获取或验证数据集和 baseline | Execution Supervisor | `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、contract approval decision |
-| 判断能否进入执行 | Execution Supervisor | `prepare --dry-run` | readiness preflight 和 Gate ledger | readiness 输入缺失、无效或过期 |
+| 获取或验证数据集和 baseline | Execution Supervisor | `$prepare` / `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、worker/gate failure |
+| 判断能否进入执行 | Execution Supervisor | `$prepare` / `prepare --dry-run` | readiness preflight 和 Gate ledger | readiness 输入缺失、无效或过期 |
 | 处理 pending request | Execution Supervisor | `workflow_ctl status --json`，然后 `workflow_ctl approve ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
-| 推进 planned slice 的 build / validate | Execution Supervisor | `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、postcondition validation、Validate Run Report | 缺输入、worker 失败、Gate ledger 无效或 validate-run postconditions 未通过 |
-| 跑多轮实验 | Execution Supervisor | `$auto-iterate-goal check`，然后 `iterate` | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |
-| 成熟代码库收到新需求 | Execution Supervisor | `change` | Change Request JSON 和 route confidence | route 影响 evaluation、claim boundary、architecture 或 new research direction |
-| 准备 release / submit action | Execution Supervisor | `release --action validate|package|submit` | WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、approval 缺失或 claim 超出证据 |
+| 推进 planned slice 的 build / validate | Execution Supervisor | `$build` / `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、postcondition validation、Validate Run Report | 缺输入、worker 失败、Gate ledger 无效或 validate-run postconditions 未通过 |
+| 跑多轮实验 | Execution Supervisor | `$run`，必要时接 `$analyze` | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |
+| 成熟代码库收到新需求 | Execution Supervisor | `$change` | Change Request JSON 和 route confidence | route 影响 evaluation、claim boundary、architecture 或 new research direction |
+| 写论文、完善 GitHub 或准备 release | Execution Supervisor | `$write` / scoped release action | manuscript artifacts、WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、approval 缺失或 claim 超出证据 |
 | 排查内部 node 失败 | Detailed Reference | Stage / Skill lookup | Stage page、Skill page、declared artifacts、Gate ledger | 失败需要 human steering 或 contract change |
 
 常用状态命令：
@@ -80,8 +80,9 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
 ## Boundaries
 
 - 顶层入口只选择 operating mode；它不批准 contracts 或 claims。
-- `prepare/build/iterate/release/change` 是 Execution Supervisor actions，
-  不是额外的第一层入口。
+- `$prepare/$build/$run/$analyze/$write/$change` 是 visible aliases；
+  `workflow-supervisor`, `iterate`, `evaluate`, `auto-paper`, `change-intake`
+  等是内部 Skill Contract source，不是 autocomplete 入口。
 - `status --json` 和 `tail --jsonl` 是稳定的 machine-readable surface；
   automation 不能解析 prose summary。
 - Review Packet、HTML page、hover preview 和 hook notice 是 decision aids，

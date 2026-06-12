@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/doc-compiler.md"
 source_of_truth: true
 status: "generated"
-summary: "Compile current project documents from explicit evidence chains. Use when refreshing contract, fact, protocol, or release docs that need auditable evidence."
+summary: "Read these first:"
 nav:
   section: "skills"
   position: 10
@@ -29,7 +29,11 @@ html:
 
 ## Purpose
 
-Compile current project documents from explicit evidence chains. Use when refreshing contract, fact, protocol, or release docs that need auditable evidence.
+Read these first:
+
+## Visibility
+
+This page is an internal Skill Contract reference. Contract triggers below may include legacy or internal route names from `schemas/skill_contracts.json`; they are not the `$` autocomplete surface. Daily operator entry is limited to `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change`.
 
 ## Triggers
 
