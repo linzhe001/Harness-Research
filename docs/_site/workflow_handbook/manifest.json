@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T11:46:38Z",
+  "generated_at": "2026-06-12T12:28:56Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Harness Workflow Handbook",
@@ -85,6 +85,41 @@
         "skill:iterate",
         "term:Human Approval"
       ]
+    },
+    {
+      "doc_id": "pages__cli",
+      "doc_kind": "concept",
+      "title": "CLI",
+      "source_path": "workflow_handbook/pages/cli.md",
+      "html_path": "docs/_site/workflow_handbook/pages/cli.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "cli",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Top-level command and runtime entry surface for Harness workflow operations.",
+      "references": [
+        "page:workflow_supervisor_model",
+        "page:operator_task_index"
+      ]
+    },
+    {
+      "doc_id": "pages__codebase",
+      "doc_kind": "concept",
+      "title": "Codebase",
+      "source_path": "workflow_handbook/pages/codebase.md",
+      "html_path": "docs/_site/workflow_handbook/pages/codebase.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "codebase",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "Where the framework code, workflow guidance, runtime state, and generated views live.",
+      "references": []
     },
     {
       "doc_id": "pages__evidence_approval_model",
@@ -233,6 +268,26 @@
         "skill:change-intake",
         "term:Gate Evidence",
         "term:Human Approval"
+      ]
+    },
+    {
+      "doc_id": "pages__overview",
+      "doc_kind": "overview",
+      "title": "Overview",
+      "source_path": "workflow_handbook/pages/overview.md",
+      "html_path": "docs/_site/workflow_handbook/pages/overview.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "overview",
+      "page_kind": "overview",
+      "source_type": "hand_authored",
+      "summary": "Top-level orientation for the static Harness workflow site.",
+      "references": [
+        "page:operator_handbook",
+        "page:codebase",
+        "page:cli"
       ]
     },
     {
@@ -1433,6 +1488,32 @@
         "source:schemas/skill_contracts.json#validate-run",
         "term:Gate Evidence"
       ]
+    }
+  ],
+  "topbar": [
+    {
+      "doc_id": "pages__overview",
+      "label": "Overview",
+      "source_path": "workflow_handbook/pages/overview.md",
+      "children": []
+    },
+    {
+      "doc_id": "pages__codebase",
+      "label": "Codebase",
+      "source_path": "workflow_handbook/pages/codebase.md",
+      "children": []
+    },
+    {
+      "doc_id": "pages__cli",
+      "label": "CLI",
+      "source_path": "workflow_handbook/pages/cli.md",
+      "children": []
+    },
+    {
+      "doc_id": "Workflow_Operator_Handbook",
+      "label": "Handbook",
+      "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+      "children": []
     }
   ],
   "navigation": [

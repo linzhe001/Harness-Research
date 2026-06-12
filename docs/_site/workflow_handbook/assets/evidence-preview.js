@@ -116,3 +116,60 @@
     };
   }
 })();
+
+(function () {
+  document.querySelectorAll("[data-terminal]").forEach((terminal) => {
+    const dataEl = terminal.querySelector("[data-terminal-data]");
+    const current = terminal.querySelector("[data-terminal-current]");
+    const output = terminal.querySelector("[data-terminal-output]");
+    const copy = terminal.querySelector("[data-terminal-copy]");
+    const buttons = Array.from(
+      terminal.querySelectorAll("[data-terminal-index]")
+    );
+    if (!dataEl || !current || !output || !buttons.length) return;
+
+    let commands = [];
+    try {
+      commands = JSON.parse(dataEl.textContent || "[]");
+    } catch (error) {
+      return;
+    }
+
+    function commandAt(index) {
+      return commands[index] || commands[0] || {};
+    }
+
+    function select(index) {
+      const command = commandAt(index);
+      current.textContent = command.command || "";
+      output.textContent = command.output || "";
+      buttons.forEach((button) => {
+        const isActive = Number(button.dataset.terminalIndex) === index;
+        button.classList.toggle("active", isActive);
+      });
+      if (copy) copy.textContent = "Copy command";
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        select(Number(button.dataset.terminalIndex || 0));
+      });
+    });
+
+    if (copy) {
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(current.textContent || "");
+          copy.textContent = "Copied";
+        } catch (error) {
+          copy.textContent = "Select command";
+        }
+        window.setTimeout(() => {
+          copy.textContent = "Copy command";
+        }, 1600);
+      });
+    }
+
+    select(0);
+  });
+})();

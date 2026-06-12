@@ -4,6 +4,32 @@
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+  "topbar": [
+    {
+      "page_id": "overview",
+      "label": "Overview",
+      "source_path": "workflow_handbook/pages/overview.md",
+      "generated": false
+    },
+    {
+      "page_id": "codebase",
+      "label": "Codebase",
+      "source_path": "workflow_handbook/pages/codebase.md",
+      "generated": false
+    },
+    {
+      "page_id": "cli",
+      "label": "CLI",
+      "source_path": "workflow_handbook/pages/cli.md",
+      "generated": false
+    },
+    {
+      "page_id": "operator_handbook",
+      "label": "Handbook",
+      "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
+      "generated": false
+    }
+  ],
   "sections": [
     {
       "id": "start",

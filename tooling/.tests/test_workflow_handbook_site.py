@@ -240,14 +240,54 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     index_html = (
         tmp_path / "docs" / "_site" / "workflow_handbook" / "index.html"
     ).read_text(encoding="utf-8")
+    handbook_html = (
+        tmp_path
+        / "docs"
+        / "_site"
+        / "workflow_handbook"
+        / "Workflow_Operator_Handbook.html"
+    ).read_text(encoding="utf-8")
+    codebase_html = (
+        tmp_path
+        / "docs"
+        / "_site"
+        / "workflow_handbook"
+        / "pages"
+        / "codebase.html"
+    ).read_text(encoding="utf-8")
+    cli_html = (
+        tmp_path / "docs" / "_site" / "workflow_handbook" / "pages" / "cli.html"
+    ).read_text(encoding="utf-8")
+    codebase_shell = codebase_html.split(
+        '<script type="application/json" id="evidence-preview-data">',
+        1,
+    )[0]
+    cli_shell = cli_html.split(
+        '<script type="application/json" id="evidence-preview-data">',
+        1,
+    )[0]
     root_index_html = (tmp_path / "docs" / "_site" / "index.html").read_text(
         encoding="utf-8"
     )
     css = (
         tmp_path / "docs" / "_site" / "workflow_handbook" / "assets" / "site.css"
     ).read_text(encoding="utf-8")
+    js = (
+        tmp_path
+        / "docs"
+        / "_site"
+        / "workflow_handbook"
+        / "assets"
+        / "evidence-preview.js"
+    ).read_text(encoding="utf-8")
 
     assert manifest["reference_mode"] == "workflow-handbook"
+    assert [item["label"] for item in manifest["topbar"]] == [
+        "Overview",
+        "Codebase",
+        "CLI",
+        "Handbook",
+    ]
     assert manifest["navigation"][1]["label"] == "Operate"
     assert manifest["navigation"][1]["items"][0]["label"] == "Action Index"
     assert manifest["navigation"][1]["items"][1]["label"] == "Runtime Routing"
@@ -257,39 +297,73 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     ] == ["grill contract", "workflow-supervisor runtime"]
     assert manifest["navigation"][2]["label"] == "Detailed Reference"
     assert manifest["navigation"][2]["items"][1]["label"] == "Stage Reference"
+    assert manifest["navigation"][2]["items"][2]["label"] == "Skill Reference"
     assert 'href="assets/site.css"' in index_html
     assert 'src="assets/evidence-preview.js"' in index_html
-    assert '<details class="nav-section" open>' in index_html
-    assert 'class="nav-folder"' in index_html
+    assert '<body class="has-topbar">' in index_html
+    assert '<nav class="topbar" aria-label="Primary">' in index_html
+    assert '<a class="topbar-brand" href="index.html">' in index_html
+    assert '<a class="active" href="index.html">Overview</a>' in index_html
+    assert '<a href="pages/codebase.html">Codebase</a>' in index_html
+    assert '<a href="pages/cli.html">CLI</a>' in index_html
+    assert '<a href="Workflow_Operator_Handbook.html">Handbook</a>' in index_html
+    assert '<p class="site-eyebrow">Section</p><h1>Overview</h1>' in index_html
+    assert '<nav class="section-nav" aria-label="Sections">' in index_html
+    assert '<details class="nav-section"' not in index_html
+    assert '<nav class="topbar" aria-label="Primary">' in html
+    assert '<a href="../index.html">Overview</a>' in html
+    assert '<a href="codebase.html">Codebase</a>' in html
+    assert '<a href="cli.html">CLI</a>' in html
+    handbook_link = (
+        '<a class="active" href="../Workflow_Operator_Handbook.html">Handbook</a>'
+    )
+    assert handbook_link in html
+    assert '<details class="nav-section" open>' in handbook_html
+    assert 'class="nav-folder"' in handbook_html
+    assert "<title>Overview - Harness Workflow Handbook</title>" in index_html
     assert "<title>Workflow Operator Handbook - Harness Workflow Handbook</title>" in (
-        index_html
+        handbook_html
     )
     assert (
         "Source: <code>workflow_handbook/Workflow_Operator_Handbook.md</code>"
-        in index_html
+        in handbook_html
     )
+    assert "Source: <code>workflow_handbook/pages/overview.md</code>" in index_html
     assert '<h2 id="start-here">Start Here</h2>' in index_html
     assert '<h2 id="mental-model">Mental Model</h2>' in index_html
-    assert '<h2 id="quick-action-index">Quick Action Index</h2>' in index_html
-    assert '<h2 id="visible-aliases">Visible Aliases</h2>' in index_html
-    assert '<aside class="callout callout-tip">' in index_html
+    assert '<h2 id="quick-action-index">Quick Action Index</h2>' in handbook_html
+    assert '<h2 id="visible-aliases">Visible Aliases</h2>' in handbook_html
+    assert '<aside class="callout callout-tip">' in handbook_html
     assert '<nav class="page-rail"><strong>On this page</strong>' in index_html
-    assert 'href="#quick-action-index"' in index_html
+    assert 'href="#start-here"' in index_html
     assert 'content="0; url=workflow_handbook/index.html"' in root_index_html
     assert 'href="workflow_handbook/index.html"' in root_index_html
     assert "Opening the rendered handbook." in root_index_html
-    assert 'href="Workflow_Stage_Cards.html"' in index_html
-    assert "Operate" in index_html
-    assert "Action Index" in index_html
-    assert "Runtime Routing" in index_html
-    assert "Detailed Reference" in index_html
-    assert "Stage Reference" in index_html
+    assert 'href="Workflow_Stage_Cards.html"' in handbook_html
+    assert "Operate" in handbook_html
+    assert "Action Index" in handbook_html
+    assert "Runtime Routing" in handbook_html
+    assert "Detailed Reference" in handbook_html
+    assert "Stage Reference" in handbook_html
+    assert "Codebase" in index_html
+    assert "Detailed Reference" not in codebase_shell
+    assert "Stage Reference" not in codebase_shell
+    assert "Detailed Reference" not in cli_shell
+    assert "Stage Reference" not in cli_shell
+    assert 'class="web-terminal" data-terminal' in cli_html
+    assert 'data-terminal-current' in cli_html
+    assert 'data-terminal-output' in cli_html
+    assert 'data-terminal-data' in cli_html
+    assert "tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json" in (
+        cli_html
+    )
+    assert "Static example output, not Gate Evidence" in cli_html
     assert "Workflow Details" not in index_html
     assert "Stage Details" not in index_html
     assert "Run The Workflow" not in index_html
-    assert "Detailed Workflow Map" in index_html
-    assert "<summary>Maintenance</summary>" not in index_html
-    assert 'href="plans/HTML_Rendering_Handbook_Plan.html"' not in index_html
+    assert "Detailed Workflow Map" in handbook_html
+    assert "<summary>Maintenance</summary>" not in handbook_html
+    assert 'href="plans/HTML_Rendering_Handbook_Plan.html"' not in handbook_html
     assert 'href="../assets/site.css"' in html
     assert 'src="../assets/evidence-preview.js"' in html
     assert 'data-ref="skill:docs-site"' in html
@@ -300,8 +374,15 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert '<h3 id="wf12-release">WF12 Release</h3>' in stage_cards_html
     assert 'data-ref="term:Gate Evidence"' in layers_html
     assert 'href="workflow_terms.html#gate-evidence"' in layers_html
+    assert "workflow_handbook/pages/codebase.md" in codebase_html
+    assert "workflow_handbook/pages/cli.md" in cli_html
     assert "Harness Workflow Handbook" in html
     assert "grid-template-columns: minmax(248px, 280px) minmax(0, 1fr)" in css
+    assert ".topbar" in css
+    assert ".topbar-links a.active" in css
+    assert ".section-nav" in css
+    assert "body.has-topbar .layout" in css
+    assert "body.has-topbar .sidebar" in css
     assert ".content-inner" in css
     assert ".page-grid" in css
     assert ".page-rail" in css
@@ -313,6 +394,12 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert ".code-block-terminal" in css
     assert ".code-block-data" in css
     assert ".code-block-source" in css
+    assert ".web-terminal" in css
+    assert ".terminal-shell" in css
+    assert ".terminal-command-list" in css
+    assert ".terminal-screen" in css
+    assert "[data-terminal]" in js
+    assert "navigator.clipboard.writeText" in js
     assert "letter-spacing: 0" in css
     assert "--font-mono: ui-monospace" in css
     assert '"Cascadia Mono"' in css

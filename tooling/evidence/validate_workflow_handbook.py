@@ -268,6 +268,19 @@ def validate_navigation(workspace_root: Path, pages: list[HandbookPage]) -> list
     )
     seen_page_ids: set[str] = set()
     nav_source_paths: set[str] = set()
+    for item in iter_nav_items(data.get("topbar", [])):
+        page_id = item.get("page_id")
+        source_path = item.get("source_path")
+        if isinstance(page_id, str):
+            if page_id in seen_page_ids:
+                errors.append(f"{NAV_CONFIG}: duplicate topbar page_id {page_id}")
+            seen_page_ids.add(page_id)
+        if isinstance(source_path, str):
+            nav_source_paths.add(source_path)
+            if not (workspace_root / source_path).exists():
+                errors.append(f"{NAV_CONFIG}: missing source_path {source_path}")
+
+    seen_page_ids.clear()
     for section in data.get("sections", []):
         if not isinstance(section, dict):
             continue

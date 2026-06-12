@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T11:46:31Z",
+  "generated_at": "2026-06-12T12:28:56Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -2687,6 +2687,32 @@
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
     },
+    "page:cli": {
+      "ref": "page:cli",
+      "kind": "page",
+      "title": "CLI",
+      "summary": "Top-level command and runtime entry surface for Harness workflow operations.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/pages/cli.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "CLI",
+        "body": "CLI: Top-level command and runtime entry surface for Harness workflow operations.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
     "page:code-debug": {
       "ref": "page:code-debug",
       "kind": "page",
@@ -2757,6 +2783,32 @@
       "preview": {
         "title": "code-review",
         "body": "code-review: Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:codebase": {
+      "ref": "page:codebase",
+      "kind": "page",
+      "title": "Codebase",
+      "summary": "Where the framework code, workflow guidance, runtime state, and generated views live.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/pages/codebase.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "Codebase",
+        "body": "Codebase: Where the framework code, workflow guidance, runtime state, and generated views live.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3329,6 +3381,32 @@
       "preview": {
         "title": "orchestrator",
         "body": "orchestrator: Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly.",
+        "format": "plain",
+        "source_excerpt": null,
+        "excerpt_hash": null,
+        "truncated": false
+      },
+      "related_refs": [],
+      "last_validated_by": "build_workflow_handbook_reference_index.py"
+    },
+    "page:overview": {
+      "ref": "page:overview",
+      "kind": "page",
+      "title": "Overview",
+      "summary": "Top-level orientation for the static Harness workflow site.",
+      "truth_status": "source_of_truth",
+      "owner": "maintainer",
+      "source_paths": [
+        {
+          "path": "workflow_handbook/pages/overview.md",
+          "anchor": null,
+          "line": null,
+          "role": "handbook_page"
+        }
+      ],
+      "preview": {
+        "title": "Overview",
+        "body": "Overview: Top-level orientation for the static Harness workflow site.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -8380,6 +8458,58 @@
         "target_html": null
       }
     ],
+    "workflow_handbook/pages/cli.md": [
+      {
+        "ref": "page:workflow_supervisor_model",
+        "source_path": "workflow_handbook/pages/cli.md",
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
+        "line": 57,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
+      },
+      {
+        "ref": "page:workflow_supervisor_model",
+        "source_path": "workflow_handbook/pages/cli.md",
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
+        "line": 67,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
+      },
+      {
+        "ref": "page:operator_task_index",
+        "source_path": "workflow_handbook/pages/cli.md",
+        "marker": "[[page:operator_task_index|Action Index]]",
+        "line": 68,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
+      }
+    ],
+    "workflow_handbook/pages/codebase.md": [
+      {
+        "ref": "page:workflow_layers",
+        "source_path": "workflow_handbook/pages/codebase.md",
+        "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
+        "line": 71,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
+      },
+      {
+        "ref": "page:markdown_to_html_preview_chain",
+        "source_path": "workflow_handbook/pages/codebase.md",
+        "marker": "[[page:markdown_to_html_preview_chain|HTML Preview Chain]]",
+        "line": 72,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
+      },
+      {
+        "ref": "page:hooks_permissions_model",
+        "source_path": "workflow_handbook/pages/codebase.md",
+        "marker": "[[page:hooks_permissions_model|Hooks And Permissions]]",
+        "line": 73,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
+      }
+    ],
     "workflow_handbook/pages/evidence_approval_model.md": [
       {
         "ref": "page:workflow_terms",
@@ -8648,6 +8778,56 @@
         "line": 111,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
+      }
+    ],
+    "workflow_handbook/pages/overview.md": [
+      {
+        "ref": "page:codebase",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:codebase|Codebase]]",
+        "line": 55,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/codebase.html"
+      },
+      {
+        "ref": "page:cli",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:cli|CLI]]",
+        "line": 56,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/cli.html"
+      },
+      {
+        "ref": "page:operator_handbook",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:operator_handbook|Handbook]]",
+        "line": 57,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/Workflow_Operator_Handbook.html"
+      },
+      {
+        "ref": "page:codebase",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:codebase|Codebase]]",
+        "line": 61,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/codebase.html"
+      },
+      {
+        "ref": "page:cli",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:cli|CLI]]",
+        "line": 62,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/pages/cli.html"
+      },
+      {
+        "ref": "page:operator_handbook",
+        "source_path": "workflow_handbook/pages/overview.md",
+        "marker": "[[page:operator_handbook|Handbook]]",
+        "line": 63,
+        "status": "resolved",
+        "target_html": "docs/_site/workflow_handbook/Workflow_Operator_Handbook.html"
       }
     ],
     "workflow_handbook/pages/site_modes.md": [

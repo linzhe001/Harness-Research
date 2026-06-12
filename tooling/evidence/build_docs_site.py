@@ -30,6 +30,89 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 TERMINAL_CODE_LANGUAGES = {"bash", "console", "sh", "shell", "terminal", "zsh"}
 DIAGRAM_CODE_LANGUAGES = {"plain", "plaintext", "text", "txt"}
 DATA_CODE_LANGUAGES = {"json", "toml", "yaml", "yml"}
+CLI_TERMINAL_COMMANDS = [
+    {
+        "label": "Status",
+        "caption": "inspect runtime",
+        "command": "tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json",
+        "output": "\n".join(
+            [
+                "# static example output",
+                "{",
+                '  "ok": true,',
+                '  "controller": "workflow-supervisor",',
+                '  "runtime_state": ".workflow_supervisor/**",',
+                '  "approval": "not granted by status"',
+                "}",
+            ]
+        ),
+    },
+    {
+        "label": "Prepare",
+        "caption": "dry-run route",
+        "command": (
+            "tooling/workflow_supervisor/scripts/workflow_ctl.sh start "
+            '--segment prepare --goal "<goal>" --dry-run'
+        ),
+        "output": "\n".join(
+            [
+                "# static example output",
+                "route: prepare",
+                "mode: dry-run",
+                "writes: none",
+                "next: inspect generated plan before accepting any contract",
+            ]
+        ),
+    },
+    {
+        "label": "Build",
+        "caption": "supervised run",
+        "command": (
+            "tooling/workflow_supervisor/scripts/workflow_ctl.sh start "
+            '--segment build --goal "<goal>" --auto'
+        ),
+        "output": "\n".join(
+            [
+                "# static example output",
+                "route: build",
+                "mode: supervised auto",
+                "expected_artifacts: code patch, command evidence, gate ledger",
+                "approval: still requires operator review when a gate asks for it",
+            ]
+        ),
+    },
+    {
+        "label": "Change",
+        "caption": "route delta",
+        "command": (
+            "tooling/workflow_supervisor/scripts/workflow_ctl.sh start "
+            '--segment change --goal "<new request>" --json'
+        ),
+        "output": "\n".join(
+            [
+                "# static example output",
+                "{",
+                '  "route": "change",',
+                '  "intake": "classify mature-codebase delta",',
+                '  "claim_boundary": "must be restated from current evidence"',
+                "}",
+            ]
+        ),
+    },
+    {
+        "label": "Validate",
+        "caption": "node checks",
+        "command": "tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes",
+        "output": "\n".join(
+            [
+                "# static example output",
+                "nodes: checked",
+                "contracts: checked",
+                "result: use real command output as Gate Evidence, not this preview",
+            ]
+        ),
+    },
+]
 
 STYLE_CSS = """
 :root {
@@ -85,6 +168,56 @@ a:hover { text-decoration: underline; }
   grid-template-columns: minmax(248px, 280px) minmax(0, 1fr);
   min-height: 100vh;
 }
+body.has-topbar .layout {
+  min-height: calc(100vh - 57px);
+}
+.topbar {
+  background: color-mix(in srgb, var(--paper), var(--nav-bg) 55%);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.topbar-inner {
+  align-items: center;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 28px;
+}
+.topbar-brand {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.topbar-links {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.topbar-links a {
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.3;
+  padding: 7px 10px;
+}
+.topbar-links a:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+.topbar-links a.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
 .sidebar {
   border-right: 1px solid var(--line);
   background: var(--nav-bg);
@@ -93,6 +226,10 @@ a:hover { text-decoration: underline; }
   top: 0;
   height: 100vh;
   overflow: auto;
+}
+body.has-topbar .sidebar {
+  height: calc(100vh - 57px);
+  top: 57px;
 }
 .sidebar-header {
   border-bottom: 1px solid var(--line);
@@ -177,6 +314,24 @@ a:hover { text-decoration: underline; }
 .nav-section a:hover,
 .nav-folder > summary a.active,
 .nav-folder > summary a:hover {
+  background: var(--paper);
+  box-shadow: inset 3px 0 0 var(--accent);
+  text-decoration: none;
+}
+.section-nav {
+  display: grid;
+  gap: 4px;
+}
+.section-nav a {
+  border-radius: 6px;
+  color: var(--ink);
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  padding: 8px 9px;
+}
+.section-nav a.active,
+.section-nav a:hover {
   background: var(--paper);
   box-shadow: inset 3px 0 0 var(--accent);
   text-decoration: none;
@@ -391,6 +546,172 @@ blockquote p:last-child {
   background: #0b1220;
   color: #dbeafe;
 }
+.web-terminal {
+  font-family: var(--font-sans);
+  margin: 0 0 32px;
+}
+.terminal-shell {
+  background: #0b1220;
+  border: 1px solid #22304d;
+  border-radius: 8px;
+  box-shadow: 0 22px 54px rgba(8, 13, 24, 0.24);
+  color: #dbeafe;
+  overflow: hidden;
+}
+.terminal-toolbar {
+  align-items: center;
+  background: #111827;
+  border-bottom: 1px solid #22304d;
+  color: #cbd5e1;
+  display: flex;
+  gap: 12px;
+  min-height: 40px;
+  padding: 8px 14px;
+}
+.terminal-toolbar strong {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+.terminal-toolbar span:last-child {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-left: auto;
+}
+.terminal-dots {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.terminal-dots span {
+  background: #ef4444;
+  border-radius: 999px;
+  height: 10px;
+  width: 10px;
+}
+.terminal-dots span:nth-child(2) { background: #eab308; }
+.terminal-dots span:nth-child(3) { background: #22c55e; }
+.terminal-body {
+  display: grid;
+  grid-template-columns: minmax(176px, 224px) minmax(0, 1fr);
+  min-height: 390px;
+}
+.terminal-command-list {
+  background: #0f172a;
+  border-right: 1px solid #22304d;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+.terminal-command-list button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #cbd5e1;
+  cursor: pointer;
+  font: inherit;
+  min-height: 56px;
+  padding: 9px 10px;
+  text-align: left;
+}
+.terminal-command-list button:hover,
+.terminal-command-list button.active {
+  background: #172554;
+  border-color: #31547f;
+  color: #eff6ff;
+}
+.terminal-command-list button span {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.terminal-command-list button small {
+  color: #94a3b8;
+  display: block;
+  font-size: 11px;
+  line-height: 1.25;
+  margin-top: 4px;
+}
+.terminal-screen {
+  background: #0b1220;
+  min-width: 0;
+  padding: 18px;
+}
+.terminal-status-line {
+  color: #94a3b8;
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.terminal-prompt {
+  align-items: flex-start;
+  background: #080d18;
+  border: 1px solid #22304d;
+  border-radius: 7px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 13px 14px;
+}
+.terminal-prompt span {
+  color: #38bdf8;
+  font-family: var(--font-mono);
+}
+.terminal-prompt code {
+  background: transparent;
+  border-radius: 0;
+  color: #f8fafc;
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  padding: 0;
+}
+.terminal-output {
+  background: #080d18;
+  border: 1px solid #22304d;
+  border-radius: 7px;
+  color: #c7d2fe;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 14px 0 0;
+  min-height: 168px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+.terminal-actions {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.terminal-actions button {
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #172554;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  padding: 7px 10px;
+}
+.terminal-docs {
+  margin-top: 10px;
+}
 code {
   background: #eef2f6;
   border-radius: 4px;
@@ -481,12 +802,24 @@ th {
 }
 @media (max-width: 860px) {
   .layout { display: block; }
+  .topbar-inner {
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 18px;
+  }
+  .topbar-links {
+    justify-content: flex-start;
+  }
   .sidebar {
     border-bottom: 1px solid var(--line);
     border-right: 0;
     height: auto;
     max-height: 48vh;
     position: static;
+  }
+  body.has-topbar .sidebar {
+    height: auto;
+    top: 0;
   }
   .sidebar h1 {
     margin-bottom: 12px;
@@ -501,10 +834,34 @@ th {
     margin-left: 4px;
     padding-left: 8px;
   }
+  .terminal-body {
+    grid-template-columns: 1fr;
+  }
+  .terminal-command-list {
+    border-bottom: 1px solid #22304d;
+    border-right: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .content { padding: 22px 14px 48px; }
   article { padding: 0; }
 }
 @media (max-width: 520px) {
+  .topbar-inner {
+    display: block;
+  }
+  .topbar-brand {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .topbar-links a {
+    padding: 6px 8px;
+  }
+  .terminal-command-list {
+    grid-template-columns: 1fr;
+  }
+  .terminal-toolbar {
+    align-items: flex-start;
+  }
   article {
     margin-left: -14px;
     margin-right: -14px;
@@ -633,6 +990,63 @@ PREVIEW_JS = """
         .join(" | "),
     };
   }
+})();
+
+(function () {
+  document.querySelectorAll("[data-terminal]").forEach((terminal) => {
+    const dataEl = terminal.querySelector("[data-terminal-data]");
+    const current = terminal.querySelector("[data-terminal-current]");
+    const output = terminal.querySelector("[data-terminal-output]");
+    const copy = terminal.querySelector("[data-terminal-copy]");
+    const buttons = Array.from(
+      terminal.querySelectorAll("[data-terminal-index]")
+    );
+    if (!dataEl || !current || !output || !buttons.length) return;
+
+    let commands = [];
+    try {
+      commands = JSON.parse(dataEl.textContent || "[]");
+    } catch (error) {
+      return;
+    }
+
+    function commandAt(index) {
+      return commands[index] || commands[0] || {};
+    }
+
+    function select(index) {
+      const command = commandAt(index);
+      current.textContent = command.command || "";
+      output.textContent = command.output || "";
+      buttons.forEach((button) => {
+        const isActive = Number(button.dataset.terminalIndex) === index;
+        button.classList.toggle("active", isActive);
+      });
+      if (copy) copy.textContent = "Copy command";
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        select(Number(button.dataset.terminalIndex || 0));
+      });
+    });
+
+    if (copy) {
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(current.textContent || "");
+          copy.textContent = "Copied";
+        } catch (error) {
+          copy.textContent = "Select command";
+        }
+        window.setTimeout(() => {
+          copy.textContent = "Copy command";
+        }, 1600);
+      });
+    }
+
+    select(0);
+  });
 })();
 """.strip()
 
@@ -1242,6 +1656,86 @@ def render_markdown(
     return "\n".join(rendered)
 
 
+def render_cli_terminal() -> str:
+    payload = json.dumps(CLI_TERMINAL_COMMANDS, ensure_ascii=False).replace(
+        "</", "<\\/"
+    )
+    first = CLI_TERMINAL_COMMANDS[0]
+    buttons: list[str] = []
+    for index, command in enumerate(CLI_TERMINAL_COMMANDS):
+        css = ' class="active"' if index == 0 else ""
+        buttons.append(
+            f'<button type="button"{css} data-terminal-index="{index}">'
+            f'<span>{html.escape(command["label"])}</span>'
+            f'<small>{html.escape(command["caption"])}</small>'
+            "</button>"
+        )
+    return (
+        '<section class="web-terminal" data-terminal>'
+        '<div class="terminal-shell">'
+        '<div class="terminal-toolbar">'
+        '<span class="terminal-dots" aria-hidden="true">'
+        "<span></span><span></span><span></span>"
+        "</span>"
+        "<strong>workflow_ctl.sh</strong>"
+        "<span>Static preview</span>"
+        "</div>"
+        '<div class="terminal-body">'
+        '<div class="terminal-command-list" aria-label="Command templates">'
+        + "".join(buttons)
+        + "</div>"
+        '<div class="terminal-screen">'
+        '<div class="terminal-status-line">'
+        "<span>~/Harness-Research</span>"
+        "<span>preview only</span>"
+        "</div>"
+        '<div class="terminal-prompt">'
+        "<span>$</span>"
+        f'<code data-terminal-current>{html.escape(first["command"])}</code>'
+        "</div>"
+        '<pre class="terminal-output" data-terminal-output>'
+        f'{html.escape(first["output"])}</pre>'
+        '<div class="terminal-actions">'
+        '<button type="button" data-terminal-copy>Copy command</button>'
+        "<span>Static example output, not Gate Evidence</span>"
+        "</div>"
+        "</div>"
+        "</div>"
+        "</div>"
+        f'<script type="application/json" data-terminal-data>{payload}</script>'
+        "</section>"
+    )
+
+
+def render_cli_terminal_body(rendered_body: str) -> str:
+    terminal = render_cli_terminal()
+    marker = "</h1>"
+    if marker in rendered_body:
+        return rendered_body.replace(marker, marker + "\n" + terminal, 1)
+    return terminal + "\n" + rendered_body
+
+
+def render_page_body(
+    page: dict[str, Any],
+    markdown: str,
+    *,
+    reference_mode: str,
+    preview_data: dict[str, Any],
+    current_html: Path,
+    workspace_root: Path,
+) -> str:
+    body = render_markdown(
+        markdown,
+        reference_mode=reference_mode,
+        preview_data=preview_data,
+        current_html=current_html,
+        workspace_root=workspace_root,
+    )
+    if reference_mode == "workflow-handbook" and page.get("page_id") == "cli":
+        return render_cli_terminal_body(body)
+    return body
+
+
 def discover_markdown(source_root: Path, output_root: Path) -> list[Path]:
     excluded = {
         output_root.resolve(),
@@ -1367,6 +1861,23 @@ def navigation_for_config(
             }
         )
     return navigation
+
+
+def topbar_for_config(
+    pages: list[dict[str, Any]],
+    nav_config: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    if nav_config is None:
+        return []
+    by_source = {str(page["source_path"]): str(page["doc_id"]) for page in pages}
+    items: list[dict[str, Any]] = []
+    for item in nav_config.get("topbar", []):
+        if not isinstance(item, dict):
+            continue
+        rendered = nav_item_for_config(item, by_source)
+        if rendered is not None:
+            items.append(rendered)
+    return items
 
 
 def nav_item_contains_doc(item: dict[str, Any], current_doc_id: str | None) -> bool:
@@ -1529,7 +2040,12 @@ def render_index_body(
     return f"<h1>{html.escape(site_title)}</h1>{''.join(sections)}"
 
 
-def homepage_doc_id(navigation: list[dict[str, Any]]) -> str | None:
+def homepage_doc_id(
+    navigation: list[dict[str, Any]],
+    topbar_items: list[dict[str, Any]] | None = None,
+) -> str | None:
+    if topbar_items:
+        return str(topbar_items[0]["doc_id"])
     for group in navigation:
         pages = group.get("pages", [])
         if isinstance(pages, list) and pages:
@@ -1555,6 +2071,119 @@ def render_page_rail(headings: list[dict[str, Any]]) -> str:
     ) + "</nav>"
 
 
+def topbar_item_target(
+    *,
+    item: dict[str, Any],
+    index: int,
+    by_id: dict[str, dict[str, Any]],
+    workspace_root: Path,
+    output_root: Path,
+) -> Path:
+    if index == 0:
+        return workspace_root / output_root / "index.html"
+    doc_id = str(item["doc_id"])
+    page = by_id[doc_id]
+    return workspace_root / str(page["html_path"])
+
+
+def active_topbar_doc_id(
+    topbar_items: list[dict[str, Any]],
+    current_doc_id: str | None,
+) -> str | None:
+    if current_doc_id is None:
+        return None
+    configured = {str(item["doc_id"]) for item in topbar_items}
+    if current_doc_id in configured:
+        return current_doc_id
+    for item in topbar_items:
+        if str(item.get("label", "")).lower() == "handbook":
+            return str(item["doc_id"])
+    return None
+
+
+def topbar_label_for_doc_id(
+    topbar_items: list[dict[str, Any]],
+    current_doc_id: str | None,
+) -> str | None:
+    active_doc_id = active_topbar_doc_id(topbar_items, current_doc_id)
+    if active_doc_id is None:
+        return None
+    for item in topbar_items:
+        if str(item["doc_id"]) == active_doc_id:
+            return str(item.get("label") or active_doc_id)
+    return None
+
+
+def render_workflow_topbar(
+    *,
+    current_html: Path,
+    workspace_root: Path,
+    output_root: Path,
+    site_title: str,
+    pages: list[dict[str, Any]],
+    topbar_items: list[dict[str, Any]],
+    current_doc_id: str | None,
+) -> str:
+    if not topbar_items:
+        return ""
+    by_id = {str(page["doc_id"]): page for page in pages}
+    links: list[str] = []
+    active_doc_id = active_topbar_doc_id(topbar_items, current_doc_id)
+    for index, item in enumerate(topbar_items):
+        label = str(item.get("label") or item["doc_id"])
+        target = topbar_item_target(
+            item=item,
+            index=index,
+            by_id=by_id,
+            workspace_root=workspace_root,
+            output_root=output_root,
+        )
+        css = ' class="active"' if str(item["doc_id"]) == active_doc_id else ""
+        href = html.escape(href_between(current_html, target), quote=True)
+        links.append(f'<a{css} href="{href}">{html.escape(label)}</a>')
+    home_href = html.escape(
+        href_between(current_html, workspace_root / output_root / "index.html"),
+        quote=True,
+    )
+    return (
+        '<nav class="topbar" aria-label="Primary">'
+        '<div class="topbar-inner">'
+        f'<a class="topbar-brand" href="{home_href}">{html.escape(site_title)}</a>'
+        '<div class="topbar-links">'
+        + "".join(links)
+        + "</div></div></nav>\n"
+    )
+
+
+def render_section_sidebar(
+    *,
+    topbar_items: list[dict[str, Any]],
+    pages: list[dict[str, Any]],
+    current_doc_id: str | None,
+    current_html: Path,
+    workspace_root: Path,
+    output_root: Path,
+) -> str:
+    by_id = {str(page["doc_id"]): page for page in pages}
+    active_doc_id = active_topbar_doc_id(topbar_items, current_doc_id)
+    links: list[str] = []
+    for index, item in enumerate(topbar_items):
+        label = str(item.get("label") or item["doc_id"])
+        target = topbar_item_target(
+            item=item,
+            index=index,
+            by_id=by_id,
+            workspace_root=workspace_root,
+            output_root=output_root,
+        )
+        css = ' class="active"' if str(item["doc_id"]) == active_doc_id else ""
+        href = html.escape(href_between(current_html, target), quote=True)
+        links.append(f'<a{css} href="{href}">{html.escape(label)}</a>')
+    return '<nav class="section-nav" aria-label="Sections">' + "".join(
+        links
+    ) + "</nav>"
+
+
 def page_html(
     *,
     title: str,
@@ -1567,10 +2196,15 @@ def page_html(
     site_title: str,
     style_href: str,
     script_href: str,
+    topbar_html: str = "",
+    sidebar_eyebrow: str = "Static handbook",
+    sidebar_title: str | None = None,
 ) -> str:
     preview_json = json.dumps(preview_data, ensure_ascii=False).replace("</", "<\\/")
     status_text = f"Status: {html.escape(status)} | " if status else ""
     page_rail = render_page_rail(headings)
+    body_class = ' class="has-topbar"' if topbar_html else ""
+    sidebar_heading = sidebar_title or site_title
     return (
         "<!doctype html>\n"
         '<html lang="zh-Hans">\n'
@@ -1580,11 +2214,12 @@ def page_html(
         f"  <title>{html.escape(title)} - {html.escape(site_title)}</title>\n"
         f'  <link rel="stylesheet" href="{html.escape(style_href, quote=True)}">\n'
         "</head>\n"
-        "<body>\n"
+        f"<body{body_class}>\n"
+        f"{topbar_html}"
         '<div class="layout">\n'
         '<aside class="sidebar"><div class="sidebar-header">'
-        '<p class="site-eyebrow">Static handbook</p>'
-        f"<h1>{html.escape(site_title)}</h1></div>{nav_html}</aside>\n"
+        f'<p class="site-eyebrow">{html.escape(sidebar_eyebrow)}</p>'
+        f"<h1>{html.escape(sidebar_heading)}</h1></div>{nav_html}</aside>\n"
         '<main class="content">\n'
         '<div class="content-inner">\n'
         f'<div class="doc-meta">{status_text}Source: '
@@ -1730,6 +2365,7 @@ def build_docs_site(
         markdown_by_id[doc_id] = body
 
     navigation = navigation_for_config(pages, nav_config)
+    topbar_items = topbar_for_config(pages, nav_config)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
@@ -1739,6 +2375,7 @@ def build_docs_site(
         "reference_mode": reference_mode,
         "nav_config_path": nav_config_path.as_posix() if nav_config_path else None,
         "pages": pages,
+        "topbar": topbar_items,
         "navigation": navigation,
     }
 
@@ -1753,18 +2390,49 @@ def build_docs_site(
 
     for page in pages:
         html_path = workspace / str(page["html_path"])
-        nav_html = render_nav(
-            pages,
-            navigation,
-            str(page["doc_id"]),
-            html_path,
-            workspace,
-        )
+        current_doc_id = str(page["doc_id"])
         style_href = href_between(html_path, assets / "site.css")
         script_href = href_between(html_path, assets / "evidence-preview.js")
+        topbar_label = topbar_label_for_doc_id(topbar_items, current_doc_id)
+        is_parallel_page = topbar_label is not None and topbar_label != "Handbook"
+        if is_parallel_page:
+            nav_html = render_section_sidebar(
+                topbar_items=topbar_items,
+                pages=pages,
+                current_doc_id=current_doc_id,
+                current_html=html_path,
+                workspace_root=workspace,
+                output_root=Path(output_root),
+            )
+            sidebar_eyebrow = "Section"
+            sidebar_title = topbar_label
+        else:
+            nav_html = render_nav(
+                pages,
+                navigation,
+                current_doc_id,
+                html_path,
+                workspace,
+            )
+            sidebar_eyebrow = "Static handbook"
+            sidebar_title = site_title
+        topbar_html = (
+            render_workflow_topbar(
+                current_html=html_path,
+                workspace_root=workspace,
+                output_root=Path(output_root),
+                site_title=site_title,
+                pages=pages,
+                topbar_items=topbar_items,
+                current_doc_id=current_doc_id,
+            )
+            if reference_mode == "workflow-handbook"
+            else ""
+        )
         page_text = page_html(
             title=str(page["title"]),
-            body=render_markdown(
+            body=render_page_body(
+                page,
                 markdown_by_id[str(page["doc_id"])],
                 reference_mode=reference_mode,
                 preview_data=preview_data,
@@ -1779,16 +2447,20 @@ def build_docs_site(
             site_title=site_title,
             style_href=style_href,
             script_href=script_href,
+            topbar_html=topbar_html,
+            sidebar_eyebrow=sidebar_eyebrow,
+            sidebar_title=sidebar_title,
         )
         atomic_write_text(html_path, page_text)
 
     index_path = output / "index.html"
     pages_by_id = {str(page["doc_id"]): page for page in pages}
-    home_doc_id = homepage_doc_id(navigation)
+    home_doc_id = homepage_doc_id(navigation, topbar_items)
     if home_doc_id and home_doc_id in markdown_by_id and home_doc_id in pages_by_id:
         home_page = pages_by_id[home_doc_id]
         index_markdown = markdown_by_id[home_doc_id]
-        index_body = render_markdown(
+        index_body = render_page_body(
+            home_page,
             index_markdown,
             reference_mode=reference_mode,
             preview_data=preview_data,
@@ -1812,17 +2484,57 @@ def build_docs_site(
         index_status = None
         index_nav_doc_id = None
         index_markdown = ""
+    index_topbar_label = topbar_label_for_doc_id(topbar_items, index_nav_doc_id)
+    index_is_parallel = (
+        index_topbar_label is not None and index_topbar_label != "Handbook"
+    )
+    if index_is_parallel:
+        index_nav_html = render_section_sidebar(
+            topbar_items=topbar_items,
+            pages=pages,
+            current_doc_id=index_nav_doc_id,
+            current_html=index_path,
+            workspace_root=workspace,
+            output_root=Path(output_root),
+        )
+        index_sidebar_eyebrow = "Section"
+        index_sidebar_title = index_topbar_label
+    else:
+        index_nav_html = render_nav(
+            pages,
+            navigation,
+            index_nav_doc_id,
+            index_path,
+            workspace,
+        )
+        index_sidebar_eyebrow = "Static handbook"
+        index_sidebar_title = site_title
     index_html = page_html(
         title=index_title,
         body=index_body,
         headings=extract_page_headings(index_markdown),
         source_path=index_source,
         status=index_status,
-        nav_html=render_nav(pages, navigation, index_nav_doc_id, index_path, workspace),
+        nav_html=index_nav_html,
         preview_data=preview_data,
         site_title=site_title,
         style_href=href_between(index_path, assets / "site.css"),
         script_href=href_between(index_path, assets / "evidence-preview.js"),
+        topbar_html=(
+            render_workflow_topbar(
+                current_html=index_path,
+                workspace_root=workspace,
+                output_root=Path(output_root),
+                site_title=site_title,
+                pages=pages,
+                topbar_items=topbar_items,
+                current_doc_id=index_nav_doc_id,
+            )
+            if reference_mode == "workflow-handbook"
+            else ""
+        ),
+        sidebar_eyebrow=index_sidebar_eyebrow,
+        sidebar_title=index_sidebar_title,
     )
     atomic_write_text(index_path, index_html)
     root_index_path = root_entry_path(output)
