@@ -10,6 +10,7 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "grill"))
 
 import draft  # noqa: E402
 import questions  # noqa: E402
+import readiness  # noqa: E402
 
 
 def make_workspace(tmp_path: Path) -> Path:
@@ -209,6 +210,41 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
     assert "private auth token not recorded" in packet
     assert "Free-SurGS, Feature 3DGS" in packet
     assert "no credentials recorded" in packet
+
+
+def test_grill_readiness_cli_records_approved_sources(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+
+    code = readiness.main(
+        [
+            "--workspace-root",
+            str(root),
+            "--write-readiness",
+            "--approve-dataset",
+            "id=realx3d,source=https://huggingface.co/datasets/example/realx3d,target=data/realx3d,license=research",
+            "--approve-baseline",
+            "id=free-surgs,repo=https://github.com/example/Free-SurGS,target=baselines/free-surgs,ref=main",
+            "--source-ref",
+            "Grill Round 4 operator approval",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    data = json.loads(
+        (root / ".workflow_supervisor" / "readiness.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert data["external_download_policy"] == "allow_if_approved"
+    assert data["operator_approved_at"]
+    assert data["approved_datasets"][0]["access_status"] == "approved"
+    assert data["approved_datasets"][0]["target_path"] == "data/realx3d"
+    assert data["approved_baselines"][0]["repo"].endswith("Free-SurGS")
+    assert data["approved_baselines"][0]["target_path"] == "baselines/free-surgs"
+    assert data["target_paths"]["dataset_root"] == "data/realx3d"
+    assert data["target_paths"]["baseline_cache"] == "baselines/free-surgs"
+    assert data["inputs"][-1]["kind"] == "approval_source"
 
 
 def test_questions_render_known_lens() -> None:

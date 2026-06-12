@@ -560,20 +560,15 @@ def test_prepare_complete_acquires_dataset_and_baseline(
         ]
     )
 
-    assert code == workflow_ctl.EXIT_MANUAL_ACTION
+    assert code == workflow_ctl.EXIT_OK
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
     run_id = state["active_run_id"]
-    assert state["status"] == "paused"
-    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert state["status"] == "completed"
+    assert state["segment_status"] == "prepare_complete"
     assert "prepare_data_prep" in state["completed_nodes"]
     assert "prepare_baseline_repro" in state["completed_nodes"]
-    pending = json.loads(
-        (root / ".workflow_supervisor" / "pending_request.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert pending["reason"] == "prepare_complete_approval_required"
+    assert not (root / ".workflow_supervisor" / "pending_request.json").exists()
     assert (root / "data" / "primary" / "sample.txt").exists()
     assert (root / "baselines" / "baseline_source" / "train.py").exists()
     assert (root / "docs" / "Dataset_Stats.md").exists()
@@ -867,7 +862,7 @@ def test_resume_acquisition_plan_with_local_answer_overrides_remote_bridge(
         ]
     )
 
-    assert resume_code == workflow_ctl.EXIT_MANUAL_ACTION
+    assert resume_code == workflow_ctl.EXIT_OK
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
     run_id = state["active_run_id"]
@@ -881,7 +876,7 @@ def test_resume_acquisition_plan_with_local_answer_overrides_remote_bridge(
             / "acquisition_plan.json"
         ).read_text(encoding="utf-8")
     )
-    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert state["segment_status"] == "prepare_complete"
     assert plan["policy"]["blocked_remote_sources"] == []
     assert plan["dataset"]["entries"][0]["source"] == str(dataset_source)
     assert [item["source"] for item in plan["baselines"]["repos"]] == [
@@ -1033,20 +1028,14 @@ def test_recover_auto_resume_answered_prepare_dataset_request(
         ]
     )
 
-    assert recover_code == workflow_ctl.EXIT_MANUAL_ACTION
+    assert recover_code == workflow_ctl.EXIT_OK
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
-    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert state["segment_status"] == "prepare_complete"
     assert "prepare_data_prep" in state["completed_nodes"]
     assert "prepare_baseline_repro" in state["completed_nodes"]
     assert "prepare_data_prep" not in state["failed_nodes"]
-    new_pending = json.loads(
-        (root / ".workflow_supervisor" / "pending_request.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert new_pending["request_id"] != pending["request_id"]
-    assert new_pending["reason"] == "prepare_complete_approval_required"
+    assert not (root / ".workflow_supervisor" / "pending_request.json").exists()
     assert (root / "docs" / "Dataset_Stats.md").exists()
     assert (root / "docs" / "Baseline_Report.md").exists()
     assert (root / "data" / "dataset_manifest.json").exists()
@@ -1169,11 +1158,11 @@ def test_prepare_complete_bridges_grill_readiness_packet(
         ]
     )
 
-    assert code == workflow_ctl.EXIT_MANUAL_ACTION
+    assert code == workflow_ctl.EXIT_OK
     payload = json.loads(capsys.readouterr().out)
     state = payload["state"]
     run_id = state["active_run_id"]
-    assert state["segment_status"] == "prepare_waiting_for_approval"
+    assert state["segment_status"] == "prepare_complete"
     bridge = json.loads(
         (
             root

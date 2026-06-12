@@ -6917,22 +6917,27 @@ def continue_prepare_complete_after_supervised_nodes(
             gate_status_refs=[node_record_path.relative_to(workspace_root).as_posix()],
         )
 
-    request = create_prepare_approval_request(
-        workspace_root,
-        run_id=run_id,
-        gate_result=gate_result,
-        node_record_path=node_record_path,
-        reason="prepare_complete_approval_required",
-        unlocks_execution=True,
-    )
-    state["status"] = "paused"
-    state["segment_status"] = "prepare_waiting_for_approval"
-    state["pending_request_id"] = request["request_id"]
+    state["status"] = "completed"
+    state["segment_status"] = "prepare_complete"
+    state["current_node_id"] = None
+    state["current_attempt"] = 0
+    state["pending_request_id"] = None
     state["completed_nodes"] = list(
         dict.fromkeys([*state.get("completed_nodes", []), "prepare_review_packet"])
     )
     save_state(workspace_root, state)
-    return emit_status(workspace_root, args.json, exit_code=EXIT_MANUAL_ACTION)
+    pending = load_json_if_exists(pending_request_path(workspace_root), {})
+    if isinstance(pending, dict) and pending.get("run_id") == run_id:
+        pending_request_path(workspace_root).unlink(missing_ok=True)
+    append_event(
+        workspace_root,
+        "RUN_COMPLETED",
+        run_id=run_id,
+        segment="prepare",
+        status="completed",
+        payload={"mode": "prepare_complete"},
+    )
+    return emit_status(workspace_root, args.json)
 
 
 def start_prepare_complete(
