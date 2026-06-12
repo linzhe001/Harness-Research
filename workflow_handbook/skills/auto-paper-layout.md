@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-layout.md"
 source_of_truth: true
 status: "generated"
-summary: "Create an executable rewrite plan. Do not edit `.tex` files in layout."
+summary: "Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 280
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Create an executable rewrite plan. Do not edit `.tex` files in layout.
+Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

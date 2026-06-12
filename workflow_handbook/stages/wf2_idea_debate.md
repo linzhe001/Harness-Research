@@ -41,7 +41,7 @@ Compare candidate directions and choose the strongest research path.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

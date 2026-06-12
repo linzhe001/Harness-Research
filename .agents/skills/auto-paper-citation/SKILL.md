@@ -1,3 +1,8 @@
+---
+name: auto-paper-citation
+description: "Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Citation
 
 ## Purpose

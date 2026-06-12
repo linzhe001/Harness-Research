@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $refine-arch after data and baseline evidence to turn the refined idea into a concrete technical spec."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

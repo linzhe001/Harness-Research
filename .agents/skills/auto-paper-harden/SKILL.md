@@ -1,3 +1,8 @@
+---
+name: auto-paper-harden
+description: "Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Harden
 
 ## Purpose

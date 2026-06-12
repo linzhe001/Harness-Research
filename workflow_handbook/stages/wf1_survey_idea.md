@@ -41,7 +41,7 @@ Collect early Conclusion Evidence and decide whether the idea is worth pursuing.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

@@ -1,3 +1,8 @@
+---
+name: init-project
+description: "Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Init Project
 
 Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`.

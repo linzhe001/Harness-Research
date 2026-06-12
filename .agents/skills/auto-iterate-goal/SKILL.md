@@ -1,3 +1,8 @@
+---
+name: auto-iterate-goal
+description: "Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 ## Purpose
 
 Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.

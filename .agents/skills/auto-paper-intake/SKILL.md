@@ -1,3 +1,8 @@
+---
+name: auto-paper-intake
+description: "Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Intake
 
 ## Purpose

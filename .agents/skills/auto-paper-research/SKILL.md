@@ -1,3 +1,8 @@
+---
+name: auto-paper-research
+description: "Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Research
 
 ## Purpose

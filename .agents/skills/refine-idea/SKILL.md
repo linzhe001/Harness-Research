@@ -1,3 +1,8 @@
+---
+name: refine-idea
+description: "Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Refine Idea
 
 ## References

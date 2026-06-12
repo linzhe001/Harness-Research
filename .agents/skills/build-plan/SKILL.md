@@ -1,3 +1,8 @@
+---
+name: build-plan
+description: "Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Build Plan
 
 ## References

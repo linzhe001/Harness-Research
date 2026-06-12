@@ -41,7 +41,7 @@ Run final experiment checks against approved contracts and claim boundaries.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

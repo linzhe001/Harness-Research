@@ -1,3 +1,8 @@
+---
+name: code-review
+description: "Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Code Review
 
 Use this Skill for review-only checks. Do not edit subject code, configs,

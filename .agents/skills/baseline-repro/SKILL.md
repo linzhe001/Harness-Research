@@ -1,3 +1,8 @@
+---
+name: baseline-repro
+description: "Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Baseline Repro
 
 ## References

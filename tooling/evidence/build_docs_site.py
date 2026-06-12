@@ -34,57 +34,82 @@ DATA_CODE_LANGUAGES = {"json", "toml", "yaml", "yml"}
 STYLE_CSS = """
 :root {
   color-scheme: light;
-  --bg: #f7f8fa;
-  --panel: #ffffff;
-  --text: #17202a;
-  --muted: #5d6b7a;
-  --line: #d9dee6;
-  --accent: #0f766e;
-  --accent-soft: #dff4f0;
+  --bg: #f5f7fb;
+  --paper: #ffffff;
+  --panel: #f8fafc;
+  --nav-bg: #eef3f7;
+  --ink: #2f3337;
+  --text: #2f3337;
+  --muted: #657386;
+  --faint: #8d98a8;
+  --line: #d8dee8;
+  --line-strong: #b9c3d2;
+  --accent: #405f7c;
+  --accent-strong: #1f5f7a;
+  --accent-soft: #e6f1f4;
+  --pass: #2f7d5f;
+  --pending: #9a6a16;
+  --fail: #a64242;
+  --blocked: #6f4a8e;
   --code: #111827;
+  --shadow: 0 20px 45px rgba(36, 42, 53, 0.14);
+  --font-sans: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Charter", "Noto Serif SC", "Source Han Serif SC",
+    "Songti SC", Georgia, serif;
   --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SFMono-Regular",
     "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
 }
 * { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+}
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.68;
   background: var(--bg);
   color: var(--text);
   min-width: 0;
 }
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--accent-strong); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .layout {
   display: grid;
-  grid-template-columns: minmax(232px, 19rem) minmax(0, 1fr);
+  grid-template-columns: minmax(248px, 280px) minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
   border-right: 1px solid var(--line);
-  background: #eef2f6;
-  padding: 24px 20px;
+  background: var(--nav-bg);
+  padding: 26px 18px;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: auto;
 }
 .sidebar h1 {
-  font-size: 18px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 0;
   line-height: 1.25;
-  margin: 0 0 18px;
+  margin: 0 0 20px;
+  max-width: 18rem;
 }
 .nav-section {
-  margin: 12px 0;
+  margin: 10px 0;
 }
 .nav-section > summary {
   color: var(--muted);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
+  letter-spacing: 0;
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0 0 7px;
   text-transform: uppercase;
 }
 .nav-section > summary::-webkit-details-marker,
@@ -93,16 +118,17 @@ a:hover { text-decoration: underline; }
 }
 .nav-section > summary::before,
 .nav-folder > summary::before {
-  color: var(--muted);
-  content: "+";
+  color: var(--faint);
+  content: ">";
   display: inline-block;
-  font-weight: 700;
-  margin-right: 6px;
+  font-weight: 650;
+  margin-right: 7px;
+  transform: rotate(0deg);
   width: 10px;
 }
 .nav-section[open] > summary::before,
 .nav-folder[open] > summary::before {
-  content: "-";
+  transform: rotate(90deg);
 }
 .nav-section-body {
   padding: 1px 0 4px;
@@ -116,52 +142,160 @@ a:hover { text-decoration: underline; }
 }
 .nav-children {
   border-left: 1px solid var(--line);
-  margin-left: 13px;
-  padding-left: 8px;
+  margin-left: 12px;
+  padding-left: 9px;
 }
 .nav-section a,
 .nav-folder > summary a {
   display: block;
   border-radius: 6px;
-  color: var(--text);
+  color: var(--ink);
   font-size: 14px;
   line-height: 1.35;
-  padding: 7px 8px;
+  padding: 7px 9px;
 }
 .nav-section a.active,
 .nav-section a:hover,
 .nav-folder > summary a.active,
 .nav-folder > summary a:hover {
-  background: var(--panel);
+  background: var(--paper);
+  box-shadow: inset 3px 0 0 var(--accent);
   text-decoration: none;
 }
 .content {
-  margin: 0 auto;
-  max-width: 1120px;
   min-width: 0;
+  padding: 44px 50px 76px;
+}
+.content-inner {
+  margin: 0 auto;
+  max-width: 1180px;
   width: 100%;
-  padding: 40px 56px 72px;
+}
+.page-grid {
+  align-items: start;
+  display: grid;
+  gap: 36px;
+  grid-template-columns: minmax(0, 820px) minmax(168px, 220px);
 }
 .doc-meta {
+  align-items: center;
   color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 1.45;
+  margin-bottom: 16px;
   overflow-wrap: break-word;
 }
+.doc-meta code {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  padding: 0;
+}
+.page-rail {
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+  padding: 6px 0 6px 16px;
+  position: sticky;
+  top: 28px;
+}
+.page-rail strong {
+  color: var(--ink);
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.page-rail a {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 5px 0;
+}
+.page-rail a.h3 {
+  padding-left: 12px;
+}
 article {
-  background: var(--panel);
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 8px;
   min-width: 0;
   overflow-wrap: break-word;
-  padding: 34px;
+  padding: 40px 44px;
 }
-article h1, article h2, article h3 { line-height: 1.25; }
-article h1 { font-size: 32px; margin-top: 0; }
-article h2 { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 24px; }
-article p, article li { line-height: 1.65; }
+article h1, article h2, article h3 {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  line-height: 1.22;
+}
+article h1 {
+  font-size: 38px;
+  font-weight: 650;
+  margin: 0 0 18px;
+}
+article h2 {
+  border-top: 1px solid var(--line);
+  font-size: 24px;
+  font-weight: 630;
+  margin: 42px 0 14px;
+  padding-top: 26px;
+}
+article h3 {
+  font-size: 18px;
+  font-weight: 630;
+  margin: 26px 0 10px;
+}
+article p, article li {
+  line-height: 1.72;
+}
+article p {
+  margin: 0 0 1.05em;
+}
+article ul,
+article ol {
+  padding-left: 1.35rem;
+}
+.callout,
+blockquote {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  margin: 18px 0;
+  padding: 14px 16px;
+}
+.callout p:last-child,
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+.callout-title {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+.callout-tip,
+.callout-note {
+  border-left-color: var(--accent);
+}
+.callout-warning,
+.callout-important {
+  border-left-color: var(--pending);
+}
+.callout-danger,
+.callout-caution {
+  border-left-color: var(--fail);
+}
 .code-block {
-  background: #ffffff;
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 7px;
   margin: 16px 0;
@@ -169,12 +303,12 @@ article p, article li { line-height: 1.65; }
 }
 .code-label {
   align-items: center;
-  background: #f8fafc;
+  background: var(--panel);
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   display: flex;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 650;
   gap: 8px;
   letter-spacing: 0;
   min-height: 32px;
@@ -182,7 +316,7 @@ article p, article li { line-height: 1.65; }
   text-transform: uppercase;
 }
 .code-label::before {
-  background: #2563eb;
+  background: var(--accent);
   border-radius: 999px;
   content: "";
   flex: 0 0 auto;
@@ -190,7 +324,7 @@ article p, article li { line-height: 1.65; }
   width: 8px;
 }
 .code-block pre {
-  background: #f8fafc;
+  background: var(--panel);
   color: #111827;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -201,10 +335,10 @@ article p, article li { line-height: 1.65; }
   padding: 16px;
   tab-size: 2;
 }
-.code-block-source .code-label::before { background: #2563eb; }
-.code-block-source pre { background: #f8fafc; color: #111827; }
-.code-block-data .code-label::before { background: #0f766e; }
-.code-block-data pre { background: #f8fffd; color: #12312f; }
+.code-block-source .code-label::before { background: var(--accent); }
+.code-block-source pre { background: var(--panel); color: #111827; }
+.code-block-data .code-label::before { background: var(--pass); }
+.code-block-data pre { background: #f7fffb; color: #12312f; }
 .code-block-diagram {
   background: #fbfcff;
 }
@@ -237,7 +371,7 @@ article p, article li { line-height: 1.65; }
   color: #dbeafe;
 }
 code {
-  background: #edf0f4;
+  background: #eef2f6;
   border-radius: 4px;
   font-family: var(--font-mono);
   font-variant-ligatures: none;
@@ -250,14 +384,23 @@ code {
   padding: 0;
 }
 table { border-collapse: collapse; display: block; overflow-x: auto; width: 100%; }
-th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
-th { background: #f1f4f8; text-align: left; }
+th, td {
+  border: 1px solid var(--line);
+  padding: 9px 11px;
+  vertical-align: top;
+}
+th {
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 650;
+  text-align: left;
+}
 .evidence-marker,
 .reference-marker {
   background: var(--accent-soft);
-  border: 1px solid #9bd5cb;
+  border: 1px solid #b9d8e2;
   border-radius: 999px;
-  color: #075e55;
+  color: var(--accent-strong);
   cursor: pointer;
   display: inline-block;
   font-size: 0.86em;
@@ -268,22 +411,33 @@ th { background: #f1f4f8; text-align: left; }
 .evidence-marker:hover,
 .reference-marker:hover { text-decoration: none; }
 .evidence-popover {
-  background: #101820;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
-  color: #f8fafc;
+  box-shadow: var(--shadow);
+  color: var(--ink);
   display: none;
-  max-width: min(440px, calc(100vw - 32px));
+  max-height: min(24rem, calc(100vh - 32px));
+  max-width: min(34rem, calc(100vw - 32px));
+  overflow: auto;
   padding: 12px 14px;
   position: fixed;
-  z-index: 20;
+  z-index: 1000;
 }
 .evidence-popover strong { display: block; margin-bottom: 6px; }
 .evidence-popover p { margin: 6px 0; }
-.evidence-popover .muted { color: #bfccd9; font-size: 12px; }
+.evidence-popover .muted { color: var(--muted); font-size: 12px; }
+@media (max-width: 1180px) {
+  .page-grid {
+    grid-template-columns: minmax(0, 880px);
+  }
+  .page-rail {
+    display: none;
+  }
+}
 @media (max-width: 1100px) {
   .layout {
-    grid-template-columns: 224px minmax(0, 1fr);
+    grid-template-columns: 236px minmax(0, 1fr);
   }
   .content {
     padding: 32px 28px 64px;
@@ -298,6 +452,9 @@ th { background: #f1f4f8; text-align: left; }
     max-height: 48vh;
     position: static;
   }
+  .sidebar h1 {
+    margin-bottom: 12px;
+  }
   .nav-section { margin: 14px 0; }
   .nav-section a,
   .nav-folder > summary a {
@@ -309,7 +466,7 @@ th { background: #f1f4f8; text-align: left; }
     padding-left: 8px;
   }
   .content { padding: 22px 14px 48px; }
-  article { padding: 24px 18px; }
+  article { padding: 26px 20px; }
 }
 @media (max-width: 520px) {
   article {
@@ -319,7 +476,8 @@ th { background: #f1f4f8; text-align: left; }
     margin-left: -14px;
     margin-right: -14px;
   }
-  article h1 { font-size: 28px; }
+  article h1 { font-size: 30px; }
+  article h2 { font-size: 22px; }
 }
 """.strip()
 
@@ -330,6 +488,8 @@ PREVIEW_JS = """
   if (!dataEl || !popover) return;
 
   let previews = {};
+  let activeAnchor = null;
+  let hideTimer = 0;
   try {
     previews = JSON.parse(dataEl.textContent || "{}");
   } catch (error) {
@@ -342,48 +502,87 @@ PREVIEW_JS = """
     return (previews.evidence || {})[marker] || null;
   }
 
-  function show(event) {
-    const marker = event.currentTarget.getAttribute("data-marker");
-    const ref = event.currentTarget.getAttribute("data-ref");
-    const preview = ref ? referencePreviewFor(ref) : previewFor(marker);
-    if (!preview) return;
-    popover.innerHTML = "";
-    const title = document.createElement("strong");
-    title.textContent = preview.title || marker;
-    const excerpt = document.createElement("p");
-    excerpt.textContent = preview.excerpt || "No excerpt recorded.";
-    const meta = document.createElement("p");
-    meta.className = "muted";
-    meta.textContent = [preview.path, preview.support_relation]
-      .filter(Boolean)
-      .join(" | ");
-    popover.append(title, excerpt, meta);
-    popover.style.display = "block";
-    const rect = event.currentTarget.getBoundingClientRect();
-    const left = Math.min(rect.left, window.innerWidth - popover.offsetWidth - 16);
-    const top = Math.min(
-      rect.bottom + 8,
-      window.innerHeight - popover.offsetHeight - 16
+  function previewForAnchor(anchor) {
+    const ref = anchor.getAttribute("data-ref");
+    if (ref) return referencePreviewFor(ref);
+    const marker = anchor.getAttribute("data-marker");
+    if (marker) return previewFor(marker);
+    const previewId = anchor.getAttribute("data-preview-id");
+    if (!previewId) return null;
+    return referencePreviewFor(previewId) || previewFor(previewId);
+  }
+
+  function place(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const gap = 10;
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - popover.offsetWidth - 16
     );
+    const below = rect.bottom + gap;
+    const above = rect.top - popover.offsetHeight - gap;
+    const top =
+      below + popover.offsetHeight <= window.innerHeight - 16
+        ? below
+        : Math.max(16, above);
     popover.style.left = Math.max(16, left) + "px";
     popover.style.top = Math.max(16, top) + "px";
   }
 
+  function show(event) {
+    const anchor = event.currentTarget;
+    const marker =
+      anchor.getAttribute("data-ref") ||
+      anchor.getAttribute("data-marker") ||
+      anchor.getAttribute("data-preview-id");
+    const preview = previewForAnchor(anchor);
+    if (!preview) return;
+    activeAnchor = anchor;
+    clearTimeout(hideTimer);
+    popover.innerHTML = "";
+    const title = document.createElement("strong");
+    title.textContent = preview.title || marker;
+    const excerpt = document.createElement("p");
+    excerpt.textContent = preview.excerpt || preview.body || "No preview recorded.";
+    const meta = document.createElement("p");
+    meta.className = "muted";
+    meta.textContent = [
+      preview.path,
+      preview.support_relation,
+      preview.kind,
+      preview.truth_status
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    popover.append(title, excerpt, meta);
+    popover.style.display = "block";
+    place(anchor);
+  }
+
   function hide() {
+    activeAnchor = null;
     popover.style.display = "none";
   }
 
-  document.querySelectorAll(".evidence-marker").forEach((el) => {
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hide, 140);
+  }
+
+  document.querySelectorAll("[data-preview-id]").forEach((el) => {
     el.addEventListener("mouseenter", show);
     el.addEventListener("focus", show);
-    el.addEventListener("mouseleave", hide);
-    el.addEventListener("blur", hide);
+    el.addEventListener("mouseleave", scheduleHide);
+    el.addEventListener("blur", scheduleHide);
   });
-  document.querySelectorAll(".reference-marker").forEach((el) => {
-    el.addEventListener("mouseenter", show);
-    el.addEventListener("focus", show);
-    el.addEventListener("mouseleave", hide);
-    el.addEventListener("blur", hide);
+
+  popover.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+  popover.addEventListener("mouseleave", scheduleHide);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => {
+    if (activeAnchor && popover.style.display === "block") place(activeAnchor);
   });
 
   function referencePreviewFor(ref) {
@@ -459,6 +658,26 @@ def extract_title(markdown: str, fallback: str) -> str:
         if match and len(match.group(1)) == 1:
             return match.group(2).strip()
     return fallback
+
+
+def extract_page_headings(markdown: str) -> list[dict[str, Any]]:
+    headings: list[dict[str, Any]] = []
+    in_fence = False
+    for line in markdown.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        match = HEADING_RE.match(line)
+        if not match:
+            continue
+        level = len(match.group(1))
+        if level not in {2, 3}:
+            continue
+        text = match.group(2).strip()
+        headings.append({"level": level, "text": text, "slug": slugify(text)})
+    return headings
 
 
 def split_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
@@ -640,6 +859,7 @@ def render_evidence_marker(
     return (
         '<a class="evidence-marker" tabindex="0" '
         f'data-marker="{html.escape(marker, quote=True)}" '
+        f'data-preview-id="{html.escape(marker, quote=True)}" '
         f'href="{html.escape(href, quote=True)}">'
         f"{match.group(0)}</a>"
     )
@@ -703,6 +923,7 @@ def render_workflow_ref(
     return (
         '<a class="reference-marker" tabindex="0" '
         f'data-ref="{html.escape(ref, quote=True)}" '
+        f'data-preview-id="{html.escape(ref, quote=True)}" '
         f'href="{html.escape(href, quote=True)}">'
         f"{html.escape(label)}</a>"
     )
@@ -754,6 +975,108 @@ def render_table(
         html_rows.append("<tr>" + cells + "</tr>")
     html_rows.append("</tbody></table>")
     return "\n".join(html_rows), index
+
+
+def render_blockquote(
+    lines: list[str],
+    start: int,
+    *,
+    reference_mode: str,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> tuple[str, int]:
+    quote_lines: list[str] = []
+    index = start
+    while index < len(lines) and lines[index].strip().startswith(">"):
+        quote_lines.append(lines[index].strip()[1:].lstrip())
+        index += 1
+    if not quote_lines:
+        return "", index
+
+    first = quote_lines[0].strip()
+    callout_match = re.match(r"^\[!([A-Za-z0-9_-]+)\]\s*(.*)$", first)
+    inner_markdown = "\n".join(quote_lines)
+    if not callout_match:
+        inner = render_markdown(
+            inner_markdown,
+            reference_mode=reference_mode,
+            preview_data=preview_data,
+            current_html=current_html,
+            workspace_root=workspace_root,
+        )
+        return f"<blockquote>{inner}</blockquote>", index
+
+    callout_kind = slugify(callout_match.group(1))
+    title = callout_match.group(2).strip() or callout_match.group(1).title()
+    body_markdown = "\n".join(quote_lines[1:]).strip()
+    body = (
+        render_markdown(
+            body_markdown,
+            reference_mode=reference_mode,
+            preview_data=preview_data,
+            current_html=current_html,
+            workspace_root=workspace_root,
+        )
+        if body_markdown
+        else ""
+    )
+    inline_title = render_inline(
+        title,
+        reference_mode=reference_mode,
+        preview_data=preview_data,
+        current_html=current_html,
+        workspace_root=workspace_root,
+    )
+    return (
+        f'<aside class="callout callout-{callout_kind}">'
+        f'<p class="callout-title">{inline_title}</p>'
+        f"{body}</aside>",
+        index,
+    )
+
+
+def render_unordered_list(
+    lines: list[str],
+    start: int,
+    *,
+    reference_mode: str,
+    preview_data: dict[str, Any],
+    current_html: Path | None,
+    workspace_root: Path | None,
+) -> tuple[str, int]:
+    items: list[str] = []
+    index = start
+    while index < len(lines) and lines[index].strip().startswith(("- ", "* ")):
+        item_parts = [lines[index].strip()[2:].strip()]
+        index += 1
+        while index < len(lines):
+            next_line = lines[index].strip()
+            if (
+                not next_line
+                or next_line.startswith(("- ", "* "))
+                or next_line.startswith("```")
+                or next_line.startswith(">")
+                or HEADING_RE.match(next_line)
+                or is_table_start(lines, index)
+            ):
+                break
+            item_parts.append(next_line)
+            index += 1
+        items.append(" ".join(item_parts))
+
+    inline_kwargs = {
+        "reference_mode": reference_mode,
+        "preview_data": preview_data,
+        "current_html": current_html,
+        "workspace_root": workspace_root,
+    }
+    return (
+        "<ul>"
+        + "".join(f"<li>{render_inline(item, **inline_kwargs)}</li>" for item in items)
+        + "</ul>",
+        index,
+    )
 
 
 def render_markdown(
@@ -832,19 +1155,28 @@ def render_markdown(
             rendered.append(table_html)
             continue
 
-        if stripped.startswith(("- ", "* ")):
-            items: list[str] = []
-            while index < len(lines) and lines[index].strip().startswith(("- ", "* ")):
-                items.append(lines[index].strip()[2:].strip())
-                index += 1
-            rendered.append(
-                "<ul>"
-                + "".join(
-                    f"<li>{render_inline(item, **inline_kwargs)}</li>"
-                    for item in items
-                )
-                + "</ul>"
+        if stripped.startswith(">"):
+            blockquote_html, index = render_blockquote(
+                lines,
+                index,
+                reference_mode=reference_mode,
+                preview_data=preview_data,
+                current_html=current_html,
+                workspace_root=workspace_root,
             )
+            rendered.append(blockquote_html)
+            continue
+
+        if stripped.startswith(("- ", "* ")):
+            list_html, index = render_unordered_list(
+                lines,
+                index,
+                reference_mode=reference_mode,
+                preview_data=preview_data,
+                current_html=current_html,
+                workspace_root=workspace_root,
+            )
+            rendered.append(list_html)
             continue
 
         paragraph: list[str] = [stripped]
@@ -856,6 +1188,7 @@ def render_markdown(
                 or next_line.startswith("```")
                 or HEADING_RE.match(next_line)
                 or next_line.startswith(("- ", "* "))
+                or next_line.startswith(">")
                 or is_table_start(lines, index)
             ):
                 break
@@ -1170,10 +1503,29 @@ def homepage_doc_id(navigation: list[dict[str, Any]]) -> str | None:
     return None
 
 
+def render_page_rail(headings: list[dict[str, Any]]) -> str:
+    if not headings:
+        return ""
+    links: list[str] = []
+    for heading in headings:
+        level = int(heading.get("level", 2))
+        text = str(heading.get("text", "Section"))
+        slug = str(heading.get("slug", slugify(text)))
+        css = "h3" if level == 3 else "h2"
+        links.append(
+            f'<a class="{css}" href="#{html.escape(slug, quote=True)}">'
+            f"{html.escape(text)}</a>"
+        )
+    return '<nav class="page-rail"><strong>On this page</strong>' + "".join(
+        links
+    ) + "</nav>"
+
+
 def page_html(
     *,
     title: str,
     body: str,
+    headings: list[dict[str, Any]],
     source_path: str,
     status: str | None,
     nav_html: str,
@@ -1184,6 +1536,7 @@ def page_html(
 ) -> str:
     preview_json = json.dumps(preview_data, ensure_ascii=False).replace("</", "<\\/")
     status_text = f"Status: {html.escape(status)} | " if status else ""
+    page_rail = render_page_rail(headings)
     return (
         "<!doctype html>\n"
         '<html lang="en">\n'
@@ -1197,9 +1550,14 @@ def page_html(
         '<div class="layout">\n'
         f'<aside class="sidebar"><h1>{html.escape(site_title)}</h1>{nav_html}</aside>\n'
         '<main class="content">\n'
+        '<div class="content-inner">\n'
         f'<div class="doc-meta">{status_text}Source: '
         f"<code>{html.escape(source_path)}</code></div>\n"
+        '<div class="page-grid">\n'
         f"<article>{body}</article>\n"
+        f"{page_rail}\n"
+        "</div>\n"
+        "</div>\n"
         "</main>\n"
         "</div>\n"
         '<div class="evidence-popover" role="tooltip"></div>\n'
@@ -1224,9 +1582,9 @@ def root_entry_html(*, site_title: str, target_href: str) -> str:
         f"  <title>{safe_title}</title>\n"
         "  <style>\n"
         "    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "
-        '"Segoe UI", sans-serif; background: #f7f8fa; color: #17202a; }\n'
+        '"Segoe UI", sans-serif; background: #f5f7fb; color: #2f3337; }\n'
         "    main { max-width: 720px; margin: 18vh auto; padding: 0 24px; }\n"
-        "    a { color: #0f766e; }\n"
+        "    a { color: #1f5f7a; }\n"
         "  </style>\n"
         "</head>\n"
         "<body>\n"
@@ -1377,6 +1735,7 @@ def build_docs_site(
                 current_html=html_path,
                 workspace_root=workspace,
             ),
+            headings=extract_page_headings(markdown_by_id[str(page["doc_id"])]),
             source_path=str(page["source_path"]),
             status=page.get("status"),
             nav_html=nav_html,
@@ -1392,8 +1751,9 @@ def build_docs_site(
     home_doc_id = homepage_doc_id(navigation)
     if home_doc_id and home_doc_id in markdown_by_id and home_doc_id in pages_by_id:
         home_page = pages_by_id[home_doc_id]
+        index_markdown = markdown_by_id[home_doc_id]
         index_body = render_markdown(
-            markdown_by_id[home_doc_id],
+            index_markdown,
             reference_mode=reference_mode,
             preview_data=preview_data,
             current_html=index_path,
@@ -1415,9 +1775,11 @@ def build_docs_site(
         index_source = Path(source_root).as_posix()
         index_status = None
         index_nav_doc_id = None
+        index_markdown = ""
     index_html = page_html(
         title=index_title,
         body=index_body,
+        headings=extract_page_headings(index_markdown),
         source_path=index_source,
         status=index_status,
         nav_html=render_nav(pages, navigation, index_nav_doc_id, index_path, workspace),

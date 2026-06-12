@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-patch.md"
 source_of_truth: true
 status: "generated"
-summary: "Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory."
+summary: "Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 290
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory.
+Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

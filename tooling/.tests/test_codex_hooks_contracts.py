@@ -127,12 +127,49 @@ def _frontmatter_skill_names(surface: str) -> set[str]:
     }
 
 
-def test_only_human_facing_skill_aliases_have_frontmatter() -> None:
-    assert _frontmatter_skill_names(".agents") == VISIBLE_SKILL_ALIASES
+def _codex_skill_names() -> set[str]:
+    return {
+        path.parent.name
+        for path in (REPO_ROOT / ".agents" / "skills").glob("*/SKILL.md")
+    }
+
+
+def _policy_block(metadata_text: str) -> str:
+    lines = metadata_text.splitlines()
+    try:
+        start = lines.index("policy:")
+    except ValueError:
+        return ""
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        if lines[index] and not lines[index].startswith(" "):
+            end = index
+            break
+    return "\n".join(lines[start:end])
+
+
+def test_codex_skill_sources_are_loader_clean() -> None:
+    assert _frontmatter_skill_names(".agents") == _codex_skill_names()
+
+
+def test_only_human_facing_claude_aliases_have_frontmatter() -> None:
     assert _frontmatter_skill_names(".claude") == VISIBLE_SKILL_ALIASES
 
 
-def test_internal_skill_sources_are_not_autocomplete_entries() -> None:
+def test_internal_codex_skill_sources_are_product_filtered() -> None:
+    for skill in _codex_skill_names() - VISIBLE_SKILL_ALIASES:
+        metadata_path = (
+            REPO_ROOT / ".agents" / "skills" / skill / "agents" / "openai.yaml"
+        )
+        metadata_text = metadata_path.read_text(encoding="utf-8")
+        policy = _policy_block(metadata_text)
+        assert "products:" in policy, skill
+        assert "- chatgpt" in policy, skill
+        assert "- codex" not in policy.lower(), skill
+        assert "allow_implicit_invocation: false" in policy, skill
+
+
+def test_internal_claude_skill_sources_are_not_autocomplete_entries() -> None:
     internal_skills = {
         "auto-paper",
         "auto-iterate-goal",
@@ -145,11 +182,10 @@ def test_internal_skill_sources_are_not_autocomplete_entries() -> None:
         "workflow-supervisor",
     }
 
-    for surface in [".agents", ".claude"]:
-        for skill in internal_skills:
-            path = REPO_ROOT / surface / "skills" / skill / "SKILL.md"
-            assert path.exists(), path.relative_to(REPO_ROOT).as_posix()
-            assert not path.read_text(encoding="utf-8").startswith("---\n")
+    for skill in internal_skills:
+        path = REPO_ROOT / ".claude" / "skills" / skill / "SKILL.md"
+        assert path.exists(), path.relative_to(REPO_ROOT).as_posix()
+        assert not path.read_text(encoding="utf-8").startswith("---\n")
 
 
 def test_iterate_contract_covers_eval_iteration_reports() -> None:
@@ -873,7 +909,7 @@ def test_workflow_handbook_stage_cards_match_generated_output() -> None:
     assert output.read_text(encoding="utf-8") == expected
 
 
-def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
+def test_workflow_handbook_keeps_visible_alias_entrypoints() -> None:
     handbook_dir = REPO_ROOT / "workflow_handbook"
     files = sorted(path.name for path in handbook_dir.glob("*.md"))
 
@@ -886,19 +922,19 @@ def test_workflow_handbook_keeps_two_human_entrypoints() -> None:
     )
     assert "Start Here" in handbook
     assert "Quick Action Index" in handbook
-    assert "Top-Level Modes" in handbook
+    assert "Visible Aliases" in handbook
     assert "内部执行细节不属于第一层界面" in handbook
     assert (
         "Intent\n"
-        "  -> Grill or Execution Supervisor\n"
-        "  -> supervisor action / typed request / worker result / Gate ledger\n"
+        "  -> visible alias\n"
+        "  -> internal runtime / typed request / worker result / Gate ledger\n"
         "  -> Human Approval or next safe action"
     ) in handbook
-    assert (
-        "visible aliases `$prepare`, `$build`, `$run`, `$analyze`, `$write`, "
-        "`$change`"
-    ) in handbook
-    assert "[[page:workflow_supervisor_model|Workflow Supervisor Model]]" in handbook
+    assert "| `$grill` |" in handbook
+    assert "| `$prepare` / `$build` |" in handbook
+    assert "| `$run` / `$analyze` |" in handbook
+    assert "| `$write` / `$change` |" in handbook
+    assert "[[page:workflow_supervisor_model|Runtime Routing Model]]" in handbook
     assert "[[page:operator_task_index|Operator Action Index]]" in handbook
     assert "Daily Run Shape" in handbook
     assert "Detailed Reference" in handbook

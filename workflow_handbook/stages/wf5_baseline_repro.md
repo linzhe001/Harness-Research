@@ -41,7 +41,7 @@ Baseline report, baseline evidence, and draft or approved contracts are ready fo
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

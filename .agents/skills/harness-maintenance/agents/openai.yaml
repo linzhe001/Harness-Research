@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $harness-maintenance to update Harness hooks, skill contracts, routing, or permission policy."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

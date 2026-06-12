@@ -1,3 +1,8 @@
+---
+name: survey-idea
+description: "Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Survey Idea
 
 ## References

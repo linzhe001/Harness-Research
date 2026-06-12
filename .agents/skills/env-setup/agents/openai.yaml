@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $env-setup to refresh or create the documented project environment."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -1,3 +1,8 @@
+---
+name: protocol-drift-check
+description: "Internal Harness instruction source for protocol-drift-check. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Protocol Drift Check
 
 ## References

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-harden.md"
 source_of_truth: true
 status: "generated"
-summary: "Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase."
+summary: "Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 300
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase.
+Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

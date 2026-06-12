@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $doc-compiler to refresh a current document with an evidence chain."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

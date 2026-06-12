@@ -41,7 +41,7 @@ Changed code, focused validation, and map updates are ready for review.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

@@ -41,7 +41,7 @@ Refine the technical architecture within approved boundaries.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

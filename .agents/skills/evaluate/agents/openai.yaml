@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $evaluate to analyze the latest results and recommend the next action."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

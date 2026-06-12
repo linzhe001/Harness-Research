@@ -3738,8 +3738,7 @@
         "harness build",
         "harness iterate",
         "harness release",
-        "harness change",
-        "execution supervisor"
+        "harness change"
       ],
       "required_read_set": {
         "harness": [

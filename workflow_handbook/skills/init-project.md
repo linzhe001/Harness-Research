@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/init-project.md"
 source_of_truth: true
 status: "generated"
-summary: "Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts."
+summary: "Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 140
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.
+Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

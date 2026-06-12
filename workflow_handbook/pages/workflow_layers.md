@@ -8,7 +8,7 @@ source_type: "hand_authored"
 source_path: "workflow_handbook/pages/workflow_layers.md"
 source_of_truth: true
 status: "current"
-summary: "Explains the entrypoint-first operating model and where internal Stage references fit."
+summary: "Explains the visible-alias-first operating model and where internal Stage references fit."
 nav:
   section: "detailed_reference"
   position: 40
@@ -32,7 +32,7 @@ html:
 
 ## Purpose
 
-这页解释 operator 如何把一句自然语言请求落到正确的顶层入口和 Gate。
+这页解释 operator 如何把一句自然语言请求落到正确的可见入口和 Gate。
 WF0-WF12 nodes 和 Skill 是内部执行参考，不是第一层用户界面。
 
 ## Model
@@ -47,8 +47,8 @@ Intent
 
 - Intent 是人的目标，例如“验证这次实现”。
 - Visible aliases 只有 `$grill`, `$prepare`, `$build`, `$run`, `$analyze`,
-  `$write`, `$change`。它们路由到 Grill 或 Execution Supervisor 的内部
-  Skill Contract source，不创建新的 stage ownership。
+  `$write`, `$change`。它们路由到内部 runtime 或 Skill Contract source，
+  不创建新的 stage ownership。
 - Internal skills such as `workflow-supervisor`, `iterate`, `evaluate`,
   `auto-paper`, and `change-intake` are detailed references and hook route
   targets, not autocomplete entries.
@@ -61,7 +61,7 @@ Intent
 
 ## Boundaries
 
-- 顶层入口只决定运行语义，不替代 Stage artifact、Gate Evidence 或
+- 可见入口只决定运行语义，不替代 Stage artifact、Gate Evidence 或
   Human Approval。
 - Stage 决定内部 artifact map，不等于用户必须先选择 Stage。
 - Skill Contract 决定 recommended reads、declared paths 和 required actions。
@@ -75,7 +75,7 @@ Intent
 
 ## Related Pages
 
-- [[page:workflow_supervisor_model|Workflow Supervisor Model]]
+- [[page:workflow_supervisor_model|Runtime Routing Model]]
 - [[page:stage_cards|Stage Reference]]
 - [[page:layer_explore|Explore Layer]]
 - [[page:layer_contract_plan|Contract And Plan Layer]]

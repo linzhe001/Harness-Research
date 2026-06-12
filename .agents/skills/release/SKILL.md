@@ -1,3 +1,8 @@
+---
+name: release
+description: "Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Release
 
 ## References

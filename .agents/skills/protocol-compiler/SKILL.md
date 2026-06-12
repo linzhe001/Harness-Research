@@ -1,3 +1,8 @@
+---
+name: protocol-compiler
+description: "Internal Harness instruction source for protocol-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Protocol Compiler
 
 ## References

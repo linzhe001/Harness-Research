@@ -1,3 +1,8 @@
+---
+name: code-expert
+description: "Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Code Expert
 
 ## References

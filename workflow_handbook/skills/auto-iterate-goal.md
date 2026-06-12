@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-iterate-goal.md"
 source_of_truth: true
 status: "generated"
-summary: "Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes."
+summary: "Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 340
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.
+Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

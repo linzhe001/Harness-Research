@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $data-prep to document dataset readiness, paths, and split artifacts."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

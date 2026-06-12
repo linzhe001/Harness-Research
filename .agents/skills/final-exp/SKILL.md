@@ -1,3 +1,8 @@
+---
+name: final-exp
+description: "Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Final Exp
 
 ## References

@@ -1,3 +1,8 @@
+---
+name: auto-paper
+description: "Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper
 
 Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It

@@ -2,3 +2,8 @@ interface:
   display_name: "Auto Paper Research"
   short_description: "Auto-paper branch workflow"
   default_prompt: "Use $auto-paper-research for its auto-paper phase."
+
+policy:
+  products:
+    - chatgpt
+  allow_implicit_invocation: false

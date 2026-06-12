@@ -1,3 +1,8 @@
+---
+name: validate-run
+description: "Internal Harness instruction source for validate-run. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Validate Run
 
 ## References

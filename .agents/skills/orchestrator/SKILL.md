@@ -1,3 +1,8 @@
+---
+name: orchestrator
+description: "Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Orchestrator
 
 ## References

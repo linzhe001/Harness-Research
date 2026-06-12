@@ -1,14 +1,14 @@
 ---
 schema_version: "0.1"
 page_id: "workflow_supervisor_model"
-title: "Workflow Supervisor Model"
+title: "Runtime Routing Model"
 kind: "concept"
 audience: ["operator", "agent", "maintainer"]
 source_type: "hand_authored"
 source_path: "workflow_handbook/pages/workflow_supervisor_model.md"
 source_of_truth: true
 status: "current"
-summary: "How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval."
+summary: "How visible aliases route to internal runtime sources without replacing Gate Evidence or Human Approval."
 nav:
   section: "operate"
   position: 10
@@ -24,14 +24,16 @@ html:
   preview_index_path: "docs/_views/workflow_handbook_reference_index.json"
 ---
 
-# Workflow Supervisor Model
+# Runtime Routing Model
 
 ## Purpose
 
 The supervisor layer reduces workflow friction without changing the authority
-model. Operators choose one of two human-facing top-level modes first. Existing Skill-owned
-artifact producers remain the internal execution map. Evidence tooling still
-owns Evidence Chains and Review Packets. Human Approval is still required for
+model. Operators choose a visible alias first. Some aliases route to the
+internal workflow-supervisor runtime; others route to iterate, evaluate,
+auto-paper, docs-site, or change-intake sources. Existing Skill-owned artifact
+producers remain the internal execution map. Evidence tooling still owns
+Evidence Chains and Review Packets. Human Approval is still required for
 contracts, claim boundaries, high-risk transitions, and release decisions.
 
 ## Model
@@ -39,14 +41,14 @@ contracts, claim boundaries, high-risk transitions, and release decisions.
 ```text
 Intent
   -> visible alias: grill | prepare | build | run | analyze | write | change
-  -> internal supervisor action or Skill Contract source
+  -> internal runtime or Skill Contract source
   -> Gate Evidence or typed HITL interrupt
   -> Next safe action
 ```
 
-Top-level modes define the operator surface:
+Visible aliases define the operator surface:
 
-| Top-level mode | 什么时候用 | 主要状态面 |
+| Visible alias | 什么时候用 | 主要状态面 |
 | --- | --- | --- |
 | `$grill` | research intent 还不清楚 | Research Intent Draft 和 readiness candidates |
 | `$prepare`, `$build`, `$run`, `$analyze`, `$write`, `$change` | intent 已经能进入执行、验证、迭代、写作，或成熟代码库出现新请求 | pending request、worker result JSON、Gate ledger、controller status |
@@ -70,7 +72,7 @@ remains a typed input request.
 Dataset approvals may carry `target`, `license`, and `max_size_gb`; baseline
 approvals may carry `repo`, `ref`, and `target`.
 
-Execution Supervisor actions are scoped commands under the second mode:
+Each visible alias routes to an internal runtime or Skill Contract source:
 
 | Visible alias | Internal route | 什么时候用 | 主要状态面 |
 | --- | --- | --- | --- |
@@ -85,7 +87,8 @@ Detailed reference pages are still available, but they are not the first
 question the operator answers. Open them only when you need internal artifact
 ownership, postcondition details, or a Skill Contract field.
 
-The v0 CLI is intentionally lightweight:
+The workflow-supervisor CLI is the internal runtime surface behind selected
+aliases:
 
 ```bash
 tooling/workflow_supervisor/scripts/harness.sh prepare --goal "<goal>" --dry-run
@@ -106,7 +109,8 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goa
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
 
-Default non-dry-run `prepare` remains the low-risk HITL PoC. It verifies
+The legacy non-`--complete` `prepare` path remains a low-risk HITL plumbing
+check. It verifies
 candidate readiness inputs, compiles a draft protocol packet under
 `.evidence/protocol_compiler/**`, generates a WF5 Review Packet with
 dynamic-context tooling, writes a pending request under
@@ -163,24 +167,25 @@ code-expert/code-debug, and validate-run. Postcondition validation records
 PASS/FAIL/NOT_RUN from artifacts, schema checks, forbidden-write checks, and
 worker Gate ledger.
 
-Slice 6 delegates WF10 to the existing auto-iterate controller. The supervisor
-launches `auto_iterate_ctl.py`, records status snapshots under
+WF10 iteration is reached through `$run`. When workflow-supervisor is used as a
+runtime bridge, it launches `auto_iterate_ctl.py`, records status snapshots under
 `.workflow_supervisor/**`, reads `.auto_iterate/state.json` through
 `status --json`, and maps `manual_action_required` or operator pause to a
 typed `STEER` request. It must not write `.auto_iterate/**` directly.
 
-Slice 7 adds deterministic Change Intake. The supervisor reads the operator
-request plus available context hints, writes a schema-validated Change Request
-under `.workflow_supervisor/runs/<run_id>/runtime/change_request.json`, and
-records a route such as `code-debug`, `iterate`, `build_delta`,
+`$change` routes to deterministic Change Intake. The runtime reads the
+operator request plus available context hints, writes a schema-validated Change
+Request under `.workflow_supervisor/runs/<run_id>/runtime/change_request.json`,
+and records a route such as `code-debug`, `iterate`, `build_delta`,
 `review_packet`, `claim_boundary_review`, `delta_grill`, or
 `harness-maintenance`. Low-confidence requests fail closed into a typed
-`STEER` request. The supervisor records the route only; it does not invoke the
+`STEER` request. The runtime records the route only; it does not invoke the
 routed Skill or edit code/contracts by itself.
 
-Slice 8 adds the conservative Release Segment gate. The registry contains WF11
-`final-exp` and WF12 `release` nodes. Non-dry-run `release` requires an
-explicit `validate`, `package`, or `submit` action, runs
+`$write` may reach the conservative release gate when the request is about
+release readiness, packaging, or claim boundaries. The registry contains WF11
+`final-exp` and WF12 `release` nodes. Non-dry-run release requires an explicit
+`validate`, `package`, or `submit` action, runs
 `check_dynamic_context.py --stage wf12 --review-packet`, and pauses with an
 exact scoped `APPROVE_ACTION` only when dynamic context is active and Project
 Contract, Evaluation Contract, and Claim Boundary approvals are confirmed. If

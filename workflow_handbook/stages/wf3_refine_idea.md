@@ -41,7 +41,7 @@ Turn the selected idea into a tighter research question and execution target.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

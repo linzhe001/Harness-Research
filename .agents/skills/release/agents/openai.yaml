@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $release to validate the submission package and list any issues."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

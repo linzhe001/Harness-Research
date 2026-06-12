@@ -41,7 +41,7 @@ Convert the architecture into bounded implementation slices.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $baseline-repro to reproduce the selected baseline and update the tracked report and metrics."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

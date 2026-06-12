@@ -1,3 +1,8 @@
+---
+name: auto-paper-patch
+description: "Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Patch
 
 ## Purpose

@@ -1,3 +1,8 @@
 name: auto-iterate-goal
 description: Generate or validate the auto-iterate goal file
 instructions_file: ../SKILL.md
+
+policy:
+  products:
+    - chatgpt
+  allow_implicit_invocation: false

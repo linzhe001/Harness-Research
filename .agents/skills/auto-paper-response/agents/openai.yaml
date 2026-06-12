@@ -2,3 +2,8 @@ interface:
   display_name: "Auto Paper Response"
   short_description: "Auto-paper optional response branch"
   default_prompt: "Use $auto-paper-response to handle reviewer responses."
+
+policy:
+  products:
+    - chatgpt
+  allow_implicit_invocation: false

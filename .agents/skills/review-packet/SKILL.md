@@ -1,3 +1,8 @@
+---
+name: review-packet
+description: "Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Review Packet
 
 ## References

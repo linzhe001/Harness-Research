@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-figure.md"
 source_of_truth: true
 status: "generated"
-summary: "Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk."
+summary: "Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 330
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk.
+Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

@@ -41,7 +41,7 @@ After `$grill` reaches `grill_draft_ready`, run the internal `init-project updat
 
 ## Contract Detail
 
-Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.
+Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

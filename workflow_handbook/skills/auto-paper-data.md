@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-data.md"
 source_of_truth: true
 status: "generated"
-summary: "Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence."
+summary: "Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 320
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence.
+Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

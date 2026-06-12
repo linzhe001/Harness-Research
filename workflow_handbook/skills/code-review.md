@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/code-review.md"
 source_of_truth: true
 status: "generated"
-summary: "Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active."
+summary: "Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 200
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active.
+Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

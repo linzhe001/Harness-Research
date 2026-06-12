@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/idea-debate.md"
 source_of_truth: true
 status: "generated"
-summary: "Read these first:"
+summary: "Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 70
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Read these first:
+Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

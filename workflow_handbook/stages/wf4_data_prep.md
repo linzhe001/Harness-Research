@@ -41,7 +41,7 @@ Dataset stats, data facts, configs, and evidence tables are current.
 
 ## Contract Detail
 
-Use this Skill for WF4 dataset analysis, subset design, and data-pipeline preparation.
+Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

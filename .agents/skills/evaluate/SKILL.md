@@ -1,3 +1,8 @@
+---
+name: evaluate
+description: "Internal Harness instruction source for evaluate. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Evaluate
 
 ## References

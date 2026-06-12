@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/harness-maintenance.md"
 source_of_truth: true
 status: "generated"
-summary: "Read these first:"
+summary: "Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 190
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Read these first:
+Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

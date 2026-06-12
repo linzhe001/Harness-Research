@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-citation.md"
 source_of_truth: true
 status: "generated"
-summary: "Support claims, not reference stuffing. Do not rewrite the manuscript in this phase."
+summary: "Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 270
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Support claims, not reference stuffing. Do not rewrite the manuscript in this phase.
+Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

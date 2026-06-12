@@ -1,3 +1,8 @@
+---
+name: change-intake
+description: "Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Change Intake
 
 ## Purpose

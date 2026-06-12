@@ -1,3 +1,8 @@
+---
+name: workflow-supervisor
+description: "Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Workflow Supervisor
 
 Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`,

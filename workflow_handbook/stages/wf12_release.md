@@ -41,7 +41,7 @@ Prepare release artifacts while keeping claims inside the approved boundary.
 
 ## Contract Detail
 
-Read these first:
+Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

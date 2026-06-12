@@ -44,6 +44,10 @@ def test_render_markdown_classifies_code_blocks_by_language() -> None:
     site_builder = load_evidence_tool("build_docs_site")
 
     rendered = site_builder.render_markdown(
+        "> [!TIP] Reading path\n"
+        "> Start with the visible alias.\n\n"
+        "- Read the current source artifacts,\n"
+        "  then run the owning tool.\n\n"
         "```text\n"
         "workflow -> gate\n"
         "```\n\n"
@@ -58,6 +62,12 @@ def test_render_markdown_classifies_code_blocks_by_language() -> None:
         "```\n"
     )
 
+    assert '<aside class="callout callout-tip">' in rendered
+    assert '<p class="callout-title">Reading path</p>' in rendered
+    assert (
+        "<li>Read the current source artifacts, then run the owning tool.</li>"
+        in rendered
+    )
     assert 'class="code-block code-block-diagram" data-language="text"' in rendered
     assert 'class="code-block code-block-terminal" data-language="bash"' in rendered
     assert 'class="code-block code-block-data" data-language="json"' in rendered
@@ -240,11 +250,11 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert manifest["reference_mode"] == "workflow-handbook"
     assert manifest["navigation"][1]["label"] == "Operate"
     assert manifest["navigation"][1]["items"][0]["label"] == "Action Index"
-    assert manifest["navigation"][1]["items"][1]["label"] == "Visible Aliases"
+    assert manifest["navigation"][1]["items"][1]["label"] == "Runtime Routing"
     assert manifest["navigation"][1]["items"][1]["children"]
     assert [
         child["label"] for child in manifest["navigation"][1]["items"][1]["children"]
-    ] == ["grill", "internal supervisor contract"]
+    ] == ["grill contract", "workflow-supervisor runtime"]
     assert manifest["navigation"][2]["label"] == "Detailed Reference"
     assert manifest["navigation"][2]["items"][1]["label"] == "Stage Reference"
     assert 'href="assets/site.css"' in index_html
@@ -259,15 +269,19 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
         in index_html
     )
     assert '<h2 id="start-here">Start Here</h2>' in index_html
+    assert '<h2 id="mental-model">Mental Model</h2>' in index_html
     assert '<h2 id="quick-action-index">Quick Action Index</h2>' in index_html
-    assert '<h2 id="top-level-modes">Top-Level Modes</h2>' in index_html
+    assert '<h2 id="visible-aliases">Visible Aliases</h2>' in index_html
+    assert '<aside class="callout callout-tip">' in index_html
+    assert '<nav class="page-rail"><strong>On this page</strong>' in index_html
+    assert 'href="#quick-action-index"' in index_html
     assert 'content="0; url=workflow_handbook/index.html"' in root_index_html
     assert 'href="workflow_handbook/index.html"' in root_index_html
     assert "Opening the rendered handbook." in root_index_html
     assert 'href="Workflow_Stage_Cards.html"' in index_html
     assert "Operate" in index_html
     assert "Action Index" in index_html
-    assert "Modes" in index_html
+    assert "Runtime Routing" in index_html
     assert "Detailed Reference" in index_html
     assert "Stage Reference" in index_html
     assert "Workflow Details" not in index_html
@@ -279,6 +293,7 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert 'href="../assets/site.css"' in html
     assert 'src="../assets/evidence-preview.js"' in html
     assert 'data-ref="skill:docs-site"' in html
+    assert 'data-preview-id="skill:docs-site"' in html
     assert 'href="../skills/docs-site.html"' in html
     assert '<h2 id="explore">Explore</h2>' in stage_cards_html
     assert '<h2 id="contract-plan">Contract &amp; Plan</h2>' in stage_cards_html
@@ -286,7 +301,11 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert 'data-ref="term:Gate Evidence"' in layers_html
     assert 'href="workflow_terms.html#gate-evidence"' in layers_html
     assert "Harness Workflow Handbook" in html
-    assert "grid-template-columns: minmax(232px, 19rem) minmax(0, 1fr)" in css
+    assert "grid-template-columns: minmax(248px, 280px) minmax(0, 1fr)" in css
+    assert ".content-inner" in css
+    assert ".page-grid" in css
+    assert ".page-rail" in css
+    assert ".callout" in css
     assert ".nav-folder" in css
     assert ".code-block" in css
     assert ".code-label" in css

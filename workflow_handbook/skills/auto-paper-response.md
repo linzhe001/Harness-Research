@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-response.md"
 source_of_truth: true
 status: "generated"
-summary: "Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work."
+summary: "Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 310
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work.
+Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

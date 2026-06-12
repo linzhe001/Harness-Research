@@ -1,3 +1,8 @@
+---
+name: data-prep
+description: "Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Data Prep
 
 Use this Skill for WF4 dataset analysis, subset design, and data-pipeline

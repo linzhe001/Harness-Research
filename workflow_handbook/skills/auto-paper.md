@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper.md"
 source_of_truth: true
 status: "generated"
-summary: "Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state."
+summary: "Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 230
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state.
+Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

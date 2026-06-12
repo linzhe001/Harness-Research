@@ -2,3 +2,8 @@ interface:
   display_name: "Auto Paper"
   short_description: "Artifact-first paper writing loop"
   default_prompt: "Use $auto-paper to run an artifact-first LaTeX paper rewrite workflow."
+
+policy:
+  products:
+    - chatgpt
+  allow_implicit_invocation: false

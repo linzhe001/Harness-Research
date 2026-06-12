@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $final-exp to plan the final experiment matrix from the best WF10 outcome."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

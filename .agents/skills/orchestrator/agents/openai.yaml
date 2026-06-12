@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $orchestrator to inspect the current workflow stage, blockers, and next action."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-intake.md"
 source_of_truth: true
 status: "generated"
-summary: "Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake."
+summary: "Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 240
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake.
+Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

@@ -1,3 +1,8 @@
+---
+name: idea-debate
+description: "Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Idea Debate
 
 ## References

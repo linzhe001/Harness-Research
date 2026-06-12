@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $code-debug to apply the scoped implementation code change and validate it."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

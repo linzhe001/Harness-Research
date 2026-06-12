@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/change-intake.md"
 source_of_truth: true
 status: "generated"
-summary: "Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits."
+summary: "Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 390
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits.
+Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

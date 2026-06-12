@@ -1,3 +1,8 @@
+---
+name: deep-check
+description: "Internal Harness instruction source for deep-check. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Deep Check
 
 ## References

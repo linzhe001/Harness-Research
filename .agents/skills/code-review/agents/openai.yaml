@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $code-review to review the current git diff and write a reconciled report."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

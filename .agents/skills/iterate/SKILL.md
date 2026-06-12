@@ -1,3 +1,8 @@
+---
+name: iterate
+description: "Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Iterate
 
 Use this Skill only for WF10 experiment-loop state. It owns

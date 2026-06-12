@@ -41,7 +41,7 @@ Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.
 
 ## Contract Detail
 
-Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.
+Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Trigger Visibility
 

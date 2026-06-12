@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $iterate to inspect the current iteration and decide the next WF10 action."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

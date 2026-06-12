@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $validate-run to review and smoke-test the current training pipeline."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -39,18 +39,19 @@ Canonical definitions live in `.agents/references/ubiquitous-language.md`. This 
 
 ### Entrypoint
 
-One of the two human-facing ways to start workflow work: Grill or Execution
-Supervisor. Supervisor actions such as prepare, build, iterate, release, and
-change are scoped actions under Execution Supervisor, not extra top-level
-entrypoints.
+A human-facing visible alias used to start workflow work. Current Entrypoints
+are `$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, and
+`$change`. Internal runtime names such as `workflow-supervisor`, `iterate`,
+`evaluate`, `auto-paper`, and `change-intake` are route targets or detailed
+references, not extra first-layer entrypoints.
 
 ### Visible Skill Alias
 
-A small `$` / `/` command surface that routes to an Entrypoint or supervisor
-action without creating a new Skill Contract. Current visible aliases are
-`grill`, `prepare`, `build`, `run`, `analyze`, `write`, and `change`. Internal
-skill sources remain readable by path and may be selected by hook route hints,
-but they should not appear in autocomplete.
+A small `$` / `/` command surface that routes to an internal runtime or Skill
+Contract source without creating a new Skill Contract. Current visible aliases
+are `grill`, `prepare`, `build`, `run`, `analyze`, `write`, and `change`.
+Internal skill sources remain readable by path and may be selected by hook
+route hints, but they should not appear in autocomplete.
 
 ### Stage
 

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-argument.md"
 source_of_truth: true
 status: "generated"
-summary: "Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase."
+summary: "Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 260
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase.
+Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

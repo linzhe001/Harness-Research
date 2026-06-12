@@ -1,3 +1,8 @@
+---
+name: code-debug
+description: "Internal Harness instruction source for code-debug. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Code Debug
 
 ## References

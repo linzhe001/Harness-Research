@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $refine-idea after survey and idea debate to produce a feasible, testable research framing without architecture design."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/workflow-supervisor.md"
 source_of_truth: true
 status: "generated"
-summary: "Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval."
+summary: "Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 380
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.
+Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 
@@ -46,7 +46,6 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `harness iterate`
 - `harness release`
 - `harness change`
-- `execution supervisor`
 
 ## Can Write
 

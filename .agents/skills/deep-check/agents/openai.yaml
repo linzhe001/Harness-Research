@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $deep-check to review technical risk after WF6 architecture design and before implementation planning."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

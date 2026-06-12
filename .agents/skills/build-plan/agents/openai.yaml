@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $build-plan after WF6 architecture design to update the roadmap and stable project blueprint."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -1,3 +1,8 @@
+---
+name: auto-paper-layout
+description: "Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Auto Paper Layout
 
 ## Purpose

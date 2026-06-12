@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/auto-paper-research.md"
 source_of_truth: true
 status: "generated"
-summary: "Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence."
+summary: "Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 250
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence.
+Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

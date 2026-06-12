@@ -1,3 +1,8 @@
+---
+name: doc-compiler
+description: "Internal Harness instruction source for doc-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Doc Compiler
 
 ## References

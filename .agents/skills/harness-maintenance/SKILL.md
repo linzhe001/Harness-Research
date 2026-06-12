@@ -1,3 +1,8 @@
+---
+name: harness-maintenance
+description: "Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Harness Maintenance
 
 ## References

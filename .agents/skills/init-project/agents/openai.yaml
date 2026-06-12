@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $init-project to initialize or refresh the compact project snapshot."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

@@ -8,7 +8,7 @@ source_type: "generated"
 source_path: "workflow_handbook/skills/iterate.md"
 source_of_truth: true
 status: "generated"
-summary: "Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`."
+summary: "Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly."
 nav:
   section: "skills"
   position: 220
@@ -29,7 +29,7 @@ html:
 
 ## Purpose
 
-Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.
+Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.
 
 ## Visibility
 

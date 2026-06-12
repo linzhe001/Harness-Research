@@ -4,4 +4,6 @@ interface:
   default_prompt: "Use $idea-debate for WF2 to compare candidate ideas, objections, MVP pilots, and kill criteria before refine-idea."
 
 policy:
+  products:
+    - chatgpt
   allow_implicit_invocation: false

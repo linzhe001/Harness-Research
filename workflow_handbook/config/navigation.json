@@ -33,12 +33,12 @@
         },
         {
           "page_id": "workflow_supervisor_model",
-          "label": "Visible Aliases",
+          "label": "Runtime Routing",
           "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
           "generated": false,
           "children": [
-            { "page_id": "grill", "label": "grill", "source_path": "workflow_handbook/skills/grill.md", "generated": true },
-            { "page_id": "workflow-supervisor", "label": "internal supervisor contract", "source_path": "workflow_handbook/skills/workflow-supervisor.md", "generated": true }
+            { "page_id": "grill", "label": "grill contract", "source_path": "workflow_handbook/skills/grill.md", "generated": true },
+            { "page_id": "workflow-supervisor", "label": "workflow-supervisor runtime", "source_path": "workflow_handbook/skills/workflow-supervisor.md", "generated": true }
           ]
         },
         {

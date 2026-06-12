@@ -1,3 +1,8 @@
+---
+name: refine-arch
+description: "Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly."
+---
+
 # Refine Arch
 
 ## References
