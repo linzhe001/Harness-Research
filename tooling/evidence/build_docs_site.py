@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import datetime as dt
 import html
 import json
@@ -14,9 +15,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import tomllib
 import yaml
 
 SCHEMA_VERSION = "0.1"
+DEFAULT_CODEBASE_TITLE = "harness research"
 DEFAULT_SOURCE_ROOT = Path("docs")
 DEFAULT_OUTPUT_ROOT = Path("docs/_site")
 DEFAULT_PREVIEW_INDEX = Path("docs/_views/evidence_preview_index.json")
@@ -1078,6 +1081,67 @@ def relpath(path: Path, root: Path) -> str:
         return path.resolve().as_posix()
 
 
+def nonempty_project_name(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    name = value.strip()
+    return name or None
+
+
+def codebase_title_for(workspace_root: Path) -> str:
+    pyproject_path = workspace_root / "pyproject.toml"
+    if pyproject_path.exists():
+        pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        project = pyproject.get("project", {})
+        if isinstance(project, dict):
+            name = nonempty_project_name(project.get("name"))
+            if name:
+                return name
+        poetry = pyproject.get("tool", {}).get("poetry", {})
+        if isinstance(poetry, dict):
+            name = nonempty_project_name(poetry.get("name"))
+            if name:
+                return name
+
+    package_path = workspace_root / "package.json"
+    if package_path.exists():
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        if not isinstance(package, dict):
+            raise ValueError("package.json must contain a JSON object")
+        name = nonempty_project_name(package.get("name"))
+        if name:
+            return name
+
+    cargo_path = workspace_root / "Cargo.toml"
+    if cargo_path.exists():
+        cargo = tomllib.loads(cargo_path.read_text(encoding="utf-8"))
+        package = cargo.get("package", {})
+        if isinstance(package, dict):
+            name = nonempty_project_name(package.get("name"))
+            if name:
+                return name
+
+    setup_cfg_path = workspace_root / "setup.cfg"
+    if setup_cfg_path.exists():
+        parser = configparser.ConfigParser()
+        parser.read(setup_cfg_path, encoding="utf-8")
+        if parser.has_section("metadata"):
+            name = nonempty_project_name(parser.get("metadata", "name", fallback=""))
+            if name:
+                return name
+
+    go_mod_path = workspace_root / "go.mod"
+    if go_mod_path.exists():
+        for line in go_mod_path.read_text(encoding="utf-8").splitlines():
+            parts = line.strip().split()
+            if len(parts) == 2 and parts[0] == "module":
+                name = nonempty_project_name(parts[1].rstrip("/").rsplit("/", 1)[-1])
+                if name:
+                    return name
+
+    return DEFAULT_CODEBASE_TITLE
+
+
 def doc_id_for(source_path: Path, source_root: Path) -> str:
     relative = source_path.relative_to(source_root).with_suffix("")
     return "__".join(relative.parts)
@@ -2119,7 +2183,7 @@ def render_workflow_topbar(
     current_html: Path,
     workspace_root: Path,
     output_root: Path,
-    site_title: str,
+    codebase_title: str,
     pages: list[dict[str, Any]],
     topbar_items: list[dict[str, Any]],
     current_doc_id: str | None,
@@ -2148,7 +2212,8 @@ def render_workflow_topbar(
     return (
         '<nav class="topbar" aria-label="Primary">'
         '<div class="topbar-inner">'
-        f'<a class="topbar-brand" href="{home_href}">{html.escape(site_title)}</a>'
+        f'<a class="topbar-brand" href="{home_href}">'
+        f"{html.escape(codebase_title)}</a>"
         '<div class="topbar-links">'
         + "".join(links)
         + "</div></div></nav>\n"
@@ -2366,12 +2431,14 @@ def build_docs_site(
 
     navigation = navigation_for_config(pages, nav_config)
     topbar_items = topbar_for_config(pages, nav_config)
+    codebase_title = codebase_title_for(workspace)
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
         "source_root": Path(source_root).as_posix(),
         "output_root": Path(output_root).as_posix(),
         "site_title": site_title,
+        "codebase_title": codebase_title,
         "reference_mode": reference_mode,
         "nav_config_path": nav_config_path.as_posix() if nav_config_path else None,
         "pages": pages,
@@ -2421,7 +2488,7 @@ def build_docs_site(
                 current_html=html_path,
                 workspace_root=workspace,
                 output_root=Path(output_root),
-                site_title=site_title,
+                codebase_title=codebase_title,
                 pages=pages,
                 topbar_items=topbar_items,
                 current_doc_id=current_doc_id,
@@ -2525,7 +2592,7 @@ def build_docs_site(
                 current_html=index_path,
                 workspace_root=workspace,
                 output_root=Path(output_root),
-                site_title=site_title,
+                codebase_title=codebase_title,
                 pages=pages,
                 topbar_items=topbar_items,
                 current_doc_id=index_nav_doc_id,

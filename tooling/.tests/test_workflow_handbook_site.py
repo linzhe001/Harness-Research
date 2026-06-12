@@ -193,6 +193,19 @@ def test_docs_site_cli_json_full_keeps_manifest(tmp_path: Path, capsys) -> None:
     assert payload["pages"][0]["source_path"] == "docs/Index.md"
 
 
+def test_codebase_title_uses_metadata_or_fallback(tmp_path: Path) -> None:
+    site_builder = load_evidence_tool("build_docs_site")
+
+    assert site_builder.codebase_title_for(tmp_path) == "harness research"
+
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "sample-codebase"\n',
+        encoding="utf-8",
+    )
+
+    assert site_builder.codebase_title_for(tmp_path) == "sample-codebase"
+
+
 def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     builder = load_evidence_tool("build_workflow_handbook_reference_index")
     site_builder = load_evidence_tool("build_docs_site")
@@ -282,6 +295,8 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
 
     assert manifest["reference_mode"] == "workflow-handbook"
+    assert manifest["site_title"] == "Harness Workflow Handbook"
+    assert manifest["codebase_title"] == "harness research"
     assert [item["label"] for item in manifest["topbar"]] == [
         "Overview",
         "Codebase",
@@ -302,7 +317,10 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert 'src="assets/evidence-preview.js"' in index_html
     assert '<body class="has-topbar">' in index_html
     assert '<nav class="topbar" aria-label="Primary">' in index_html
-    assert '<a class="topbar-brand" href="index.html">' in index_html
+    assert (
+        '<a class="topbar-brand" href="index.html">harness research</a>'
+        in index_html
+    )
     assert '<a class="active" href="index.html">Overview</a>' in index_html
     assert '<a href="pages/codebase.html">Codebase</a>' in index_html
     assert '<a href="pages/cli.html">CLI</a>' in index_html
@@ -377,6 +395,7 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
     assert "workflow_handbook/pages/codebase.md" in codebase_html
     assert "workflow_handbook/pages/cli.md" in cli_html
     assert "Harness Workflow Handbook" in html
+    assert "harness research" in html
     assert "grid-template-columns: minmax(248px, 280px) minmax(0, 1fr)" in css
     assert ".topbar" in css
     assert ".topbar-links a.active" in css

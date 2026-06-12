@@ -1,9 +1,10 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T12:28:56Z",
+  "generated_at": "2026-06-12T12:37:57Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Harness Workflow Handbook",
+  "codebase_title": "harness research",
   "reference_mode": "workflow-handbook",
   "nav_config_path": "workflow_handbook/config/navigation.json",
   "pages": [
