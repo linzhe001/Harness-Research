@@ -2110,6 +2110,7 @@
         ".claude/rules/",
         ".claude/shared/",
         "tooling/codex_hooks/",
+        "tooling/intent_router/",
         "tooling/evidence/",
         "tooling/model_api/",
         "tooling/.tests/",
@@ -2136,6 +2137,7 @@
           ".claude/rules/",
           ".claude/shared/",
           "tooling/codex_hooks/",
+          "tooling/intent_router/",
           "tooling/evidence/",
           "tooling/model_api/",
           "tooling/.tests/",
@@ -2191,6 +2193,7 @@
           "kind": "implementation",
           "paths": [
             "tooling/codex_hooks/",
+            "tooling/intent_router/",
             "tooling/evidence/",
             "tooling/model_api/",
             "tooling/.tests/",

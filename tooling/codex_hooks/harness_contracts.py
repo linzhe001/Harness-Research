@@ -12,12 +12,22 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+INTENT_ROUTER_DIR = Path(__file__).resolve().parents[1] / "intent_router"
+if str(INTENT_ROUTER_DIR) not in sys.path:
+    sys.path.insert(0, str(INTENT_ROUTER_DIR))
+try:
+    from router import route_prompt as intent_route_prompt
+except ImportError:  # pragma: no cover - defensive fallback for partial installs
+    intent_route_prompt = None  # type: ignore[assignment]
+
 CONTRACTS_PATH = Path("schemas/skill_contracts.json")
 SLICED_COMMIT_RULE_PATH = ".agents/references/sliced-commit-rule.md"
 COMMIT_GUIDANCE_FILES = (SLICED_COMMIT_RULE_PATH,)
 RUNTIME_DIR = Path(".harness_hooks")
 SESSION_PATH = RUNTIME_DIR / "session.json"
 SESSIONS_DIR = RUNTIME_DIR / "sessions"
+ROUTE_PATH = RUNTIME_DIR / "route.json"
+LAST_ROUTE_PATH = RUNTIME_DIR / "last_route.json"
 READ_LEDGER_PATH = RUNTIME_DIR / "read_ledger.json"
 READ_LEDGERS_DIR = RUNTIME_DIR / "read_ledgers"
 READ_LEDGER_LOCK_PATH = RUNTIME_DIR / "read_ledger.lock"
@@ -42,10 +52,13 @@ DIRECT_TOOL_OWNED_PATHS = [
 GUARDRAIL_PATH_OWNERS = {
     "harness-maintenance": [
         "tooling/codex_hooks/",
+        "tooling/intent_router/",
         "tooling/workflow_supervisor/",
         "tooling/grill/",
         "schemas/skill_contracts.json",
         "schemas/skill_contracts.schema.json",
+        "schemas/harness_intent_route.schema.json",
+        "schemas/intent_route_example.schema.json",
         "schemas/workflow_supervisor_state.schema.json",
         "schemas/workflow_supervisor_nodes.schema.json",
         "schemas/workflow_supervisor_worker_result.schema.json",
@@ -79,6 +92,28 @@ CHANGED_PATH_OWNER_PATTERNS = {
         "project_map.json",
         "docs/20_facts/Codebase_Map.md",
     ],
+}
+
+INTENT_ROUTE_SKILL_MAP = {
+    "grill": "grill",
+    "prepare": "workflow-supervisor",
+    "build": "workflow-supervisor",
+    "run": "iterate",
+    "analyze": "evaluate",
+    "write": "auto-paper",
+    "change": "change-intake",
+    "code-review": "code-review",
+    "code-debug": "code-debug",
+    "harness-maintenance": "harness-maintenance",
+}
+HOOK_INTENT_ROUTER_ROUTES = {
+    "grill",
+    "prepare",
+    "build",
+    "run",
+    "analyze",
+    "write",
+    "change",
 }
 
 ENFORCEMENT_NONE = "none"
@@ -708,6 +743,57 @@ def _candidate_match(
     }
 
 
+def _route_confidence_allowed(route: dict[str, Any]) -> bool:
+    route_name = route.get("route")
+    confidence = route.get("confidence")
+    if route_name == "unknown" or confidence == "low":
+        return False
+    return isinstance(route_name, str) and route_name in HOOK_INTENT_ROUTER_ROUTES
+
+
+def infer_intent_route(prompt: str) -> dict[str, Any] | None:
+    if intent_route_prompt is None:
+        return None
+    route = intent_route_prompt(prompt)
+    return route if isinstance(route, dict) else None
+
+
+def _intent_route_match(
+    root: Path,
+    prompt: str,
+    intent: str,
+) -> dict[str, Any] | None:
+    if intent_route_prompt is None:
+        return None
+    route = intent_route_prompt(prompt)
+    if not isinstance(route, dict) or not _route_confidence_allowed(route):
+        return None
+    route_name = str(route["route"])
+    skill = INTENT_ROUTE_SKILL_MAP[route_name]
+    contract = contract_by_skill(root, skill)
+    if contract is None:
+        return None
+    match_intent = intent if intent != "unknown" else str(route.get("intent_class"))
+    reason_codes = route.get("reason_codes")
+    reason_suffix = ""
+    if isinstance(reason_codes, list) and reason_codes:
+        reason_suffix = " reason_codes=" + ",".join(str(item) for item in reason_codes)
+    match = _candidate_match(
+        contract,
+        skill,
+        route_name,
+        "intent_router",
+        match_intent,
+        (
+            "Intent router inferred Harness workflow route "
+            f"`{route_name}` with {route.get('confidence')} confidence; "
+            f"{route.get('next_safe_action')}{reason_suffix}"
+        ),
+    )
+    match["intent_route"] = route
+    return match
+
+
 def _workflow_action_match(
     root: Path,
     prompt: str,
@@ -872,6 +958,10 @@ def detect_skill_match(root: Path, prompt: str) -> dict[str, Any] | None:
     )
     if changed_owner_match:
         return changed_owner_match
+
+    intent_router_match = _intent_route_match(root, prompt, intent)
+    if intent_router_match:
+        return intent_router_match
 
     best: tuple[int, dict[str, Any], str, str] | None = None
     for contract in load_contracts(root):
@@ -1133,10 +1223,14 @@ def validate_contract_files(root: Path) -> list[str]:
         if skill in seen_skills:
             errors.append(f"{skill}: duplicate skill contract")
         seen_skills.add(str(skill))
-        expected_skill_path = f".agents/skills/{skill}/SKILL.md"
-        if expected_skill_path not in read_set.get("skill", []):
+        expected_skill_paths = {
+            f".agents/skills/{skill}/SKILL.md",
+            f".agents/skills/{skill}/INTERNAL.md",
+        }
+        if not expected_skill_paths.intersection(read_set.get("skill", [])):
             errors.append(
-                f"{skill}: required_read_set.skill must include {expected_skill_path}"
+                f"{skill}: required_read_set.skill must include "
+                f"{sorted(expected_skill_paths)}"
             )
         if "AGENTS.md" not in read_set.get("project_when_present", []):
             errors.append(
@@ -1245,7 +1339,7 @@ def validate_contract_files(root: Path) -> list[str]:
                     errors.append(
                         f"{skill}: missing required {section} read file: {path}"
                     )
-        skill_file = root / ".agents" / "skills" / str(skill) / "SKILL.md"
+        skill_file = root / primary_skill_source_path(contract)
         if not skill_file.exists():
             errors.append(
                 f"{skill}: missing skill file: {skill_file.relative_to(root)}"
@@ -1268,6 +1362,19 @@ def validate_contract_files(root: Path) -> list[str]:
     return errors
 
 
+def primary_skill_source_path(contract: dict[str, Any]) -> Path:
+    skill = str(contract.get("skill", ""))
+    read_set = contract.get("required_read_set", {})
+    expected = (
+        f".agents/skills/{skill}/SKILL.md",
+        f".agents/skills/{skill}/INTERNAL.md",
+    )
+    for path in read_set.get("skill", []):
+        if path in expected:
+            return Path(path)
+    return Path(expected[0])
+
+
 def load_session(root: Path) -> dict[str, Any]:
     return load_json(root / SESSION_PATH, {})
 
@@ -1277,6 +1384,11 @@ def save_session(root: Path, session: dict[str, Any]) -> None:
     session_id = session.get("session_id")
     if isinstance(session_id, str) and session_id.strip():
         write_json(root / SESSIONS_DIR / f"{runtime_key(session_id)}.json", session)
+
+
+def save_route(root: Path, route: dict[str, Any]) -> None:
+    write_json(root / ROUTE_PATH, route)
+    write_json(root / LAST_ROUTE_PATH, route)
 
 
 def runtime_key(value: str) -> str:
@@ -2507,6 +2619,7 @@ def additional_context_for_contract(
     return (
         f"Harness route hint: {contract['skill']}\n"
         + detection
+        + f"Skill source: {primary_skill_source_path(contract)}\n"
         + "This is advisory route context. "
         + "Read relevant local files before durable edits; tool-time policy "
         + "will warn or block from the concrete tool call."
@@ -2520,6 +2633,14 @@ def additional_context_for_candidate(
     reason = ""
     if match and match.get("candidate_reason"):
         reason = f"Reason: {match.get('candidate_reason')}.\n"
+    route = ""
+    if match and isinstance(match.get("intent_route"), dict):
+        intent_route = match["intent_route"]
+        route = (
+            f"Intent route: {intent_route.get('route')} "
+            f"({intent_route.get('confidence')}). "
+            f"Next: {intent_route.get('next_safe_action')}\n"
+        )
     trigger = ""
     if match:
         trigger_type = match.get("candidate_trigger_type") or match.get(
@@ -2531,9 +2652,12 @@ def additional_context_for_candidate(
             f"trigger `{trigger_value}`; "
             f"intent={match.get('intent_class')}.\n"
         )
+    source = f"Skill source: {primary_skill_source_path(contract)}\n"
     return (
         f"Harness route hint: {contract['skill']}\n"
         + trigger
+        + route
+        + source
         + reason
         + "This is advisory context only. Concrete tool calls are checked "
         "at tool time."

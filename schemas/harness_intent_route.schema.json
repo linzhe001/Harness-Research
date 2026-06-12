@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness intent route",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "route",
+    "intent_class",
+    "confidence",
+    "source",
+    "reason_codes",
+    "next_safe_action",
+    "prompt_hash",
+    "prompt_preview"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "route": {
+      "type": "string",
+      "enum": [
+        "grill",
+        "prepare",
+        "build",
+        "run",
+        "analyze",
+        "write",
+        "change",
+        "code-review",
+        "code-debug",
+        "harness-maintenance",
+        "unknown"
+      ]
+    },
+    "intent_class": {
+      "type": "string",
+      "enum": [
+        "research_ideation",
+        "execution_prepare",
+        "initial_build",
+        "experiment_run",
+        "result_analysis",
+        "paper_write",
+        "post_build_change",
+        "code_review",
+        "code_write",
+        "harness_maintenance",
+        "question",
+        "unknown"
+      ]
+    },
+    "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+    "source": { "type": "string" },
+    "reason_codes": { "type": "array", "items": { "type": "string" } },
+    "next_safe_action": { "type": "string" },
+    "prompt_hash": { "type": "string" },
+    "prompt_preview": { "type": "string" }
+  },
+  "additionalProperties": true
+}
+

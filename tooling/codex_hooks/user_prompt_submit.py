@@ -10,6 +10,7 @@ from harness_contracts import (
     daily_context_for_workspace,
     detect_skill_match,
     emit,
+    infer_intent_route,
     is_continuation_prompt,
     is_harness_workspace,
     load_session_for_event,
@@ -17,6 +18,7 @@ from harness_contracts import (
     read_hook_event,
     repo_root,
     reset_read_ledger,
+    save_route,
     save_session,
     truncate_user_prompt_context,
 )
@@ -56,6 +58,7 @@ def continuation_match(root, prompt: str, event: dict) -> dict | None:
             "trigger": "continuation",
             "trigger_type": "continuation",
             "intent_class": previous.get("intent_class"),
+            "intent_route": previous.get("intent_route"),
             "enforcement_mode": previous.get("enforcement_mode"),
             "read_contract_stop_required": bool(
                 previous.get("read_contract_stop_required")
@@ -81,8 +84,8 @@ def continuation_match(root, prompt: str, event: dict) -> dict | None:
         ),
         "trigger": "candidate_continuation",
         "trigger_type": "continuation",
-        "intent_class": previous.get("intent_class")
-        or classify_prompt_intent(prompt),
+        "intent_class": previous.get("intent_class") or classify_prompt_intent(prompt),
+        "intent_route": previous.get("intent_route"),
         "enforcement_mode": ENFORCEMENT_CONTEXT_ONLY,
         "read_contract_stop_required": False,
         "continued_from_previous_prompt": True,
@@ -111,6 +114,13 @@ def main() -> int:
         match = detect_skill_match(root, prompt)
     contract = match.get("contract") if match else None
     candidate_contract = match.get("candidate_contract") if match else None
+    intent_route = match.get("intent_route") if match else None
+    if not isinstance(intent_route, dict):
+        intent_route = infer_intent_route(prompt)
+    if isinstance(intent_route, dict):
+        intent_route = dict(intent_route)
+        intent_route["session_id"] = event.get("session_id")
+        intent_route["turn_id"] = event.get("turn_id")
     if continued:
         session = load_session_for_event(root, event)
         session.pop("last_mutating_tool", None)
@@ -125,6 +135,7 @@ def main() -> int:
                 "candidate_trigger_type": match.get("candidate_trigger_type"),
                 "candidate_reason": match.get("candidate_reason"),
                 "intent_class": match.get("intent_class"),
+                "intent_route": intent_route,
                 "skill_trigger": match.get("trigger"),
                 "skill_trigger_type": match.get("trigger_type"),
                 "enforcement_mode": match.get("enforcement_mode")
@@ -154,6 +165,7 @@ def main() -> int:
             "intent_class": match.get("intent_class")
             if match
             else classify_prompt_intent(prompt),
+            "intent_route": intent_route,
             "skill_trigger": match.get("trigger") if match else None,
             "skill_trigger_type": match.get("trigger_type") if match else None,
             "enforcement_mode": match.get("enforcement_mode")
@@ -172,6 +184,8 @@ def main() -> int:
             "mutating_tool_seen": False,
         }
     save_session(root, session)
+    if isinstance(intent_route, dict):
+        save_route(root, intent_route)
     if is_harness_workspace(root) and not continued:
         reset_read_ledger(root, event)
     daily_context = daily_context_for_workspace(root)

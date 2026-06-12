@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harness intent route example",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "created_at",
+    "language",
+    "privacy",
+    "prompt",
+    "expected_route",
+    "expected_intent",
+    "reason"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "language": { "type": "string" },
+    "privacy": {
+      "type": "string",
+      "enum": ["raw_ok", "redacted", "paraphrase_only"]
+    },
+    "prompt": { "type": "string" },
+    "expected_route": {
+      "type": "string",
+      "enum": [
+        "grill",
+        "prepare",
+        "build",
+        "run",
+        "analyze",
+        "write",
+        "change",
+        "code-review",
+        "code-debug",
+        "harness-maintenance"
+      ]
+    },
+    "expected_intent": { "type": "string" },
+    "observed_route": { "type": "string" },
+    "observed_confidence": { "type": "string" },
+    "reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}
+
