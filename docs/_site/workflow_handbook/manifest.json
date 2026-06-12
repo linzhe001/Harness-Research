@@ -1,10 +1,10 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T04:54:39Z",
+  "generated_at": "2026-06-12T11:32:15Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
-  "site_title": "Project Docs",
-  "reference_mode": "project-evidence",
+  "site_title": "Harness Workflow Handbook",
+  "reference_mode": "workflow-handbook",
   "nav_config_path": "workflow_handbook/config/navigation.json",
   "pages": [
     {
@@ -225,7 +225,7 @@
       "page_id": "operator_task_index",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+      "summary": "Action-first index for choosing the right Harness visible alias, internal runtime, status check, and detailed reference.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -268,7 +268,7 @@
       "page_id": "workflow_layers",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "Explains the entrypoint-first operating model and where internal Stage references fit.",
+      "summary": "Explains the visible-alias-first operating model and where internal Stage references fit.",
       "references": [
         "term:Stage",
         "term:Skill",
@@ -279,7 +279,7 @@
     {
       "doc_id": "pages__workflow_supervisor_model",
       "doc_kind": "concept",
-      "title": "Workflow Supervisor Model",
+      "title": "Runtime Routing Model",
       "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
       "html_path": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html",
       "status": "current",
@@ -289,7 +289,7 @@
       "page_id": "workflow_supervisor_model",
       "page_kind": "concept",
       "source_type": "hand_authored",
-      "summary": "How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval.",
+      "summary": "How visible aliases route to internal runtime sources without replacing Gate Evidence or Human Approval.",
       "references": [
         "skill:grill",
         "skill:workflow-supervisor",
@@ -351,7 +351,7 @@
       "page_id": "auto-iterate-goal",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.",
+      "summary": "Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-iterate-goal",
         "source:schemas/skill_contracts.json#auto-iterate-goal",
@@ -371,7 +371,7 @@
       "page_id": "auto-paper-argument",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase.",
+      "summary": "Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-argument",
         "source:schemas/skill_contracts.json#auto-paper-argument",
@@ -391,7 +391,7 @@
       "page_id": "auto-paper-citation",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Support claims, not reference stuffing. Do not rewrite the manuscript in this phase.",
+      "summary": "Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-citation",
         "source:schemas/skill_contracts.json#auto-paper-citation",
@@ -411,7 +411,7 @@
       "page_id": "auto-paper-data",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence.",
+      "summary": "Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-data",
         "source:schemas/skill_contracts.json#auto-paper-data",
@@ -431,7 +431,7 @@
       "page_id": "auto-paper-figure",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk.",
+      "summary": "Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-figure",
         "source:schemas/skill_contracts.json#auto-paper-figure",
@@ -451,7 +451,7 @@
       "page_id": "auto-paper-harden",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase.",
+      "summary": "Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-harden",
         "source:schemas/skill_contracts.json#auto-paper-harden",
@@ -471,7 +471,7 @@
       "page_id": "auto-paper-intake",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake.",
+      "summary": "Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-intake",
         "source:schemas/skill_contracts.json#auto-paper-intake",
@@ -491,7 +491,7 @@
       "page_id": "auto-paper-layout",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Create an executable rewrite plan. Do not edit `.tex` files in layout.",
+      "summary": "Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-layout",
         "source:schemas/skill_contracts.json#auto-paper-layout",
@@ -511,7 +511,7 @@
       "page_id": "auto-paper-patch",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory.",
+      "summary": "Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-patch",
         "source:schemas/skill_contracts.json#auto-paper-patch",
@@ -531,7 +531,7 @@
       "page_id": "auto-paper-research",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence.",
+      "summary": "Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-research",
         "source:schemas/skill_contracts.json#auto-paper-research",
@@ -551,7 +551,7 @@
       "page_id": "auto-paper-response",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work.",
+      "summary": "Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper-response",
         "source:schemas/skill_contracts.json#auto-paper-response",
@@ -571,7 +571,7 @@
       "page_id": "auto-paper",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state.",
+      "summary": "Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:auto-paper",
         "source:schemas/skill_contracts.json#auto-paper",
@@ -591,7 +591,7 @@
       "page_id": "baseline-repro",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:baseline-repro",
         "source:schemas/skill_contracts.json#baseline-repro",
@@ -611,7 +611,7 @@
       "page_id": "build-plan",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:build-plan",
         "source:schemas/skill_contracts.json#build-plan",
@@ -631,7 +631,7 @@
       "page_id": "change-intake",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits.",
+      "summary": "Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:change-intake",
         "source:schemas/skill_contracts.json#change-intake",
@@ -651,7 +651,7 @@
       "page_id": "code-debug",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for code-debug. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:code-debug",
         "source:schemas/skill_contracts.json#code-debug",
@@ -671,7 +671,7 @@
       "page_id": "code-expert",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:code-expert",
         "source:schemas/skill_contracts.json#code-expert",
@@ -691,7 +691,7 @@
       "page_id": "code-review",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active.",
+      "summary": "Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:code-review",
         "source:schemas/skill_contracts.json#code-review",
@@ -711,7 +711,7 @@
       "page_id": "data-prep",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill for WF4 dataset analysis, subset design, and data-pipeline preparation.",
+      "summary": "Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:data-prep",
         "source:schemas/skill_contracts.json#data-prep",
@@ -731,7 +731,7 @@
       "page_id": "deep-check",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for deep-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:deep-check",
         "source:schemas/skill_contracts.json#deep-check",
@@ -751,7 +751,7 @@
       "page_id": "doc-compiler",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for doc-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:doc-compiler",
         "source:schemas/skill_contracts.json#doc-compiler",
@@ -771,7 +771,7 @@
       "page_id": "docs-site",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for docs-site. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:docs-site",
         "source:schemas/skill_contracts.json#docs-site",
@@ -791,7 +791,7 @@
       "page_id": "env-setup",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for env-setup. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:env-setup",
         "source:schemas/skill_contracts.json#env-setup",
@@ -811,7 +811,7 @@
       "page_id": "evaluate",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for evaluate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:evaluate",
         "source:schemas/skill_contracts.json#evaluate",
@@ -831,7 +831,7 @@
       "page_id": "final-exp",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:final-exp",
         "source:schemas/skill_contracts.json#final-exp",
@@ -871,7 +871,7 @@
       "page_id": "harness-maintenance",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:harness-maintenance",
         "source:schemas/skill_contracts.json#harness-maintenance",
@@ -891,7 +891,7 @@
       "page_id": "idea-debate",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:idea-debate",
         "source:schemas/skill_contracts.json#idea-debate",
@@ -911,7 +911,7 @@
       "page_id": "init-project",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.",
+      "summary": "Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:init-project",
         "source:schemas/skill_contracts.json#init-project",
@@ -931,7 +931,7 @@
       "page_id": "iterate",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.",
+      "summary": "Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:iterate",
         "source:schemas/skill_contracts.json#iterate",
@@ -951,7 +951,7 @@
       "page_id": "orchestrator",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:orchestrator",
         "source:schemas/skill_contracts.json#orchestrator",
@@ -971,7 +971,7 @@
       "page_id": "protocol-compiler",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for protocol-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:protocol-compiler",
         "source:schemas/skill_contracts.json#protocol-compiler",
@@ -991,7 +991,7 @@
       "page_id": "protocol-drift-check",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for protocol-drift-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:protocol-drift-check",
         "source:schemas/skill_contracts.json#protocol-drift-check",
@@ -1011,7 +1011,7 @@
       "page_id": "refine-arch",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:refine-arch",
         "source:schemas/skill_contracts.json#refine-arch",
@@ -1031,7 +1031,7 @@
       "page_id": "refine-idea",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:refine-idea",
         "source:schemas/skill_contracts.json#refine-idea",
@@ -1051,7 +1051,7 @@
       "page_id": "release",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:release",
         "source:schemas/skill_contracts.json#release",
@@ -1071,7 +1071,7 @@
       "page_id": "review-packet",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:review-packet",
         "source:schemas/skill_contracts.json#review-packet",
@@ -1091,7 +1091,7 @@
       "page_id": "survey-idea",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:survey-idea",
         "source:schemas/skill_contracts.json#survey-idea",
@@ -1111,7 +1111,7 @@
       "page_id": "validate-run",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for validate-run. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:validate-run",
         "source:schemas/skill_contracts.json#validate-run",
@@ -1131,7 +1131,7 @@
       "page_id": "workflow-supervisor",
       "page_kind": "skill",
       "source_type": "generated",
-      "summary": "Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.",
+      "summary": "Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "references": [
         "skill:workflow-supervisor",
         "source:schemas/skill_contracts.json#workflow-supervisor",
@@ -1448,18 +1448,18 @@
         },
         {
           "doc_id": "pages__workflow_supervisor_model",
-          "label": "Visible Aliases",
+          "label": "Runtime Routing",
           "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
           "children": [
             {
               "doc_id": "skills__grill",
-              "label": "grill",
+              "label": "grill contract",
               "source_path": "workflow_handbook/skills/grill.md",
               "children": []
             },
             {
               "doc_id": "skills__workflow-supervisor",
-              "label": "internal supervisor contract",
+              "label": "workflow-supervisor runtime",
               "source_path": "workflow_handbook/skills/workflow-supervisor.md",
               "children": []
             }

@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T04:54:29Z",
+  "generated_at": "2026-06-12T11:32:15Z",
   "source_index_version": "skill_contracts:0.1",
   "source_roots": [
     "schemas/skill_contracts.json",
@@ -2275,7 +2275,7 @@
       "ref": "page:auto-iterate-goal",
       "kind": "page",
       "title": "auto-iterate-goal",
-      "summary": "Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.",
+      "summary": "Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2288,7 +2288,7 @@
       ],
       "preview": {
         "title": "auto-iterate-goal",
-        "body": "auto-iterate-goal: Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.",
+        "body": "auto-iterate-goal: Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2301,7 +2301,7 @@
       "ref": "page:auto-paper",
       "kind": "page",
       "title": "auto-paper",
-      "summary": "Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state.",
+      "summary": "Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2314,7 +2314,7 @@
       ],
       "preview": {
         "title": "auto-paper",
-        "body": "auto-paper: Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It routes phases, checks artifacts, and keeps paper-writing state separate from auto-iterate experiment state.",
+        "body": "auto-paper: Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2327,7 +2327,7 @@
       "ref": "page:auto-paper-argument",
       "kind": "page",
       "title": "auto-paper-argument",
-      "summary": "Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase.",
+      "summary": "Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2340,7 +2340,7 @@
       ],
       "preview": {
         "title": "auto-paper-argument",
-        "body": "auto-paper-argument: Decide what the paper can responsibly claim. Do not optimize sentences and do not patch LaTeX in this phase.",
+        "body": "auto-paper-argument: Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2353,7 +2353,7 @@
       "ref": "page:auto-paper-citation",
       "kind": "page",
       "title": "auto-paper-citation",
-      "summary": "Support claims, not reference stuffing. Do not rewrite the manuscript in this phase.",
+      "summary": "Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2366,7 +2366,7 @@
       ],
       "preview": {
         "title": "auto-paper-citation",
-        "body": "auto-paper-citation: Support claims, not reference stuffing. Do not rewrite the manuscript in this phase.",
+        "body": "auto-paper-citation: Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2379,7 +2379,7 @@
       "ref": "page:auto-paper-data",
       "kind": "page",
       "title": "auto-paper-data",
-      "summary": "Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence.",
+      "summary": "Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2392,7 +2392,7 @@
       ],
       "preview": {
         "title": "auto-paper-data",
-        "body": "auto-paper-data: Prepare availability and reproducibility statements from verified project facts. This branch does not invent dataset access, license state, ethics approval, code release status, compute details, or artifact permanence.",
+        "body": "auto-paper-data: Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2405,7 +2405,7 @@
       "ref": "page:auto-paper-figure",
       "kind": "page",
       "title": "auto-paper-figure",
-      "summary": "Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk.",
+      "summary": "Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2418,7 +2418,7 @@
       ],
       "preview": {
         "title": "auto-paper-figure",
-        "body": "auto-paper-figure: Create figure contracts and caption audits before any plotting or asset edits. This branch is not the default drawing tool; enter it when the operator asks for figure work or when harden finds figure/caption risk.",
+        "body": "auto-paper-figure: Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2431,7 +2431,7 @@
       "ref": "page:auto-paper-harden",
       "kind": "page",
       "title": "auto-paper-harden",
-      "summary": "Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase.",
+      "summary": "Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2444,7 +2444,7 @@
       ],
       "preview": {
         "title": "auto-paper-harden",
-        "body": "auto-paper-harden: Audit manuscript readiness. Do not do large rewrites in harden; route failures to the owning phase.",
+        "body": "auto-paper-harden: Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2457,7 +2457,7 @@
       "ref": "page:auto-paper-intake",
       "kind": "page",
       "title": "auto-paper-intake",
-      "summary": "Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake.",
+      "summary": "Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2470,7 +2470,7 @@
       ],
       "preview": {
         "title": "auto-paper-intake",
-        "body": "auto-paper-intake: Create the run configuration and source inventory. Do not write manuscript prose or make claim decisions in intake.",
+        "body": "auto-paper-intake: Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2483,7 +2483,7 @@
       "ref": "page:auto-paper-layout",
       "kind": "page",
       "title": "auto-paper-layout",
-      "summary": "Create an executable rewrite plan. Do not edit `.tex` files in layout.",
+      "summary": "Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2496,7 +2496,7 @@
       ],
       "preview": {
         "title": "auto-paper-layout",
-        "body": "auto-paper-layout: Create an executable rewrite plan. Do not edit `.tex` files in layout.",
+        "body": "auto-paper-layout: Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2509,7 +2509,7 @@
       "ref": "page:auto-paper-patch",
       "kind": "page",
       "title": "auto-paper-patch",
-      "summary": "Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory.",
+      "summary": "Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2522,7 +2522,7 @@
       ],
       "preview": {
         "title": "auto-paper-patch",
-        "body": "auto-paper-patch: Produce bounded LaTeX changes from approved artifacts. In a guarded Harness workspace, default to writing apply-ready diffs under `auto_paper_output/<paper_id>/` instead of directly editing the manuscript source. Do not perform broad rewrites from chat memory.",
+        "body": "auto-paper-patch: Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2535,7 +2535,7 @@
       "ref": "page:auto-paper-research",
       "kind": "page",
       "title": "auto-paper-research",
-      "summary": "Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence.",
+      "summary": "Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2548,7 +2548,7 @@
       ],
       "preview": {
         "title": "auto-paper-research",
-        "body": "auto-paper-research: Build research context only. Do not patch `.tex`, write final sentences, or add claims that are not supported by author evidence.",
+        "body": "auto-paper-research: Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2561,7 +2561,7 @@
       "ref": "page:auto-paper-response",
       "kind": "page",
       "title": "auto-paper-response",
-      "summary": "Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work.",
+      "summary": "Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2574,7 +2574,7 @@
       ],
       "preview": {
         "title": "auto-paper-response",
-        "body": "auto-paper-response: Handle reviewer comments and response letters without changing the paper's claim boundary. This branch is optional and should not be entered by the main auto-paper loop unless the operator asks for rebuttal or revision-response work.",
+        "body": "auto-paper-response: Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2613,7 +2613,7 @@
       "ref": "page:baseline-repro",
       "kind": "page",
       "title": "baseline-repro",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2626,7 +2626,7 @@
       ],
       "preview": {
         "title": "baseline-repro",
-        "body": "baseline-repro: Read these first:",
+        "body": "baseline-repro: Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2639,7 +2639,7 @@
       "ref": "page:build-plan",
       "kind": "page",
       "title": "build-plan",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2652,7 +2652,7 @@
       ],
       "preview": {
         "title": "build-plan",
-        "body": "build-plan: Read these first:",
+        "body": "build-plan: Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2665,7 +2665,7 @@
       "ref": "page:change-intake",
       "kind": "page",
       "title": "change-intake",
-      "summary": "Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits.",
+      "summary": "Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2678,7 +2678,7 @@
       ],
       "preview": {
         "title": "change-intake",
-        "body": "change-intake: Use Change Intake after a codebase exists or after WF8/WF9 when the operator brings a new request, idea, config change, or code delta. The goal is to route the change without silently rerunning WF1-WF12 or making broad edits.",
+        "body": "change-intake: Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2691,7 +2691,7 @@
       "ref": "page:code-debug",
       "kind": "page",
       "title": "code-debug",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for code-debug. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2704,7 +2704,7 @@
       ],
       "preview": {
         "title": "code-debug",
-        "body": "code-debug: Read these first:",
+        "body": "code-debug: Internal Harness instruction source for code-debug. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2717,7 +2717,7 @@
       "ref": "page:code-expert",
       "kind": "page",
       "title": "code-expert",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2730,7 +2730,7 @@
       ],
       "preview": {
         "title": "code-expert",
-        "body": "code-expert: Read these first:",
+        "body": "code-expert: Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2743,7 +2743,7 @@
       "ref": "page:code-review",
       "kind": "page",
       "title": "code-review",
-      "summary": "Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active.",
+      "summary": "Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2756,7 +2756,7 @@
       ],
       "preview": {
         "title": "code-review",
-        "body": "code-review: Use this Skill for review-only checks. Do not edit subject code, configs, tests, current docs, or canonical state while this Skill is active.",
+        "body": "code-review: Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2769,7 +2769,7 @@
       "ref": "page:data-prep",
       "kind": "page",
       "title": "data-prep",
-      "summary": "Use this Skill for WF4 dataset analysis, subset design, and data-pipeline preparation.",
+      "summary": "Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2782,7 +2782,7 @@
       ],
       "preview": {
         "title": "data-prep",
-        "body": "data-prep: Use this Skill for WF4 dataset analysis, subset design, and data-pipeline preparation.",
+        "body": "data-prep: Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2795,7 +2795,7 @@
       "ref": "page:deep-check",
       "kind": "page",
       "title": "deep-check",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for deep-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2808,7 +2808,7 @@
       ],
       "preview": {
         "title": "deep-check",
-        "body": "deep-check: Read these first:",
+        "body": "deep-check: Internal Harness instruction source for deep-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2821,7 +2821,7 @@
       "ref": "page:doc-compiler",
       "kind": "page",
       "title": "doc-compiler",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for doc-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2834,7 +2834,7 @@
       ],
       "preview": {
         "title": "doc-compiler",
-        "body": "doc-compiler: Read these first:",
+        "body": "doc-compiler: Internal Harness instruction source for doc-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2847,7 +2847,7 @@
       "ref": "page:docs-site",
       "kind": "page",
       "title": "docs-site",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for docs-site. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2860,7 +2860,7 @@
       ],
       "preview": {
         "title": "docs-site",
-        "body": "docs-site: Read these first:",
+        "body": "docs-site: Internal Harness instruction source for docs-site. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2873,7 +2873,7 @@
       "ref": "page:env-setup",
       "kind": "page",
       "title": "env-setup",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for env-setup. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2886,7 +2886,7 @@
       ],
       "preview": {
         "title": "env-setup",
-        "body": "env-setup: Read these first:",
+        "body": "env-setup: Internal Harness instruction source for env-setup. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2899,7 +2899,7 @@
       "ref": "page:evaluate",
       "kind": "page",
       "title": "evaluate",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for evaluate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2912,7 +2912,7 @@
       ],
       "preview": {
         "title": "evaluate",
-        "body": "evaluate: Read these first:",
+        "body": "evaluate: Internal Harness instruction source for evaluate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -2951,7 +2951,7 @@
       "ref": "page:final-exp",
       "kind": "page",
       "title": "final-exp",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -2964,7 +2964,7 @@
       ],
       "preview": {
         "title": "final-exp",
-        "body": "final-exp: Read these first:",
+        "body": "final-exp: Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3003,7 +3003,7 @@
       "ref": "page:harness-maintenance",
       "kind": "page",
       "title": "harness-maintenance",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3016,7 +3016,7 @@
       ],
       "preview": {
         "title": "harness-maintenance",
-        "body": "harness-maintenance: Read these first:",
+        "body": "harness-maintenance: Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3055,7 +3055,7 @@
       "ref": "page:idea-debate",
       "kind": "page",
       "title": "idea-debate",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3068,7 +3068,7 @@
       ],
       "preview": {
         "title": "idea-debate",
-        "body": "idea-debate: Read these first:",
+        "body": "idea-debate: Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3081,7 +3081,7 @@
       "ref": "page:init-project",
       "kind": "page",
       "title": "init-project",
-      "summary": "Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.",
+      "summary": "Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3094,7 +3094,7 @@
       ],
       "preview": {
         "title": "init-project",
-        "body": "init-project: Use this Skill for `init`, `update`, `update-from-grill`, or `deps-changed`. It maintains compact guidance, preserves `## Custom`, and does not approve research contracts.",
+        "body": "init-project: Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3107,7 +3107,7 @@
       "ref": "page:iterate",
       "kind": "page",
       "title": "iterate",
-      "summary": "Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.",
+      "summary": "Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3120,7 +3120,7 @@
       ],
       "preview": {
         "title": "iterate",
-        "body": "iterate: Use this Skill only for WF10 experiment-loop state. It owns `iteration_log.json`; it never writes stage transitions into `PROJECT_STATE.json` and never writes `.auto_iterate/**`.",
+        "body": "iterate: Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3289,7 +3289,7 @@
       "ref": "page:operator_task_index",
       "kind": "page",
       "title": "Operator Action Index",
-      "summary": "Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+      "summary": "Action-first index for choosing the right Harness visible alias, internal runtime, status check, and detailed reference.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3302,7 +3302,7 @@
       ],
       "preview": {
         "title": "Operator Action Index",
-        "body": "Operator Action Index: Action-first index for choosing the right Harness top-level mode, supervisor action, status check, and detailed reference.",
+        "body": "Operator Action Index: Action-first index for choosing the right Harness visible alias, internal runtime, status check, and detailed reference.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3315,7 +3315,7 @@
       "ref": "page:orchestrator",
       "kind": "page",
       "title": "orchestrator",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3328,7 +3328,7 @@
       ],
       "preview": {
         "title": "orchestrator",
-        "body": "orchestrator: Read these first:",
+        "body": "orchestrator: Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3341,7 +3341,7 @@
       "ref": "page:protocol-compiler",
       "kind": "page",
       "title": "protocol-compiler",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for protocol-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3354,7 +3354,7 @@
       ],
       "preview": {
         "title": "protocol-compiler",
-        "body": "protocol-compiler: Read these first:",
+        "body": "protocol-compiler: Internal Harness instruction source for protocol-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3367,7 +3367,7 @@
       "ref": "page:protocol-drift-check",
       "kind": "page",
       "title": "protocol-drift-check",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for protocol-drift-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3380,7 +3380,7 @@
       ],
       "preview": {
         "title": "protocol-drift-check",
-        "body": "protocol-drift-check: Read these first:",
+        "body": "protocol-drift-check: Internal Harness instruction source for protocol-drift-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3393,7 +3393,7 @@
       "ref": "page:refine-arch",
       "kind": "page",
       "title": "refine-arch",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3406,7 +3406,7 @@
       ],
       "preview": {
         "title": "refine-arch",
-        "body": "refine-arch: Read these first:",
+        "body": "refine-arch: Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3419,7 +3419,7 @@
       "ref": "page:refine-idea",
       "kind": "page",
       "title": "refine-idea",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3432,7 +3432,7 @@
       ],
       "preview": {
         "title": "refine-idea",
-        "body": "refine-idea: Read these first:",
+        "body": "refine-idea: Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3445,7 +3445,7 @@
       "ref": "page:release",
       "kind": "page",
       "title": "release",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3458,7 +3458,7 @@
       ],
       "preview": {
         "title": "release",
-        "body": "release: Read these first:",
+        "body": "release: Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3471,7 +3471,7 @@
       "ref": "page:review-packet",
       "kind": "page",
       "title": "review-packet",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3484,7 +3484,7 @@
       ],
       "preview": {
         "title": "review-packet",
-        "body": "review-packet: Read these first:",
+        "body": "review-packet: Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3549,7 +3549,7 @@
       "ref": "page:survey-idea",
       "kind": "page",
       "title": "survey-idea",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3562,7 +3562,7 @@
       ],
       "preview": {
         "title": "survey-idea",
-        "body": "survey-idea: Read these first:",
+        "body": "survey-idea: Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3575,7 +3575,7 @@
       "ref": "page:validate-run",
       "kind": "page",
       "title": "validate-run",
-      "summary": "Read these first:",
+      "summary": "Internal Harness instruction source for validate-run. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3588,7 +3588,7 @@
       ],
       "preview": {
         "title": "validate-run",
-        "body": "validate-run: Read these first:",
+        "body": "validate-run: Internal Harness instruction source for validate-run. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3939,7 +3939,7 @@
       "ref": "page:workflow-supervisor",
       "kind": "page",
       "title": "workflow-supervisor",
-      "summary": "Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.",
+      "summary": "Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3952,7 +3952,7 @@
       ],
       "preview": {
         "title": "workflow-supervisor",
-        "body": "workflow-supervisor: Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`, or direct `workflow_ctl` work. The supervisor orchestrates existing Skills; it does not replace Stage Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.",
+        "body": "workflow-supervisor: Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3965,7 +3965,7 @@
       "ref": "page:workflow_layers",
       "kind": "page",
       "title": "Workflow Layers",
-      "summary": "Explains the entrypoint-first operating model and where internal Stage references fit.",
+      "summary": "Explains the visible-alias-first operating model and where internal Stage references fit.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -3978,7 +3978,7 @@
       ],
       "preview": {
         "title": "Workflow Layers",
-        "body": "Workflow Layers: Explains the entrypoint-first operating model and where internal Stage references fit.",
+        "body": "Workflow Layers: Explains the visible-alias-first operating model and where internal Stage references fit.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -3990,8 +3990,8 @@
     "page:workflow_supervisor_model": {
       "ref": "page:workflow_supervisor_model",
       "kind": "page",
-      "title": "Workflow Supervisor Model",
-      "summary": "How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval.",
+      "title": "Runtime Routing Model",
+      "summary": "How visible aliases route to internal runtime sources without replacing Gate Evidence or Human Approval.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -4003,8 +4003,8 @@
         }
       ],
       "preview": {
-        "title": "Workflow Supervisor Model",
-        "body": "Workflow Supervisor Model: How Grill and execution supervisor form the two user-facing top-level modes without replacing Gate Evidence or Human Approval.",
+        "title": "Runtime Routing Model",
+        "body": "Runtime Routing Model: How visible aliases route to internal runtime sources without replacing Gate Evidence or Human Approval.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -4043,7 +4043,7 @@
       "ref": "skill:auto-iterate-goal",
       "kind": "skill",
       "title": "auto-iterate-goal",
-      "summary": "auto-iterate-goal Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-iterate-goal. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4077,7 +4077,7 @@
       "ref": "skill:auto-paper",
       "kind": "skill",
       "title": "auto-paper",
-      "summary": "auto-paper Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4111,7 +4111,7 @@
       "ref": "skill:auto-paper-argument",
       "kind": "skill",
       "title": "auto-paper-argument",
-      "summary": "auto-paper-argument Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-argument. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4145,7 +4145,7 @@
       "ref": "skill:auto-paper-citation",
       "kind": "skill",
       "title": "auto-paper-citation",
-      "summary": "auto-paper-citation Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-citation. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4179,7 +4179,7 @@
       "ref": "skill:auto-paper-data",
       "kind": "skill",
       "title": "auto-paper-data",
-      "summary": "auto-paper-data Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-data. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4213,7 +4213,7 @@
       "ref": "skill:auto-paper-figure",
       "kind": "skill",
       "title": "auto-paper-figure",
-      "summary": "auto-paper-figure Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-figure. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4247,7 +4247,7 @@
       "ref": "skill:auto-paper-harden",
       "kind": "skill",
       "title": "auto-paper-harden",
-      "summary": "auto-paper-harden Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-harden. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4281,7 +4281,7 @@
       "ref": "skill:auto-paper-intake",
       "kind": "skill",
       "title": "auto-paper-intake",
-      "summary": "auto-paper-intake Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4315,7 +4315,7 @@
       "ref": "skill:auto-paper-layout",
       "kind": "skill",
       "title": "auto-paper-layout",
-      "summary": "auto-paper-layout Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-layout. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4349,7 +4349,7 @@
       "ref": "skill:auto-paper-patch",
       "kind": "skill",
       "title": "auto-paper-patch",
-      "summary": "auto-paper-patch Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-patch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4383,7 +4383,7 @@
       "ref": "skill:auto-paper-research",
       "kind": "skill",
       "title": "auto-paper-research",
-      "summary": "auto-paper-research Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-research. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4417,7 +4417,7 @@
       "ref": "skill:auto-paper-response",
       "kind": "skill",
       "title": "auto-paper-response",
-      "summary": "auto-paper-response Skill Contract.",
+      "summary": "Internal Harness instruction source for auto-paper-response. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4451,7 +4451,7 @@
       "ref": "skill:baseline-repro",
       "kind": "skill",
       "title": "baseline-repro",
-      "summary": "baseline-repro Skill Contract.",
+      "summary": "Internal Harness instruction source for baseline-repro. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4485,7 +4485,7 @@
       "ref": "skill:build-plan",
       "kind": "skill",
       "title": "build-plan",
-      "summary": "build-plan Skill Contract.",
+      "summary": "Internal Harness instruction source for build-plan. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4519,7 +4519,7 @@
       "ref": "skill:change-intake",
       "kind": "skill",
       "title": "change-intake",
-      "summary": "change-intake Skill Contract.",
+      "summary": "Internal Harness instruction source for change-intake. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4553,7 +4553,7 @@
       "ref": "skill:code-debug",
       "kind": "skill",
       "title": "code-debug",
-      "summary": "code-debug Skill Contract.",
+      "summary": "Internal Harness instruction source for code-debug. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4587,7 +4587,7 @@
       "ref": "skill:code-expert",
       "kind": "skill",
       "title": "code-expert",
-      "summary": "code-expert Skill Contract.",
+      "summary": "Internal Harness instruction source for code-expert. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4621,7 +4621,7 @@
       "ref": "skill:code-review",
       "kind": "skill",
       "title": "code-review",
-      "summary": "code-review Skill Contract.",
+      "summary": "Internal Harness instruction source for code-review. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4655,7 +4655,7 @@
       "ref": "skill:data-prep",
       "kind": "skill",
       "title": "data-prep",
-      "summary": "data-prep Skill Contract.",
+      "summary": "Internal Harness instruction source for data-prep. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4689,7 +4689,7 @@
       "ref": "skill:deep-check",
       "kind": "skill",
       "title": "deep-check",
-      "summary": "deep-check Skill Contract.",
+      "summary": "Internal Harness instruction source for deep-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4723,7 +4723,7 @@
       "ref": "skill:doc-compiler",
       "kind": "skill",
       "title": "doc-compiler",
-      "summary": "doc-compiler Skill Contract.",
+      "summary": "Internal Harness instruction source for doc-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4757,7 +4757,7 @@
       "ref": "skill:docs-site",
       "kind": "skill",
       "title": "docs-site",
-      "summary": "docs-site Skill Contract.",
+      "summary": "Internal Harness instruction source for docs-site. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "docs-site",
       "source_paths": [
@@ -4791,7 +4791,7 @@
       "ref": "skill:env-setup",
       "kind": "skill",
       "title": "env-setup",
-      "summary": "env-setup Skill Contract.",
+      "summary": "Internal Harness instruction source for env-setup. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4825,7 +4825,7 @@
       "ref": "skill:evaluate",
       "kind": "skill",
       "title": "evaluate",
-      "summary": "evaluate Skill Contract.",
+      "summary": "Internal Harness instruction source for evaluate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4859,7 +4859,7 @@
       "ref": "skill:final-exp",
       "kind": "skill",
       "title": "final-exp",
-      "summary": "final-exp Skill Contract.",
+      "summary": "Internal Harness instruction source for final-exp. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4927,7 +4927,7 @@
       "ref": "skill:harness-maintenance",
       "kind": "skill",
       "title": "harness-maintenance",
-      "summary": "harness-maintenance Skill Contract.",
+      "summary": "Internal Harness instruction source for harness-maintenance. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4961,7 +4961,7 @@
       "ref": "skill:idea-debate",
       "kind": "skill",
       "title": "idea-debate",
-      "summary": "idea-debate Skill Contract.",
+      "summary": "Internal Harness instruction source for idea-debate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -4995,7 +4995,7 @@
       "ref": "skill:init-project",
       "kind": "skill",
       "title": "init-project",
-      "summary": "init-project Skill Contract.",
+      "summary": "Internal Harness instruction source for init-project. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5029,7 +5029,7 @@
       "ref": "skill:iterate",
       "kind": "skill",
       "title": "iterate",
-      "summary": "iterate Skill Contract.",
+      "summary": "Internal Harness instruction source for iterate. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5063,7 +5063,7 @@
       "ref": "skill:orchestrator",
       "kind": "skill",
       "title": "orchestrator",
-      "summary": "orchestrator Skill Contract.",
+      "summary": "Internal Harness instruction source for orchestrator. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5097,7 +5097,7 @@
       "ref": "skill:protocol-compiler",
       "kind": "skill",
       "title": "protocol-compiler",
-      "summary": "protocol-compiler Skill Contract.",
+      "summary": "Internal Harness instruction source for protocol-compiler. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5131,7 +5131,7 @@
       "ref": "skill:protocol-drift-check",
       "kind": "skill",
       "title": "protocol-drift-check",
-      "summary": "protocol-drift-check Skill Contract.",
+      "summary": "Internal Harness instruction source for protocol-drift-check. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5165,7 +5165,7 @@
       "ref": "skill:refine-arch",
       "kind": "skill",
       "title": "refine-arch",
-      "summary": "refine-arch Skill Contract.",
+      "summary": "Internal Harness instruction source for refine-arch. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5199,7 +5199,7 @@
       "ref": "skill:refine-idea",
       "kind": "skill",
       "title": "refine-idea",
-      "summary": "refine-idea Skill Contract.",
+      "summary": "Internal Harness instruction source for refine-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5233,7 +5233,7 @@
       "ref": "skill:release",
       "kind": "skill",
       "title": "release",
-      "summary": "release Skill Contract.",
+      "summary": "Internal Harness instruction source for release. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5267,7 +5267,7 @@
       "ref": "skill:review-packet",
       "kind": "skill",
       "title": "review-packet",
-      "summary": "review-packet Skill Contract.",
+      "summary": "Internal Harness instruction source for review-packet. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5301,7 +5301,7 @@
       "ref": "skill:survey-idea",
       "kind": "skill",
       "title": "survey-idea",
-      "summary": "survey-idea Skill Contract.",
+      "summary": "Internal Harness instruction source for survey-idea. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5335,7 +5335,7 @@
       "ref": "skill:validate-run",
       "kind": "skill",
       "title": "validate-run",
-      "summary": "validate-run Skill Contract.",
+      "summary": "Internal Harness instruction source for validate-run. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -5369,7 +5369,7 @@
       "ref": "skill:workflow-supervisor",
       "kind": "skill",
       "title": "workflow-supervisor",
-      "summary": "workflow-supervisor Skill Contract.",
+      "summary": "Internal Harness instruction source for workflow-supervisor. Route through visible Harness aliases or hook contracts instead of invoking directly.",
       "truth_status": "source_of_truth",
       "owner": "skill",
       "source_paths": [
@@ -7394,7 +7394,7 @@
       "ref": "term:Entrypoint",
       "kind": "term",
       "title": "Entrypoint",
-      "summary": "One of the two human-facing ways to start workflow work: Grill or Execution Supervisor. Supervisor actions such as prepare, build, iterate, release, and change are scoped actions under Execution Supervisor, not extra top-level entrypoints.",
+      "summary": "A human-facing visible alias used to start workflow work. Current Entrypoints are grill, prepare, build, run, analyze, write, and change. Internal runtime names such as workflow-supervisor, iterate, evaluate, auto-paper, and change-intake are route targets or detailed references, not extra first-layer entrypoints.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -7407,11 +7407,11 @@
       ],
       "preview": {
         "title": "Entrypoint",
-        "body": "One of the two human-facing ways to start workflow work: Grill or Execution Supervisor. Supervisor actions such as prepare, build, iterate, release, and change are scoped actions under Execution Supervisor, not extra top-level entrypoints.",
+        "body": "A human-facing visible alias used to start workflow work. Current Entrypoints are grill, prepare, build, run, analyze, write, and change. Internal runtime names such as workflow-supervisor, iterate, evaluate, auto-paper, and change-intake are route targets or detailed referenc...",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
-        "truncated": false
+        "truncated": true
       },
       "related_refs": [],
       "last_validated_by": "build_workflow_handbook_reference_index.py"
@@ -7784,7 +7784,7 @@
       "ref": "term:Visible Skill Alias",
       "kind": "term",
       "title": "Visible Skill Alias",
-      "summary": "A small $ / / command surface that routes to an Entrypoint or supervisor action without creating a new Skill Contract. Harness keeps visible aliases limited to grill, prepare, build, run, analyze, write, and change; internal skill sources remain readable by path.",
+      "summary": "A small $ / / command surface that routes to an internal runtime or Skill Contract source without creating a new Skill Contract. Harness keeps visible aliases limited to grill, prepare, build, run, analyze, write, and change; internal skill sources remain readable by path.",
       "truth_status": "source_of_truth",
       "owner": "maintainer",
       "source_paths": [
@@ -7797,7 +7797,7 @@
       ],
       "preview": {
         "title": "Visible Skill Alias",
-        "body": "A small $ / / command surface that routes to an Entrypoint or supervisor action without creating a new Skill Contract. Harness keeps visible aliases limited to grill, prepare, build, run, analyze, write, and change; internal skill sources remain readable by path.",
+        "body": "A small $ / / command surface that routes to an internal runtime or Skill Contract source without creating a new Skill Contract. Harness keeps visible aliases limited to grill, prepare, build, run, analyze, write, and change; internal skill sources remain readable by path.",
         "format": "plain",
         "source_excerpt": null,
         "excerpt_hash": null,
@@ -7839,15 +7839,15 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:operator_task_index|Operator Action Index]]",
-        "line": 17,
+        "line": 38,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
       {
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
-        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
-        "line": 18,
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
+        "line": 39,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
@@ -7855,7 +7855,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 19,
+        "line": 40,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7863,7 +7863,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate Model]]",
-        "line": 20,
+        "line": 41,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       },
@@ -7871,7 +7871,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 21,
+        "line": 42,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7879,7 +7879,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 21,
+        "line": 42,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7887,7 +7887,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 21,
+        "line": 42,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7895,15 +7895,15 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:operator_task_index|Operator Action Index]]",
-        "line": 36,
+        "line": 57,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
       {
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
-        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
-        "line": 54,
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
+        "line": 77,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
       },
@@ -7911,7 +7911,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval Model]]",
-        "line": 114,
+        "line": 145,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -7919,7 +7919,7 @@
         "ref": "page:workflow_layers",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_layers|Detailed Workflow Map]]",
-        "line": 120,
+        "line": 151,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_layers.html"
       },
@@ -7927,7 +7927,7 @@
         "ref": "page:stage_cards",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:stage_cards|Stage Reference]]",
-        "line": 121,
+        "line": 152,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/Workflow_Stage_Cards.html"
       },
@@ -7935,7 +7935,7 @@
         "ref": "page:skill_reference",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:skill_reference|Skill Reference]]",
-        "line": 122,
+        "line": 153,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/skill_reference.html"
       },
@@ -7943,7 +7943,7 @@
         "ref": "page:hooks_permissions_model",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:hooks_permissions_model|Hooks And Permissions Model]]",
-        "line": 123,
+        "line": 154,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/hooks_permissions_model.html"
       },
@@ -7951,7 +7951,7 @@
         "ref": "page:workflow_terms",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:workflow_terms|Workflow Terms]]",
-        "line": 124,
+        "line": 155,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_terms.html"
       },
@@ -7959,7 +7959,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 125,
+        "line": 156,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       },
@@ -7967,7 +7967,7 @@
         "ref": "page:markdown_to_html_preview_chain",
         "source_path": "workflow_handbook/Workflow_Operator_Handbook.md",
         "marker": "[[page:markdown_to_html_preview_chain|Markdown To HTML Preview Chain]]",
-        "line": 141,
+        "line": 172,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/04_markdown_to_html_preview_chain.html"
       }
@@ -8546,7 +8546,7 @@
       {
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/pages/operator_task_index.md",
-        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
         "line": 106,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
@@ -8646,7 +8646,7 @@
       {
         "ref": "page:workflow_supervisor_model",
         "source_path": "workflow_handbook/pages/workflow_layers.md",
-        "marker": "[[page:workflow_supervisor_model|Workflow Supervisor Model]]",
+        "marker": "[[page:workflow_supervisor_model|Runtime Routing Model]]",
         "line": 78,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/workflow_supervisor_model.html"
@@ -8713,7 +8713,7 @@
         "ref": "page:operator_task_index",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:operator_task_index|Operator Action Index]]",
-        "line": 221,
+        "line": 226,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/operator_task_index.html"
       },
@@ -8721,7 +8721,7 @@
         "ref": "skill:grill",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:grill]]",
-        "line": 222,
+        "line": 227,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/grill.html"
       },
@@ -8729,7 +8729,7 @@
         "ref": "skill:workflow-supervisor",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:workflow-supervisor]]",
-        "line": 223,
+        "line": 228,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
       },
@@ -8737,7 +8737,7 @@
         "ref": "skill:change-intake",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[skill:change-intake]]",
-        "line": 224,
+        "line": 229,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/change-intake.html"
       },
@@ -8745,7 +8745,7 @@
         "ref": "page:evidence_approval_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:evidence_approval_model|Evidence And Approval]]",
-        "line": 225,
+        "line": 230,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/evidence_approval_model.html"
       },
@@ -8753,7 +8753,7 @@
         "ref": "page:auto_iterate_model",
         "source_path": "workflow_handbook/pages/workflow_supervisor_model.md",
         "marker": "[[page:auto_iterate_model|Auto-Iterate]]",
-        "line": 226,
+        "line": 231,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/pages/auto_iterate_model.html"
       }
@@ -8763,7 +8763,7 @@
         "ref": "term:Entrypoint",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Entrypoint]]",
-        "line": 104,
+        "line": 105,
         "status": "resolved",
         "target_html": null
       },
@@ -8771,7 +8771,7 @@
         "ref": "term:Visible Skill Alias",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Visible Skill Alias]]",
-        "line": 105,
+        "line": 106,
         "status": "resolved",
         "target_html": null
       },
@@ -8779,7 +8779,7 @@
         "ref": "term:Stage",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Stage]]",
-        "line": 106,
+        "line": 107,
         "status": "resolved",
         "target_html": null
       },
@@ -8787,7 +8787,7 @@
         "ref": "term:Skill",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Skill]]",
-        "line": 107,
+        "line": 108,
         "status": "resolved",
         "target_html": null
       },
@@ -8795,7 +8795,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 108,
+        "line": 109,
         "status": "resolved",
         "target_html": null
       },
@@ -8803,7 +8803,7 @@
         "ref": "term:Pending Request",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Pending Request]]",
-        "line": 109,
+        "line": 110,
         "status": "resolved",
         "target_html": null
       },
@@ -8811,7 +8811,7 @@
         "ref": "term:Human Approval",
         "source_path": "workflow_handbook/pages/workflow_terms.md",
         "marker": "[[term:Human Approval]]",
-        "line": 110,
+        "line": 111,
         "status": "resolved",
         "target_html": null
       }
@@ -9835,7 +9835,7 @@
         "ref": "skill:workflow-supervisor",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[skill:workflow-supervisor]]",
-        "line": 115,
+        "line": 114,
         "status": "resolved",
         "target_html": "docs/_site/workflow_handbook/skills/workflow-supervisor.html"
       },
@@ -9843,7 +9843,7 @@
         "ref": "source:schemas/skill_contracts.json#workflow-supervisor",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[source:schemas/skill_contracts.json#workflow-supervisor]]",
-        "line": 116,
+        "line": 115,
         "status": "resolved",
         "target_html": null
       },
@@ -9851,7 +9851,7 @@
         "ref": "term:Gate Evidence",
         "source_path": "workflow_handbook/skills/workflow-supervisor.md",
         "marker": "[[term:Gate Evidence]]",
-        "line": 117,
+        "line": 116,
         "status": "resolved",
         "target_html": null
       }

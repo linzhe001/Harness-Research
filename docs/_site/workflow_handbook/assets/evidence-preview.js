@@ -4,6 +4,8 @@
   if (!dataEl || !popover) return;
 
   let previews = {};
+  let activeAnchor = null;
+  let hideTimer = 0;
   try {
     previews = JSON.parse(dataEl.textContent || "{}");
   } catch (error) {
@@ -16,48 +18,87 @@
     return (previews.evidence || {})[marker] || null;
   }
 
-  function show(event) {
-    const marker = event.currentTarget.getAttribute("data-marker");
-    const ref = event.currentTarget.getAttribute("data-ref");
-    const preview = ref ? referencePreviewFor(ref) : previewFor(marker);
-    if (!preview) return;
-    popover.innerHTML = "";
-    const title = document.createElement("strong");
-    title.textContent = preview.title || marker;
-    const excerpt = document.createElement("p");
-    excerpt.textContent = preview.excerpt || "No excerpt recorded.";
-    const meta = document.createElement("p");
-    meta.className = "muted";
-    meta.textContent = [preview.path, preview.support_relation]
-      .filter(Boolean)
-      .join(" | ");
-    popover.append(title, excerpt, meta);
-    popover.style.display = "block";
-    const rect = event.currentTarget.getBoundingClientRect();
-    const left = Math.min(rect.left, window.innerWidth - popover.offsetWidth - 16);
-    const top = Math.min(
-      rect.bottom + 8,
-      window.innerHeight - popover.offsetHeight - 16
+  function previewForAnchor(anchor) {
+    const ref = anchor.getAttribute("data-ref");
+    if (ref) return referencePreviewFor(ref);
+    const marker = anchor.getAttribute("data-marker");
+    if (marker) return previewFor(marker);
+    const previewId = anchor.getAttribute("data-preview-id");
+    if (!previewId) return null;
+    return referencePreviewFor(previewId) || previewFor(previewId);
+  }
+
+  function place(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const gap = 10;
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - popover.offsetWidth - 16
     );
+    const below = rect.bottom + gap;
+    const above = rect.top - popover.offsetHeight - gap;
+    const top =
+      below + popover.offsetHeight <= window.innerHeight - 16
+        ? below
+        : Math.max(16, above);
     popover.style.left = Math.max(16, left) + "px";
     popover.style.top = Math.max(16, top) + "px";
   }
 
+  function show(event) {
+    const anchor = event.currentTarget;
+    const marker =
+      anchor.getAttribute("data-ref") ||
+      anchor.getAttribute("data-marker") ||
+      anchor.getAttribute("data-preview-id");
+    const preview = previewForAnchor(anchor);
+    if (!preview) return;
+    activeAnchor = anchor;
+    clearTimeout(hideTimer);
+    popover.innerHTML = "";
+    const title = document.createElement("strong");
+    title.textContent = preview.title || marker;
+    const excerpt = document.createElement("p");
+    excerpt.textContent = preview.excerpt || preview.body || "No preview recorded.";
+    const meta = document.createElement("p");
+    meta.className = "muted";
+    meta.textContent = [
+      preview.path,
+      preview.support_relation,
+      preview.kind,
+      preview.truth_status
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    popover.append(title, excerpt, meta);
+    popover.style.display = "block";
+    place(anchor);
+  }
+
   function hide() {
+    activeAnchor = null;
     popover.style.display = "none";
   }
 
-  document.querySelectorAll(".evidence-marker").forEach((el) => {
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hide, 140);
+  }
+
+  document.querySelectorAll("[data-preview-id]").forEach((el) => {
     el.addEventListener("mouseenter", show);
     el.addEventListener("focus", show);
-    el.addEventListener("mouseleave", hide);
-    el.addEventListener("blur", hide);
+    el.addEventListener("mouseleave", scheduleHide);
+    el.addEventListener("blur", scheduleHide);
   });
-  document.querySelectorAll(".reference-marker").forEach((el) => {
-    el.addEventListener("mouseenter", show);
-    el.addEventListener("focus", show);
-    el.addEventListener("mouseleave", hide);
-    el.addEventListener("blur", hide);
+
+  popover.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+  popover.addEventListener("mouseleave", scheduleHide);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => {
+    if (activeAnchor && popover.style.display === "block") place(activeAnchor);
   });
 
   function referencePreviewFor(ref) {
