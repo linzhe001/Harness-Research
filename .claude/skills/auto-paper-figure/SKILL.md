@@ -1,10 +1,3 @@
----
-name: auto-paper-figure
-description: Run the optional auto-paper figure and caption branch. Use for figure asset maps, figure contracts, caption claim mapping, and figure backend reports before plotting or figure edits.
-argument-hint: "[artifact dir or figure request]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Figure
 
 <instructions>

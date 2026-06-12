@@ -1,8 +1,3 @@
----
-name: auto-paper-patch
-description: Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, write patch_ledger.md with guard results, and prepare apply-ready manuscript patches without bypassing artifact gates.
----
-
 # Auto Paper Patch
 
 ## Purpose

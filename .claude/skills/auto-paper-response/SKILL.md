@@ -1,10 +1,3 @@
----
-name: auto-paper-response
-description: Run the optional auto-paper reviewer-response branch. Use for rebuttals, revision response letters, reviewer comment maps, response strategy, and revision commitment registers.
-argument-hint: "[artifact dir or reviewer comments]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Response
 
 <instructions>

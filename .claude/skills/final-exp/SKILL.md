@@ -1,11 +1,3 @@
----
-name: final-exp
-description: WF11 ablation experiment plan. Design ablation experiments, hyperparameter searches, robustness tests, and cross-dataset evaluations meeting top-venue standards, estimate computation budget, and output Final_Experiment_Matrix.md. Use when main experiments are complete and ablation studies need to be designed.
-argument-hint: "[stage_report_path]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Bash, Glob
----
-
 # WF11: Ablation Experiment Plan
 
 <role>
@@ -121,3 +113,9 @@ For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

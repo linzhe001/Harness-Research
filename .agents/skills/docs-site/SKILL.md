@@ -1,8 +1,3 @@
----
-name: docs-site
-description: Render source Markdown project docs into human-readable HTML under docs/_site, with Evidence Chain hover previews from docs/_views/evidence_preview_index.json. Use after stable Markdown docs are finalized, before human review or handoff, or when explicitly rebuilding the human docs site.
----
-
 # Docs Site
 
 ## References

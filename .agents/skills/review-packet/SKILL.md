@@ -1,8 +1,3 @@
----
-name: review-packet
-description: Build concise human review packets for dynamic-context contracts, protocol readiness, and release gates.
----
-
 # Review Packet
 
 ## References
@@ -77,3 +72,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 - If the packet reports blockers, propose the smallest next fix: evidence,
   protocol review, docchain compilation, or contract revision.
 - Do not treat packet generation alone as approval or readiness.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

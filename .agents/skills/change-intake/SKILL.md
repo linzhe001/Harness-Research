@@ -1,8 +1,3 @@
----
-name: change-intake
-description: "Classify post-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer."
----
-
 # Change Intake
 
 ## Purpose

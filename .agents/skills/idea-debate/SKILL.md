@@ -1,8 +1,3 @@
----
-name: idea-debate
-description: Codex wrapper for WF2 idea debate. Use after WF1 feasibility to stress-test candidate research directions before WF3 refine-idea and before any architecture design.
----
-
 # Idea Debate
 
 ## References
@@ -73,3 +68,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Use this skill to reduce idea risk before WF3 refine-idea. Do not turn it into another generic feasibility summary or an architecture design stage.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

@@ -1,8 +1,3 @@
----
-name: baseline-repro
-description: Codex wrapper for WF5 baseline reproduction. Use when the user wants baseline adaptation, reproduction tracking, and `docs/Baseline_Report.md` following the original workflow contract.
----
-
 # Baseline Repro
 
 ## References
@@ -73,3 +68,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Follow the local prompt, baseline report template, and language policy instead of simplifying the reproduction stage.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

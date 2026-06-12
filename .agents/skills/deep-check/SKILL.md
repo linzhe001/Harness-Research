@@ -1,8 +1,3 @@
----
-name: deep-check
-description: Codex design-review gate for WF6 architecture decisions. Use when the user wants a skeptical Go/No-Go review of the technical spec before implementation planning or heavy implementation starts.
----
-
 # Deep Check
 
 ## References
@@ -71,3 +66,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Follow the local review logic, template, and language policy rather than collapsing this stage into a generic prose review.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

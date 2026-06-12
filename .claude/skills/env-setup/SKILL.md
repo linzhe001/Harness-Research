@@ -1,10 +1,3 @@
----
-name: env-setup
-description: Environment creation and refresh tool. Create mode sets up a new conda environment; refresh mode detects the current environment and syncs the Environment section of CLAUDE.md. Use when dependencies change or the environment needs initialization.
-argument-hint: "[create|refresh]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
----
-
 # Environment Creation and Refresh Tool
 
 <role>

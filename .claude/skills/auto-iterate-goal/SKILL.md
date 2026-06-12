@@ -1,11 +1,3 @@
----
-name: auto-iterate-goal
-description: Generate or validate the auto-iterate goal file before launching WF10 auto-iterate
-argument-hint: "[init|refresh|check]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 ## Purpose
 
 Bridge skill between WF9 PASS and WF10 auto-iterate `start`. Produces or validates `docs/auto_iterate_goal.md` — the operator-facing research objective that the controller's goal parser consumes.
@@ -92,3 +84,9 @@ WF9 validate-run PASS
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

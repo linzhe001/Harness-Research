@@ -1,8 +1,3 @@
----
-name: release
-description: Codex wrapper for WF12 release and submission packaging. Use when the user wants validation, packaging, or submission preparation according to the original workflow.
----
-
 # Release
 
 ## References
@@ -88,3 +83,9 @@ creates an exact scoped `APPROVE_ACTION` when dynamic context is active and
 Project Contract, Evaluation Contract, and Claim Boundary approvals are
 confirmed. It records approval and reruns the gate; it does not package or
 submit by itself.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

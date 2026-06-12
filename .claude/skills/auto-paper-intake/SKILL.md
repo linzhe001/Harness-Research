@@ -1,10 +1,3 @@
----
-name: auto-paper-intake
-description: Prepare an auto-paper run for a LaTeX manuscript. Use when the operator provides a paper directory, draft path, materials, references, target venue, or wants intake before the writing loop.
-argument-hint: "[paper path or goal]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Intake
 
 <instructions>

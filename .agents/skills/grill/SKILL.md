@@ -116,9 +116,10 @@ Use `--write-readiness` only for intentional tooling-owned writes to
 ## Handoff
 
 When the operator confirms `grill_draft_ready` or asks to proceed from an
-accepted draft, continue with `$init-project update-from-grill` unless the
-operator asks to skip guidance initialization. Inputs are the three Grill docs
-and `.workflow_supervisor/readiness.json` when supervisor tooling produced it.
+accepted draft, continue with the internal `init-project update-from-grill`
+mode unless the operator asks to skip guidance initialization. Inputs are the
+three Grill docs and `.workflow_supervisor/readiness.json` when supervisor
+tooling produced it.
 
 The handoff initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md`
 from candidate Grill context only, preserves `## Custom`, keeps dataset and

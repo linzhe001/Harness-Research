@@ -1,8 +1,3 @@
----
-name: auto-paper-data
-description: Run the optional auto-paper data, code, ethics, and reproducibility branch. Use when Codex needs to draft or audit data availability, code availability, ethics boundaries, FAIR metadata, or reproducibility statements for a manuscript.
----
-
 # Auto Paper Data
 
 ## Purpose

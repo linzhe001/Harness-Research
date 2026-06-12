@@ -1,8 +1,3 @@
----
-name: auto-paper-figure
-description: Run the optional auto-paper figure and caption branch. Use when Codex needs to audit figure assets, define figure contracts, map caption claims to evidence, or plan/generate manuscript figures only after figure requirements are explicit.
----
-
 # Auto Paper Figure
 
 ## Purpose

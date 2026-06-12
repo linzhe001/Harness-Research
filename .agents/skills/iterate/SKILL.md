@@ -1,8 +1,3 @@
----
-name: iterate
-description: Codex wrapper for WF10 structured iteration. Use when the user wants to run `plan`, `code`, `run`, `eval`, `ablate`, `status`, or `log` while preserving the original iteration schema and workflow logic.
----
-
 # Iterate
 
 Use this Skill only for WF10 experiment-loop state. It owns
@@ -69,3 +64,9 @@ Use this Skill only for WF10 experiment-loop state. It owns
 
 After stable Markdown outputs are finalized, invoke `$docs-site` or report
 `docs_site_boundary_report`.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

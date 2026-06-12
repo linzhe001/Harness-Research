@@ -1,11 +1,3 @@
----
-name: baseline-repro
-description: WF5 Baseline Reproduction. Clone comparison method code, adapt to local environment, train and record metrics, output Baseline_Report.md. Used after data preparation and before code planning to provide comparison baselines for the research method.
-argument-hint: "[baseline_name or 'all']"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # WF5: Baseline Reproduction
 
 <role>
@@ -124,3 +116,9 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

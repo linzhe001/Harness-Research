@@ -1,10 +1,3 @@
----
-name: auto-paper
-description: Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use for auto-paper loops, citation-supported rewrites, section restructuring, submission hardening, reviewer-risk audits, and research to argument to citation to layout to patch to harden writing phases.
-argument-hint: "[intake|research|argument|citation|layout|patch|harden]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper
 
 <role>

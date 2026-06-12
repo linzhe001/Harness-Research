@@ -1,10 +1,3 @@
----
-name: change-intake
-description: "Classify mature-codebase requests into bugfix, experiment delta, stable code delta, architecture delta, evaluation delta, claim-boundary delta, new research direction, harness guardrail delta, or steer."
-argument-hint: "[request text]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Change Intake
 
 Use `/change-intake` after WF8/WF9 or on a mature codebase when a new request

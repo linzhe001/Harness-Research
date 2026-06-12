@@ -1,10 +1,3 @@
----
-name: validate-run
-description: WF9 training pipeline validation. Before WF10 iteration, review baseline equivalence and run a 100-step smoke validation chain.
-argument-hint: "[config_path]"
-allowed-tools: Read, Write, Bash, Glob, Grep
----
-
 # WF9: Training Pipeline Validation
 
 Use this gate between WF8 implementation and WF10 iteration. It checks semantic
@@ -88,4 +81,5 @@ FAIL, or REVIEW without confirmation, list failures and route to `/code-debug`.
 ## Durable Docs Render
 
 After validation Markdown is finalized, invoke `/docs-site` or report
-`docs_site_boundary_report`. Do not render for temporary drafts.
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

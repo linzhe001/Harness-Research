@@ -1,8 +1,3 @@
----
-name: orchestrator
-description: Codex wrapper for the canonical WF orchestrator. Use when the user wants project initialization, stage status, gate checks, rollback, or decision logging around `PROJECT_STATE.json`.
----
-
 # Orchestrator
 
 ## References

@@ -1,10 +1,3 @@
----
-name: harness-maintenance
-description: "Maintain Harness guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use for hooks, contracts, schema validation, trust/status, templates, workflow guidance, and permission boundaries; use code-debug for ordinary implementation code."
-argument-hint: "[hook|contract|skill|permission issue]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Harness Maintenance
 
 <role>

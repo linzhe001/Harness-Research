@@ -1,11 +1,3 @@
----
-name: orchestrator
-description: "Harness research project orchestrator. Coordinates the 12-stage research workflow, tracks PROJECT_STATE.json, and handles init, status, next, rollback, and decision commands."
-argument-hint: "[command: init|status|next|rollback|decision]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Bash, Glob, Edit, Skill
----
-
 # Harness Research Project Orchestrator
 
 Use this skill for workflow status, stage movement, rollback, and durable

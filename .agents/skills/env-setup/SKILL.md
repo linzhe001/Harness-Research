@@ -1,8 +1,3 @@
----
-name: env-setup
-description: Codex wrapper for environment creation and refresh. Use when the user wants the environment detected, created, or synchronized into the legacy `CLAUDE.md` format.
----
-
 # Env Setup
 
 ## References

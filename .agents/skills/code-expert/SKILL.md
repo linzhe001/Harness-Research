@@ -1,8 +1,3 @@
----
-name: code-expert
-description: Codex wrapper for WF8 first-pass code generation. Use when the user wants implementation generated directly from `project_map.json`, `docs/20_facts/Codebase_Map.md`, the roadmap, and the original Claude skill contract.
----
-
 # Code Expert
 
 ## References

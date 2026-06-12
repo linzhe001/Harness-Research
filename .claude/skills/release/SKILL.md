@@ -1,11 +1,3 @@
----
-name: release
-description: WF12 Submission/Release Tool. Multi-scene training, result packaging, filename validation, dry-run submission checks. Used after ablation experiments are complete and before competition submission.
-argument-hint: "[submit|package|validate] [details]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # WF12: Submission and Release
 
 <role>
@@ -115,3 +107,9 @@ creates an exact scoped `APPROVE_ACTION` when dynamic context is active and
 Project Contract, Evaluation Contract, and Claim Boundary approvals are
 confirmed. It records approval and reruns the gate; it does not package or
 submit by itself.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

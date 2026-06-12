@@ -1,10 +1,3 @@
----
-name: workflow-supervisor
-description: "Operate the Harness execution supervisor CLI and runtime boundaries for prepare/build/iterate/release/change segments, typed HITL, and worker-result validation."
-argument-hint: "[status|start|pause|resume|approve|validate]"
-allowed-tools: Read, Bash, Glob, Grep
----
-
 # Workflow Supervisor
 
 Use `/workflow-supervisor` for `harness prepare`, `harness build`,
@@ -106,9 +99,9 @@ decisions, skips entries marked `rejected`, `deferred`, or
 `requires_approval` for unattended acquisition, and passes only executable
 `candidate` entries to data-prep. Data-prep records every skipped or failed
 candidate in the worker Gate ledger and tries the next executable candidate
-before creating an `ASK_INPUT` pending request. Successful full prepare still
-pauses for explicit approval and resumes to `prepare_complete` only after
-approval.
+before creating an `ASK_INPUT` pending request. Successful full prepare now
+completes as `prepare_complete` after the WF5 gate passes; only missing
+inputs, policy blockers, worker failures, or gate failures pause for HITL.
 `start --segment build` runs the build registry through structured workers.
 Use `--auto` for Codex delegation, or `--worker-command` for a command template
 that writes `schemas/workflow_supervisor_worker_result.schema.json`. Build

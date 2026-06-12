@@ -1,8 +1,3 @@
----
-name: auto-paper-intake
-description: Prepare an auto-paper run for a LaTeX manuscript. Use when the user provides a paper directory, draft path, materials, references, target venue, or asks to start auto-paper intake before research, argument, citation, layout, patch, or harden phases.
----
-
 # Auto Paper Intake
 
 ## Purpose

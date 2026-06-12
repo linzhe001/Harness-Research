@@ -1,8 +1,3 @@
----
-name: data-prep
-description: Codex wrapper for WF4 data engineering. Use when the user wants dataset analysis, subset strategy selection, and `docs/Dataset_Stats.md` produced according to the original workflow.
----
-
 # Data Prep
 
 Use this Skill for WF4 dataset analysis, subset design, and data-pipeline
@@ -78,3 +73,9 @@ conditions.
   and state writes, including `dataset_acquisition_or_NOT_RUN`.
 - After stable Markdown is finalized, invoke `$docs-site` or report
   `docs_site_boundary_report`.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

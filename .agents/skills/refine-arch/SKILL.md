@@ -1,8 +1,3 @@
----
-name: refine-arch
-description: Codex wrapper for WF6 architecture design. Use after WF4 data preparation and WF5 baseline reproduction to convert the refined idea, dataset facts, baseline evidence, and evaluation contract into a technical spec and MVP architecture.
----
-
 # Refine Arch
 
 ## References

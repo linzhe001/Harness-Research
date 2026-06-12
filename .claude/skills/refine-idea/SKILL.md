@@ -1,11 +1,3 @@
----
-name: refine-idea
-description: WF3 idea refinement. Turn WF1 survey and WF2 idea debate into a feasible, testable research idea without designing architecture.
-argument-hint: "[selected_direction]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash
----
-
 # WF3: Refine Idea
 
 Use this skill after WF1 survey and WF2 idea debate.
@@ -39,3 +31,9 @@ Do not write architecture, module plans, file trees, or implementation roadmaps.
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

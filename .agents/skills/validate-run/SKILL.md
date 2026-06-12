@@ -1,8 +1,3 @@
----
-name: validate-run
-description: Codex wrapper for WF9 validation. Use when the user wants the training chain reviewed and smoke-tested before entering WF10.
----
-
 # Validate Run
 
 ## References
@@ -69,8 +64,8 @@ Use this skill for WF9 when the user wants to verify the codebase is safe to ent
    workflow-state check run before WF10 readiness.
 11. After `docs/Validate_Run_Report.md` or
     `docs/30_evidence/Validation_Table.md` is finalized, invoke `$docs-site` or
-    report `docs_site_boundary_report`. Do not render after temporary draft
-    edits.
+    report `docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not
+    render after temporary draft edits.
 
 ## Codex Adaptation
 

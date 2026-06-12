@@ -36,6 +36,7 @@ Avoid bare `evidence` when the meaning could be unclear:
 | --- | --- |
 | `Workflow` | End-to-end Harness control process from initialization through release. |
 | `Entrypoint` | One of the two human-facing ways to start workflow work: Grill or Execution Supervisor. Supervisor actions such as `prepare`, `build`, `iterate`, `release`, and `change` are scoped actions under Execution Supervisor, not extra top-level entrypoints. |
+| `Visible Skill Alias` | A small `$` / `/` command surface that routes to an Entrypoint or supervisor action without creating a new Skill Contract. Harness keeps visible aliases limited to `grill`, `prepare`, `build`, `run`, `analyze`, `write`, and `change`; internal skill sources remain readable by path. |
 | `Stage` | Named workflow phase such as WF5, WF10, or `release`. |
 | `Skill` | Agent behavior contract for a stage or bounded task. |
 | `Skill Contract` | Machine-readable rule set in `schemas/skill_contracts.json`. |
@@ -68,6 +69,8 @@ Avoid bare `evidence` when the meaning could be unclear:
 - Use `WF<N>` only for canonical workflow stages.
 - Use `Entrypoint` for how work is started; do not use it as a synonym for
   Stage completion, approval, or write authorization.
+- Use `Visible Skill Alias` only for the autocomplete-facing wrapper names;
+  do not treat aliases as independent stage ownership or approval.
 - Use `Stage` for the active phase, and `Skill` for agent behavior.
 - Use `<skill> Contract` only for machine-readable contract behavior.
 - Use `Approved <Thing> Contract` only after explicit human approval.

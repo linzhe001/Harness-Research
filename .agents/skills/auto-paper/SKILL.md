@@ -1,8 +1,3 @@
----
-name: auto-paper
-description: Orchestrate artifact-first academic paper writing for LaTeX manuscripts. Use when Codex is asked to run an auto-paper loop, rewrite or restructure a paper section, produce citation-supported manuscript edits, harden a submission, audit reviewer risk, or coordinate research to argument to citation to layout to patch to harden writing phases.
----
-
 # Auto Paper
 
 Use this Skill as the auto-paper orchestrator, not a direct polishing tool. It

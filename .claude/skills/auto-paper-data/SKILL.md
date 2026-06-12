@@ -1,10 +1,3 @@
----
-name: auto-paper-data
-description: Run the optional auto-paper data, code, ethics, and reproducibility branch. Use for data availability, code availability, ethics boundaries, FAIR metadata, and reproducibility statements.
-argument-hint: "[artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Data
 
 <instructions>

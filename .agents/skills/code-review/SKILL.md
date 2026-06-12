@@ -1,8 +1,3 @@
----
-name: code-review
-description: Review code, docs-supporting code, and git diffs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report.
----
-
 # Code Review
 
 Use this Skill for review-only checks. Do not edit subject code, configs,

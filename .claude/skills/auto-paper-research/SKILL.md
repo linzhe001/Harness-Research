@@ -1,10 +1,3 @@
----
-name: auto-paper-research
-description: Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, author evidence summaries, exemplar structure and style, and SOTA gap artifacts without manuscript edits.
-argument-hint: "[artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Research
 
 <instructions>

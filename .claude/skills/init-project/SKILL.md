@@ -1,10 +1,3 @@
----
-name: init-project
-description: WF0/bootstrap CLAUDE.md phased generator. init mode creates compact guidance; update mode refreshes it after stages or after an accepted Grill draft.
-argument-hint: "[init|update|update-from-grill|deps-changed]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
----
-
 # Project CLAUDE.md Phased Generator
 
 `CLAUDE.md` is loaded every session, so keep it compact. Initial output should
@@ -121,3 +114,9 @@ Use immediately after explicit operator acceptance of a Grill draft or
 
 After stable Markdown outputs are finalized, invoke `/docs-site` or report
 `docs_site_boundary_report`. Do not render for temporary drafts.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

@@ -114,8 +114,8 @@ Grill does not create `PROJECT_STATE.json`, `project_map.json`, or
 build planning, and WF10 iteration.
 
 When the operator explicitly confirms `grill_draft_ready` or asks to proceed
-from an accepted Grill draft, continue in the same turn with
-`/init-project update-from-grill` unless the operator asks to skip guidance
+from an accepted Grill draft, continue in the same turn with the internal
+`init-project update-from-grill` mode unless the operator asks to skip guidance
 initialization. The handoff reads `docs/Research_Intent_Draft.md`,
 `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
 `.workflow_supervisor/readiness.json` when supervisor tooling has produced it.
@@ -129,5 +129,5 @@ handoff, and do not create `PROJECT_STATE.json`, `project_map.json`, or
 Exit with `grill_draft_ready`, `grill_bridge_complete`, `pivot`, or `abandon`,
 and report Gate Evidence for durable writes or skipped checks. A
 `grill_draft_ready` exit requires executable and non-executable acquisition
-sources to be separated in the readiness ledgers, and
-`/init-project update-from-grill` to have run or to be reported as `NOT_RUN`.
+sources to be separated in the readiness ledgers, and internal
+`init-project update-from-grill` to have run or to be reported as `NOT_RUN`.

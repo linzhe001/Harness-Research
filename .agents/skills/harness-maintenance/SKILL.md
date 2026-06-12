@@ -1,8 +1,3 @@
----
-name: harness-maintenance
-description: "Maintain Harness framework guardrails: Codex hooks, evidence tooling guardrails, skill contracts, skill routing/triggers, permission policy docs, schema/tests, bootstrap templates, and .agents/.claude guidance alignment. Use when modifying tooling/codex_hooks, tooling/evidence guardrails, schemas/skill_contracts.json, schemas/skill_contracts.schema.json, .agents/skills, .agents/references, .claude/Workflow_Guide.md, .claude/skills, .claude/rules, .claude/shared, templates, hook detection, hook trust/status, schema validation, or permission boundaries."
----
-
 # Harness Maintenance
 
 ## References

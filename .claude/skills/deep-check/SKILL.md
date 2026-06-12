@@ -1,11 +1,3 @@
----
-name: deep-check
-description: WF6 architecture design review. Acts as a skeptical reviewer for Technical_Spec.md, searches for failure cases, assesses risks, checks contract conflicts, and makes a Go/No-Go decision before implementation planning.
-argument-hint: "[technical_spec_path]"
-disable-model-invocation: true
-allowed-tools: WebSearch, WebFetch, Read, Write
----
-
 # WF6: Architecture Design Review
 
 <role>
@@ -151,3 +143,9 @@ When enabled, read `docs/10_contract/**` and record conflicts. Do not draft or a
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

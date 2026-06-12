@@ -1,8 +1,3 @@
----
-name: evaluate
-description: Codex wrapper for experiment analysis and decision-making. Use when the user wants metrics interpreted, a stage or iteration report written, and a NEXT_ROUND, DEBUG, CONTINUE, PIVOT, or ABORT recommendation.
----
-
 # Evaluate
 
 ## References
@@ -67,3 +62,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Follow the local evaluation prompt, stage-report template, and language policy rather than collapsing this into a brief metrics summary.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

@@ -1,10 +1,3 @@
----
-name: auto-paper-layout
-description: Run the auto-paper layout phase. Use to map current TeX logic, design section and paragraph blueprints, create a writing rationale matrix, citation plan, and LaTeX patch plan.
-argument-hint: "[artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Layout
 
 <instructions>

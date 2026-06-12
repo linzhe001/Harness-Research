@@ -1,8 +1,3 @@
----
-name: workflow-supervisor
-description: "Operate the Harness execution supervisor CLI and runtime boundaries. Use for harness prepare/build/iterate/release/change dry runs, status, pause, resume, typed HITL requests, and worker-result validation."
----
-
 # Workflow Supervisor
 
 Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`,
@@ -82,8 +77,8 @@ a narrower Grill source-specific policy.
 
 - `prepare --complete`: readiness preflight, acquisition plan schema check,
   deterministic dataset verification/acquisition, baseline clone/acquisition,
-  manifest schema checks, protocol compiler, WF5 review packet, then approval
-  pause. It preserves candidate/rejected/deferred/
+  manifest schema checks, protocol compiler, WF5 review packet, then
+  `prepare_complete` when gates pass. It preserves candidate/rejected/deferred/
   requires-approval distinctions from the Grill bridge.
 - `build`: structured node workers. Build becomes `build_ready_for_iterate`
   only after validate-run postconditions pass. `code-debug` is failure

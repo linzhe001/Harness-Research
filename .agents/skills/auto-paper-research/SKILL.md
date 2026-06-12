@@ -1,8 +1,3 @@
----
-name: auto-paper-research
-description: Run the auto-paper research phase for a LaTeX manuscript. Use to build local source context, summarize author evidence, learn exemplar structure and style, map SOTA gaps, and prepare research artifacts without editing the manuscript.
----
-
 # Auto Paper Research
 
 ## Purpose

@@ -1,8 +1,3 @@
----
-name: protocol-drift-check
-description: Check whether dynamic research protocol drafts are stale before baseline, iteration, final experiment, or release gates.
----
-
 # Protocol Drift Check
 
 ## References
@@ -67,3 +62,9 @@ After stable Markdown outputs for this skill are finalized, invoke `/docs-site` 
 - If evidence is contradictory or insufficient, keep it in Open Questions.
 - Report whether the project is safe to continue, safe only with an explicit
   operator exception, or blocked pending protocol review.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

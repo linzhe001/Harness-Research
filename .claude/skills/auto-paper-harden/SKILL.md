@@ -1,10 +1,3 @@
----
-name: auto-paper-harden
-description: Run the auto-paper harden phase. Use for final manuscript audit, artifact completeness, claim support, logic transfer, revision quality, LaTeX guard, compile report, and reviewer-risk gate routing.
-argument-hint: "[artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Harden
 
 <instructions>

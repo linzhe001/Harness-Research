@@ -1,8 +1,3 @@
----
-name: protocol-compiler
-description: Compile Dynamic Research Protocol drafts from current evidence tables without using pre-baked research profiles.
----
-
 # Protocol Compiler
 
 ## References
@@ -81,3 +76,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
   approved from protocol compilation alone.
 - A protocol draft is not machine-verified unless the compile/drift/docchain
   commands and results are reported.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

@@ -1,8 +1,3 @@
----
-name: doc-compiler
-description: Compile current project documents from explicit evidence chains. Use when refreshing contract, fact, protocol, or release docs that need auditable evidence.
----
-
 # Doc Compiler
 
 ## References

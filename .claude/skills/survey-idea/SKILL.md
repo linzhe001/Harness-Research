@@ -1,11 +1,3 @@
----
-name: survey-idea
-description: WF1 inspiration survey and gap analysis. Takes the user's research idea, performs literature search, gap analysis, competitor analysis, and feasibility scoring, then outputs Feasibility_Report.md.
-argument-hint: "[idea description]"
-disable-model-invocation: true
-allowed-tools: WebSearch, WebFetch, Read, Write, Bash, Glob
----
-
 # WF1: Inspiration Survey and Gap Analysis
 
 Use this Skill for literature-backed feasibility assessment of a new research
@@ -60,3 +52,9 @@ does not approve contracts.
   to language policy.
 - After stable Markdown is finalized, invoke `/docs-site` or report
   `docs_site_boundary_report`.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

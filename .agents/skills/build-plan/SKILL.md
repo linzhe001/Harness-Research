@@ -1,8 +1,3 @@
----
-name: build-plan
-description: Codex wrapper for WF7 implementation planning. Use after WF6 architecture design when the user wants `docs/Implementation_Roadmap.md`, `project_map.json`, and `docs/20_facts/Codebase_Map.md` built from the technical spec, baseline evidence, templates, and schemas.
----
-
 # Build Plan
 
 ## References
@@ -84,8 +79,8 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 - Do not introduce new architecture choices here. WF7 may refine implementation details, module interfaces, configuration fields, validation checks, and coding constraints needed to execute the approved architecture efficiently. If the roadmap requires a different architecture, stop and route back to WF6 or a design review.
 - After `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`,
   or `docs/20_facts/Codebase_Map.md` is finalized for the stage, invoke
-  `$docs-site` or report `docs_site_boundary_report`. Do not render after
-  temporary draft edits.
+  `$docs-site` or report `docs_site_boundary_report` /
+  `docs_site_render_or_NOT_RUN`. Do not render after temporary draft edits.
 - Treat template wording as structure-only; localize headings and narrative text according to `../../../.agents/references/language-policy.md` unless a field is explicitly English-only.
 
 ## Codex Adaptation

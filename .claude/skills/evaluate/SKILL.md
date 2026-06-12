@@ -1,10 +1,3 @@
----
-name: evaluate
-description: Result analysis tool (utility). Parses training logs, diagnoses training issues, compares against baseline performance, predicts full-training results, and provides NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decisions. Can be called by /iterate eval or used standalone.
-argument-hint: "[log_path]"
-allowed-tools: Read, Write, Bash, Glob, Grep
----
-
 # Result Analysis and Pivot Decision (Utility)
 
 <role>
@@ -143,3 +136,9 @@ history by path, and keep the report under 1200 words unless requested.
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

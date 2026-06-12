@@ -1,10 +1,3 @@
----
-name: code-review
-description: Review code and code-backed docs with line-referenced findings, git metadata, Codex review, optional external model cross-check, and a reconciled report.
-argument-hint: "[light|medium|heavy] [scope]"
-allowed-tools: Read, Write, Bash, Glob, Grep
----
-
 # Code Review
 
 <role>

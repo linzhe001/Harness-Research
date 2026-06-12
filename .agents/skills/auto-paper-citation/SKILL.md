@@ -1,8 +1,3 @@
----
-name: auto-paper-citation
-description: Run the auto-paper citation phase. Use to segment manuscript claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims before LaTeX patching.
----
-
 # Auto Paper Citation
 
 ## Purpose

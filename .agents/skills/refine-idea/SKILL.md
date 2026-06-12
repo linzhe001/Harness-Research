@@ -1,8 +1,3 @@
----
-name: refine-idea
-description: Codex wrapper for WF3 idea refinement. Use after WF1 survey and WF2 idea debate to turn the selected direction into a feasible research idea, task framing, success criteria, baseline requirements, and protocol assumptions without designing the architecture.
----
-
 # Refine Idea
 
 ## References
@@ -68,3 +63,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Keep this stage narrow: turn survey and debate into a feasible idea and testable research framing. Leave architecture selection until after data and baseline evidence exist.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

@@ -1,11 +1,3 @@
----
-name: refine-arch
-description: WF6 architecture design and MVP specification. Reads the refined idea, dataset facts, baseline evidence, and evaluation contract/protocol before designing the MVP architecture and outputting Technical_Spec.md.
-argument-hint: "[codebase_path]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash, WebSearch, WebFetch
----
-
 # WF6: Architecture Design and MVP Specification
 
 <role>

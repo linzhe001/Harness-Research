@@ -1,10 +1,3 @@
----
-name: auto-paper-citation
-description: Run the auto-paper citation phase. Use to segment claims, build a citation support bank, grade support strength, map claims to citations, and route unsupported claims.
-argument-hint: "[artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Citation
 
 <instructions>

@@ -1,11 +1,3 @@
----
-name: idea-debate
-description: WF2 idea debate. Stress-test candidate research directions after WF1 feasibility and before WF3 refine-idea.
-argument-hint: "[idea_notes]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, WebSearch, WebFetch
----
-
 # WF2: Idea Debate
 
 Use this skill after WF1 survey. New projects should not skip directly from
@@ -41,3 +33,9 @@ unless the operator explicitly expands scope.
 ## Durable Docs Render
 
 After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

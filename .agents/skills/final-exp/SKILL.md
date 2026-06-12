@@ -1,8 +1,3 @@
----
-name: final-exp
-description: Codex wrapper for WF11 final experiment planning. Use when the user wants ablations, robustness tests, cross-dataset evaluation, and compute budgeting organized according to the original template.
----
-
 # Final Exp
 
 ## References
@@ -56,3 +51,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 ## Execution Rule
 
 Follow the local planning prompt, experiment-matrix template, and language policy rather than replacing them with a generic experiment checklist.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

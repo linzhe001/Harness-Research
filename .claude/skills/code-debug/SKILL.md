@@ -1,10 +1,3 @@
----
-name: code-debug
-description: Code Fix and Iteration Tool for ordinary repository implementation code. Handles training error fixes, planned iteration changes, and performance tuning under src, scripts, configs, project_map, or Codebase_Map. Use /harness-maintenance for hooks, skill contracts, skill routing, and permission policy.
-argument-hint: "[error_log_path or issue description]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Code Fix and Iteration Tool
 
 <role>

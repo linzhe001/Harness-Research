@@ -1,11 +1,3 @@
----
-name: iterate
-description: "WF10 structured experiment iteration. Manages the hypothesis->code->run->eval cycle, maintains iteration_log.json, with optional Codex cross-validation. Supported commands: plan, code, run, eval, ablate, status, log."
-argument-hint: "[plan|code|run|eval|ablate|status|log] [details]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Skill, WebSearch
----
-
 # WF10: Structured Experiment Iteration
 
 Use this skill only for WF10 experiment-loop state. It owns
@@ -119,3 +111,9 @@ status, decision, and key change.
 
 After stable Markdown outputs are finalized, invoke `/docs-site` or report
 `docs_site_boundary_report`. Do not render for temporary drafts.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

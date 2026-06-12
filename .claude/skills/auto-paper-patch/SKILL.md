@@ -1,10 +1,3 @@
----
-name: auto-paper-patch
-description: Run the auto-paper patch phase. Use to produce bounded LaTeX or bibliography diffs from latex_patch_plan.md, record patch_ledger.md with guard results, and prepare apply-ready manuscript patches.
-argument-hint: "[unit id or artifact dir]"
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # Auto Paper Patch
 
 <instructions>

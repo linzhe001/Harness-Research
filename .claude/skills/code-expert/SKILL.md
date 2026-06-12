@@ -1,11 +1,3 @@
----
-name: code-expert
-description: WF8 Initial Code Generator. Strictly follows project_map.json, docs/20_facts/Codebase_Map.md, and Implementation_Roadmap.md to generate all project code in one pass. Used only for initial code generation; subsequent modifications use code-debug.
-argument-hint: "[target_module or 'all']"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
----
-
 # WF8: Initial Code Generator
 
 <role>

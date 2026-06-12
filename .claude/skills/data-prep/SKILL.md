@@ -1,11 +1,3 @@
----
-name: data-prep
-description: WF4 Data engineering and subset generation. Analyzes dataset format and distribution, generates appropriate training subset strategies by project type, creates data pipeline scripts, and outputs dataset stats.
-argument-hint: "[dataset_path] [subset_strategy]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Bash, Glob, Grep
----
-
 # WF4: Data Engineering and Subset Generation
 
 Use this Skill for WF4 dataset analysis, subset strategy, and data-pipeline
@@ -95,3 +87,9 @@ archives when a smaller task-valid slice is enough.
   state writes.
 - After stable Markdown is finalized, invoke `/docs-site` or report
   `docs_site_boundary_report`.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `/docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

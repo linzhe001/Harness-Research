@@ -1,11 +1,3 @@
----
-name: build-plan
-description: WF7 implementation planning. Translate the WF6 architecture into project file structure, module pseudocode, configuration schema, training pipeline, Implementation_Roadmap.md, project_map.json, and docs/20_facts/Codebase_Map.md.
-argument-hint: "[project_path]"
-disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep
----
-
 # WF7: Implementation Roadmap and Project Map
 
 Use this Skill after WF6. WF7 translates the selected architecture into
@@ -71,4 +63,4 @@ implementation order, stable file structure, interfaces, tests,
 - Run workflow-state checks when `PROJECT_STATE.json` or `project_map.json`
   changed, or report `NOT_RUN`.
 - After stable Markdown is finalized, invoke `/docs-site` or report
-  `docs_site_boundary_report`.
+  `docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`.

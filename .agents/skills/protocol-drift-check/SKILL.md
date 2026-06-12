@@ -1,8 +1,3 @@
----
-name: protocol-drift-check
-description: Check whether dynamic research protocol drafts are stale before baseline, iteration, final experiment, or release gates.
----
-
 # Protocol Drift Check
 
 ## References
@@ -69,3 +64,9 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
   operator exception, or blocked pending protocol review.
 - Do not summarize protocol readiness without listing the actual drift command
   outcome or `NOT_RUN`.
+
+## Durable Docs Render
+
+After stable Markdown is finalized, invoke `$docs-site` or report
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
+temporary drafts.

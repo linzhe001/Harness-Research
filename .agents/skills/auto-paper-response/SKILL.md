@@ -1,8 +1,3 @@
----
-name: auto-paper-response
-description: Run the optional auto-paper reviewer-response branch. Use when Codex needs to handle rebuttal writing, revision response letters, reviewer comment maps, response strategy, or revision commitment registers for an academic manuscript.
----
-
 # Auto Paper Response
 
 ## Purpose
