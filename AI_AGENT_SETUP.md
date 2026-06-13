@@ -1,16 +1,20 @@
 # AI Agent Setup Runbook
 
 This file is for AI agents that need to rebuild or refresh a Harness Research
-workspace until the operator can immediately use the workflow, for example:
+workspace until the operator can immediately use the visible workflow
+Entrypoints, for example:
 
 ```text
-$init init
 $grill
-$workflow-supervisor status
+$prepare
+$run
 ```
 
-Canonical names still exist. `$init` is the short alias for
-`$init-project`; `/init-project` remains the Claude Code form.
+Compatibility route hints such as `$init`, `$init-project`, `$iterate`,
+`$workflow-supervisor`, and `$auto-iterate-goal` may still be recognized by
+hooks and Skill Contracts. They are internal route targets or migration aids,
+not the first-layer commands to teach operators. The operator-facing surface is
+`$grill`, `$prepare`, `$build`, `$run`, `$analyze`, `$write`, and `$change`.
 
 ## Success Criteria
 
@@ -20,15 +24,17 @@ Setup is complete only when all of these are true:
 - Codex hooks are installed or explicitly marked `NOT_RUN`
 - `schemas/skill_contracts.json` is present and hook status sees the workspace
   as Harness-active
-- `CLAUDE.md`, `AGENTS.md`, and `MEMORY.md` exist from project templates;
-  `$init init` can then refresh compact guidance without needing framework
-  paths to be reconstructed
+- `CLAUDE.md`, `AGENTS.md`, `README.md`, and `MEMORY.md` are research-owned
+  project files, initialized from reviewed candidate templates when missing
+- incoming template candidates and `README_new.md` have either been merged into
+  research-owned project files or removed as temporary setup inputs
 - dynamic-context directories and templates are initialized when the project
   opts into them
-- the operator can open Codex in the target workspace and run `$init init`
-  without needing to manually reconstruct framework paths
-- `$workflow-supervisor` is installed enough for status and node validation, or
-  any missing runtime check is explicitly marked `NOT_RUN`
+- the operator can open Codex in the target workspace and start from a visible
+  Entrypoint without needing to manually reconstruct framework paths
+- workflow-supervisor runtime is installed enough for `$prepare` / `$build`
+  routing, status, and node validation, or any missing runtime check is
+  explicitly marked `NOT_RUN`
 - no temporary `harness-research/` or `Harness-Research/` source checkout is
   left inside the target research workspace after `.harness` is attached
 
@@ -54,6 +60,7 @@ target workspace root
         .git/                      research git history
         CLAUDE.md                  compact project guidance
         AGENTS.md                  Codex/native project guidance
+        README.md                  project-facing research README
         PROJECT_STATE.json         workflow state, when initialized
         iteration_log.json         WF10 experiment history
         project_map.json           stable code map after WF7
@@ -62,6 +69,10 @@ target workspace root
 ```
 
 The two git histories share one worktree but must not track the same files.
+Root `AGENTS.md`, `CLAUDE.md`, `README.md`, and `MEMORY.md` are target
+research files. Harness templates and the framework source `README.md` are
+incoming candidates only; use `README_new.md` for temporary README comparison
+when no dedicated `README.md.template` exists.
 
 ## Required Inputs
 
@@ -110,8 +121,10 @@ chooses it as `TARGET_WORKSPACE`.
 ### 1. Copy Harness Runtime Files Into The Target Workspace
 
 For a new or accepted target workspace, copy only framework runtime paths. Do
-not copy the framework source root `AGENTS.md` or `CLAUDE.md`; target workspace
-versions of those files must come from templates or `$init`.
+not copy the framework source root `AGENTS.md`, `CLAUDE.md`, or `README.md`
+over target files. Target workspace versions of those files are
+research-owned; they must come from reviewed candidate templates or project
+state.
 
 ```bash
 cd "$TARGET_WORKSPACE"
@@ -123,14 +136,8 @@ for path in \
   templates \
   schemas \
   workflow_handbook \
-  README.md \
   AI_AGENT_SETUP.md \
-  Harness_Update_Guide.md \
-  AGENTS.md.template \
-  CLAUDE.md.template \
-  MEMORY.md.template \
-  OPERATOR_CONTEXT.md.template \
-  settings.local.json.template
+  Harness_Update_Guide.md
 do
   if [ -e "$HARNESS_SOURCE/$path" ]; then
     rsync -ani "$HARNESS_SOURCE/$path" ./
@@ -139,9 +146,9 @@ done
 ```
 
 Inspect the dry-run output. If it would overwrite research-owned files such as
-`src/`, `scripts/`, `configs/`, `docs/`, `tests/`, root `AGENTS.md`, or root
-`CLAUDE.md`, stop and ask the operator. Those paths should not be copied from
-the framework source.
+`src/`, `scripts/`, `configs/`, `docs/`, `tests/`, root `AGENTS.md`, root
+`CLAUDE.md`, or root `README.md`, stop and ask the operator. Those paths should
+not be copied from the framework source.
 
 Then copy the framework:
 
@@ -153,9 +160,24 @@ for path in \
   templates \
   schemas \
   workflow_handbook \
-  README.md \
   AI_AGENT_SETUP.md \
-  Harness_Update_Guide.md \
+  Harness_Update_Guide.md
+do
+  if [ -e "$HARNESS_SOURCE/$path" ]; then
+    rsync -a "$HARNESS_SOURCE/$path" ./
+  fi
+done
+```
+
+Create temporary candidate inputs for research-owned root guidance. These files
+are comparison inputs only. After `CLAUDE.md`, `AGENTS.md`, `README.md`, and
+`MEMORY.md` are initialized or refreshed, delete the candidates.
+
+```bash
+CANDIDATE_DIR=".harness_update_candidates/$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$CANDIDATE_DIR"
+
+for path in \
   AGENTS.md.template \
   CLAUDE.md.template \
   MEMORY.md.template \
@@ -163,9 +185,13 @@ for path in \
   settings.local.json.template
 do
   if [ -e "$HARNESS_SOURCE/$path" ]; then
-    rsync -a "$HARNESS_SOURCE/$path" ./
+    cp -n "$HARNESS_SOURCE/$path" "$CANDIDATE_DIR/$path"
   fi
 done
+
+if [ -e "$HARNESS_SOURCE/README.md" ]; then
+  cp -n "$HARNESS_SOURCE/README.md" README_new.md
+fi
 ```
 
 Do not copy the framework source `.gitignore` into a target research workspace.
@@ -188,6 +214,7 @@ for path in \
   CLAUDE.md \
   MEMORY.md \
   OPERATOR_CONTEXT.md \
+  README.md \
   PROJECT_STATE.json \
   iteration_log.json \
   project_map.json \
@@ -199,7 +226,9 @@ for path in \
   baselines \
   experiments \
   tests \
-  .evidence
+  .evidence \
+  .harness_update_candidates \
+  README_new.md
 do
   if [ -e "$path" ]; then
     rsync -a "$path" "$SETUP_BACKUP"/
@@ -209,8 +238,8 @@ done
 
 Create the Harness git history in `.harness` and limit it to the framework
 runtime surface with sparse checkout. This prevents `hgit` from claiming
-research-owned paths such as root `AGENTS.md`, root `CLAUDE.md`, `docs/`, or
-`tests/`.
+research-owned paths such as root `AGENTS.md`, root `CLAUDE.md`, root
+`README.md`, `docs/`, or `tests/`.
 
 ```bash
 if [ -e .harness ]; then
@@ -230,14 +259,8 @@ cat > .harness/info/sparse-checkout <<'EOF'
 /templates/
 /schemas/
 /workflow_handbook/
-/README.md
 /AI_AGENT_SETUP.md
 /Harness_Update_Guide.md
-/AGENTS.md.template
-/CLAUDE.md.template
-/MEMORY.md.template
-/OPERATOR_CONTEXT.md.template
-/settings.local.json.template
 EOF
 
 git --git-dir=.harness --work-tree=. read-tree -mu HEAD
@@ -313,11 +336,10 @@ cat >> .git/info/exclude <<'EOF'
 /templates/
 /schemas/
 /workflow_handbook/
-/README.md
 /AI_AGENT_SETUP.md
 /Harness_Update_Guide.md
-/*.template
-/settings.local.json.template
+/.harness_update_candidates/
+/README_new.md
 EOF
 ```
 
@@ -329,10 +351,13 @@ cat >> .harness/info/exclude <<'EOF'
 
 # Research workspace layer
 /.setup_backup/
+/.harness_update_candidates/
 /CLAUDE.md
 /AGENTS.md
 /MEMORY.md
 /OPERATOR_CONTEXT.md
+/README.md
+/README_new.md
 /PROJECT_STATE.json
 /iteration_log.json
 /project_map.json
@@ -368,6 +393,8 @@ cat >> .gitignore <<'EOF'
 __pycache__/
 .pytest_cache/
 .harness_hooks/
+.harness_update_candidates/
+README_new.md
 .auto_iterate/
 .workflow_supervisor/
 .agents/state/workflow_supervisor_worker_results/
@@ -380,12 +407,15 @@ EOF
 
 ### 4. Create Minimal Research Files
 
-Copy templates only when the target file is missing:
+Copy candidate templates only when the target file is missing:
 
 ```bash
-cp -n CLAUDE.md.template CLAUDE.md
-cp -n AGENTS.md.template AGENTS.md
-cp -n MEMORY.md.template MEMORY.md
+TEMPLATE_DIR=$(find .harness_update_candidates -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 1)
+test -n "$TEMPLATE_DIR"
+
+cp -n "$TEMPLATE_DIR/CLAUDE.md.template" CLAUDE.md
+cp -n "$TEMPLATE_DIR/AGENTS.md.template" AGENTS.md
+cp -n "$TEMPLATE_DIR/MEMORY.md.template" MEMORY.md
 ```
 
 If `AGENTS.md` or `CLAUDE.md` already exists, verify it is project guidance, not
@@ -394,16 +424,23 @@ the framework source guidance:
 ```bash
 rg -n "Use this checkout to improve the framework itself|framework codebase" \
   AGENTS.md CLAUDE.md && {
-    echo "Target guidance appears to be copied from the framework source; replace from templates or run \$init init after operator confirmation." >&2
+    echo "Target guidance appears to be copied from the framework source; replace from reviewed candidates or rerun the internal init-project route after operator confirmation." >&2
     exit 1
   } || true
 ```
+
+If `README.md` is missing, create a short project README from explicit operator
+input or reviewed Grill context. Do not copy `README_new.md` directly over the
+project README; it is the framework-source README used only for comparison.
 
 Create `OPERATOR_CONTEXT.md` only from explicit operator preferences:
 
 ```bash
 # Optional. Do not infer this from project facts.
-cp -n OPERATOR_CONTEXT.md.template OPERATOR_CONTEXT.md
+# Set CREATE_OPERATOR_CONTEXT=1 only after the operator explicitly asks for it.
+if [ "${CREATE_OPERATOR_CONTEXT:-0}" = "1" ]; then
+  cp -n "$TEMPLATE_DIR/OPERATOR_CONTEXT.md.template" OPERATOR_CONTEXT.md
+fi
 ```
 
 Create common research directories:
@@ -413,20 +450,25 @@ mkdir -p src scripts configs baselines experiments tests
 mkdir -p docs docs/40_iterations docs/50_memory docs/90_legacy
 ```
 
-At this point the operator can already ask Codex:
+At this point the operator can already ask Codex through visible Entrypoints:
 
 ```text
-$init init
+$grill
+$prepare
 ```
 
-The canonical form is:
+If setup still needs to exercise compatibility routing, the hook simulator can
+verify that `$init` maps to the internal `init-project` route. Do not teach
+`$init` as the primary operator command.
 
-```text
-$init-project init
+After `CLAUDE.md`, `AGENTS.md`, `README.md`, and `MEMORY.md` are initialized or
+merged, delete the candidate inputs:
+
+```bash
+rm -rf "$TEMPLATE_DIR"
+rm -f README_new.md
+rmdir .harness_update_candidates 2>/dev/null || true
 ```
-
-`$init init` prepares compact guidance. It does not approve contracts, validate
-research evidence, or advance workflow stages.
 
 ### 5. Install Workspace-Local Codex Hooks
 
@@ -514,9 +556,10 @@ Do not hand-edit `.evidence/**`; rerun the owning tooling.
 
 ### 7. Optional Workflow Supervisor Bootstrap
 
-Use this when the operator wants conversation-driven execution through
-`$workflow-supervisor` instead of manually running setup scripts. Prepare files
-only; do not approve a contract or invent dataset/baseline paths during setup.
+Use this when the operator wants conversation-driven execution through visible
+Entrypoints such as `$prepare` and `$build`, which route to the internal
+workflow-supervisor runtime. Prepare files only; do not approve a contract or
+invent dataset/baseline paths during setup.
 
 Useful smoke checks:
 
@@ -575,7 +618,8 @@ Boundary:
 
 ```text
 docs/auto_iterate_goal.md
-  -> research-owned objective, edited by the operator / $auto-iterate-goal
+  -> research-owned objective, edited by the operator or the internal
+     auto-iterate-goal route
 
 tooling/auto_iterate/config/controller.local.yaml
   -> local controller input for this workspace
@@ -587,12 +631,20 @@ tooling/auto_iterate/config/controller.local.yaml
   -> supervisor-owned runtime, never create or edit by hand
 ```
 
-Before the first real run:
+Before the first real run, validate the goal through `$run` or the internal
+auto-iterate-goal route, then inspect controller status:
 
 ```bash
-$auto-iterate-goal check
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
 ```
+
+WF10 runs must follow the Run Artifact Contract. Before meaningful training or
+evaluation, commit training-related code with a semantic message. Completed
+metric-bearing iterations must point `iteration_log.json` at a run artifact
+bundle with `git_commit`, unique `exp_dir`, resolved config, console log, git
+snapshot, and metric artifacts. Screening/proxy runs store the bundle in
+`screening.run_manifest`; full runs store the final bundle in top-level
+`run_manifest` without overwriting `screening.run_manifest`.
 
 Optional supervisor smoke check:
 
@@ -613,19 +665,8 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \
 
 ## First Commands For The Operator
 
-After setup, tell the operator to open Codex in `TARGET_WORKSPACE` and run:
-
-```text
-$init init
-```
-
-Then:
-
-```text
-$workflow-supervisor status
-```
-
-If the idea still needs clarification:
+After setup, tell the operator to open Codex in `TARGET_WORKSPACE` and choose a
+visible Entrypoint:
 
 ```text
 $grill
@@ -635,14 +676,24 @@ If Grill artifacts already exist and the project is ready for execution
 readiness:
 
 ```text
-$workflow-supervisor prepare --complete
+$prepare
 ```
 
-If only compact guidance needs refresh:
+If the project is already in WF10 and needs experiment iteration:
 
 ```text
-$init update
+$run
 ```
+
+For result interpretation after a run:
+
+```text
+$analyze
+```
+
+Compatibility route hints such as `$init update`, `$workflow-supervisor`, and
+`$auto-iterate-goal check` may still be used for migration/debugging, but they
+are not the first-layer operator workflow.
 
 ## Verification Checklist
 
@@ -656,11 +707,14 @@ test -f .agents/skills/workflow-supervisor/SKILL.md
 test -f .claude/skills/init-project/SKILL.md
 test -f CLAUDE.md
 test -f AGENTS.md
+test -f README.md
 test -f MEMORY.md
 
 python tooling/codex_hooks/check_contracts.py --workspace-root .
 python tooling/codex_hooks/hook_status.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status || true
 tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
+python tooling/evidence/check_workflow_state.py --workspace-root .
 python tooling/codex_hooks/simulate_hook.py UserPromptSubmit \
   --workspace-root . \
   --event-json '{"prompt":"run $init init"}'
@@ -673,8 +727,13 @@ git --git-dir=.harness --work-tree=. status --short
 git status --short
 git check-ignore -v \
   .agents/ .claude/ tooling/ schemas/ workflow_handbook/ \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
-  .agents/state/workflow_supervisor_worker_results/
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .agents/state/workflow_supervisor_worker_results/ \
+  .harness_update_candidates/ README_new.md
+if git check-ignore -v README.md; then
+  echo "README.md should be research-owned and visible to normal git" >&2
+  exit 1
+fi
 test ! -d harness-research
 test ! -d Harness-Research
 ```
@@ -683,10 +742,11 @@ Expected outcome:
 
 - `hgit status` shows only intentional framework edits
 - `git status` shows only intentional research files
-- `git check-ignore` confirms research git hides framework paths
+- `git check-ignore` confirms research git hides framework paths and temporary
+  candidates, while root `README.md` stays visible to normal `git`
 - no nested temporary Harness source checkout remains in the target workspace
 - hook status reports Harness contracts at `schemas/skill_contracts.json`
-- `$init init` maps to `init-project`
+- compatibility route hint `$init init` maps to internal `init-project`
 
 ## Troubleshooting
 
@@ -748,9 +808,10 @@ clean stale runtime only after confirming no real controller process is active.
 | `templates/**` | harness git | bootstrap templates |
 | `schemas/**` | harness git | framework schemas and Skill Contracts |
 | `workflow_handbook/**` | harness git | operator-facing framework docs |
-| `README.md`, `AI_AGENT_SETUP.md`, `Harness_Update_Guide.md` | harness git | framework docs |
-| `CLAUDE.md`, `AGENTS.md`, `MEMORY.md` | research git | project guidance and memory |
+| `AI_AGENT_SETUP.md`, `Harness_Update_Guide.md` | harness git | framework setup/update docs |
+| `CLAUDE.md`, `AGENTS.md`, `README.md`, `MEMORY.md` | research git | project guidance, README, and memory |
 | `OPERATOR_CONTEXT.md` | research git | explicit operator preferences only |
+| `.harness_update_candidates/**`, `README_new.md` | ignored temporary inputs | incoming template / README comparison files; delete after merge |
 | `PROJECT_STATE.json` | research git | workflow state |
 | `iteration_log.json` | research git | WF10 experiment state |
 | `project_map.json` | research git | stable implementation map |

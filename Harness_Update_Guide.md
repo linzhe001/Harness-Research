@@ -17,8 +17,10 @@ In this layout:
 - the research repo lives in the normal `.git`
 - both repos share the same project root as one worktree
 
-That means framework files can appear at the project root while still belonging
-to the harness repo.
+That means some framework files can appear at the project root while still
+belonging to the harness repo. Target root `AGENTS.md`, `CLAUDE.md`,
+`README.md`, and `MEMORY.md` are exceptions: they are research-owned project
+guidance files.
 
 ## What Is Harness-Owned
 
@@ -27,7 +29,6 @@ When you update harness, the following paths are framework files managed by
 
 - `.claude/**`
 - `.agents/**`, except ignored local state under `.agents/state/**`
-- `*.template`
 - `templates/**`
 - `schemas/**`
 - `workflow_handbook/**`
@@ -37,11 +38,17 @@ When you update harness, the following paths are framework files managed by
 - `tooling/workflow_supervisor/**`
 - `tooling/model_api/**`
 - `tooling/.tests/**`
-- `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
 
 Do not add these files to the research repo.
+
+In a target research workspace, root `AGENTS.md`, `CLAUDE.md`, `README.md`, and
+`MEMORY.md` belong to normal `git`. Harness source templates and the framework
+source `README.md` are update candidates only. When there is no dedicated
+`README.md.template`, write the incoming framework README to `README_new.md`,
+compare it with the project README, merge only relevant guidance, and delete
+`README_new.md`.
 
 ## Ignore Rules In Dual-Repo Mode
 
@@ -64,7 +71,8 @@ Examples:
 - good: `data/.gitignore`
 - good: root `.gitignore` rules for ordinary runtime outputs such as
   `.auto_iterate/`, `.workflow_supervisor/`, `.harness_hooks/`,
-  `.agents/state/workflow_supervisor_worker_results/`, and `__pycache__/`
+  `.agents/state/workflow_supervisor_worker_results/`,
+  `.harness_update_candidates/`, `README_new.md`, and `__pycache__/`
 - avoid: root `.gitignore` rules whose only purpose is to hide framework files
   from the research repo or research files from the harness repo
 
@@ -76,9 +84,62 @@ Workflow supervisor worker handoffs are local runtime state:
   `tooling/workflow_supervisor/scripts/workflow_ctl.sh`
 
 If normal `git status --untracked-files=all` suddenly stops showing research
-files such as `CLAUDE.md`, `AGENTS.md`, `docs/`, or `src/`, the root
+files such as `CLAUDE.md`, `AGENTS.md`, `README.md`, `docs/`, or `src/`, the root
 `.gitignore` is hiding too much. Move those research-side hide rules into
 `.harness/info/exclude`.
+
+### One-time migration for older target workspaces
+
+Older target workspaces may have root `README.md` or root `*.template` files in
+the Harness sparse checkout. Move those paths out of the target Harness surface
+before the next pull. Preserve research-owned root files first:
+
+```bash
+alias hgit='git --git-dir=.harness --work-tree=.'
+
+MIGRATION_BACKUP=".harness_update_candidates/root-doc-backup-$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$MIGRATION_BACKUP"
+
+for path in README.md AGENTS.md CLAUDE.md MEMORY.md OPERATOR_CONTEXT.md
+do
+  if [ -e "$path" ]; then
+    cp -a "$path" "$MIGRATION_BACKUP"/
+  fi
+done
+
+cp .harness/info/sparse-checkout \
+  ".harness/info/sparse-checkout.backup.$(date +%Y%m%d_%H%M%S)"
+
+sed -i \
+  -e '/^\/README\.md$/d' \
+  -e '/^\/AGENTS\.md\.template$/d' \
+  -e '/^\/CLAUDE\.md\.template$/d' \
+  -e '/^\/MEMORY\.md\.template$/d' \
+  -e '/^\/OPERATOR_CONTEXT\.md\.template$/d' \
+  -e '/^\/settings\.local\.json\.template$/d' \
+  .harness/info/sparse-checkout
+
+hgit read-tree -mu HEAD
+cp -a "$MIGRATION_BACKUP"/. ./
+```
+
+Then make the ownership excludes explicit:
+
+```bash
+cat >> .git/info/exclude <<'EOF'
+/.harness_update_candidates/
+/README_new.md
+EOF
+
+cat >> .harness/info/exclude <<'EOF'
+/README.md
+/.harness_update_candidates/
+/README_new.md
+EOF
+```
+
+Verify normal `git` can see `README.md`, while temporary candidates remain
+ignored. Delete `.harness_update_candidates/` after the migration is verified.
 
 ## Daily Pull Workflow
 
@@ -172,7 +233,7 @@ the staged set, then commit and push:
 ```bash
 hgit status --short
 hgit diff -- \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 hgit add <harness paths>
 hgit diff --cached --name-status
@@ -204,10 +265,10 @@ changes:
 ```bash
 hgit status --short
 hgit diff -- \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 hgit diff --cached -- \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 ```
 
@@ -256,7 +317,6 @@ If it is not clean, resolve that before `pull`.
 
 Typical blocking files are:
 
-- `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
 - `.claude/**`
@@ -278,26 +338,56 @@ hgit status --short
 
 Expected result: empty output.
 
-### 2. Treat updated root docs as framework docs
+### 2. Treat updated setup docs as framework docs
 
 If any of these changed:
 
-- `README.md`
 - `AI_AGENT_SETUP.md`
 - `Harness_Update_Guide.md`
 
 read them as framework updates. Do not commit them into the research repo.
 
-### 3. Compare templates with project-owned files
+### 3. Generate candidate guidance inputs
 
-Harness updates do not automatically merge your project-specific files.
+Harness updates do not automatically merge project-specific root guidance.
+Generate temporary candidates, compare them with the research-owned files, then
+delete the candidates after merging relevant guidance.
+
+```bash
+CANDIDATE_DIR=".harness_update_candidates/$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$CANDIDATE_DIR"
+
+for path in \
+  AGENTS.md.template \
+  CLAUDE.md.template \
+  MEMORY.md.template \
+  OPERATOR_CONTEXT.md.template \
+  settings.local.json.template
+do
+  if hgit cat-file -e "HEAD:$path" 2>/dev/null; then
+    hgit show "HEAD:$path" > "$CANDIDATE_DIR/$path"
+  fi
+done
+
+if hgit cat-file -e HEAD:README.md 2>/dev/null; then
+  hgit show HEAD:README.md > README_new.md
+fi
+```
+
+`README_new.md` is a comparison input because there is no dedicated
+`README.md.template`. Do not copy it directly over the project README.
+
+### 4. Compare candidates with project-owned files
 
 Check at least:
 
 ```bash
-diff CLAUDE.md.template CLAUDE.md
-diff AGENTS.md.template AGENTS.md
-diff OPERATOR_CONTEXT.md.template OPERATOR_CONTEXT.md
+diff "$CANDIDATE_DIR/CLAUDE.md.template" CLAUDE.md
+diff "$CANDIDATE_DIR/AGENTS.md.template" AGENTS.md
+if [ -f OPERATOR_CONTEXT.md ]; then
+  diff "$CANDIDATE_DIR/OPERATOR_CONTEXT.md.template" OPERATOR_CONTEXT.md
+fi
+diff README_new.md README.md
 diff tooling/auto_iterate/docs/auto_iterate_goal_template.md docs/auto_iterate_goal.md
 diff tooling/auto_iterate/config/templates/auto_iterate_controller.example.yaml tooling/auto_iterate/config/controller.local.yaml
 diff tooling/auto_iterate/config/templates/auto_iterate_accounts.example.yaml tooling/auto_iterate/config/accounts.local.yaml
@@ -308,20 +398,23 @@ handoff rules need to be merged into project guidance:
 
 ```bash
 rg -n "update-from-grill|grill_draft_ready" \
-  CLAUDE.md.template AGENTS.md.template \
+  "$CANDIDATE_DIR/CLAUDE.md.template" "$CANDIDATE_DIR/AGENTS.md.template" \
   .agents/skills/grill/SKILL.md .agents/skills/init-project/SKILL.md \
   .claude/skills/grill/SKILL.md .claude/skills/init-project/SKILL.md
-diff CLAUDE.md.template CLAUDE.md
-diff AGENTS.md.template AGENTS.md
+diff "$CANDIDATE_DIR/CLAUDE.md.template" CLAUDE.md
+diff "$CANDIDATE_DIR/AGENTS.md.template" AGENTS.md
+diff README_new.md README.md
 ```
 
 Current expected behavior after this Harness update:
 
-- after the operator accepts a Grill draft, `$grill` should route directly to
-  `$init-project update-from-grill` unless guidance initialization is skipped
-- `$init-project update-from-grill` reads `docs/Research_Intent_Draft.md`,
-  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
-  supervisor-produced `.workflow_supervisor/readiness.json` when present
+- after the operator accepts a Grill draft, `$grill` should route to the
+  internal `init-project update-from-grill` mode unless guidance initialization
+  is skipped
+- internal `init-project update-from-grill` reads
+  `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`,
+  `docs/Execution_Readiness_Packet.md`, and supervisor-produced
+  `.workflow_supervisor/readiness.json` when present
 - the handoff may initialize or refresh `CLAUDE.md`, `AGENTS.md`, and
   `README.md`
 - dataset paths, baseline repos, and local clone/download targets from Grill
@@ -329,10 +422,20 @@ Current expected behavior after this Harness update:
 - the handoff does not create `PROJECT_STATE.json`, `project_map.json`, or
   `iteration_log.json`; missing state/map/iteration JSON immediately after
   `update-from-grill` is expected unless another tool already produced it
-- a bare conversation `$workflow-supervisor` after accepted Grill output should
-  run status first, then start full prepare with
+- a visible `$prepare` request after accepted Grill output should run status
+  first, then route to full prepare with
   `--goal-file docs/Research_Intent_Draft.md --complete` when no run is active;
   shell CLI commands still require explicit segment/goal arguments
+
+After all relevant guidance is merged:
+
+```bash
+rm -rf "$CANDIDATE_DIR"
+rm -f README_new.md
+rmdir .harness_update_candidates 2>/dev/null || true
+```
+
+### 5. Check dynamic context updates
 
 If the project uses the dynamic context layout, also compare the framework
 templates and schemas before refreshing project-owned docs:
@@ -379,7 +482,46 @@ docs; leave `.evidence/protocol_compiler/**` and `.evidence/review_packets/**`
 as local/generated review artifacts unless the project explicitly archives
 them.
 
-### 3b. Check workflow supervisor and hook updates
+### 6. Check WF10 run artifact contract updates
+
+If any of these changed:
+
+- `.agents/references/run-artifact-contract.md`
+- `.claude/shared/run-artifact-contract.md`
+- `.agents/skills/iterate/**`
+- `.claude/skills/iterate/**`
+- `schemas/iteration_log.schema.json`
+- `tooling/run_artifacts.py`
+- `tooling/evidence/check_workflow_state.py`
+- `tooling/auto_iterate/**`
+
+run:
+
+```bash
+python tooling/evidence/check_workflow_state.py --workspace-root .
+pytest tooling/.tests/test_run_artifacts.py \
+  tooling/.tests/test_workflow_state_check.py \
+  tooling/.tests/test_auto_iterate_runtime_adapter.py
+```
+
+Current run artifact behavior to remember after a pull:
+
+- meaningful training/evaluation runs require a semantic pre-run commit
+- completed metric-bearing iterations need a run artifact bundle with
+  `git_commit`, unique `exp_dir`, resolved config, console log, git snapshot,
+  and metric artifacts
+- screening/proxy runs store their bundle in `screening.run_manifest`; full runs
+  store the final bundle in top-level `run_manifest`
+- full runs must not overwrite `screening.run_manifest`
+- old completed iterations without real run artifacts may fail gates after this
+  update; backfill only from real Source Artifacts or leave the iteration
+  incomplete / legacy-exception documented in the Gate ledger
+
+Do not hand-edit `iteration_log.json` to invent successful runs. If the
+artifact directory, stdout log, config snapshot, or git snapshot cannot be
+found, keep the result out of strong Conclusion Evidence until rerun.
+
+### 7. Check workflow supervisor and hook updates
 
 If any of these changed:
 
@@ -395,12 +537,14 @@ run:
 ```bash
 tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
 python tooling/codex_hooks/check_contracts.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root .
+python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status
 python tooling/evidence/validate_workflow_handbook.py --workspace-root .
 ```
 
 Current supervisor behavior to remember after a pull:
 
-- `$workflow-supervisor prepare --complete` can read `$grill` outputs such as
+- visible `$prepare` routing can read `$grill` outputs such as
   `docs/Execution_Readiness_Packet.md`, `docs/Research_Intent_Draft.md`,
   `docs/Grill_Round_Log.md`, and optional
   `.workflow_supervisor/readiness.json`
@@ -419,7 +563,7 @@ If your repo versions `controller.local.yaml` / `accounts.local.yaml` as shared
 defaults, update those tracked files in place while keeping generated credential
 directories outside the repo.
 
-### 4. Check the research repo separately
+### 8. Check the research repo separately
 
 ```bash
 git status --short
@@ -436,10 +580,10 @@ Inspect both staged and unstaged harness state:
 
 ```bash
 git --git-dir=.harness --work-tree=. diff -- \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 git --git-dir=.harness --work-tree=. diff --cached -- \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 ```
 
@@ -449,7 +593,7 @@ before retrying:
 ```bash
 git --git-dir=.harness --work-tree=. restore \
   --staged --worktree --source=HEAD --ignore-skip-worktree-bits \
-  README.md AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
   .claude .agents workflow_handbook templates schemas tooling
 ```
 
@@ -465,13 +609,13 @@ Instead, add harness-managed paths to `.git/info/exclude`, for example:
 /.harness/
 /.claude/
 /.agents/
-/README.md
 /AI_AGENT_SETUP.md
 /Harness_Update_Guide.md
 /workflow_handbook/
 /tooling/
 /.agents/state/workflow_supervisor_worker_results/
-/*.template
+/.harness_update_candidates/
+/README_new.md
 ```
 
 ### Research files disappear from normal `git status`
@@ -482,7 +626,7 @@ research-owned files from the research repo.
 Symptoms:
 
 - `git status --untracked-files=all` does not show `CLAUDE.md`, `AGENTS.md`,
-  `docs/`, `src/`, or other research scaffolding you just created
+  `README.md`, `docs/`, `src/`, or other research scaffolding you just created
 - the files exist on disk, but normal `git` behaves as if they are ignored
 
 Fix:
@@ -494,7 +638,7 @@ Fix:
 Quick check:
 
 ```bash
-git check-ignore -v CLAUDE.md AGENTS.md docs src 2>/dev/null || true
+git check-ignore -v CLAUDE.md AGENTS.md README.md docs src 2>/dev/null || true
 git --git-dir=.harness --work-tree=. status --short
 git status --untracked-files=all
 ```
@@ -507,14 +651,15 @@ After every harness pull:
 
 1. verify `hgit status`
 2. read updated framework docs
-3. diff templates against project-owned files
-4. merge relevant template guidance into project-owned `CLAUDE.md`, `AGENTS.md`,
+3. generate candidate templates and `README_new.md`
+4. diff candidates against project-owned files
+5. merge relevant guidance into project-owned `CLAUDE.md`, `AGENTS.md`,
    `README.md`, or `docs/auto_iterate_goal.md` only after reviewing current
-   project state
-5. verify normal `git status` is still clean with respect to harness paths and
+   project state, then delete candidates
+6. verify normal `git status` is still clean with respect to harness paths and
    is still able to see research-owned files
-6. run workflow-supervisor, hook-contract, and handbook checks when those paths
-   changed
+7. run workflow-supervisor, hook-contract, handbook, and run-artifact checks
+   when those paths changed
 
 For every harness push:
 

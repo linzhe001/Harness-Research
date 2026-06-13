@@ -39,7 +39,6 @@ IGNORE_GIT_ADD_PATTERNS = [
     "ref/",
     "plan.markdown",
     "跨项目共享上下文解析.txt",
-    "Harness_Update_Guide.md",
 ]
 
 DIRECT_TOOL_OWNED_PATHS = [
