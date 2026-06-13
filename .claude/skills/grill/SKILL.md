@@ -28,12 +28,12 @@ artifact.
 The handoff target is candidate-clear intent: concrete observation, candidate
 claim, falsifier, metric/evaluation signal, baseline or negative control,
 dataset/compute assumptions, maximum claim boundary, forbidden claims,
-pivot/abort condition, and execution readiness inputs that would otherwise
-stop `prepare`. Executable baselines need a code repository URL, official code
-entrypoint, or exact local path; executable datasets need a direct downloadable
-source, official dataset API, Hugging Face dataset id, release/archive URL, or
-exact local path in private readiness. Missing items stay as unresolved
-questions.
+pivot/abort condition, required model/teacher/detector weights, and execution
+readiness inputs that would otherwise stop `prepare`. Executable baselines
+need a code repository URL, official code entrypoint, or exact local path;
+executable datasets need a direct downloadable source, official dataset API,
+Hugging Face dataset id, release/archive URL, or exact local path in private
+readiness. Missing items stay as unresolved questions.
 
 Read the compact workflow/supervisor runtime reference, workflow guide, context
 layering, contract gating, documentation rules, language policy, and
@@ -67,6 +67,11 @@ Dataset Access, and Baseline Source ledgers. Every active dataset and executable
 baseline/negative control must have either a concrete acquisition source plus
 `Execution Decision: candidate`, or an explicit non-executable decision such as
 `deferred`, `requires_approval`, `rejected`, or `baseline_repo_missing`.
+For required model weights, record a `Model Weight Ledger` with weight id/name,
+role, source/entrypoint, access verdict, target/cache, execution decision, and
+notes. Use a Hugging Face model id, clone/download URL, official checkpoint or
+release URL, or exact local path; model family names are non-executable until
+source, access policy, and target are clear.
 
 When external acquisition, clone, or access intent is discussed, also record an
 `Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror the
@@ -77,11 +82,13 @@ prose: `hf_access_policy` for source-specific Hugging Face allowance with no
 credentials or tokens, `non_hf_registration_policy` for non-HF gated-source
 exclusion or later-approval rules, `baseline_clone_policy` for clone allowance,
 `baseline_clone_scope` for the concrete first baseline set such as
-`Free-SurGS, Feature 3DGS`, and `external_download_policy` only for an
-intentionally broad global external download/clone policy. Use readiness input
-`kind: policy`. These rows are candidate readiness policy, not Approval
-Evidence or Approved Contracts; deferred, rejected, or `requires_approval`
-dataset rows remain non-executable until later explicit approval expands scope.
+`Free-SurGS, Feature 3DGS`, `hf_model_access_policy`,
+`model_weight_download_policy`, `model_weight_scope`, and
+`external_download_policy` only for an intentionally broad global external
+download/clone policy. Use readiness input `kind: policy`. These rows are
+candidate readiness policy, not Approval Evidence or Approved Contracts;
+deferred, rejected, or `requires_approval` dataset or weight rows remain
+non-executable until later explicit approval expands scope.
 Do not leave active acquisition rows as `pending` at handoff; record the
 intended acquisition mode such as Hugging Face auth download, local path
 verification, Git clone, release/archive download, or no-download reference
@@ -90,7 +97,9 @@ When readiness JSON is written, keep top-level structured fields:
 `external_download_policy`, `approved_datasets`, `approved_baselines`,
 `target_paths`, `unknowns`, and `operator_approved_at`.
 Dataset rows may include `target`, `license`, and `max_size_gb`; baseline rows
-may include `repo`, `ref`, and `target`.
+may include `repo`, `ref`, and `target`. Weight targets belong in
+`target_paths` keys such as `model_cache` or `model_<id>` until a native
+`approved_weights` schema exists.
 
 Outputs:
 - `docs/Research_Intent_Draft.md`
