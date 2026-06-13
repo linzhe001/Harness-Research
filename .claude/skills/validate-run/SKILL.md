@@ -13,7 +13,8 @@ tracking, and git snapshot paths work before expensive loops begin.
   `docs/20_facts/Project_Glossary.md`, and `docs/20_facts/Codebase_Map.md`
   when present.
 - Shared rules: `language-policy.md`, `ubiquitous-language.md`,
-  `documentation-evidence-rule.md`, and `documentation-style.md`.
+  `run-artifact-contract.md`, `documentation-evidence-rule.md`, and
+  `documentation-style.md`.
 
 ## Validation Flow
 
@@ -41,7 +42,7 @@ tracking, and git snapshot paths work before expensive loops begin.
    ```
 
    Record startup, completion, loss trend, NaN/Inf, OOM/crash, stderr summary,
-   and GPU memory when available.
+   GPU memory, and run artifact bundle paths when available.
 6. Verify checkpoint save/load with required fields such as model, optimizer,
    step, and git commit.
 7. Run eval on the smoke checkpoint, usually:
@@ -51,7 +52,8 @@ tracking, and git snapshot paths work before expensive loops begin.
    ```
 
    Record completion, protocol metrics, and generated outputs.
-8. Verify wandb only when enabled. Verify git snapshot in smoke logs.
+8. Verify wandb only when enabled. Verify git snapshot in smoke logs and the
+   run artifact bundle from `../../shared/run-artifact-contract.md`.
 9. Create or refresh `docs/30_evidence/Validation_Table.md` and
    `docs/Validate_Run_Report.md` with reviewed slices, commands, raw log paths,
    review traces, failures, open validation questions, and final verdict.

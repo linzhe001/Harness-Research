@@ -945,6 +945,7 @@
           ".agents/references/context-layering-policy.md",
           ".agents/references/contract-gating-rule.md",
           ".agents/references/pre-training-rule.md",
+          ".agents/references/run-artifact-contract.md",
           ".agents/references/ubiquitous-language.md",
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
@@ -1312,6 +1313,7 @@
           ".agents/references/lesson-quality-rule.md",
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
+          ".agents/references/run-artifact-contract.md",
           ".agents/references/reviewer-independence.md",
           ".agents/references/review-tracing.md",
           ".agents/references/language-policy.md"
@@ -1666,6 +1668,7 @@
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/project-map-rule.md",
+          ".agents/references/run-artifact-contract.md",
           ".agents/references/sliced-commit-rule.md"
         ],
         "skill": [
@@ -2341,6 +2344,7 @@
           ".agents/references/workflow-guide.md",
           ".agents/references/contract-gating-rule.md",
           ".agents/references/ubiquitous-language.md",
+          ".agents/references/run-artifact-contract.md",
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/reviewer-independence.md",
@@ -2448,6 +2452,7 @@
           ".agents/references/contract-gating-rule.md",
           ".agents/references/lesson-quality-rule.md",
           ".agents/references/ubiquitous-language.md",
+          ".agents/references/run-artifact-contract.md",
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/reviewer-independence.md",

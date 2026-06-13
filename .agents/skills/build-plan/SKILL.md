@@ -16,6 +16,7 @@ Read these first:
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `../../../.agents/references/project-map-rule.md`
+- `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/sliced-commit-rule.md`
 - `./references/implementation-roadmap.md`
 - `./references/project-map-schema.json`
@@ -55,6 +56,7 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
    - file ownership and dependency order
    - a test plan with Red/Green/Refactor or smoke feedback for each slice
    - training pipeline with smoke test
+   - run artifact bundle layout and `run_manifest` fields
    - validation checkpoints
    - complexity budget for public APIs, new terms, dependencies, and files per slice
    - commit boundary and suggested semantic commit message for each completed slice

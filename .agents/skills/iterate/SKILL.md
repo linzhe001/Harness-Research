@@ -13,6 +13,7 @@ Use this Skill only for WF10 experiment-loop state. It owns
 
 - Workflow, context, contract, lesson, code-style, review, language, and docs
   rules under `../../../.agents/references/`
+- `../../../.agents/references/run-artifact-contract.md`
 - `./references/iteration-log-schema.json`
 - `./references/iteration-context.md`
 - `./references/iteration-constraints.md`
@@ -46,9 +47,9 @@ Use this Skill only for WF10 experiment-loop state. It owns
   checklist, preserve slice/glossary boundaries, route implementation through
   `$code-debug`, and require a semantic commit before status `training`.
 - `run`: select latest `training` iteration, resolve Train/Eval scripts from
-  `CLAUDE.md`, use WF5 protocol metric keys, record `run_manifest`, tracked
-  metrics, screening result when relevant, and canonical failure/manual-mode
-  behavior.
+  `CLAUDE.md`, use WF5 protocol metric keys, record `run_manifest` with run
+  artifact bundle paths, tracked metrics, screening result when relevant, and
+  canonical failure/manual-mode behavior.
 - `eval`: refresh context, invoke `$evaluate` when needed, compare baseline,
   previous, and best metrics, record decision, lessons, lesson candidates,
   slice/drift observations, complexity/boundary observations, reports, and

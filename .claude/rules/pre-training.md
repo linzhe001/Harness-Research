@@ -1,5 +1,5 @@
 ---
-description: Must git commit (semantic message) before training + training scripts must integrate git_snapshot and wandb
+description: Must git commit before meaningful training + record git identity in run artifacts
 globs:
   - "scripts/train*.py"
   - "scripts/run*.py"
@@ -22,6 +22,9 @@ Must execute git add + git commit. Commit message format:
 
 Semantic description must explain **what was done and why**, not just list file names.
 
+The run output directory itself is generated Execution Evidence and is normally
+not committed before the run.
+
 ## 2. Training Scripts Must Integrate
 
 All training scripts (research code and baselines) must call at the beginning of main():
@@ -37,6 +40,8 @@ git_snapshot responsibilities:
 - `git pull --rebase` then push (avoid merge conflicts)
 - Return commit_hash, branch, commit_message, etc.
 - wandb already auto-records git commit + uncommitted diff; git_snapshot info is supplementary
+- The run directory must record the same commit identity in its run artifact
+  bundle; see `../shared/run-artifact-contract.md`.
 
 ## 3. wandb Integration Requirements
 
@@ -64,3 +69,11 @@ torch.save({
     "git_message": snapshot["commit_message"],
 }, path)
 ```
+
+## 5. Run Artifact Bundle
+
+Meaningful runs must produce or register the run artifact bundle from
+`../shared/run-artifact-contract.md`: resolved config snapshot, console log,
+git snapshot, eval metric artifacts when metrics are reported, and checkpoint
+path when checkpointing is expected. Dirty smoke/debug runs may preserve a patch,
+but they are not strong Conclusion Evidence until rerun from a semantic commit.

@@ -10,10 +10,19 @@ and §4.5 for the ``current_iteration_id`` binding algorithm.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
 from .state import StateLoadError, load_json
+
+TOOLING_DIR = Path(__file__).resolve().parents[3]
+if str(TOOLING_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLING_DIR))
+
+from run_artifacts import run_artifact_errors  # noqa: E402
+
+_DEFAULT_MANIFEST = object()
 
 # ---------------------------------------------------------------------------
 # Result dataclass (plain dict for simplicity)
@@ -79,20 +88,99 @@ def _get_ids(iterations: list[dict]) -> set[str]:
     return {it["id"] for it in iterations if "id" in it}
 
 
-def _run_manifest_error(iteration: dict) -> str | None:
-    run_manifest = iteration.get("run_manifest")
+def _run_manifest_error(
+    iteration: dict,
+    *,
+    run_manifest: dict[str, Any] | object = _DEFAULT_MANIFEST,
+    manifest_name: str = "run_manifest",
+) -> str | None:
+    if run_manifest is _DEFAULT_MANIFEST:
+        run_manifest = iteration.get("run_manifest")
     if not isinstance(run_manifest, dict) or not run_manifest:
-        return "run_manifest is required"
+        return f"{manifest_name} is required"
     if (
         not isinstance(run_manifest.get("command"), str)
         or not run_manifest.get("command", "").strip()
     ):
-        return "run_manifest.command is required"
+        return f"{manifest_name}.command is required"
     if (
         not isinstance(run_manifest.get("exp_dir"), str)
         or not run_manifest.get("exp_dir", "").strip()
     ):
-        return "run_manifest.exp_dir is required"
+        return f"{manifest_name}.exp_dir is required"
+    return None
+
+
+def _run_artifact_error(
+    root: Path,
+    iteration: dict,
+    *,
+    run_manifest: dict[str, Any] | object = _DEFAULT_MANIFEST,
+    manifest_name: str = "run_manifest",
+) -> str | None:
+    kwargs: dict[str, Any] = {"manifest_name": manifest_name}
+    if run_manifest is not _DEFAULT_MANIFEST:
+        kwargs["run_manifest"] = run_manifest
+    errors = run_artifact_errors(root, iteration, **kwargs)
+    if not errors:
+        return None
+    return "; ".join(errors)
+
+
+def _screening_run_manifest(iteration: dict) -> dict[str, Any] | None:
+    screening = iteration.get("screening")
+    if not isinstance(screening, dict):
+        return None
+    manifest = screening.get("run_manifest")
+    return manifest if isinstance(manifest, dict) else None
+
+
+def _manifest_exp_dir(manifest: Any) -> str | None:
+    if not isinstance(manifest, dict):
+        return None
+    exp_dir = manifest.get("exp_dir")
+    if not isinstance(exp_dir, str) or not exp_dir.strip():
+        return None
+    return exp_dir.strip()
+
+
+def _screening_run_artifact_error(root: Path, iteration: dict) -> str | None:
+    screening = iteration.get("screening")
+    if not (
+        isinstance(screening, dict)
+        and screening.get("status") in ("passed", "failed")
+        and isinstance(screening.get("metrics"), dict)
+        and screening.get("metrics")
+    ):
+        return None
+
+    screening_manifest = _screening_run_manifest(iteration)
+    manifest_error = _run_manifest_error(
+        iteration,
+        run_manifest=screening_manifest,
+        manifest_name="screening.run_manifest",
+    )
+    if manifest_error:
+        return manifest_error
+
+    artifact_error = _run_artifact_error(
+        root,
+        iteration,
+        run_manifest=screening_manifest,
+        manifest_name="screening.run_manifest",
+    )
+    if artifact_error:
+        return artifact_error
+
+    full_run = iteration.get("full_run")
+    if isinstance(full_run, dict) and full_run.get("status") == "completed":
+        full_exp_dir = _manifest_exp_dir(iteration.get("run_manifest"))
+        screening_exp_dir = _manifest_exp_dir(screening_manifest)
+        if full_exp_dir and screening_exp_dir and full_exp_dir == screening_exp_dir:
+            return (
+                "screening.run_manifest.exp_dir must differ from "
+                "run_manifest.exp_dir when full_run.status=completed"
+            )
     return None
 
 
@@ -410,10 +498,29 @@ class PostconditionValidator:
                     )
                 },
             )
-        manifest_error = None if status == "skipped" else _run_manifest_error(it)
+        screening_manifest = _screening_run_manifest(it)
+        manifest_error = (
+            None
+            if status == "skipped"
+            else _run_manifest_error(
+                it,
+                run_manifest=screening_manifest,
+                manifest_name="screening.run_manifest",
+            )
+        )
         if manifest_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
                          {"error": manifest_error})
+        if status in ("passed", "failed"):
+            artifact_error = _run_artifact_error(
+                self.root,
+                it,
+                run_manifest=screening_manifest,
+                manifest_name="screening.run_manifest",
+            )
+            if artifact_error:
+                return _fail("run_screening", "postcondition_failed",
+                             iteration_id, {"error": artifact_error})
         metrics_error = _screening_metrics_error(it, tracked_metrics)
         if metrics_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
@@ -480,6 +587,21 @@ class PostconditionValidator:
             if manifest_error:
                 return _fail("run_full", "postcondition_failed", iteration_id,
                              {"error": manifest_error})
+            artifact_error = _run_artifact_error(self.root, it)
+            if artifact_error:
+                return _fail("run_full", "postcondition_failed", iteration_id,
+                             {"error": artifact_error})
+            screening_artifact_error = _screening_run_artifact_error(
+                self.root,
+                it,
+            )
+            if screening_artifact_error:
+                return _fail(
+                    "run_full",
+                    "postcondition_failed",
+                    iteration_id,
+                    {"error": screening_artifact_error},
+                )
         if status in ("recoverable_failed", "failed"):
             run_manifest = it.get("run_manifest", {}) or {}
             if not full_run.get("error") and not run_manifest.get("error"):
@@ -563,6 +685,14 @@ class PostconditionValidator:
         if manifest_error:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": manifest_error})
+        artifact_error = _run_artifact_error(self.root, it)
+        if artifact_error:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": artifact_error})
+        screening_artifact_error = _screening_run_artifact_error(self.root, it)
+        if screening_artifact_error:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": screening_artifact_error})
         if existing_iteration_report_path(self.root, iteration_id) is None:
             return _fail(
                 "eval",

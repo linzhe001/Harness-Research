@@ -147,6 +147,35 @@ train:
   learning_rate: float
 ```
 
+### 5b. run_artifact_contract
+
+Use `.agents/references/run-artifact-contract.md`.
+
+| Artifact | Planned Path | Producer | Consumer / Gate |
+|----------|--------------|----------|-----------------|
+| resolved config snapshot | | | |
+| console log | | | |
+| git snapshot | | | |
+| eval metrics | | | |
+| checkpoint | | | |
+| tracking logs | | | |
+
+`run_manifest` fields:
+
+| Field | Source | Required For |
+|-------|--------|--------------|
+| `artifact_contract_version` | static contract | completed runs |
+| `run_type` | run phase | completed runs |
+| `command` | launch script / shell | all runs |
+| `config_path` | selected config | all runs |
+| `resolved_config_path` | run dir | completed runs |
+| `exp_dir` | run dir | all runs |
+| `stdout_log_path` | run dir | completed runs |
+| `git_snapshot_path` | run dir | completed runs |
+| `git_commit` | pre-run commit | completed runs |
+| `checkpoint_path` | trainer | checkpointed runs |
+| `eval_artifact_paths` | eval script | metric-bearing runs |
+
 ### 6. training_pipeline
 
 #### Stage 1: Smoke Test

@@ -18,6 +18,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
+For run artifact bundle requirements, see [../../shared/run-artifact-contract.md](../../shared/run-artifact-contract.md).
 When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving tracked metrics; otherwise surface the missing-contract gap as draft/legacy protocol.
 </context>
 
@@ -59,6 +60,7 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
         git commit -m "train(baseline/{method_name}): {semantic description}"
         ```
       - Training scripts should integrate git_snapshot (if feasible)
+      - Record the run artifact bundle for reproduced metrics
 
    d. **Evaluate**
       - Use unified evaluation metrics (PSNR / SSIM / LPIPS etc., per project requirements)
@@ -81,7 +83,8 @@ When `docs/10_contract/Evaluation_Contract.md` exists, read it before deriving t
    - Discrepancy analysis against paper-reported values
 
    Create or refresh `docs/30_evidence/Baseline_Table.md` with baseline repos,
-   paper citations, configs, commit hashes, reproduced metrics, raw log paths,
+   paper citations, configs, commit hashes, run artifact bundle paths,
+   reproduced metrics, raw log paths,
    skip reasons, and unresolved reproduction questions. This is human-readable
    Conclusion Evidence; `.evidence/**` Evidence Chains remain tool-owned.
 

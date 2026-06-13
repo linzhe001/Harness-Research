@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from copy import deepcopy
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -51,8 +52,17 @@ def base_iteration_log() -> dict:
                 "decision": "CONTINUE",
                 "git_commit": "abc123",
                 "run_manifest": {
+                    "artifact_contract_version": "1",
+                    "run_type": "full",
                     "command": "python train.py --config configs/test.yaml",
+                    "config_path": "configs/test.yaml",
+                    "resolved_config_path": "experiments/iter1/run_param.yaml",
                     "exp_dir": "experiments/iter1",
+                    "stdout_log_path": "experiments/iter1/stdout+stderr.log",
+                    "git_snapshot_path": "experiments/iter1/git_status/commit.txt",
+                    "git_commit": "abc123",
+                    "eval_artifact_paths": ["experiments/iter1/epochs/1/eval.jsonl"],
+                    "checkpoint_path": "experiments/iter1/checkpoints/1/model.pth",
                 },
                 "metrics": {"accuracy": 0.8},
                 "lessons": ["Accuracy improved under the reviewed protocol."],
@@ -102,6 +112,28 @@ def write_required_stage_artifacts(root: Path) -> None:
     src_dir = root / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
     (src_dir / "model.py").write_text("# source marker\n", encoding="utf-8")
+    write_run_artifact_bundle(root)
+
+
+def write_run_artifact_bundle(root: Path, commit: str = "abc123") -> None:
+    exp_dir = root / "experiments" / "iter1"
+    (exp_dir / "git_status").mkdir(parents=True, exist_ok=True)
+    (exp_dir / "epochs" / "1").mkdir(parents=True, exist_ok=True)
+    (exp_dir / "checkpoints" / "1").mkdir(parents=True, exist_ok=True)
+    (exp_dir / "run_param.yaml").write_text("seed: 1\n", encoding="utf-8")
+    (exp_dir / "stdout+stderr.log").write_text("completed\n", encoding="utf-8")
+    (exp_dir / "git_status" / "commit.txt").write_text(
+        f"{commit}\n",
+        encoding="utf-8",
+    )
+    (exp_dir / "epochs" / "1" / "eval.jsonl").write_text(
+        '{"accuracy": 0.8}\n',
+        encoding="utf-8",
+    )
+    (exp_dir / "checkpoints" / "1" / "model.pth").write_text(
+        "checkpoint marker\n",
+        encoding="utf-8",
+    )
 
 
 def test_workflow_state_valid_cross_file_set_passes(tmp_path: Path) -> None:
@@ -112,6 +144,7 @@ def test_workflow_state_valid_cross_file_set_passes(tmp_path: Path) -> None:
     report_path = tmp_path / "docs" / "iterations" / "iter1.md"
     report_path.parent.mkdir(parents=True)
     report_path.write_text("# iter1\n", encoding="utf-8")
+    write_run_artifact_bundle(tmp_path)
     write_json(
         tmp_path / ".auto_iterate" / "state.json",
         {"current_iteration_id": "iter1", "current_phase_key": "eval"},
@@ -328,7 +361,136 @@ def test_workflow_state_rejects_completed_iteration_with_incomplete_run_manifest
     )
 
 
+def test_workflow_state_rejects_completed_iteration_missing_run_artifacts(
+    tmp_path: Path,
+) -> None:
+    checker = load_tool("check_workflow_state")
+    write_json(tmp_path / "PROJECT_STATE.json", base_project_state())
+    write_json(tmp_path / "iteration_log.json", base_iteration_log())
+    report_path = tmp_path / "docs" / "40_iterations" / "iter1.md"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("# iter1\n", encoding="utf-8")
+
+    result = checker.gate_result(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "iteration_run_artifact_bundle"
+        and not check["ok"]
+        and "resolved_config_path" in check["detail"]
+        for check in result["checks"]
+    )
+
+
+def test_workflow_state_rejects_duplicate_completed_run_exp_dirs(
+    tmp_path: Path,
+) -> None:
+    checker = load_tool("check_workflow_state")
+    write_json(tmp_path / "PROJECT_STATE.json", base_project_state())
+    log = base_iteration_log()
+    duplicate = deepcopy(log["iterations"][0])
+    duplicate["id"] = "iter2"
+    log["iterations"].append(duplicate)
+    write_json(tmp_path / "iteration_log.json", log)
+    write_run_artifact_bundle(tmp_path)
+    for iteration_id in ("iter1", "iter2"):
+        report_path = tmp_path / "docs" / "40_iterations" / f"{iteration_id}.md"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(f"# {iteration_id}\n", encoding="utf-8")
+
+    result = checker.gate_result(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "iteration_run_exp_dirs_unique"
+        and not check["ok"]
+        and "experiments/iter1" in check["detail"]
+        for check in result["checks"]
+    )
+
+
+def test_workflow_state_rejects_screening_and_full_run_same_exp_dir(
+    tmp_path: Path,
+) -> None:
+    checker = load_tool("check_workflow_state")
+    write_json(tmp_path / "PROJECT_STATE.json", base_project_state())
+    log = base_iteration_log()
+    run_manifest = deepcopy(log["iterations"][0]["run_manifest"])
+    run_manifest["run_type"] = "screening"
+    log["iterations"][0]["screening"] = {
+        "recommended": True,
+        "status": "passed",
+        "metrics": {"accuracy": 0.7},
+        "run_manifest": run_manifest,
+    }
+    log["iterations"][0]["full_run"] = {
+        "status": "completed",
+        "metrics": {"accuracy": 0.8},
+    }
+    write_json(tmp_path / "iteration_log.json", log)
+    write_run_artifact_bundle(tmp_path)
+    report_path = tmp_path / "docs" / "40_iterations" / "iter1.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("# iter1\n", encoding="utf-8")
+
+    result = checker.gate_result(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "iteration_run_exp_dirs_unique"
+        and not check["ok"]
+        and "must differ" in check["detail"]
+        for check in result["checks"]
+    )
+
+
 def test_workflow_state_rejects_untracked_screening_metric(
+    tmp_path: Path,
+) -> None:
+    checker = load_tool("check_workflow_state")
+    write_json(tmp_path / "PROJECT_STATE.json", base_project_state())
+    log = base_iteration_log()
+    log["iterations"] = [
+        {
+            "id": "iter1",
+            "status": "training",
+            "git_commit": "abc123",
+            "screening": {
+                "recommended": True,
+                "status": "passed",
+                "metrics": {"NOT_TRACKED": 1.0},
+                "run_manifest": {
+                    "artifact_contract_version": "1",
+                    "run_type": "screening",
+                    "command": "python train.py --config configs/test.yaml",
+                    "config_path": "configs/test.yaml",
+                    "resolved_config_path": "experiments/iter1/run_param.yaml",
+                    "exp_dir": "experiments/iter1",
+                    "stdout_log_path": "experiments/iter1/stdout+stderr.log",
+                    "git_snapshot_path": "experiments/iter1/git_status/commit.txt",
+                    "git_commit": "abc123",
+                    "eval_artifact_paths": [
+                        "experiments/iter1/epochs/1/eval.jsonl"
+                    ],
+                },
+            },
+        }
+    ]
+    write_json(tmp_path / "iteration_log.json", log)
+    write_run_artifact_bundle(tmp_path)
+
+    result = checker.gate_result(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "iteration_screening_metric_protocol_consistency"
+        and not check["ok"]
+        and "NOT_TRACKED" in check["detail"]
+        for check in result["checks"]
+    )
+
+
+def test_workflow_state_rejects_screening_missing_run_manifest(
     tmp_path: Path,
 ) -> None:
     checker = load_tool("check_workflow_state")
@@ -341,7 +503,7 @@ def test_workflow_state_rejects_untracked_screening_metric(
             "screening": {
                 "recommended": True,
                 "status": "passed",
-                "metrics": {"NOT_TRACKED": 1.0},
+                "metrics": {"accuracy": 0.8},
             },
         }
     ]
@@ -351,9 +513,8 @@ def test_workflow_state_rejects_untracked_screening_metric(
 
     assert result["ok"] is False
     assert any(
-        check["name"] == "iteration_screening_metric_protocol_consistency"
+        check["name"] == "iteration_screening_run_manifest"
         and not check["ok"]
-        and "NOT_TRACKED" in check["detail"]
         for check in result["checks"]
     )
 

@@ -55,20 +55,34 @@ These are mandatory behavior rules for `$iterate`.
 - Must resolve the tracked metrics from the baseline or evaluation protocol established in WF5.
 - Must update `run_manifest` in `iteration_log.json` before returning.
 - Must record, when available:
+  - `artifact_contract_version`
+  - `run_type`
   - `command`
   - `config_path`
+  - `resolved_config_path`
   - `exp_dir`
+  - `stdout_log_path`
+  - `git_snapshot_path`
+  - `git_commit`
   - `started_at`
   - `duration_seconds`
   - `exit_code`
   - `checkpoint_path`
+  - `eval_artifact_paths`
   - `wandb_url`
   - `error`
+- Completed metric-bearing runs must satisfy
+  `.agents/references/run-artifact-contract.md`: semantic pre-run commit,
+  resolved config snapshot, console log, git snapshot, and metric artifact
+  paths in or under `exp_dir`.
 - Must persist final evaluation metrics only for the tracked metric set defined by WF5.
 - Must keep training-only traces in a separate structure such as `training_trace` instead of hard-coding project-specific metric keys.
 - When the run is a screening/proxy run and `screening.status` is `passed` or
   `failed`, must record `screening.metrics` from the same tracked metric set and
-  keep the screening command/exp_dir in `run_manifest`.
+  keep the screening artifact bundle in `screening.run_manifest`. Top-level
+  `run_manifest` may mirror the screening bundle until a full run replaces it.
+- Full runs must preserve `screening.run_manifest` before replacing top-level
+  `run_manifest` with the full run bundle.
 - Must end with one of:
   - `status=running` when metrics were collected and eval can proceed
   - `status=training` when the run failed and needs rerun or manual intervention
@@ -94,6 +108,9 @@ These are mandatory behavior rules for `$iterate`.
   - complexity and boundary observations when public APIs, dependencies, or
     naming changed during the iteration
   - `status=completed` when evaluation is complete
+- Must not mark `status=completed` until the run artifact bundle exists. If
+  pieces are missing, report `NOT_RUN` in the Gate ledger and keep the
+  iteration incomplete.
 - Must produce or refresh a per-iteration report at `docs/40_iterations/<iter-id>.md`
   for dynamic-context workflows. Legacy/report-directory workflows may also
   mirror `docs/iterations/<iter-id>.md`.

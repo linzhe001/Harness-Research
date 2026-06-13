@@ -72,6 +72,17 @@
 | wandb | `{log_path_or_url}` | PASS/FAIL/SKIPPED | |
 | git_snapshot | `{log_path}` | PASS/FAIL/SKIPPED | |
 
+### Run Artifact Bundle
+
+| Artifact | Path | Status | Notes |
+|----------|------|--------|-------|
+| resolved config snapshot | `{path}` | PASS/FAIL/NOT_RUN | |
+| console log | `{path}` | PASS/FAIL/NOT_RUN | |
+| git snapshot | `{path}` | PASS/FAIL/NOT_RUN | |
+| eval metrics artifact | `{path}` | PASS/FAIL/NOT_RUN | |
+| checkpoint | `{path}` | PASS/FAIL/SKIPPED | |
+| commit identity match | `{git_commit}` | PASS/FAIL/NOT_RUN | |
+
 ### Verdict
 
 **Decision: PASS / REVIEW / FAIL**

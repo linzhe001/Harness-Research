@@ -100,7 +100,8 @@
             "properties": {
               "recommended": { "type": "boolean", "description": "Whether plan recommended screening" },
               "status": { "type": "string", "enum": ["passed", "failed", "skipped"], "description": "Terminal screening status" },
-              "metrics": { "type": "object", "description": "Protocol-defined tracked metrics from the screening run", "additionalProperties": { "type": ["number", "string", "null"] } }
+              "metrics": { "type": "object", "description": "Protocol-defined tracked metrics from the screening run", "additionalProperties": { "type": ["number", "string", "null"] } },
+              "run_manifest": { "type": ["object", "null"], "description": "Run artifact bundle for the screening run; same field shape as top-level run_manifest", "additionalProperties": true }
             }
           },
           "full_run": {
@@ -172,11 +173,21 @@
             "type": ["object", "null"],
             "description": "Training run metadata, populated by /iterate run",
             "properties": {
-              "command": { "type": "string", "description": "Full training command executed" },
+              "artifact_contract_version": { "type": ["string", "null"], "description": "Run Artifact Contract version used by the run bundle" },
+              "run_type": { "type": ["string", "null"], "description": "screening, full, smoke, manual, or project-specific run type" },
+              "command": { "type": "string", "description": "Run command executed" },
               "config_path": { "type": ["string", "null"], "description": "Config file path" },
+              "resolved_config_path": { "type": ["string", "null"], "description": "Final resolved config snapshot stored with the run" },
               "exp_dir": { "type": "string", "description": "Experiment output directory" },
+              "stdout_log_path": { "type": ["string", "null"], "description": "Combined stdout/stderr log path" },
+              "git_snapshot_path": { "type": ["string", "null"], "description": "Run-local git snapshot path" },
+              "git_commit": { "type": ["string", "null"], "description": "Commit identity recorded in the run bundle" },
+              "dirty_patch_path": { "type": ["string", "null"], "description": "Preserved dirty patch for debug/smoke exceptions" },
               "wandb_url": { "type": ["string", "null"], "description": "wandb run URL" },
+              "tensorboard_log_dir": { "type": ["string", "null"], "description": "TensorBoard log directory when enabled" },
               "checkpoint_path": { "type": ["string", "null"], "description": "Best/final checkpoint path" },
+              "eval_artifact_paths": { "type": ["array", "null"], "items": { "type": "string" }, "description": "Evaluation metric artifacts such as eval.jsonl or eval.json" },
+              "config_hash": { "type": ["string", "null"], "description": "Optional hash of the resolved config snapshot" },
               "started_at": { "type": ["string", "null"], "format": "date-time" },
               "duration_seconds": { "type": ["number", "null"], "description": "Training wall time in seconds" },
               "expected_steps": { "type": ["integer", "null"] },

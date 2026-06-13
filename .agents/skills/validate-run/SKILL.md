@@ -12,6 +12,7 @@ Read these first:
 - `../../../.agents/references/contract-gating-rule.md`
 - `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `../../../.agents/references/reviewer-independence.md`
@@ -55,11 +56,12 @@ Use this skill for WF9 when the user wants to verify the codebase is safe to ent
    - evaluation run
    - wandb check
    - `git_snapshot` check
+   - run artifact bundle check
 6. Classify the result as:
    - `PASS`
    - `REVIEW`
    - `FAIL`
-7. Write `docs/Validate_Run_Report.md` with evidence sources, raw log paths, review trace paths, commands, and verdict.
+7. Write `docs/Validate_Run_Report.md` with evidence sources, raw log paths, run artifact bundle paths, review trace paths, commands, and verdict.
 8. Create or refresh `docs/30_evidence/Validation_Table.md` with the
    human-readable Conclusion Evidence behind the validation verdict: reviewed
    slices, smoke commands, raw log paths, review traces, failures, and open

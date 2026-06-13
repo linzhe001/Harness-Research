@@ -245,7 +245,12 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Update screening.status to passed|failed|skipped.\n"
         "- When screening.status is passed or failed, record screening.metrics.\n"
         "- When screening.status is passed or failed, record "
-        "run_manifest.command and run_manifest.exp_dir for the screening run.\n"
+        "screening.run_manifest with artifact_contract_version, "
+        "run_type=screening, command, exp_dir, git_commit, "
+        "resolved_config_path, stdout_log_path, git_snapshot_path, and "
+        "eval_artifact_paths for the screening run.\n"
+        "- Mirror the same screening bundle in top-level run_manifest until "
+        "a full run replaces it.\n"
         "- Screening threshold: {threshold_pct}% of baseline.\n"
     ),
     "run_full": (
@@ -258,7 +263,12 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- Update full_run.status to completed|recoverable_failed|failed.\n"
         "- Record metrics in full_run.metrics.\n"
-        "- Record run_manifest.command and run_manifest.exp_dir for the full run.\n"
+        "- Preserve any screening bundle in screening.run_manifest before "
+        "overwriting top-level run_manifest.\n"
+        "- Record top-level run_manifest with artifact_contract_version, "
+        "run_type=full, command, exp_dir, git_commit, resolved_config_path, "
+        "stdout_log_path, git_snapshot_path, and eval_artifact_paths for the "
+        "full run.\n"
     ),
     "eval": (
         "You are in auto_mode. Execute `$iterate eval` for iteration {iteration_id}.\n"
@@ -277,7 +287,9 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "  - PIVOT: fundamental approach change needed.\n"
         "  - ABORT: terminate this research direction.\n"
         "- Record at least 1 lesson.\n"
-        "- Preserve git_commit and run_manifest before completion.\n"
+        "- Preserve git_commit, the final top-level run_manifest artifact "
+        "bundle, and screening.run_manifest when screening metrics exist "
+        "before completion.\n"
         "- If screening.status=failed and no full_run exists, finalize metrics "
         "from screening.metrics and explain the failed-screen decision.\n"
         "- Set iteration status to completed.\n"

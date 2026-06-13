@@ -12,12 +12,16 @@ from typing import Any
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
+TOOLING_DIR = SCRIPT_DIR.parent
+if str(TOOLING_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLING_DIR))
 
 from dynamic_context import (  # noqa: E402
     VALID_WORKFLOW_MODES,
     is_new_workflow_project,
     workflow_mode,
 )
+from run_artifacts import run_artifact_errors  # noqa: E402
 
 VALID_CONTRACT_STATUSES = {"missing", "draft", "approved", "superseded"}
 VALID_STAGE_STATUSES = {"not_started", "in_progress", "completed", "blocked", "active"}
@@ -713,6 +717,8 @@ def check_iteration_log(
         return log
 
     ids: list[str] = []
+    completed_run_exp_dirs: dict[str, list[str]] = {}
+    screening_run_exp_dirs: dict[str, list[str]] = {}
     tracked = tracked_metric_names(log.get("evaluation_protocol"))
     state_metric = None
     if state is not None:
@@ -792,6 +798,37 @@ def check_iteration_log(
                         f"metric protocol: {', '.join(unknown)}.",
                         "iteration_log.json",
                     )
+            screening_manifest = screening.get("run_manifest")
+            if not isinstance(screening_manifest, dict) or not screening_manifest:
+                add_check(
+                    checks,
+                    "iteration_screening_run_manifest",
+                    False,
+                    "error",
+                    f"{iteration_id} screening.run_manifest is required.",
+                    "iteration_log.json",
+                )
+            else:
+                exp_dir = screening_manifest.get("exp_dir")
+                if isinstance(exp_dir, str) and exp_dir.strip():
+                    screening_run_exp_dirs.setdefault(
+                        exp_dir.strip(),
+                        [],
+                    ).append(iteration_id)
+                for artifact_error in run_artifact_errors(
+                    root,
+                    iteration,
+                    run_manifest=screening_manifest,
+                    manifest_name="screening.run_manifest",
+                ):
+                    add_check(
+                        checks,
+                        "iteration_screening_run_artifact_bundle",
+                        False,
+                        "error",
+                        f"{iteration_id} {artifact_error}.",
+                        "iteration_log.json",
+                    )
         if status == "completed":
             decision = iteration.get("decision")
             if decision not in VALID_DECISIONS:
@@ -846,6 +883,47 @@ def check_iteration_log(
                         False,
                         "error",
                         f"{iteration_id} run_manifest requires exp_dir.",
+                        "iteration_log.json",
+                    )
+                else:
+                    exp_dir = run_manifest["exp_dir"].strip()
+                    completed_run_exp_dirs.setdefault(exp_dir, []).append(iteration_id)
+                    full_run = iteration.get("full_run")
+                    screening_manifest = (
+                        screening.get("run_manifest")
+                        if isinstance(screening, dict)
+                        else None
+                    )
+                    screening_exp_dir = (
+                        screening_manifest.get("exp_dir")
+                        if isinstance(screening_manifest, dict)
+                        else None
+                    )
+                    if (
+                        isinstance(full_run, dict)
+                        and full_run.get("status") == "completed"
+                        and isinstance(screening_exp_dir, str)
+                        and screening_exp_dir.strip() == exp_dir
+                    ):
+                        add_check(
+                            checks,
+                            "iteration_run_exp_dirs_unique",
+                            False,
+                            "error",
+                            (
+                                f"{iteration_id} screening.run_manifest.exp_dir "
+                                "must differ from run_manifest.exp_dir when "
+                                "full_run.status=completed."
+                            ),
+                            "iteration_log.json",
+                        )
+                for artifact_error in run_artifact_errors(root, iteration):
+                    add_check(
+                        checks,
+                        "iteration_run_artifact_bundle",
+                        False,
+                        "error",
+                        f"{iteration_id} {artifact_error}.",
                         "iteration_log.json",
                     )
             if existing_iteration_report_path(root, iteration_id) is None:
@@ -941,6 +1019,45 @@ def check_iteration_log(
             True,
             "info",
             "Iteration ids are unique.",
+            "iteration_log.json",
+        )
+
+    duplicate_exp_dirs = {
+        exp_dir: owners
+        for exp_dir, owners in completed_run_exp_dirs.items()
+        if len(owners) > 1
+    }
+    if duplicate_exp_dirs:
+        detail = "; ".join(
+            f"{exp_dir}: {', '.join(owners)}"
+            for exp_dir, owners in sorted(duplicate_exp_dirs.items())
+        )
+        add_check(
+            checks,
+            "iteration_run_exp_dirs_unique",
+            False,
+            "error",
+            f"Completed run_manifest.exp_dir values must be unique: {detail}.",
+            "iteration_log.json",
+        )
+
+    duplicate_screening_exp_dirs = {
+        exp_dir: owners
+        for exp_dir, owners in screening_run_exp_dirs.items()
+        if len(owners) > 1
+    }
+    if duplicate_screening_exp_dirs:
+        detail = "; ".join(
+            f"{exp_dir}: {', '.join(owners)}"
+            for exp_dir, owners in sorted(duplicate_screening_exp_dirs.items())
+        )
+        add_check(
+            checks,
+            "iteration_screening_run_exp_dirs_unique",
+            False,
+            "error",
+            "screening.run_manifest.exp_dir values must be unique: "
+            f"{detail}.",
             "iteration_log.json",
         )
 

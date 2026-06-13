@@ -194,6 +194,26 @@ def test_iterate_contract_covers_eval_iteration_reports() -> None:
 
     assert "iteration_report_write" in contract["gate_ledger_required_when"]
     assert "docs/iterations/" in contract["sensitive_paths"]
+    assert (
+        ".agents/references/run-artifact-contract.md"
+        in contract["required_read_set"]["harness"]
+    )
+
+
+def test_run_artifact_contract_is_required_for_training_result_skills() -> None:
+    for skill in [
+        "baseline-repro",
+        "build-plan",
+        "validate-run",
+        "iterate",
+        "evaluate",
+    ]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert (
+            ".agents/references/run-artifact-contract.md"
+            in contract["required_read_set"]["harness"]
+        ), skill
 
 
 def test_code_debug_contract_excludes_harness_maintenance_paths() -> None:

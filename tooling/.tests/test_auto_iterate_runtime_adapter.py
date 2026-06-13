@@ -161,6 +161,31 @@ class TestRenderPrompt:
         assert "NEXT_ROUND" in prompt
         assert "CONTINUE" in prompt
         assert "iter3" in prompt
+        assert "artifact bundle" in prompt
+
+    def test_run_full_prompt_requires_artifact_bundle(self) -> None:
+        state = load_json(FIXTURES / "state.valid.json")
+        brief = build_brief(state, "run_full")
+        prompt = render_prompt(brief, iteration_id="iter3")
+        assert "artifact_contract_version" in prompt
+        assert "run_type=full" in prompt
+        assert "screening.run_manifest" in prompt
+        assert "resolved_config_path" in prompt
+        assert "stdout_log_path" in prompt
+        assert "git_snapshot_path" in prompt
+        assert "eval_artifact_paths" in prompt
+
+    def test_run_screening_prompt_requires_artifact_bundle(self) -> None:
+        state = load_json(FIXTURES / "state.valid.json")
+        brief = build_brief(state, "run_screening")
+        prompt = render_prompt(brief, iteration_id="iter3")
+        assert "screening.run_manifest" in prompt
+        assert "artifact_contract_version" in prompt
+        assert "run_type=screening" in prompt
+        assert "resolved_config_path" in prompt
+        assert "stdout_log_path" in prompt
+        assert "git_snapshot_path" in prompt
+        assert "eval_artifact_paths" in prompt
 
     def test_code_prompt(self) -> None:
         state = load_json(FIXTURES / "state.valid.json")
@@ -349,8 +374,12 @@ class TestPostconditionValidator:
         iterations: list[dict],
         *,
         create_reports: bool = True,
+        create_run_artifacts: bool = True,
     ) -> PostconditionValidator:
         """Create a minimal fixture project with the given iterations."""
+        if create_run_artifacts:
+            for it in iterations:
+                self._complete_run_manifest(tmp_path, it)
         log = {"project": "test", "iterations": iterations}
         atomic_write_json(tmp_path / "iteration_log.json", log)
         if create_reports:
@@ -363,6 +392,66 @@ class TestPostconditionValidator:
                         encoding="utf-8",
                     )
         return PostconditionValidator(tmp_path)
+
+    def _complete_run_manifest(self, root: Path, iteration: dict) -> None:
+        manifest = iteration.get("run_manifest")
+        if not isinstance(manifest, dict):
+            return
+        commit = iteration.get("git_commit")
+        if not isinstance(commit, str) or not commit.strip():
+            return
+        exp_dir_value = manifest.get("exp_dir")
+        if not isinstance(exp_dir_value, str) or not exp_dir_value.strip():
+            return
+        exp_dir = root / exp_dir_value
+        (exp_dir / "git_status").mkdir(parents=True, exist_ok=True)
+        (exp_dir / "epochs" / "1").mkdir(parents=True, exist_ok=True)
+        (exp_dir / "checkpoints" / "1").mkdir(parents=True, exist_ok=True)
+        run_type = "full"
+        screening = iteration.get("screening")
+        full_run = iteration.get("full_run")
+        if (
+            isinstance(screening, dict)
+            and screening.get("status") in ("passed", "failed")
+            and not (
+                isinstance(full_run, dict)
+                and full_run.get("status") == "completed"
+            )
+        ):
+            run_type = "screening"
+        manifest.setdefault("artifact_contract_version", "1")
+        manifest.setdefault("run_type", run_type)
+        manifest.setdefault("resolved_config_path", f"{exp_dir_value}/run_param.yaml")
+        manifest.setdefault("stdout_log_path", f"{exp_dir_value}/stdout+stderr.log")
+        manifest.setdefault(
+            "git_snapshot_path",
+            f"{exp_dir_value}/git_status/commit.txt",
+        )
+        manifest.setdefault("git_commit", commit)
+        manifest.setdefault(
+            "eval_artifact_paths",
+            [f"{exp_dir_value}/epochs/1/eval.jsonl"],
+        )
+        manifest.setdefault(
+            "checkpoint_path",
+            f"{exp_dir_value}/checkpoints/1/model.pth",
+        )
+        (exp_dir / "run_param.yaml").write_text("seed: 1\n", encoding="utf-8")
+        (exp_dir / "stdout+stderr.log").write_text("completed\n", encoding="utf-8")
+        (exp_dir / "git_status" / "commit.txt").write_text(
+            f"{commit}\n",
+            encoding="utf-8",
+        )
+        (exp_dir / "epochs" / "1" / "eval.jsonl").write_text(
+            '{"PSNR": 31.2}\n',
+            encoding="utf-8",
+        )
+        (exp_dir / "checkpoints" / "1" / "model.pth").write_text(
+            "checkpoint\n",
+            encoding="utf-8",
+        )
+        if run_type == "screening" and isinstance(screening, dict):
+            screening.setdefault("run_manifest", dict(manifest))
 
     # -- plan ---------------------------------------------------------------
 
@@ -511,6 +600,7 @@ class TestPostconditionValidator:
     def test_run_screening_passed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
              "screening": {
                  "recommended": True,
                  "status": "passed",
@@ -528,6 +618,7 @@ class TestPostconditionValidator:
     def test_run_screening_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
              "screening": {
                  "recommended": True,
                  "status": "failed",
@@ -545,6 +636,7 @@ class TestPostconditionValidator:
     def test_run_screening_failed_requires_metrics(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
              "screening": {"recommended": True, "status": "failed"},
              "run_manifest": {
                  "command": "python train.py --config configs/iter3_screen.yaml",
@@ -555,31 +647,55 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "screening.metrics" in result["payload"]["error"]
 
+    def test_run_screening_passed_requires_run_artifacts(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "training",
+              "git_commit": "abc123",
+              "screening": {
+                  "recommended": True,
+                  "status": "passed",
+                  "metrics": {"PSNR": 30.1},
+              },
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3_screen.yaml",
+                  "exp_dir": "experiments/iter3_screen",
+              }}],
+            create_run_artifacts=False,
+        )
+        result = v.validate("run_screening", "iter3")
+        assert result["ok"] is False
+        assert "screening.run_manifest" in result["payload"]["error"]
+
     def test_run_screening_rejects_untracked_metric(self, tmp_path: Path) -> None:
+        iteration = {
+            "id": "iter3",
+            "status": "training",
+            "git_commit": "abc123",
+            "screening": {
+                "recommended": True,
+                "status": "passed",
+                "metrics": {"NOT_TRACKED": 1.0},
+            },
+            "run_manifest": {
+                "command": (
+                    "python train.py --config "
+                    "configs/iter3_screen.yaml"
+                ),
+                "exp_dir": "experiments/iter3_screen",
+            },
+        }
+        self._complete_run_manifest(tmp_path, iteration)
         atomic_write_json(
             tmp_path / "iteration_log.json",
             {
                 "evaluation_protocol": {
                     "tracked_metrics": [{"name": "PSNR"}],
                 },
-                "iterations": [
-                    {
-                        "id": "iter3",
-                        "status": "training",
-                        "screening": {
-                            "recommended": True,
-                            "status": "passed",
-                            "metrics": {"NOT_TRACKED": 1.0},
-                        },
-                        "run_manifest": {
-                            "command": (
-                                "python train.py --config "
-                                "configs/iter3_screen.yaml"
-                            ),
-                            "exp_dir": "experiments/iter3_screen",
-                        },
-                    }
-                ],
+                "iterations": [iteration],
             },
         )
         v = PostconditionValidator(tmp_path)
@@ -614,6 +730,7 @@ class TestPostconditionValidator:
     def test_run_full_completed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
              "full_run": {"status": "completed", "resume_mode": "from_scratch",
                           "metrics": {"PSNR": 31.2}},
              "run_manifest": {
@@ -624,6 +741,126 @@ class TestPostconditionValidator:
         result = v.validate("run_full", "iter3")
         assert result["ok"] is True
         assert result["payload"]["full_run_status"] == "completed"
+
+    def test_run_full_completed_requires_run_artifacts(self, tmp_path: Path) -> None:
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "training",
+              "git_commit": "abc123",
+              "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}},
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3",
+              }}],
+            create_run_artifacts=False,
+        )
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is False
+        assert "resolved_config_path" in result["payload"]["error"]
+
+    def test_run_full_completed_preserves_screening_manifest(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "training",
+              "git_commit": "abc123",
+              "screening": {
+                  "recommended": True,
+                  "status": "passed",
+                  "metrics": {"PSNR": 30.1},
+              },
+              "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}},
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3",
+              }}],
+        )
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is False
+        assert "screening.run_manifest" in result["payload"]["error"]
+
+    def test_run_full_completed_with_preserved_screening_manifest(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        screening_iteration = {
+            "id": "iter3",
+            "status": "training",
+            "git_commit": "abc123",
+            "screening": {
+                "recommended": True,
+                "status": "passed",
+                "metrics": {"PSNR": 30.1},
+            },
+            "run_manifest": {
+                "command": "python train.py --config configs/iter3_screen.yaml",
+                "exp_dir": "experiments/iter3_screen",
+            },
+        }
+        self._complete_run_manifest(tmp_path, screening_iteration)
+        screening_manifest = screening_iteration["screening"]["run_manifest"]
+
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "training",
+              "git_commit": "abc123",
+              "screening": {
+                  "recommended": True,
+                  "status": "passed",
+                  "metrics": {"PSNR": 30.1},
+                  "run_manifest": screening_manifest,
+              },
+              "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}},
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3",
+              }}],
+        )
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is True
+
+    def test_run_full_completed_rejects_screening_exp_dir_reuse(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        screening_iteration = {
+            "id": "iter3",
+            "status": "training",
+            "git_commit": "abc123",
+            "screening": {
+                "recommended": True,
+                "status": "passed",
+                "metrics": {"PSNR": 30.1},
+            },
+            "run_manifest": {
+                "command": "python train.py --config configs/iter3_screen.yaml",
+                "exp_dir": "experiments/iter3_screen",
+            },
+        }
+        self._complete_run_manifest(tmp_path, screening_iteration)
+        screening_manifest = screening_iteration["screening"]["run_manifest"]
+
+        v = self._make_project(
+            tmp_path,
+            [{"id": "iter3", "status": "training",
+              "git_commit": "abc123",
+              "screening": {
+                  "recommended": True,
+                  "status": "passed",
+                  "metrics": {"PSNR": 30.1},
+                  "run_manifest": screening_manifest,
+              },
+              "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}},
+              "run_manifest": {
+                  "command": "python train.py --config configs/iter3.yaml",
+                  "exp_dir": "experiments/iter3_screen",
+              }}],
+        )
+        result = v.validate("run_full", "iter3")
+        assert result["ok"] is False
+        assert "must differ" in result["payload"]["error"]
 
     def test_run_full_recoverable_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -867,6 +1104,7 @@ class TestPostconditionValidator:
     ) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
              "full_run": {"status": "completed", "metrics": {"loss": 0.4}},
              "run_manifest": {
                  "command": "python train.py --config configs/iter3.yaml",
@@ -930,8 +1168,12 @@ class TestRecoveryEngine:
         iterations: list[dict],
         *,
         create_reports: bool = True,
+        create_run_artifacts: bool = True,
         primary_metric_name: str | None = None,
     ) -> RecoveryEngine:
+        if create_run_artifacts:
+            for iteration in iterations:
+                self._complete_run_manifest(tmp_path, iteration)
         atomic_write_json(
             tmp_path / "iteration_log.json",
             {"project": "test", "iterations": iterations},
@@ -949,6 +1191,66 @@ class TestRecoveryEngine:
             PostconditionValidator(tmp_path),
             primary_metric_name=primary_metric_name,
         )
+
+    def _complete_run_manifest(self, root: Path, iteration: dict) -> None:
+        manifest = iteration.get("run_manifest")
+        if not isinstance(manifest, dict):
+            return
+        commit = iteration.get("git_commit")
+        if not isinstance(commit, str) or not commit.strip():
+            return
+        exp_dir_value = manifest.get("exp_dir")
+        if not isinstance(exp_dir_value, str) or not exp_dir_value.strip():
+            return
+        exp_dir = root / exp_dir_value
+        (exp_dir / "git_status").mkdir(parents=True, exist_ok=True)
+        (exp_dir / "epochs" / "1").mkdir(parents=True, exist_ok=True)
+        (exp_dir / "checkpoints" / "1").mkdir(parents=True, exist_ok=True)
+        run_type = "full"
+        screening = iteration.get("screening")
+        full_run = iteration.get("full_run")
+        if (
+            isinstance(screening, dict)
+            and screening.get("status") in ("passed", "failed")
+            and not (
+                isinstance(full_run, dict)
+                and full_run.get("status") == "completed"
+            )
+        ):
+            run_type = "screening"
+        manifest.setdefault("artifact_contract_version", "1")
+        manifest.setdefault("run_type", run_type)
+        manifest.setdefault("resolved_config_path", f"{exp_dir_value}/run_param.yaml")
+        manifest.setdefault("stdout_log_path", f"{exp_dir_value}/stdout+stderr.log")
+        manifest.setdefault(
+            "git_snapshot_path",
+            f"{exp_dir_value}/git_status/commit.txt",
+        )
+        manifest.setdefault("git_commit", commit)
+        manifest.setdefault(
+            "eval_artifact_paths",
+            [f"{exp_dir_value}/epochs/1/eval.jsonl"],
+        )
+        manifest.setdefault(
+            "checkpoint_path",
+            f"{exp_dir_value}/checkpoints/1/model.pth",
+        )
+        (exp_dir / "run_param.yaml").write_text("seed: 1\n", encoding="utf-8")
+        (exp_dir / "stdout+stderr.log").write_text("completed\n", encoding="utf-8")
+        (exp_dir / "git_status" / "commit.txt").write_text(
+            f"{commit}\n",
+            encoding="utf-8",
+        )
+        (exp_dir / "epochs" / "1" / "eval.jsonl").write_text(
+            '{"PSNR": 31.2}\n',
+            encoding="utf-8",
+        )
+        (exp_dir / "checkpoints" / "1" / "model.pth").write_text(
+            "checkpoint\n",
+            encoding="utf-8",
+        )
+        if run_type == "screening" and isinstance(screening, dict):
+            screening.setdefault("run_manifest", dict(manifest))
 
     def test_recovery_revalidates_code_adoption(self, tmp_path: Path) -> None:
         engine = self._make_engine(
@@ -980,6 +1282,7 @@ class TestRecoveryEngine:
                 {
                     "id": "iter3",
                     "status": "training",
+                    "git_commit": "abc123",
                     "screening": {"recommended": True, "status": "failed"},
                     "run_manifest": {
                         "command": "python train.py --config configs/iter3.yaml",

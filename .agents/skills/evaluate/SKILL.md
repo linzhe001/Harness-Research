@@ -12,6 +12,7 @@ Read these first:
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/lesson-quality-rule.md`
 - `../../../.agents/references/language-policy.md`
+- `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `../../../.agents/references/reviewer-independence.md`
@@ -28,7 +29,7 @@ Use this skill when the user wants training or evaluation results interpreted an
 
 ## Required Work
 
-1. Parse the relevant logs, metrics, or checkpoint metadata.
+1. Parse the relevant run artifact bundle, logs, metrics, or checkpoint metadata.
 2. Analyze:
    - training stability
    - convergence
@@ -45,7 +46,7 @@ Use this skill when the user wants training or evaluation results interpreted an
    - `PIVOT`
    - `ABORT`
 8. If invoked from `$iterate`, do not take over stage-transition ownership.
-9. Include evidence sources and keep unverifiable result interpretations under open questions.
+9. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
 10. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, or `iteration_log.json` are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
 ## Context Budget

@@ -14,7 +14,8 @@ iteration records.
 - `docs/10_contract/Evaluation_Contract.md` or protocol docs when present.
 - Shared rules: `code-style.md`, `language-policy.md`,
   `documentation-evidence-rule.md`, `documentation-style.md`,
-  `contract-gating-rule.md`, and `lesson-quality-rule.md`.
+  `contract-gating-rule.md`, `run-artifact-contract.md`, and
+  `lesson-quality-rule.md`.
 
 ## State Rules
 
@@ -56,9 +57,12 @@ report the blocker.
 
 Select the latest `training` iteration. Resolve Train/Eval scripts from
 `CLAUDE.md`, infer or use the config path, build the command from `config_diff`,
-and run training in the background when possible. Record `run_manifest`,
-`training_trace`, checkpoint path, duration, exit code, and only metrics defined
-by the active evaluation protocol. On successful eval, set status `running`.
+and run training in the background when possible. Record `run_manifest` with
+run artifact bundle paths, `training_trace`, checkpoint path, duration, exit
+code, and only metrics defined by the active evaluation protocol. For screening
+runs, store the bundle in `screening.run_manifest` and mirror it in top-level
+`run_manifest` until a full run replaces the top-level bundle. On successful
+eval, set status `running`.
 For OOM, NaN, crash, or missing checkpoint, keep status `training` and report
 the concrete error. If `--manual` or cluster execution is required, register the
 command and expected outputs without inventing metrics.
@@ -101,6 +105,8 @@ status, decision, and key change.
   command creates sub-iterations.
 - Every completed iteration needs metrics or a documented failure, a decision,
   and at least one lesson.
+- Every completed metric-bearing iteration needs a run artifact bundle. If
+  pieces are missing, report `NOT_RUN` and keep the iteration incomplete.
 - Compare against baseline and previous best during eval.
 - `git_commit` is required after `code` completes.
 - Core training/evaluation logic must stay in `CLAUDE.md` Entry Scripts;

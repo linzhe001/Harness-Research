@@ -15,7 +15,7 @@ implementation order, stable file structure, interfaces, tests,
 - `docs/20_facts/Project_Glossary.md` and `docs/20_facts/Codebase_Map.md`
   when present
 - shared code-style, project-map, sliced-commit, language, ubiquitous-language,
-  documentation evidence, and documentation style rules
+  run-artifact, documentation evidence, and documentation style rules
 - `templates/implementation-roadmap.md`
 - `templates/project-map-schema.json`
 
@@ -48,7 +48,7 @@ implementation order, stable file structure, interfaces, tests,
 9. Define config schema with data/model/train/tracking/experiment sections.
 10. Design training pipeline with `Smoke Test`, `Module Integration`, and
     `Full Training`; startup flow is git snapshot, tracking init, training
-    loop, checkpoint with snapshot commit.
+    loop, checkpoint with snapshot commit, and run artifact bundle.
 11. Update `PROJECT_STATE.json` with roadmap, project-map, glossary, and
     codebase-map artifacts.
 

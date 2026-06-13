@@ -24,6 +24,7 @@ When called standalone, the decision is recorded in PROJECT_STATE.json.
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
+For run artifact bundle requirements, see [../../shared/run-artifact-contract.md](../../shared/run-artifact-contract.md).
 For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write findings and candidates to iteration docs or `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
 
 Context budget: load active iteration plus 5 recent summaries, reference full
@@ -33,7 +34,7 @@ history by path, and keep the report under 1200 words unless requested.
 <instructions>
 1. **Parse Training Logs**
 
-   Get the log path from $ARGUMENTS, extract key information:
+   Get the run artifact bundle or log path from $ARGUMENTS, extract key information:
    - Loss curves (train loss, val loss per epoch)
    - Learning rate schedule actual values
    - Gradient norms (if available)
@@ -101,6 +102,7 @@ history by path, and keep the report under 1200 words unless requested.
 
    Report contents:
    - context_summary (≤20 lines)
+   - run_artifacts (resolved config, console log, git snapshot, eval metrics, checkpoint)
    - training_analysis (loss/lr/gradient analysis)
    - metric_protocol (baseline/evaluation protocol used in this round)
    - performance_comparison (comparison table)

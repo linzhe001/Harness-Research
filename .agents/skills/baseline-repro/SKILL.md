@@ -12,6 +12,7 @@ Read these first:
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/contract-gating-rule.md`
 - `../../../.agents/references/pre-training-rule.md`
+- `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
@@ -35,13 +36,14 @@ Use this skill for WF5 when the user wants baselines reproduced fairly before ne
 4. Resolve baseline inclusion/skipping rules from the approved Baseline Contract when present, and resolve the canonical evaluation protocol from the approved Evaluation Contract when present; otherwise derive drafts from reproduced baseline evidence and persist the tracked metric names for WF10.
 5. Reproduce each requested baseline with minimal environment-specific changes.
 6. Compare reproduced metrics against paper-reported metrics.
-7. Write `docs/Baseline_Report.md` using the canonical template.
-8. Create or refresh `docs/30_evidence/Baseline_Table.md` as the
+7. Record baseline run artifact bundle paths for reproduced metrics.
+8. Write `docs/Baseline_Report.md` using the canonical template.
+9. Create or refresh `docs/30_evidence/Baseline_Table.md` as the
    human-readable Conclusion Evidence table for baseline repos, papers,
    configs, reproduced metrics, logs, and skip reasons.
-9. If `docs/20_facts/Codebase_Map.md` exists, keep it synchronized when
+10. If `docs/20_facts/Codebase_Map.md` exists, keep it synchronized when
    baseline directories, scripts, configs, or durable entry points change.
-10. Update:
+11. Update:
    - `PROJECT_STATE.json` baseline metrics
    - `PROJECT_STATE.json` evaluation protocol or tracked metrics for later WF10 comparison
    - `project_map.json` baseline status and entry point
@@ -55,6 +57,7 @@ After stable Markdown outputs for this skill are finalized, invoke `$docs-site` 
 
 - Keep adaptation notes, training config notes, and reproduced-versus-paper comparison.
 - Include evidence sources for reproduced metrics, commit hashes, configs, and any paper-reported values.
+- Include run artifact bundle paths for reproduced metrics.
 - Keep `docs/30_evidence/Baseline_Table.md` source-artifact oriented; it is
   human-readable Conclusion Evidence, not an `.evidence/**` Evidence Chain.
 - If no approved Baseline or Evaluation Contract exists, write the affected baseline/evaluation protocol as draft/derived and surface the approval gap.

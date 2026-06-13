@@ -42,6 +42,15 @@
 ```markdown
 ## Training Analysis
 
+### Run Artifacts
+| Artifact | Path | Status |
+|----------|------|--------|
+| resolved config snapshot | | |
+| console log | | |
+| git snapshot | | |
+| eval metrics artifact | | |
+| checkpoint | | |
+
 ### Loss Curves
 | Step/Epoch | Train Loss | Val Loss | Key Training Trace |
 |------------|------------|----------|--------------------|
