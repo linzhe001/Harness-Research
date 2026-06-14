@@ -237,9 +237,8 @@ class TestResultAndClassify:
 
     def test_build_codex_command_run_phase_uses_danger_full_access(self) -> None:
         cmd = build_codex_command("/tmp/work", "run_full")
-        assert cmd[0] == "codex"
+        assert cmd[:2] == ["codex", "exec"]
         assert "--dangerously-bypass-approvals-and-sandbox" in cmd
-        assert "exec" in cmd
         assert "--full-auto" not in cmd
 
     def test_build_codex_command_run_phase_can_keep_full_auto(self) -> None:
@@ -253,8 +252,8 @@ class TestResultAndClassify:
 
     def test_build_codex_command_non_run_phase_keeps_full_auto(self) -> None:
         cmd = build_codex_command("/tmp/work", "plan")
+        assert cmd[:2] == ["codex", "exec"]
         assert "--full-auto" in cmd
-        assert "exec" in cmd
         assert "danger-full-access" not in cmd
 
     def test_build_result_fields(self) -> None:
@@ -485,6 +484,79 @@ class TestPostconditionValidator:
         result = v.validate("plan", None, pre_ids=pre_ids)
         assert result["ok"] is False
         assert "did not create" in result["payload"]["error"]
+
+    def test_plan_adopts_existing_planned_iteration(self, tmp_path: Path) -> None:
+        pre_ids = {"iter1", "iter2"}
+        v = self._make_project(tmp_path, [
+            {"id": "iter1", "status": "completed"},
+            {
+                "id": "iter2",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test existing plan",
+                "changes_summary": "adopt the planned debug round",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": "skipped_low_value",
+            },
+        ])
+        result = v.validate("plan", None, pre_ids=pre_ids)
+        assert result["ok"] is True
+        assert result["iteration_id"] == "iter2"
+        assert result["payload"]["adopted_existing"] is True
+
+    def test_plan_rejects_multiple_existing_planned_iterations(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        pre_ids = {"iter1", "iter2"}
+        v = self._make_project(tmp_path, [
+            {
+                "id": "iter1",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "first plan",
+                "changes_summary": "first planned round",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": "unavailable",
+            },
+            {
+                "id": "iter2",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "second plan",
+                "changes_summary": "second planned round",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": "unavailable",
+            },
+        ])
+        result = v.validate("plan", None, pre_ids=pre_ids)
+        assert result["ok"] is False
+        assert "multiple existing planned iterations" in result["payload"]["error"]
+
+    def test_plan_rejects_existing_planned_when_blocking_iteration_exists(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        pre_ids = {"iter1", "iter2"}
+        v = self._make_project(tmp_path, [
+            {
+                "id": "iter1",
+                "date": "2026-04-28",
+                "status": "planned",
+                "hypothesis": "test existing plan",
+                "changes_summary": "adopt the planned debug round",
+                "config_diff": {},
+                "screening": {"recommended": True},
+                "codex_review": "skipped_low_value",
+            },
+            {"id": "iter2", "status": "running"},
+        ])
+        result = v.validate("plan", None, pre_ids=pre_ids)
+        assert result["ok"] is False
+        assert "blocking unfinished iterations" in result["payload"]["error"]
 
     def test_plan_multiple_new_iterations(self, tmp_path: Path) -> None:
         pre_ids = {"iter1"}

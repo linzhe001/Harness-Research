@@ -420,6 +420,47 @@ class TestDynamicPreflight:
 
 
 class TestRuntimeFailureHandling:
+    def test_plan_context_accepts_null_run_fields(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        atomic_write_json(
+            project / "iteration_log.json",
+            {
+                "project": "test",
+                "iterations": [
+                    {
+                        "id": "iter1",
+                        "status": "completed",
+                        "hypothesis": "debug TAL prompt",
+                        "decision": "DEBUG",
+                        "lessons": ["TAL prompt needs temporal context."],
+                        "screening": {
+                            "recommended": True,
+                            "status": "passed",
+                        },
+                        "full_run": None,
+                    },
+                    {
+                        "id": "iter2",
+                        "status": "planned",
+                        "hypothesis": "planned follow-up",
+                        "decision": None,
+                        "lessons": [],
+                        "screening": {
+                            "recommended": True,
+                            "status": "skipped",
+                        },
+                        "full_run": None,
+                    },
+                ],
+            },
+        )
+        ctl = LoopController(project, dry_run=True)
+
+        lessons, failed_hypotheses = ctl._plan_context()
+
+        assert lessons == ["TAL prompt needs temporal context."]
+        assert failed_hypotheses == ["debug TAL prompt"]
+
     def test_internal_error_does_not_complete_presatisfied_phase(
         self,
         tmp_path: Path,
@@ -585,6 +626,28 @@ class TestOperatorSignals:
         assert state["halt_reason"] == "manual_stop"
         assert code == EXIT_OK
         # Signal file should be consumed.
+        assert not (project / ".auto_iterate_stop").exists()
+
+    def test_resume_honors_stop_signal_before_recovery(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        state = load_json(CONTRACTS / "state.valid.json")
+        state["status"] = "paused"
+        state["halt_reason"] = "manual_action_required"
+        state["current_phase_key"] = "plan"
+        state["current_iteration_id"] = None
+        state["phase_attempt"] = 3
+        atomic_write_json(auto_dir / "state.json", state)
+        (project / ".auto_iterate_stop").touch()
+
+        ctl = LoopController(project, dry_run=True)
+        code = ctl.resume_loop()
+
+        updated = load_json(auto_dir / "state.json")
+        assert code == EXIT_OK
+        assert updated["status"] == "stopped"
+        assert updated["halt_reason"] == "manual_stop"
         assert not (project / ".auto_iterate_stop").exists()
 
     def test_pause_signal(self, tmp_path: Path) -> None:

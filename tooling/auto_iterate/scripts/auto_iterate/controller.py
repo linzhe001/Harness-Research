@@ -105,6 +105,14 @@ def _clean_reason(reason: str | None) -> str | None:
     return cleaned or None
 
 
+def _optional_status(value: Any) -> str | None:
+    """Return a nested status only when the iteration field is an object."""
+    if not isinstance(value, dict):
+        return None
+    status = value.get("status")
+    return status if isinstance(status, str) else None
+
+
 # ---------------------------------------------------------------------------
 # LoopController
 # ---------------------------------------------------------------------------
@@ -339,6 +347,11 @@ class LoopController:
         self.policy = self._policy_from_state(pc.freeze())
         self.state["_policy"] = self.policy
         self._ensure_policy_fields_in_state()
+
+        # Allow operator stop/pause signals to resolve an already paused manual
+        # action before recovery retry-ceiling checks can pause it again.
+        if self._check_operator_signals():
+            return self._map_exit_code()
 
         # Resolve external current auth from CODEX_HOME or ~/.codex.
         self.accounts = AccountRegistry.external_current()
@@ -882,8 +895,8 @@ class LoopController:
 
             hypothesis = it.get("hypothesis")
             decision = it.get("decision")
-            screening_status = it.get("screening", {}).get("status")
-            full_run_status = it.get("full_run", {}).get("status")
+            screening_status = _optional_status(it.get("screening"))
+            full_run_status = _optional_status(it.get("full_run"))
             failed = (
                 decision in {"DEBUG", "PIVOT", "ABORT"}
                 or screening_status == "failed"

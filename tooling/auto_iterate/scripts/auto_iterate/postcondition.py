@@ -88,6 +88,38 @@ def _get_ids(iterations: list[dict]) -> set[str]:
     return {it["id"] for it in iterations if "id" in it}
 
 
+def _existing_planned_iteration_id(
+    iterations: list[dict],
+) -> tuple[str | None, str | None]:
+    blocking_statuses = {"coding", "training", "running"}
+    blocking = sorted(
+        it["id"]
+        for it in iterations
+        if isinstance(it.get("id"), str) and it.get("status") in blocking_statuses
+    )
+    if blocking:
+        return (
+            None,
+            "cannot adopt an existing planned iteration while blocking "
+            f"unfinished iterations exist: {blocking}",
+        )
+
+    planned = sorted(
+        it["id"]
+        for it in iterations
+        if isinstance(it.get("id"), str) and it.get("status") == "planned"
+    )
+    if len(planned) == 0:
+        return None, "plan did not create a new iteration entry"
+    if len(planned) > 1:
+        return (
+            None,
+            "plan did not create a new iteration entry and found multiple "
+            f"existing planned iterations (ambiguous): {planned}",
+        )
+    return planned[0], None
+
+
 def _run_manifest_error(
     iteration: dict,
     *,
@@ -396,8 +428,13 @@ class PostconditionValidator:
         post_ids = _get_ids(iterations)
         iter_id, err = bind_iteration_id(pre_ids, post_ids)
         if err:
-            return _fail("plan", "postcondition_failed", None,
-                         {"error": err})
+            if post_ids - pre_ids:
+                return _fail("plan", "postcondition_failed", None,
+                             {"error": err})
+            iter_id, err = _existing_planned_iteration_id(iterations)
+            if err:
+                return _fail("plan", "postcondition_failed", None,
+                             {"error": err})
 
         it = _get_iteration(iterations, iter_id)  # type: ignore[arg-type]
         if it is None:
@@ -434,7 +471,8 @@ class PostconditionValidator:
             return _fail("plan", "postcondition_failed", iter_id,
                          {"missing_fields": missing})
 
-        return _ok("plan", "planned", iter_id)
+        payload = {"adopted_existing": iter_id in pre_ids}
+        return _ok("plan", "planned", iter_id, payload)
 
     # -- code ---------------------------------------------------------------
 

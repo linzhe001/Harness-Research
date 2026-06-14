@@ -470,13 +470,12 @@ def build_codex_command(
     project uses CPU-only or separately managed execution.
     Other phases stay on the safer workspace-write sandbox.
     """
-    cmd = ["codex"]
+    cmd = ["codex", "exec"]
     if phase_key in _GPU_VISIBLE_PHASES and run_phase_full_access:
         cmd.append("--dangerously-bypass-approvals-and-sandbox")
     else:
         cmd.append("--full-auto")
     cmd.extend([
-        "exec",
         "--cd", str(workspace_root),
         "-",  # read prompt from stdin
     ])
