@@ -73,6 +73,10 @@ Use `$harness-maintenance` for those changes.
 18. If `docs/20_facts/Codebase_Map.md` was changed and the fix is otherwise
     validated, invoke `$docs-site` or report `docs_site_boundary_report`.
     Do not render after temporary draft edits.
+19. When running as workflow-supervisor build recovery, include
+    `roadmap implementation completeness` in the Gate ledger. PASS means the
+    failed build node now satisfies the same minimal runnable path expected from
+    `$code-expert`, not merely that the immediate exception was patched.
 
 ## Codex Adaptation
 
@@ -86,6 +90,10 @@ Use `$harness-maintenance` for those changes.
 - Keep `project_map.json` synchronization for stable interface changes.
 - Keep `docs/20_facts/Codebase_Map.md` synchronized with `project_map.json`
   when it exists.
+- Preserve the distinction between fixing a failed Commit Slice and making the
+  whole build ready for iterate. If the recovery leaves required runnable-path
+  slices absent, report FAIL or NOT_RUN for `roadmap implementation
+  completeness`.
 - Use `../../../.agents/references/language-policy.md` for reply language and for any natural-language debugging summaries; keep commands, commit prefixes, paths, and identifiers in English.
 
 ## Execution Rule

@@ -73,11 +73,24 @@ Use this skill for WF9 when the user wants to verify the codebase is safe to ent
     `docs/30_evidence/Validation_Table.md` is finalized, invoke `$docs-site` or
     report `docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not
     render after temporary draft edits.
+12. In workflow-supervisor `$build`, include a final Gate ledger entry with
+    command `validate-run verdict`:
+    - PASS only when the semantic review, required smoke/eval/training checks,
+      checkpoint or dry-run substitute explicitly allowed by the roadmap,
+      run-artifact bundle checks, and dynamic-context gates passed.
+    - FAIL when the runnable entrypoint, config, evaluator, training dry-run,
+      checkpoint path, run-manifest bundle, or required tests are absent.
+    - NOT_RUN only with a concrete blocker and follow-up action.
+    REVIEW must not be reported as PASS unless the operator has explicitly
+    approved proceeding with the recorded review findings.
 
 ## Codex Adaptation
 
 - Treat natural-language requests as the canonical `$validate-run [config_path]` flow.
 - Preserve the canonical two-part gate: semantic review plus smoke test.
+- Preserve `validate-run verdict` as the supervisor-readable readiness gate.
+  Do not mark `build_ready_for_iterate` from a report that says foundation-only,
+  partial, FAIL, REVIEW without approval, or smoke checks NOT_RUN.
 - If the canonical workflow routes to a fix step, use `$code-debug`.
 - Use `../../../.agents/references/language-policy.md` for reply language and for localizing natural-language review notes and verdict summaries; keep checklist item names, commands, status labels, and identifiers in English.
 

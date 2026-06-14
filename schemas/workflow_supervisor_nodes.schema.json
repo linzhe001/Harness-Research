@@ -148,16 +148,19 @@
             "command_passes",
             "docchain_gate_passes",
             "dynamic_context_gate_passes",
+            "git_worktree_clean",
             "review_packet_exists",
             "approval_recorded",
             "auto_iterate_status",
-            "no_forbidden_writes"
+            "no_forbidden_writes",
+            "sliced_commits_recorded"
           ]
         },
         "path": { "type": "string" },
         "schema": { "type": "string" },
         "command": { "type": "string" },
         "doc_path": { "type": "string" },
+        "roadmap_path": { "type": "string" },
         "stage": { "type": "string" },
         "kind": { "type": "string" },
         "contract": { "type": "string" },
@@ -167,6 +170,10 @@
           "items": { "type": "string" }
         },
         "patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ignore_patterns": {
           "type": "array",
           "items": { "type": "string" }
         }

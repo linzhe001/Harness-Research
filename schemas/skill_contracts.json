@@ -1801,7 +1801,8 @@
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
         "docs_site_boundary_report",
-        "compile_doc_or_NOT_RUN"
+        "compile_doc_or_NOT_RUN",
+        "roadmap_implementation_completeness_gate"
       ],
       "forbidden_actions": [
         "stable_code_without_project_map_read",
@@ -1814,7 +1815,8 @@
         "codebase_map_write",
         "canonical_state_edit",
         "codebase_map_docchain",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "roadmap_implementation_completeness"
       ],
       "sensitive_paths": [
         "src/",
@@ -1924,7 +1926,8 @@
         "semantic_commit_or_NOT_RUN",
         "gate_ledger",
         "docs_site_boundary_report",
-        "compile_doc_or_NOT_RUN"
+        "compile_doc_or_NOT_RUN",
+        "roadmap_implementation_completeness_gate_when_build_recovery"
       ],
       "forbidden_actions": [
         "stable_code_without_project_map_read",
@@ -1936,7 +1939,8 @@
         "project_map_write",
         "codebase_map_write",
         "codebase_map_docchain",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "roadmap_implementation_completeness"
       ],
       "sensitive_paths": [
         "src/",
@@ -2378,7 +2382,8 @@
         "write_validate_report",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "validate_run_verdict_gate"
       ],
       "forbidden_actions": [
         "WF9_PASS_without_semantic_review",
@@ -2388,7 +2393,8 @@
         "WF10_readiness",
         "validate_report_write",
         "evidence_table_write",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "validate_run_verdict"
       ],
       "sensitive_paths": [
         "docs/Validate_Run_Report.md",
@@ -3780,7 +3786,8 @@
       "required_actions": [
         "workflow_state_gate_or_NOT_RUN",
         "build_review_packet_or_NOT_RUN",
-        "gate_ledger"
+        "gate_ledger",
+        "worker_command_gates_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "direct_edit_evidence",
@@ -3796,7 +3803,8 @@
         "human_interrupt_created",
         "approval_resume",
         "worker_result_validation",
-        "WF10_readiness"
+        "WF10_readiness",
+        "worker_command_gate"
       ],
       "sensitive_paths": [
         ".workflow_supervisor/",

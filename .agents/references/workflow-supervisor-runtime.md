@@ -61,6 +61,32 @@ normal build path.
 Starting a new segment must fail closed while any active run or pending request
 exists. Use `status`, `recover`, `answer`, `approve`, or `resume` first.
 
+## Worker Process Safety
+
+Treat stuck workers as supervisor recovery problems before treating them as OS
+process cleanup. Preferred order:
+
+```bash
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh recover --repair-stale-running --auto-resume-answered --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh tail --lines 80
+tooling/workflow_supervisor/scripts/workflow_ctl.sh stop --reason "stuck worker recovery" --json
+```
+
+Do not run `kill`, `pkill`, or process-group cleanup against delegated Codex
+worker PIDs from the active Codex conversation, PTY, shell, session, or process
+group. First inspect ancestry with:
+
+```bash
+ps -o pid,ppid,pgid,sid,tty,stat,etime,cmd -p <pid>,<ppid>
+```
+
+Only use OS-level termination from an isolated shell when the supervisor run is
+stopped or independent, no pending request remains, the PID is confirmed
+outside the current Codex session/process group, and `TERM` is tried before
+`KILL`. If unsure, report `manual_recover` or `NOT_RUN` instead of killing the
+process.
+
 ## Worker Prompt Contract
 
 Worker prompts must include:
@@ -74,6 +100,13 @@ Worker prompts must include:
 Workers must run listed `evidence_tools` when inputs exist. If a tool cannot
 run, the worker result must include a `NOT_RUN` Gate ledger entry with the
 reason.
+
+Build workers must create semantic git commits for durable non-tool-owned
+outputs before returning success. WF8 code workers must complete, validate, and
+commit each `docs/Implementation_Roadmap.md` `commit_plan` row as a distinct
+Commit Slice before starting the next independent row. The supervisor validates
+this with `sliced_commits_recorded` from the run `base_git_commit` and
+`git_worktree_clean` for non-tool-owned paths.
 
 ## Docs-Site Boundary
 

@@ -1,16 +1,9 @@
 # Workflow Supervisor
 
-Use `/workflow-supervisor` for `harness prepare`, `harness build`,
-`harness iterate`, `harness release`, `harness change`, and direct
-`workflow_ctl` work. The supervisor owns `.workflow_supervisor/**` and must be
-operated through tooling, not manual edits.
-Use `.claude/shared/workflow-supervisor-runtime.md` as the compact runtime reference; skip historical design docs and `workflow_handbook/**` by default.
-
+Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and direct `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**`; use tooling, not manual edits. Use `.claude/shared/workflow-supervisor-runtime.md` as the compact runtime reference; skip historical design docs by default.
 Core commands:
 
 ```bash
-tooling/workflow_supervisor/scripts/harness.sh prepare --goal "<goal>" --dry-run
-tooling/workflow_supervisor/scripts/harness.sh change --goal "<new request>" --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>"
@@ -26,6 +19,8 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh monitor-iterate --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goal "<new request>" --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
+For stuck workers, follow `Worker Process Safety` in the runtime reference: use `status` / `recover` / `tail` / `stop`; do not `kill` Codex worker PIDs from the active conversation session/process group unless isolation is verified.
+
 Bare `/workflow-supervisor` after an accepted `/grill` draft should not ask the
 operator to hand-build CLI arguments. First run
 `tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json`. The JSON
@@ -102,17 +97,28 @@ candidate in the worker Gate ledger and tries the next executable candidate
 before creating an `ASK_INPUT` pending request. Successful full prepare now
 completes as `prepare_complete` after the WF5 gate passes; only missing
 inputs, policy blockers, worker failures, or gate failures pause for HITL.
-`start --segment build` runs the build registry through structured workers.
-Use `--auto` for Codex delegation, or `--worker-command` for a command template
-that writes `schemas/workflow_supervisor_worker_result.schema.json`. Build
-completes only as `build_ready_for_iterate` after validate-run postconditions
-pass. `code-debug` is failure recovery, not a normal ordered build node.
-Worker prompts include the node postconditions, evidence tools, and write patterns;
-workers must run concrete checks, debug failures inside the node budget, and
-record PASS/FAIL/NOT_RUN in Gate ledger instead of relying on prose.
+`start --segment build` runs structured workers. Use `--auto` for Codex or
+`--worker-command` for a command writing
+`schemas/workflow_supervisor_worker_result.schema.json`. The normal path is
+`build_refine_arch -> build_plan -> build_code_expert -> build_validate_run`;
+`build_code_debug` is recovery. Build becomes `build_ready_for_iterate` only
+after validate-run gates pass and `validate-run verdict: PASS`; a foundation
+slice alone is `build_foundation_ready` unless explicitly requested.
+Durable non-tool-owned outputs must be committed before each build node is
+accepted. WF8 also requires one distinct semantic commit per
+`docs/Implementation_Roadmap.md` `commit_plan` row; bundled or missing slice
+commits fail node postconditions. Worker prompts include postconditions,
+evidence tools, and write patterns; workers must run concrete checks and record
+PASS/FAIL/NOT_RUN in Gate ledger, not prose. Each `command_passes` gate needs an
+exact matching `command`: build uses `roadmap implementation completeness` for
+code nodes and `validate-run verdict` for WF9; missing runnable evidence is not
+PASS. Build postconditions verify `git_worktree_clean`; code nodes also verify
+`sliced_commits_recorded` from the run `base_git_commit`.
 Codex workers write their JSON result to a temporary
 `.agents/state/workflow_supervisor_worker_results/**` handoff path; the
 supervisor validates and adopts that result into `.workflow_supervisor/**`.
+Missing handoff JSON may be synthesized only when concrete artifact/schema
+postconditions pass and no required command or git commit gate is missing.
 Worker prompts are budgeted by segment. The supervisor truncates long goal
 context before delegation, includes only compact postconditions and write
 patterns, and tells workers to stop at `node_retry_limit` /

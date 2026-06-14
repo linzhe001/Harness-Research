@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -10,6 +11,27 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "workflow_supervisor" / "scripts"))
 
 import workflow_ctl  # noqa: E402
+
+
+def init_git_workspace(root: Path) -> None:
+    subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=root,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Harness Test"],
+        cwd=root,
+        check=True,
+    )
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "test: initial supervisor fixture"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
 
 
 def make_workspace(tmp_path: Path) -> Path:
@@ -27,6 +49,7 @@ def make_workspace(tmp_path: Path) -> Path:
         "# Baseline\n",
         encoding="utf-8",
     )
+    init_git_workspace(root)
     return root
 
 
@@ -38,6 +61,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -72,10 +96,66 @@ SKILLS = {
 }
 
 
+def git_commit(root: Path, message: str, paths: list[str]) -> str:
+    subprocess.run(["git", "add", *paths], cwd=root, check=True)
+    status = subprocess.run(
+        ["git", "status", "--short", "--", *paths],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if not status.stdout.strip():
+        return ""
+    subprocess.run(
+        ["git", "commit", "-m", message],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def write_roadmap(root: Path) -> None:
+    target = root / "docs/Implementation_Roadmap.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "\n".join(
+            [
+                "# Roadmap",
+                "",
+                "## 4b. commit_plan",
+                "",
+                "| commit_slice | Files | Validation | Commit Message | Reason |",
+                "|---|---|---|---|---|",
+                (
+                    "| `S1_data_answer_contract` | src/s1.py | py_compile | "
+                    "`feat(slice/S1_data_answer_contract): add records` | slice |"
+                ),
+                (
+                    "| `S2_proxy_postprocess` | src/s2.py | py_compile | "
+                    "`feat(slice/S2_proxy_postprocess): add metrics` | slice |"
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def write_artifact(root: Path, path: str, node_id: str) -> None:
     target = root / path
     target.parent.mkdir(parents=True, exist_ok=True)
-    if target.suffix == ".json":
+    if path == "docs/Implementation_Roadmap.md":
+        write_roadmap(root)
+    elif target.suffix == ".json":
         target.write_text(
             json.dumps(
                 {
@@ -106,7 +186,45 @@ def main() -> int:
         write_artifact(root, artifact, args.node_id)
 
     gates = []
+    commit_refs = []
     if args.node_id in {"build_code_expert", "build_code_debug"}:
+        if args.node_id == "build_code_expert":
+            (root / "src").mkdir(parents=True, exist_ok=True)
+            (root / "src/s1.py").write_text("VALUE = 1\n", encoding="utf-8")
+            commit_refs.append(
+                git_commit(
+                    root,
+                    "feat(slice/S1_data_answer_contract): add records",
+                    [
+                        "project_map.json",
+                        "docs/20_facts/Codebase_Map.md",
+                        "src/s1.py",
+                    ],
+                )
+            )
+            (root / "src/s2.py").write_text("VALUE = 2\n", encoding="utf-8")
+            commit_refs.append(
+                git_commit(
+                    root,
+                    "feat(slice/S2_proxy_postprocess): add metrics",
+                    ["src/s2.py"],
+                )
+            )
+            artifacts = [*artifacts, "src/s1.py", "src/s2.py"]
+        else:
+            (root / "src").mkdir(parents=True, exist_ok=True)
+            (root / "src/debug_fix.py").write_text("VALUE = 3\n", encoding="utf-8")
+            commit_refs.append(
+                git_commit(
+                    root,
+                    "fix(build): debug validation fixture",
+                    [
+                        "project_map.json",
+                        "docs/20_facts/Codebase_Map.md",
+                        "src/debug_fix.py",
+                    ],
+                )
+            )
         gates.append(
             {
                 "command": (
@@ -118,7 +236,26 @@ def main() -> int:
                 "artifacts": [".evidence/chains/codebase_map/evidence_chain.json"],
             }
         )
+        gates.append(
+            {
+                "command": "roadmap implementation completeness",
+                "result": "PASS",
+                "reason": "fixture roadmap slices committed",
+                "artifacts": [ref for ref in commit_refs if ref],
+            }
+        )
+    elif args.node_id == "build_refine_arch":
+        commit_refs.append(
+            git_commit(root, "docs(build): add WF6 technical spec", artifacts)
+        )
+    elif args.node_id == "build_plan":
+        commit_refs.append(
+            git_commit(root, "docs(build): add WF7 implementation roadmap", artifacts)
+        )
     if args.node_id == "build_validate_run":
+        commit_refs.append(
+            git_commit(root, "docs(build): record validate run report", artifacts)
+        )
         gates.append(
             {
                 "command": (
@@ -128,6 +265,14 @@ def main() -> int:
                 "result": "PASS",
                 "reason": "fixture wf10 dynamic context gate",
                 "artifacts": [".evidence/review_packets/wf10/build/review_packet.md"],
+            }
+        )
+        gates.append(
+            {
+                "command": "validate-run verdict",
+                "result": "PASS",
+                "reason": "fixture validation passed",
+                "artifacts": [*artifacts, *[ref for ref in commit_refs if ref]],
             }
         )
 
@@ -173,6 +318,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -186,10 +332,63 @@ SKILLS = {
 }
 
 
+def git_commit(root: Path, message: str, paths: list[str]) -> str:
+    subprocess.run(["git", "add", *paths], cwd=root, check=True)
+    status = subprocess.run(
+        ["git", "status", "--short", "--", *paths],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if not status.stdout.strip():
+        return ""
+    subprocess.run(
+        ["git", "commit", "-m", message],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
 def write_text(root: Path, path: str, text: str) -> None:
     target = root / path
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
+
+
+def write_roadmap(root: Path) -> None:
+    write_text(
+        root,
+        "docs/Implementation_Roadmap.md",
+        "\n".join(
+            [
+                "# Roadmap",
+                "",
+                "## 4b. commit_plan",
+                "",
+                "| commit_slice | Files | Validation | Commit Message | Reason |",
+                "|---|---|---|---|---|",
+                (
+                    "| `S1_data_answer_contract` | src/s1.py | py_compile | "
+                    "`feat(slice/S1_data_answer_contract): add records` | slice |"
+                ),
+                (
+                    "| `S2_proxy_postprocess` | src/s2.py | py_compile | "
+                    "`feat(slice/S2_proxy_postprocess): add metrics` | slice |"
+                ),
+            ]
+        )
+        + "\n",
+    )
 
 
 def write_project_map(root: Path) -> None:
@@ -246,20 +445,60 @@ def main() -> int:
     artifacts = []
     writes = []
     status = "success"
-    marker = root / ".recovery_debug_ran"
+    marker = root / ".workflow_supervisor" / "fixture_recovery_debug_ran"
 
     if args.node_id == "build_refine_arch":
         artifacts = ["docs/Technical_Spec.md"]
         writes = artifacts
         write_text(root, "docs/Technical_Spec.md", "# Spec\n")
+        commit_ref = git_commit(root, "docs(build): add WF6 technical spec", writes)
+        gates.append(
+            {
+                "command": "semantic git commit build_refine_arch",
+                "result": "PASS",
+                "reason": "fixture build_refine_arch committed",
+                "artifacts": [commit_ref] if commit_ref else [],
+            }
+        )
     elif args.node_id == "build_plan":
+        write_roadmap(root)
         write_project_map(root)
         artifacts = ["docs/Implementation_Roadmap.md", "project_map.json"]
         writes = [*artifacts, "docs/20_facts/Codebase_Map.md"]
-        write_text(root, "docs/Implementation_Roadmap.md", "# Roadmap\n")
+        commit_ref = git_commit(
+            root,
+            "docs(build): add WF7 implementation roadmap",
+            writes,
+        )
+        gates.append(
+            {
+                "command": "semantic git commit build_plan",
+                "result": "PASS",
+                "reason": "fixture build_plan committed",
+                "artifacts": [commit_ref] if commit_ref else [],
+            }
+        )
     elif args.node_id == "build_code_expert":
         write_project_map(root)
-        artifacts = ["project_map.json", "docs/20_facts/Codebase_Map.md"]
+        (root / "src").mkdir(parents=True, exist_ok=True)
+        write_text(root, "src/s1.py", "VALUE = 1\n")
+        commit_s1 = git_commit(
+            root,
+            "feat(slice/S1_data_answer_contract): add records",
+            ["project_map.json", "docs/20_facts/Codebase_Map.md", "src/s1.py"],
+        )
+        write_text(root, "src/s2.py", "VALUE = 2\n")
+        commit_s2 = git_commit(
+            root,
+            "feat(slice/S2_proxy_postprocess): add metrics",
+            ["src/s2.py"],
+        )
+        artifacts = [
+            "project_map.json",
+            "docs/20_facts/Codebase_Map.md",
+            "src/s1.py",
+            "src/s2.py",
+        ]
         writes = artifacts
         gates.append(
             {
@@ -270,6 +509,14 @@ def main() -> int:
                 "result": "PASS",
                 "reason": "fixture docchain",
                 "artifacts": [".evidence/chains/codebase_map/evidence_chain.json"],
+            }
+        )
+        gates.append(
+            {
+                "command": "roadmap implementation completeness",
+                "result": "PASS",
+                "reason": "fixture roadmap slices committed",
+                "artifacts": [commit_s1, commit_s2],
             }
         )
     elif args.node_id == "build_validate_run" and not marker.exists():
@@ -287,7 +534,18 @@ def main() -> int:
     elif args.node_id == "build_code_debug":
         marker.write_text("debugged\n", encoding="utf-8")
         write_project_map(root)
-        artifacts = ["project_map.json", "docs/20_facts/Codebase_Map.md"]
+        (root / "src").mkdir(parents=True, exist_ok=True)
+        write_text(root, "src/debug_fix.py", "VALUE = 3\n")
+        commit_ref = git_commit(
+            root,
+            "fix(build): debug validation fixture",
+            ["project_map.json", "docs/20_facts/Codebase_Map.md", "src/debug_fix.py"],
+        )
+        artifacts = [
+            "project_map.json",
+            "docs/20_facts/Codebase_Map.md",
+            "src/debug_fix.py",
+        ]
         writes = artifacts
         gates.append(
             {
@@ -300,6 +558,14 @@ def main() -> int:
                 "artifacts": [".evidence/chains/codebase_map/evidence_chain.json"],
             }
         )
+        gates.append(
+            {
+                "command": "roadmap implementation completeness",
+                "result": "PASS",
+                "reason": "fixture debug committed",
+                "artifacts": [commit_ref] if commit_ref else [],
+            }
+        )
     elif args.node_id == "build_validate_run":
         artifacts = [
             "docs/Validate_Run_Report.md",
@@ -308,6 +574,11 @@ def main() -> int:
         writes = artifacts
         write_text(root, "docs/Validate_Run_Report.md", "# Validate\n")
         write_text(root, "docs/30_evidence/Validation_Table.md", "# Validation\n")
+        commit_ref = git_commit(
+            root,
+            "docs(build): record validate run report",
+            writes,
+        )
         gates.append(
             {
                 "command": (
@@ -317,6 +588,14 @@ def main() -> int:
                 "result": "PASS",
                 "reason": "fixture wf10 gate after debug",
                 "artifacts": [".evidence/review_packets/wf10/build/review_packet.md"],
+            }
+        )
+        gates.append(
+            {
+                "command": "validate-run verdict",
+                "result": "PASS",
+                "reason": "fixture validation passed",
+                "artifacts": [*artifacts, commit_ref],
             }
         )
 

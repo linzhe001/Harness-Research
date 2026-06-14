@@ -2568,6 +2568,24 @@ def test_pre_tool_allows_workflow_supervisor_tool_mutation() -> None:
     assert block_pre_tool(REPO_ROOT, event) is None
 
 
+def test_pre_tool_allows_worker_result_handoff_with_evidence_refs() -> None:
+    event = {
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": (
+                "cat > .agents/state/workflow_supervisor_worker_results/"
+                "sup_20260614_000000/build_code_debug.worker_result.json <<'JSON'\n"
+                "{\n"
+                "  \"artifact_refs\": [\".evidence/chains/example/doc_audit.json\"]\n"
+                "}\n"
+                "JSON"
+            )
+        },
+    }
+
+    assert block_pre_tool(REPO_ROOT, event) is None
+
+
 def test_pre_tool_allows_build_writes_to_implementation_surfaces() -> None:
     event = {
         "tool_name": "Bash",

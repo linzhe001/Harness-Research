@@ -37,9 +37,12 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `docs/20_facts/Project_Glossary.md` if it exists
 
    Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md) before writing or editing code.
-   Select the current roadmap slice and keep implementation inside that slice.
-   Do not broaden public APIs beyond the slice trace without recording the
-   boundary change and updating `project_map.json`.
+   Resolve the build scope before editing. For standalone `/code-expert
+   [target]`, select the requested roadmap slice. For workflow-supervisor
+   `/build`, implement the full `minimal_runnable_slice_set` from
+   `docs/Implementation_Roadmap.md` unless the operator explicitly requested
+   first-slice-only work. Do not broaden public APIs beyond the slice trace
+   without recording the boundary change and updating `project_map.json`.
    New identifiers, config keys, metric keys, test names, and error messages
    must use existing glossary terms or record proposed terms for review.
    Read `docs/20_facts/Codebase_Map.md` when present and use it to locate
@@ -47,10 +50,12 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    Write or update the first focused test or smoke check before implementation
    when the slice is automatable; otherwise record the manual feedback step and
    `NOT_RUN` reason.
-   Complete one roadmap slice at a time. After the slice is implemented,
+   Complete roadmap slices in dependency order. After each slice is implemented,
    validated, and any required `project_map.json` update is complete, create a
    semantic commit for that Commit Slice before starting the next independent
    slice. If the environment cannot commit, report `NOT_RUN` with the reason.
+   In workflow-supervisor `/build`, do not return success after a foundation
+   slice alone when downstream runnable-path slices remain required.
 
 2. **Generate all code in dependency order**
 
@@ -109,6 +114,12 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    If `docs/20_facts/Codebase_Map.md` was changed and the slice is otherwise
    validated, invoke `/docs-site` or report `docs_site_boundary_report`. Do
    not render after temporary draft edits.
+   In the final worker Gate ledger, include `roadmap implementation
+   completeness`: PASS only when the requested standalone slice is complete, or
+   when workflow-supervisor `/build` has implemented and validated the full
+   `minimal_runnable_slice_set`. Use FAIL or NOT_RUN when smoke runner, config,
+   evaluator, training dry-run, tests, or run-artifact bundle entries remain
+   planned but absent.
 
 User-facing progress notes and summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while paths, commands, schema keys, and code identifiers remain in English.
 </instructions>

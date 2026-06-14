@@ -39,6 +39,8 @@ implementation order, stable file structure, interfaces, tests,
    slice needs `Slice Trace`, acceptance checks, feedback command, downstream
    validation doc, Commit Slice boundary, semantic commit suggestion, and
    out-of-scope work.
+   Also define an explicit `minimal_runnable_slice_set` that distinguishes
+   foundation slices from the smallest runnable smoke/eval/training-ready path.
 7. For planned `src/` files, define signatures, pseudocode, shape examples,
    dependencies, config keys, validation behavior, error conditions, and shared
    interfaces.
@@ -58,6 +60,10 @@ implementation order, stable file structure, interfaces, tests,
   language policy.
 - Include test plan, Red/Green/Refactor or smoke feedback, validation
   checkpoints, complexity budget, and commit slices.
+- Mark foundation-only slices clearly. A foundation slice can be accepted as a
+  Commit Slice, but it must not be described as enough for
+  `build_ready_for_iterate` unless it also provides the canonical runnable
+  smoke/eval/training entrypoint and run-artifact bundle required by WF9.
 - Do not add architecture choices. If the roadmap needs a different
   architecture, stop and route back to WF6 or design review.
 - Run workflow-state checks when `PROJECT_STATE.json` or `project_map.json`

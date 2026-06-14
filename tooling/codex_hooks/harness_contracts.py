@@ -161,12 +161,16 @@ KNOWN_REQUIRED_ACTIONS = {
     "respect_claim_boundary",
     "respect_evaluation_contract",
     "reconcile_review_findings",
+    "roadmap_implementation_completeness_gate",
+    "roadmap_implementation_completeness_gate_when_build_recovery",
     "ruff_or_NOT_RUN",
     "semantic_commit_or_NOT_RUN",
     "semantic_review",
     "smoke_test_or_NOT_RUN",
     "update_project_map",
     "validate_docs_site_or_NOT_RUN",
+    "validate_run_verdict_gate",
+    "worker_command_gates_or_NOT_RUN",
     "workflow_state_gate_or_NOT_RUN",
     "write_implementation_roadmap",
     "write_review_report_or_NOT_RUN",
@@ -233,6 +237,9 @@ MUTATING_COMMAND_RE = re.compile(
 MUTATING_TOOL_NAMES = {"apply_patch", "Edit", "Write", "Bash", "shell", "local_shell"}
 READ_TOOL_NAMES = {"Read", "View", "Open"}
 REVIEW_WRITE_ALLOWED_PATHS = [".agents/state/review_traces/code-review/"]
+WORKFLOW_SUPERVISOR_WORKER_RESULT_PREFIX = (
+    ".agents/state/workflow_supervisor_worker_results/"
+)
 TOOL_OWNED_WRITE_TOOL_PREFIXES = (
     "tooling/evidence/",
     "tooling/auto_iterate/",
@@ -1917,6 +1924,21 @@ def is_untrusted_tool_owned_path_command(
     return False
 
 
+def is_workflow_supervisor_worker_result_heredoc(command: str) -> bool:
+    lines = command.splitlines()
+    if len(lines) < 2:
+        return False
+    match = re.fullmatch(
+        r"cat\s*>\s*"
+        r"(?P<path>\.agents/state/workflow_supervisor_worker_results/"
+        r"[A-Za-z0-9_:/.-]+\.json)\s*<<'?(?P<delimiter>[A-Za-z0-9_]+)'?",
+        lines[0].strip(),
+    )
+    if not match:
+        return False
+    return lines[-1].strip() == match.group("delimiter")
+
+
 def is_review_trace_bash_write(root: Path, command: str) -> bool:
     if SHELL_CONTROL_RE.search(command):
         return False
@@ -2516,6 +2538,8 @@ def block_pre_tool(root: Path, event: dict[str, Any]) -> str | None:
                     f"artifact `{pattern}` to git."
                 )
         if any(path in command for path in DIRECT_TOOL_OWNED_PATHS):
+            if is_workflow_supervisor_worker_result_heredoc(command):
+                return None
             if is_untrusted_tool_owned_path_command(command, root):
                 return (
                     "Blocked by Harness policy: .evidence/**, "

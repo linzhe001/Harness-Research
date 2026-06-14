@@ -87,10 +87,12 @@ VALID_CONDITION_TYPES = {
     "command_passes",
     "docchain_gate_passes",
     "dynamic_context_gate_passes",
+    "git_worktree_clean",
     "review_packet_exists",
     "approval_recorded",
     "auto_iterate_status",
     "no_forbidden_writes",
+    "sliced_commits_recorded",
 }
 VALID_NODE_RUN_WHEN = {"always", "on_failure", "manual"}
 FORBIDDEN_WORKER_WRITE_PREFIXES = (
@@ -99,6 +101,10 @@ FORBIDDEN_WORKER_WRITE_PREFIXES = (
     ".workflow_supervisor/",
     "docs/_views/",
     "docs/_site/",
+)
+GIT_WORKTREE_CLEAN_IGNORE_PREFIXES = (
+    *FORBIDDEN_WORKER_WRITE_PREFIXES,
+    ".agents/state/workflow_supervisor_worker_results/",
 )
 CODEX_WORKER_SANDBOX_ARGS = ["--full-auto"]
 DEFAULT_AUTOMATION_POLICY = {
@@ -3909,6 +3915,18 @@ def render_worker_prompt(
             "is explicitly requested.\n"
             "- Make the smallest code/config/doc changes needed for this node.\n"
             "- Run concrete commands that prove the node postconditions below.\n"
+            "- For each `command_passes` postcondition, include a Gate ledger "
+            "entry whose `command` exactly matches the postcondition command "
+            "string, with result PASS, FAIL, or NOT_RUN. Do not mark PASS unless "
+            "that gate was actually satisfied.\n"
+            "- For build nodes that edit durable non-tool-owned files, create a "
+            "semantic git commit before returning success. For roadmap "
+            "`commit_plan` rows, complete, validate, and commit one row before "
+            "starting the next independent row. Report each commit hash and "
+            "subject in the Gate ledger.\n"
+            "- The supervisor verifies roadmap sliced commits from the run "
+            "`base_git_commit` and verifies that non-tool-owned worktree paths "
+            "are clean before accepting build nodes.\n"
             "- Run each listed evidence tool exactly when its inputs exist. If a "
             "tool cannot run, include a NOT_RUN Gate ledger entry with the reason.\n"
             "- If a command fails, debug and rerun within the node budget before "
@@ -3941,6 +3959,9 @@ def render_worker_prompt(
             "worker handoff. The supervisor will validate and adopt it into "
             "`.workflow_supervisor/**`; do not write supervisor runtime state "
             "directly.\n"
+            "Do not use apply_patch for this handoff file; create or replace "
+            "the JSON with a normal file write command so hook policy does not "
+            "confuse the temporary handoff with a durable source edit.\n"
             "\n"
             "The result must include gate_ledger entries for every command or gate "
             "that mattered, observed_writes, artifact_refs, and any contract "
@@ -4111,6 +4132,102 @@ def run_worker_command(
     return loaded
 
 
+def codex_worker_command(codex: str, workspace_root: Path) -> list[str]:
+    return [
+        codex,
+        "exec",
+        *CODEX_WORKER_SANDBOX_ARGS,
+        "--cd",
+        str(workspace_root),
+        "-",
+    ]
+
+
+def synthetic_codex_success_from_postconditions(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node: dict[str, Any],
+    command: list[str],
+    paths: dict[str, str],
+) -> dict[str, Any] | None:
+    postconditions = node.get("postconditions", [])
+    if not isinstance(postconditions, list) or not any(
+        isinstance(condition, dict)
+        and condition.get("type") in {"artifact_exists", "artifact_matches_schema"}
+        for condition in postconditions
+    ):
+        return None
+    candidate = worker_result_payload(
+        run_id=run_id,
+        node=node,
+        status="success",
+        exit_code=0,
+        summary=(
+            "codex worker exited successfully without handoff JSON; "
+            "supervisor synthesized success from passing artifact postconditions"
+        ),
+        artifact_refs=[paths["prompt"], paths["stdout"], paths["stderr"]],
+        gate_ledger=[],
+        observed_writes=[],
+        stdout_ref=paths["stdout"],
+        stderr_ref=paths["stderr"],
+        worker_warnings=[
+            "codex_worker_missing_handoff_synthesized_from_postconditions"
+        ],
+    )
+    postcondition_result = evaluate_node_postconditions(
+        workspace_root,
+        node,
+        run_id=run_id,
+        worker_result=candidate,
+    )
+    if not postcondition_result["ok"]:
+        return None
+    postcondition_artifacts = [
+        artifact
+        for gate in postcondition_result.get("gate_ledger", [])
+        if isinstance(gate, dict)
+        for artifact in gate.get("artifacts", [])
+        if isinstance(artifact, str)
+    ]
+    candidate["artifact_refs"] = list(
+        dict.fromkeys([*candidate["artifact_refs"], *postcondition_artifacts])
+    )
+    candidate["observed_writes"] = [
+        artifact
+        for artifact in dict.fromkeys(postcondition_artifacts)
+        if not artifact.startswith("schemas/")
+    ]
+    sanitized_postcondition_gates = [
+        {
+            "command": str(gate.get("command") or "postcondition"),
+            "result": str(gate.get("result") or "FAIL"),
+            "reason": str(gate.get("reason") or "postcondition gate result"),
+            "artifacts": [
+                artifact
+                for artifact in gate.get("artifacts", [])
+                if isinstance(artifact, str)
+            ],
+        }
+        for gate in postcondition_result.get("gate_ledger", [])
+        if isinstance(gate, dict)
+    ]
+    candidate["gate_ledger"] = [
+        {
+            "command": " ".join(command),
+            "result": "PASS",
+            "reason": (
+                "codex exited 0 without worker handoff; supervisor artifact "
+                "postconditions passed"
+            ),
+            "artifacts": [paths["prompt"], paths["stdout"], paths["stderr"]],
+        },
+        *sanitized_postcondition_gates,
+    ]
+    return candidate
+
+
 def run_codex_worker(
     workspace_root: Path,
     *,
@@ -4167,14 +4284,7 @@ def run_codex_worker(
                 ],
             },
         )
-    command = [
-        codex,
-        *CODEX_WORKER_SANDBOX_ARGS,
-        "exec",
-        "--cd",
-        str(workspace_root),
-        "-",
-    ]
+    command = codex_worker_command(codex, workspace_root)
     env = os.environ.copy()
     if args.codex_home:
         env["CODEX_HOME"] = str(Path(args.codex_home).expanduser())
@@ -4204,6 +4314,16 @@ def run_codex_worker(
         loaded.setdefault("stdout_ref", paths["stdout"])
         loaded.setdefault("stderr_ref", paths["stderr"])
         return loaded
+    if codex_exit_code == 0:
+        synthetic = synthetic_codex_success_from_postconditions(
+            workspace_root,
+            run_id=run_id,
+            node=node,
+            command=command,
+            paths=paths,
+        )
+        if synthetic is not None:
+            return synthetic
     return worker_result_payload(
         run_id=run_id,
         node=node,
@@ -4279,6 +4399,30 @@ def git_changed_paths(workspace_root: Path) -> list[str]:
         return []
     proc = subprocess.run(
         ["git", "status", "--short"],
+        cwd=workspace_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return []
+    paths: list[str] = []
+    for line in proc.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        value = line[3:].strip()
+        if " -> " in value:
+            value = value.split(" -> ", 1)[1].strip()
+        if value:
+            paths.append(value)
+    return list(dict.fromkeys(paths))
+
+
+def git_status_paths(workspace_root: Path) -> list[str]:
+    if not (workspace_root / ".git").exists():
+        return []
+    proc = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
         cwd=workspace_root,
         capture_output=True,
         text=True,
@@ -6392,6 +6536,66 @@ def run_failure_recovery_node(
     return "retry"
 
 
+def adopt_previous_missing_handoff_success(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    state: dict[str, Any],
+    segment: str,
+    node: dict[str, Any],
+    completed: list[str],
+) -> bool:
+    node_id = str(node["node_id"])
+    record_path = (
+        supervisor_root(workspace_root)
+        / "runs"
+        / run_id
+        / "node_runs"
+        / f"{node_id}.json"
+    )
+    if not record_path.exists():
+        return False
+    record = load_json(record_path)
+    if not isinstance(record, dict) or record.get("status") != "failed":
+        return False
+    postcondition_result = record.get("postcondition_result")
+    if not isinstance(postcondition_result, dict) or not postcondition_result.get("ok"):
+        return False
+    worker_ref = record.get("worker_result_ref")
+    if not isinstance(worker_ref, str) or not worker_ref:
+        return False
+    worker_result = load_json(workspace_root / worker_ref)
+    if not isinstance(worker_result, dict):
+        return False
+    if worker_result.get("summary") != "codex worker did not write worker result JSON":
+        return False
+    record["status"] = "success"
+    record["adoption_reason"] = "codex_missing_handoff_but_postconditions_passed"
+    record["adoption_worker_exit_code"] = worker_result.get("exit_code")
+    record["adopted_at"] = utc_now()
+    atomic_write_json(record_path, record)
+    append_event(
+        workspace_root,
+        "NODE_ADOPTED_FROM_POSTCONDITIONS",
+        run_id=run_id,
+        segment=segment,
+        node_id=node_id,
+        status="success",
+        payload={
+            "node_record": record_path.relative_to(workspace_root).as_posix(),
+            "worker_result": worker_ref,
+            "reason": "codex_missing_handoff_but_postconditions_passed",
+        },
+    )
+    completed.append(node_id)
+    state["completed_nodes"] = list(dict.fromkeys(completed))
+    state["failed_nodes"] = [
+        failed for failed in state.get("failed_nodes", []) if failed != node_id
+    ]
+    save_state(workspace_root, state)
+    return True
+
+
 def run_supervised_nodes(
     workspace_root: Path,
     *,
@@ -6411,6 +6615,16 @@ def run_supervised_nodes(
         node = nodes[index]
         node_id = str(node["node_id"])
         if node_id in completed:
+            index += 1
+            continue
+        if adopt_previous_missing_handoff_success(
+            workspace_root,
+            run_id=run_id,
+            state=state,
+            segment=segment,
+            node=node,
+            completed=completed,
+        ):
             index += 1
             continue
         state["current_node_id"] = node_id
@@ -8859,6 +9073,204 @@ def worker_gate_condition(
     )
 
 
+def _strip_markdown_code(value: str) -> str:
+    stripped = value.strip()
+    if stripped.startswith("`") and stripped.endswith("`") and len(stripped) >= 2:
+        return stripped[1:-1].strip()
+    return stripped
+
+
+def roadmap_commit_plan(
+    workspace_root: Path,
+    roadmap_path: str,
+) -> list[dict[str, str]]:
+    path = workspace_root / roadmap_path
+    if not path.exists():
+        return []
+    rows: list[dict[str, str]] = []
+    in_commit_plan = False
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if line.startswith("## "):
+            if in_commit_plan and rows:
+                break
+            in_commit_plan = "commit_plan" in line.lower()
+            continue
+        if not in_commit_plan or not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        first = _strip_markdown_code(cells[0])
+        if not first or first == "commit_slice" or set(first) <= {"-"}:
+            continue
+        if first.lower().startswith(":"):
+            continue
+        rows.append(
+            {
+                "slice_id": first,
+                "message": _strip_markdown_code(cells[3]),
+            }
+        )
+    return rows
+
+
+def git_log_since(
+    workspace_root: Path,
+    base_commit: str,
+) -> tuple[list[dict[str, str]], str | None]:
+    if not (workspace_root / ".git").exists():
+        return [], "git repository is missing"
+    if not base_commit:
+        return [], "run manifest does not record base_git_commit"
+    proc = subprocess.run(
+        ["git", "log", "--format=%H%x1f%s", f"{base_commit}..HEAD"],
+        cwd=workspace_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        reason = proc.stderr.strip() or proc.stdout.strip() or "git log failed"
+        return [], reason
+    commits: list[dict[str, str]] = []
+    for line in proc.stdout.splitlines():
+        if "\x1f" not in line:
+            continue
+        commit_hash, subject = line.split("\x1f", 1)
+        commits.append({"hash": commit_hash.strip(), "subject": subject.strip()})
+    return commits, None
+
+
+def evaluate_sliced_commits_recorded(
+    workspace_root: Path,
+    condition: dict[str, Any],
+    *,
+    run_id: str,
+) -> dict[str, Any]:
+    roadmap_path = condition.get("roadmap_path", "docs/Implementation_Roadmap.md")
+    if not isinstance(roadmap_path, str):
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason="sliced_commits_recorded requires string roadmap_path",
+        )
+    expected = roadmap_commit_plan(workspace_root, roadmap_path)
+    if not expected:
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason=f"no commit_plan rows found in {roadmap_path}",
+            artifacts=[roadmap_path],
+        )
+    try:
+        manifest = load_run_manifest(workspace_root, run_id)
+    except ValueError as exc:
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason=str(exc),
+        )
+    base_commit = manifest.get("base_git_commit")
+    commits, error = git_log_since(
+        workspace_root,
+        str(base_commit) if isinstance(base_commit, str) else "",
+    )
+    if error:
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason=error,
+        )
+    matched: dict[str, dict[str, str]] = {}
+    for row in expected:
+        slice_id = row["slice_id"]
+        expected_message = row["message"]
+        for commit in commits:
+            subject = commit["subject"]
+            if slice_id in subject or (
+                expected_message and subject == expected_message
+            ):
+                matched[slice_id] = commit
+                break
+    missing = [row["slice_id"] for row in expected if row["slice_id"] not in matched]
+    duplicate_hashes = {
+        commit["hash"]
+        for commit in matched.values()
+        if list(item["hash"] for item in matched.values()).count(commit["hash"]) > 1
+    }
+    artifacts = [
+        f"{commit['hash']} {commit['subject']}"
+        for commit in matched.values()
+    ]
+    if missing:
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason="missing semantic commits for commit slices: " + ", ".join(missing),
+            artifacts=[roadmap_path, *artifacts],
+            command=f"sliced semantic commits from {roadmap_path}",
+        )
+    if duplicate_hashes:
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason=(
+                "multiple commit_plan slices resolved to the same commit: "
+                + ", ".join(sorted(duplicate_hashes))
+            ),
+            artifacts=[roadmap_path, *artifacts],
+            command=f"sliced semantic commits from {roadmap_path}",
+        )
+    return gate_record(
+        condition,
+        result="PASS",
+        reason="each roadmap commit_plan slice has a distinct semantic commit",
+        artifacts=[roadmap_path, *artifacts],
+        command=f"sliced semantic commits from {roadmap_path}",
+    )
+
+
+def evaluate_git_worktree_clean(
+    workspace_root: Path,
+    condition: dict[str, Any],
+) -> dict[str, Any]:
+    if not (workspace_root / ".git").exists():
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason="git repository is missing",
+        )
+    ignore_patterns = condition.get(
+        "ignore_patterns",
+        list(GIT_WORKTREE_CLEAN_IGNORE_PREFIXES),
+    )
+    if not isinstance(ignore_patterns, list) or not all(
+        isinstance(pattern, str) for pattern in ignore_patterns
+    ):
+        return gate_record(
+            condition,
+            result="FAIL",
+            reason="git_worktree_clean requires string ignore_patterns",
+        )
+    dirty = [
+        path
+        for path in git_status_paths(workspace_root)
+        if not any(path.startswith(pattern) for pattern in ignore_patterns)
+    ]
+    return gate_record(
+        condition,
+        result="PASS" if not dirty else "FAIL",
+        reason=(
+            "non-tool-owned git worktree is clean"
+            if not dirty
+            else "uncommitted non-tool-owned paths: " + ", ".join(dirty)
+        ),
+        artifacts=dirty,
+        command="git status --porcelain",
+    )
+
+
 def evaluate_condition(
     workspace_root: Path,
     condition: dict[str, Any],
@@ -9020,6 +9432,14 @@ def evaluate_condition(
             [command],
             description=f"command gate for {command}",
         )
+    if condition_type == "sliced_commits_recorded":
+        return evaluate_sliced_commits_recorded(
+            workspace_root,
+            condition,
+            run_id=run_id,
+        )
+    if condition_type == "git_worktree_clean":
+        return evaluate_git_worktree_clean(workspace_root, condition)
     if condition_type == "auto_iterate_status":
         allowed = condition.get("allowed_statuses", [])
         if not isinstance(allowed, list) or not all(
@@ -9084,7 +9504,7 @@ def evaluate_node_postconditions(
         for condition in node.get("postconditions", [])
         if isinstance(condition, dict)
     ]
-    failed = [gate for gate in gate_ledger if gate["result"] == "FAIL"]
+    failed = [gate for gate in gate_ledger if gate["result"] != "PASS"]
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,

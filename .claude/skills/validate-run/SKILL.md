@@ -59,6 +59,13 @@ tracking, and git snapshot paths work before expensive loops begin.
    review traces, failures, open validation questions, and final verdict.
 10. Clean smoke-test temporary files so the experiment directory is not
     polluted.
+11. In workflow-supervisor `/build`, include a final Gate ledger entry with
+    command `validate-run verdict`. PASS requires semantic review, required
+    smoke/eval/training checks, checkpoint or roadmap-allowed dry-run
+    substitute, run-artifact bundle checks, and dynamic-context gates. Missing
+    runnable entrypoint, config, evaluator, training dry-run, checkpoint path,
+    run-manifest bundle, or required tests is FAIL. REVIEW is not PASS unless
+    the operator explicitly approved proceeding with the recorded findings.
 
 ## Verdicts
 

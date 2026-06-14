@@ -133,6 +133,11 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    If `docs/20_facts/Codebase_Map.md` was changed and the fix is otherwise
    validated, invoke `/docs-site` or report `docs_site_boundary_report`. Do
    not render after temporary draft edits.
+   When running as workflow-supervisor build recovery, include
+   `roadmap implementation completeness` in the Gate ledger. PASS means the
+   failed build node now satisfies the same minimal runnable path expected from
+   `/code-expert`, not merely that the immediate exception was patched. If the
+   recovery leaves required runnable-path slices absent, report FAIL or NOT_RUN.
 
 User-facing debugging summaries should follow [../../shared/language-policy.md](../../shared/language-policy.md), while commands, commit prefixes, paths, and identifiers remain in English.
 </instructions>

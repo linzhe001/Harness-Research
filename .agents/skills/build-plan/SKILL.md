@@ -47,6 +47,8 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 5. Write `docs/Implementation_Roadmap.md` using the canonical template.
 6. Include:
    - vertical slices ordered by dependency and user/research outcome
+   - an explicit `minimal_runnable_slice_set` that distinguishes foundation
+     slices from the smallest runnable smoke/eval/training-ready path
    - a `Slice Trace` block for each slice
    - module pseudocode
    - shared interfaces and contracts between modules
@@ -83,6 +85,10 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
   Domain Term to Code Term decisions from `docs/20_facts/Project_Glossary.md`.
 - Include commit slices that map one-to-one with roadmap slices unless a
   documented cross-cutting reason makes a combined commit safer.
+- Mark foundation-only slices clearly. A foundation slice can be accepted as a
+  Commit Slice, but it must not be described as enough for
+  `build_ready_for_iterate` unless it also provides the canonical runnable
+  smoke/eval/training entrypoint and run-artifact bundle required by WF9.
 - Do not introduce new architecture choices here. WF7 may refine implementation details, module interfaces, configuration fields, validation checks, and coding constraints needed to execute the approved architecture efficiently. If the roadmap requires a different architecture, stop and route back to WF6 or a design review.
 - After `docs/Implementation_Roadmap.md`, `docs/20_facts/Project_Glossary.md`,
   or `docs/20_facts/Codebase_Map.md` is finalized for the stage, invoke

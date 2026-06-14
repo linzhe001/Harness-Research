@@ -32,9 +32,14 @@ Use this skill for WF8 first-pass code generation only.
 
 1. Read `project_map.json`, `docs/Implementation_Roadmap.md`, `PROJECT_STATE.json`, contracts when present, and the style/rule files before editing.
 2. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
-3. Select the current roadmap slice. Do not implement unrelated slices or
-   broaden public APIs beyond the slice trace without recording the boundary
-   change and updating `project_map.json`.
+3. Resolve the build scope before editing:
+   - For standalone `$code-expert [target]`, select the requested roadmap
+     slice.
+   - For workflow-supervisor `$build`, implement the full
+     `minimal_runnable_slice_set` from `docs/Implementation_Roadmap.md` unless
+     the operator explicitly requested first-slice-only work.
+   Do not implement unrelated slices or broaden public APIs beyond the slice
+   trace without recording the boundary change and updating `project_map.json`.
 4. Read `docs/20_facts/Project_Glossary.md` when present. New identifiers,
    config keys, metric keys, test names, and error messages must use existing
    glossary terms or record proposed terms for review.
@@ -44,10 +49,12 @@ Use this skill for WF8 first-pass code generation only.
 6. Write or update the first focused test or smoke check before implementation
    when the slice is automatable. If it cannot be automated, record the manual
    feedback step and `NOT_RUN` reason.
-7. Complete one roadmap slice at a time. After a slice is implemented,
+7. Complete roadmap slices in dependency order. After each slice is implemented,
    validated, and any required `project_map.json` update is complete, create a
    semantic commit for that Commit Slice before moving to the next independent
    slice. If the environment cannot commit, report `NOT_RUN` with the reason.
+   In workflow-supervisor `$build`, do not return success after a foundation
+   slice alone when downstream runnable-path slices remain required.
 8. Generate code in dependency order, following the canonical sequence:
    - `src/utils/`
    - `src/models/`
@@ -72,6 +79,12 @@ Use this skill for WF8 first-pass code generation only.
 14. If `docs/20_facts/Codebase_Map.md` was changed and the slice is otherwise
     validated, invoke `$docs-site` or report `docs_site_boundary_report`.
     Do not render after temporary draft edits.
+15. In the final worker Gate ledger, include:
+    - `roadmap implementation completeness`: PASS only when the requested
+      standalone slice is complete, or when workflow-supervisor `$build` has
+      implemented and validated the full `minimal_runnable_slice_set`. Use FAIL
+      or NOT_RUN when smoke runner, config, evaluator, training dry-run, tests,
+      or run-artifact bundle entries remain planned but absent.
 
 ## Routing Rule
 
@@ -82,6 +95,9 @@ Use this skill for WF8 first-pass code generation only.
 - Treat natural-language requests as the canonical `$code-expert [target or all]` flow.
 - Preserve the dependency-ordered generation style and the requirement to read `project_map.json` and the roadmap before editing.
 - Preserve vertical-slice scope and TDD/smoke feedback from the roadmap.
+- Preserve the distinction between a completed Commit Slice and
+  `build_ready_for_iterate`; a foundation-only slice is not enough for the
+  latter.
 - Preserve sliced-commit behavior: one completed and validated roadmap slice
   should become one semantic commit before the next independent slice starts.
 - Keep the canonical validation pattern and project-map synchronization.
