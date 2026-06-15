@@ -579,6 +579,321 @@ class TestRuntimeFailureHandling:
         assert any(event["event"] == "PHASE_FAILED" for event in events)
         assert not any(event["event"] == "PHASE_COMPLETED" for event in events)
 
+    def test_auth_failure_adopts_newly_satisfied_postcondition(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.policy = {"timeouts": {"code": 30}, "terminate_grace_sec": 1}
+        ctl.state = {
+            "schema_version": 1,
+            "loop_id": "test_loop",
+            "status": "running",
+            "tool": "codex",
+            "current_round_index": 0,
+            "current_phase_key": "code",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 1,
+            "goal": {
+                "source_path": "goal.md",
+                "activated_at": "2026-01-01T00:00:00Z",
+            },
+            "objective": {"primary_metric": {"name": "PSNR"}},
+            "initial_hypotheses": [],
+            "forbidden_directions": [],
+            "best": {
+                "iteration_id": None,
+                "round_index": None,
+                "primary_metric": None,
+                "updated_at": None,
+            },
+            "patience": {
+                "max_no_improve_rounds": 5,
+                "min_primary_delta": 0.1,
+                "consecutive_no_improve": 0,
+            },
+            "budget": {
+                "max_rounds": 20,
+                "completed_rounds": 0,
+                "gpu_count": 1,
+                "max_gpu_hours": 100,
+                "used_gpu_hours": 0,
+                "tracking_method": "wall_time_hours_x_gpu_count",
+            },
+            "llm_budget": {
+                "max_calls": 200,
+                "used_calls": 0,
+                "tracking_method": "runtime_invocation_count",
+            },
+            "accounts": {"selected_account_id": None, "by_account": {}},
+            "last_decision": None,
+            "halt_reason": None,
+            "last_failure": None,
+            "timeouts": {"code": 30},
+            "terminate_grace_sec": 1,
+            "retry_policy": {"max_phase_attempts": 2},
+            "heartbeat": {},
+            "event_log": {},
+            "runtime": {},
+            "screening_policy": {"enabled": False},
+        }
+
+        class FakeSupervisor:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                del args, kwargs
+
+            def run_phase(self, **kwargs: object) -> dict[str, object]:
+                del kwargs
+                return {
+                    "runtime_exit_class": "auth_failure",
+                    "exit_code": 1,
+                    "failure_reason": "codex auth expired after writeback",
+                    "duration_sec": 0,
+                }
+
+        class TransitioningValidator:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def get_iteration_ids(self) -> set[str]:
+                return {"iter1"}
+
+            def load_iteration_log(self) -> dict[str, object]:
+                return {"iterations": []}
+
+            def validate(self, *args: object, **kwargs: object) -> dict[str, object]:
+                del args, kwargs
+                self.calls += 1
+                if self.calls == 1:
+                    return {
+                        "ok": False,
+                        "classification": "postcondition_failed",
+                        "iteration_id": "iter1",
+                        "payload": {"error": "not complete before worker"},
+                    }
+                return {
+                    "ok": True,
+                    "classification": "training",
+                    "iteration_id": "iter1",
+                    "payload": {},
+                }
+
+        monkeypatch.setattr(
+            "auto_iterate.controller.PhaseSupervisor",
+            FakeSupervisor,
+        )
+        ctl.validator = TransitioningValidator()
+
+        result = ctl._run_one_phase("code", 0)
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
+            if line.strip()
+        ]
+
+        assert result["ok"] is True
+        assert result["classification"] == "training"
+        assert ctl.state["current_phase_key"] == "run_screening"
+        assert any(event["event"] == "PHASE_POSTCONDITION_ADOPTED" for event in events)
+        assert any(event["event"] == "PHASE_COMPLETED" for event in events)
+        assert not any(event["event"] == "EXTERNAL_AUTH_RETRY" for event in events)
+
+    def test_retry_pre_satisfied_postcondition_skips_runtime(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.state = {
+            "schema_version": 1,
+            "loop_id": "test_loop",
+            "status": "running",
+            "tool": "codex",
+            "current_round_index": 0,
+            "current_phase_key": "code",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 2,
+            "_recovery_mode": "retry",
+            "objective": {"primary_metric": {"name": "PSNR"}},
+            "budget": {"gpu_count": 1, "used_gpu_hours": 0},
+            "llm_budget": {"used_calls": 3, "max_calls": 200},
+            "accounts": {"selected_account_id": None, "by_account": {}},
+            "last_decision": None,
+            "halt_reason": None,
+            "last_failure": None,
+        }
+
+        class FailingSupervisor:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                del args, kwargs
+
+            def run_phase(self, **kwargs: object) -> dict[str, object]:
+                del kwargs
+                raise AssertionError("runtime should not be invoked")
+
+        class PassingValidator:
+            def get_iteration_ids(self) -> set[str]:
+                return {"iter1"}
+
+            def load_iteration_log(self) -> dict[str, object]:
+                return {"iterations": []}
+
+            def validate(self, *args: object, **kwargs: object) -> dict[str, object]:
+                del args, kwargs
+                return {
+                    "ok": True,
+                    "classification": "training",
+                    "iteration_id": "iter1",
+                    "payload": {},
+                }
+
+        monkeypatch.setattr(
+            "auto_iterate.controller.PhaseSupervisor",
+            FailingSupervisor,
+        )
+        ctl.validator = PassingValidator()
+
+        result = ctl._run_one_phase("code", 0)
+
+        assert result["ok"] is True
+        assert ctl.state["current_phase_key"] == "run_screening"
+        assert ctl.state["llm_budget"]["used_calls"] == 3
+
+    def test_resume_manual_stop_adopts_completed_eval_without_runtime(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        project = _setup_project(tmp_path)
+        auto_dir = project / ".auto_iterate"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        atomic_write_json(
+            auto_dir / "state.json",
+            {
+                "schema_version": 1,
+                "loop_id": "test_loop",
+                "status": "stopped",
+                "tool": "codex",
+                "current_round_index": 1,
+                "current_phase_key": "eval",
+                "current_iteration_id": "iter1",
+                "phase_attempt": 3,
+                "goal": {
+                    "source_path": "goal.md",
+                    "activated_at": "2026-01-01T00:00:00Z",
+                },
+                "objective": {
+                    "primary_metric": {
+                        "name": "validation_score",
+                        "direction": "maximize",
+                        "target": 0.1,
+                    }
+                },
+                "initial_hypotheses": [],
+                "forbidden_directions": [],
+                "best": {
+                    "iteration_id": None,
+                    "round_index": None,
+                    "primary_metric": None,
+                    "updated_at": None,
+                },
+                "patience": {
+                    "max_no_improve_rounds": 2,
+                    "min_primary_delta": 0.01,
+                    "consecutive_no_improve": 0,
+                },
+                "budget": {
+                    "max_rounds": 3,
+                    "completed_rounds": 0,
+                    "gpu_count": 1,
+                    "max_gpu_hours": 4,
+                    "used_gpu_hours": 0.199,
+                    "tracking_method": "wall_time_hours_x_gpu_count",
+                },
+                "llm_budget": {
+                    "max_calls": 200,
+                    "used_calls": 5,
+                    "tracking_method": "runtime_invocation_count",
+                },
+                "accounts": {"selected_account_id": None, "by_account": {}},
+                "last_decision": None,
+                "halt_reason": "manual_stop",
+                "last_failure": None,
+                "screening_policy": {"enabled": True},
+            },
+        )
+
+        class FailingSupervisor:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                del args, kwargs
+
+            def run_phase(self, **kwargs: object) -> dict[str, object]:
+                del kwargs
+                raise AssertionError("runtime should not be invoked")
+
+        class EvalCompleteValidator:
+            def get_iteration_ids(self) -> set[str]:
+                return {"iter1"}
+
+            def load_iteration_log(self) -> dict[str, object]:
+                return {
+                    "iterations": [
+                        {
+                            "id": "iter1",
+                            "status": "completed",
+                            "decision": "CONTINUE",
+                            "lessons": ["screening target met"],
+                            "metrics": {"validation_score": 0.348},
+                        }
+                    ]
+                }
+
+            def validate(self, *args: object, **kwargs: object) -> dict[str, object]:
+                phase_key = args[0]
+                assert phase_key == "eval"
+                return {
+                    "ok": True,
+                    "classification": "completed",
+                    "iteration_id": "iter1",
+                    "payload": {"decision": "CONTINUE"},
+                }
+
+        monkeypatch.setattr(
+            "auto_iterate.controller.PhaseSupervisor",
+            FailingSupervisor,
+        )
+        ctl = LoopController(project, dry_run=True)
+        ctl.validator = EvalCompleteValidator()
+
+        code = ctl.resume_loop(
+            skip_dynamic_preflight=True,
+            skip_dynamic_preflight_reason="unit test adopts completed eval",
+        )
+
+        updated = load_json(auto_dir / "state.json")
+        events = [
+            json.loads(line)
+            for line in (auto_dir / "events.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        assert code == EXIT_OK
+        assert updated["status"] == "stopped"
+        assert updated["halt_reason"] == "workflow_continue"
+        assert updated["last_decision"] == "CONTINUE"
+        assert updated["budget"]["completed_rounds"] == 1
+        assert updated["best"]["iteration_id"] == "iter1"
+        assert updated["best"]["primary_metric"] == 0.348
+        assert any(event["event"] == "PHASE_COMPLETED" for event in events)
+        assert events[-1]["event"] == "LOOP_STOPPED"
+        assert events[-1]["payload"]["decision"] == "CONTINUE"
+
     def test_missing_dynamic_tooling_fails_when_dynamic_markers_exist(
         self,
         tmp_path: Path,
@@ -1048,7 +1363,9 @@ class TestScreeningTransitions:
         assert events[-1]["event"] == "SCREENING_FAILED"
         assert events[-1]["payload"]["next_phase"] == "eval"
 
-    def test_screening_passed_uses_normal_phase_advance(self, tmp_path: Path) -> None:
+    def test_screening_passed_uses_normal_phase_advance_without_target(
+        self, tmp_path: Path
+    ) -> None:
         project = _setup_project(tmp_path)
         ctl = LoopController(project, dry_run=True)
         ctl.store.ensure_dirs()
@@ -1067,6 +1384,60 @@ class TestScreeningTransitions:
 
         assert handled is False
         assert ctl.state["current_phase_key"] == "run_screening"
+
+    def test_screening_passed_target_met_skips_full_run(self, tmp_path: Path) -> None:
+        project = _setup_project(tmp_path)
+        ctl = LoopController(project, dry_run=True)
+        ctl.store.ensure_dirs()
+        ctl.state = {
+            "loop_id": "loop_screening",
+            "status": "running",
+            "current_round_index": 1,
+            "current_phase_key": "run_screening",
+            "current_iteration_id": "iter1",
+            "phase_attempt": 1,
+            "objective": {
+                "primary_metric": {
+                    "name": "validation_score",
+                    "direction": "maximize",
+                    "target": 0.1,
+                }
+            },
+        }
+        atomic_write_json(
+            project / "iteration_log.json",
+            {
+                "project": "test",
+                "iterations": [
+                    {
+                        "id": "iter1",
+                        "status": "training",
+                        "screening": {
+                            "status": "passed",
+                            "metrics": {"validation_score": 0.348},
+                        },
+                    }
+                ],
+            },
+        )
+
+        handled = ctl._advance_after_success(
+            "run_screening", {"classification": "passed"}
+        )
+
+        events = [
+            json.loads(line)
+            for line in (project / ".auto_iterate" / "events.jsonl")
+            .read_text()
+            .splitlines()
+            if line.strip()
+        ]
+        assert handled is True
+        assert ctl.state["current_phase_key"] == "eval"
+        assert ctl.state["phase_attempt"] == 1
+        assert events[-1]["event"] == "SCREENING_TARGET_MET"
+        assert events[-1]["payload"]["next_phase"] == "eval"
+        assert events[-1]["payload"]["metric_value"] == 0.348
 
 
 # ===================================================================

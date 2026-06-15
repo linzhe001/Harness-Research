@@ -238,10 +238,23 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "You are in auto_mode. Execute `$iterate run` "
         "(screening mode) for iteration {iteration_id}.\n"
         "\n"
-        "Phase: run_screening. Run a short proxy training ({screening_steps} steps).\n"
+        "Phase: run_screening. Run the planned screening command for the "
+        "active iteration.\n"
         "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Read iteration_log.json for iteration {iteration_id} before choosing "
+        "a command.\n"
+        "- If config_diff.planned_command exists, run that exact command; do "
+        "not substitute a generic training dry-run or training smoke command.\n"
+        "- Before running config_diff.planned_command, check any "
+        "config_diff.run_local_config path and any --config path in the "
+        "planned command. If the path is missing and config_diff contains "
+        "base_config plus overrides, materialize the run-local config first; "
+        "otherwise record a planned_command_not_runnable failure without "
+        "launching an unrelated command.\n"
+        "- If the planned command is not runnable, set screening.status=failed "
+        "and record the failed planned command in screening.run_manifest.\n"
         "- Update screening.status to passed|failed|skipped.\n"
         "- When screening.status is passed or failed, record screening.metrics.\n"
         "- When screening.status is passed or failed, record "
@@ -290,11 +303,24 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Preserve git_commit, the final top-level run_manifest artifact "
         "bundle, and screening.run_manifest when screening metrics exist "
         "before completion.\n"
+        "- If screening.status=passed and no full_run exists because the "
+        "screening primary metric already met the target, finalize metrics "
+        "from screening.metrics and explain the screening-target decision.\n"
         "- If screening.status=failed and no full_run exists, finalize metrics "
         "from screening.metrics and explain the failed-screen decision.\n"
         "- Set iteration status to completed.\n"
     ),
 }
+
+_COMPLETION_INSTRUCTIONS = (
+    "\n\n"
+    "COMPLETION CONTRACT:\n"
+    "- When the required phase state change is complete, write a concise final "
+    "summary and exit immediately.\n"
+    "- Do not keep inspecting unrelated files after the postcondition can pass.\n"
+    "- Do not render docs-site or generated views during auto-iterate phases; "
+    "report a docs_site_boundary_report when relevant.\n"
+)
 
 
 def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str:
@@ -348,7 +374,7 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
         forbidden_directions=forbidden_directions_str,
         screening_steps=sp.get("default_steps", 5000),
         threshold_pct=sp.get("threshold_pct", 90),
-    )
+    ) + _COMPLETION_INSTRUCTIONS
 
 
 # ---------------------------------------------------------------------------
@@ -465,13 +491,17 @@ def build_codex_command(
 ) -> list[str]:
     """Build the codex CLI command for a given phase.
 
-    Run phases default to direct host access so training can see the local GPU.
+    The code phase needs direct host access because WF10 code postconditions
+    require a semantic git commit, which writes ``.git``. Run phases default to
+    direct host access so training can see the local GPU.
     Set ``run_phase_full_access=False`` to keep them in ``--full-auto`` when a
     project uses CPU-only or separately managed execution.
     Other phases stay on the safer workspace-write sandbox.
     """
     cmd = ["codex", "exec"]
-    if phase_key in _GPU_VISIBLE_PHASES and run_phase_full_access:
+    if phase_key == "code" or (
+        phase_key in _GPU_VISIBLE_PHASES and run_phase_full_access
+    ):
         cmd.append("--dangerously-bypass-approvals-and-sandbox")
     else:
         cmd.append("--full-auto")
@@ -523,8 +553,10 @@ class PhaseSupervisor:
         stderr_path = str(self.runtime_dir / f"round{ri}_{pk}.stderr.log")
         brief_path = str(self.runtime_dir / f"round{ri}_{pk}_brief.json")
         result_path = str(self.runtime_dir / f"round{ri}_{pk}_result.json")
+        result_file = Path(result_path)
 
         # Write brief for the adapter / diagnostics.
+        result_file.unlink(missing_ok=True)
         atomic_write_json(brief_path, brief)
 
         started_at = iso_now()

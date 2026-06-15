@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "workflow_supervisor" / "scripts"))
@@ -97,6 +100,46 @@ def test_start_dry_run_writes_state_manifest_and_events(
     events = workflow_ctl.read_events(root)
     assert [event["seq"] for event in events] == [1, 2, 3]
     assert events[-1]["event"] == "RUN_COMPLETED"
+
+
+def test_acquire_lock_clears_dead_pid_lock(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+    path = workflow_ctl.lock_path(root)
+    workflow_ctl.atomic_write_json(
+        path,
+        {
+            "schema_version": workflow_ctl.SCHEMA_VERSION,
+            "run_id": "sup_stale",
+            "pid": 999_999_999,
+            "acquired_at": "2026-06-14T20:28:19Z",
+        },
+    )
+
+    workflow_ctl.acquire_lock(root, "sup_new")
+
+    lock = json.loads(path.read_text(encoding="utf-8"))
+    assert lock["run_id"] == "sup_new"
+    assert lock["pid"] == os.getpid()
+
+
+def test_acquire_lock_rejects_lock_with_invalid_pid(tmp_path: Path) -> None:
+    root = make_workspace(tmp_path)
+    path = workflow_ctl.lock_path(root)
+    workflow_ctl.atomic_write_json(
+        path,
+        {
+            "schema_version": workflow_ctl.SCHEMA_VERSION,
+            "run_id": "sup_invalid",
+            "pid": "unknown",
+            "acquired_at": "2026-06-14T20:28:19Z",
+        },
+    )
+
+    with pytest.raises(ValueError, match="invalid pid"):
+        workflow_ctl.acquire_lock(root, "sup_new")
+
+    lock = json.loads(path.read_text(encoding="utf-8"))
+    assert lock["run_id"] == "sup_invalid"
 
 
 def test_start_without_dry_run_pauses_with_typed_request(

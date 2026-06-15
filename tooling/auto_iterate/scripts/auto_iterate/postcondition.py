@@ -10,6 +10,7 @@ and §4.5 for the ``current_iteration_id`` binding algorithm.
 
 from __future__ import annotations
 
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -143,6 +144,80 @@ def _run_manifest_error(
     return None
 
 
+def _planned_command_error(
+    root: Path,
+    iteration: dict,
+    run_manifest: dict[str, Any],
+) -> str | None:
+    config_diff = iteration.get("config_diff")
+    if not isinstance(config_diff, dict):
+        return None
+    planned_command = config_diff.get("planned_command")
+    if not isinstance(planned_command, str) or not planned_command.strip():
+        return None
+    actual_command = run_manifest.get("command")
+    if not isinstance(actual_command, str) or not actual_command.strip():
+        return "screening.run_manifest.command is required"
+    if actual_command.strip() != planned_command.strip():
+        return (
+            "screening.run_manifest.command must match "
+            "config_diff.planned_command"
+        )
+    config_path_error = _planned_config_path_error(root, config_diff)
+    if config_path_error:
+        return config_path_error
+    return None
+
+
+def _planned_config_path_error(
+    root: Path,
+    config_diff: dict[str, Any],
+) -> str | None:
+    planned_command = config_diff.get("planned_command")
+    if not isinstance(planned_command, str) or not planned_command.strip():
+        return None
+
+    try:
+        command_parts = shlex.split(planned_command)
+    except ValueError as exc:
+        return f"config_diff.planned_command could not be parsed: {exc}"
+
+    config_paths: list[str] = []
+    run_local_config = config_diff.get("run_local_config")
+    if isinstance(run_local_config, str) and run_local_config.strip():
+        config_paths.append(run_local_config.strip())
+
+    for index, part in enumerate(command_parts):
+        if part == "--config":
+            if index + 1 >= len(command_parts):
+                return "config_diff.planned_command has --config without a path"
+            config_paths.append(command_parts[index + 1])
+        elif part.startswith("--config="):
+            value = part.split("=", 1)[1].strip()
+            if not value:
+                return "config_diff.planned_command has empty --config path"
+            config_paths.append(value)
+
+    missing = [
+        config_path
+        for config_path in dict.fromkeys(config_paths)
+        if not _path_is_file(root, config_path)
+    ]
+    if missing:
+        return (
+            "config_diff planned config path(s) do not exist: "
+            f"{', '.join(missing)}"
+        )
+    return None
+
+
+def _path_is_file(root: Path, value: str) -> bool:
+    path = Path(value)
+    if path.is_absolute():
+        return path.is_file()
+    return (root / path).is_file()
+
+
 def _run_artifact_error(
     root: Path,
     iteration: dict,
@@ -249,6 +324,7 @@ def _metrics_protocol_error(
     *,
     tracked: set[str],
     primary_metric: str | None,
+    allow_null_primary_metric: bool = False,
 ) -> str | None:
     if tracked:
         unknown = sorted(set(metrics) - tracked)
@@ -261,6 +337,8 @@ def _metrics_protocol_error(
         return f"metrics must include primary metric {primary_metric!r}"
     if primary_metric:
         value = metrics[primary_metric]
+        if allow_null_primary_metric and value is None:
+            return None
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return f"primary metric {primary_metric!r} must be numeric"
     return None
@@ -325,6 +403,22 @@ def iteration_metrics_conflict(iteration: dict[str, Any]) -> bool:
         return False
     nested = full_run.get("metrics")
     return isinstance(nested, dict) and bool(nested) and top_level != nested
+
+
+def failed_run_eval_allows_null_primary(iteration: dict[str, Any]) -> bool:
+    decision = iteration.get("decision")
+    if decision not in {"DEBUG", "PIVOT", "ABORT"}:
+        return False
+
+    full_run = iteration.get("full_run")
+    if isinstance(full_run, dict) and full_run.get("status") in {
+        "recoverable_failed",
+        "failed",
+    }:
+        return True
+
+    screening = iteration.get("screening")
+    return isinstance(screening, dict) and screening.get("status") == "failed"
 
 
 def iteration_report_paths(root: Path, iteration_id: str) -> list[Path]:
@@ -549,6 +643,11 @@ class PostconditionValidator:
         if manifest_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
                          {"error": manifest_error})
+        if status in ("passed", "failed") and isinstance(screening_manifest, dict):
+            command_error = _planned_command_error(self.root, it, screening_manifest)
+            if command_error:
+                return _fail("run_screening", "postcondition_failed",
+                             iteration_id, {"error": command_error})
         if status in ("passed", "failed"):
             artifact_error = _run_artifact_error(
                 self.root,
@@ -711,6 +810,7 @@ class PostconditionValidator:
             metrics,
             tracked=tracked_metrics,
             primary_metric=primary_metric,
+            allow_null_primary_metric=failed_run_eval_allows_null_primary(it),
         )
         if metrics_error:
             return _fail("eval", "postcondition_failed", iteration_id,

@@ -337,7 +337,10 @@ class LoopController:
             return EXIT_INVALID_STATE
 
         status = self.state.get("status")
-        if status not in ("paused", "failed", "running"):
+        stopped_manual_resume = (
+            status == "stopped" and self.state.get("halt_reason") == "manual_stop"
+        )
+        if status not in ("paused", "failed", "running") and not stopped_manual_resume:
             return EXIT_INVALID_STATE
 
         # Reconstruct frozen runtime policy from durable state. Config/defaults
@@ -387,12 +390,16 @@ class LoopController:
         )
         max_attempts = self._phase_retry_ceiling()
         plan = recovery.recover(self.state, max_phase_attempts=max_attempts)
+        if stopped_manual_resume and plan["action"] != ADOPT:
+            return EXIT_INVALID_STATE
 
         if plan["action"] == FAIL:
             self.state["status"] = "paused"
             self.state["halt_reason"] = "manual_action_required"
             self._persist_state()
             return EXIT_MANUAL_ACTION
+        if plan.get("retry_ceiling_bypassed") == "git_sandbox_commit_access":
+            self.state["phase_attempt"] = max_attempts
 
         adopt_after_preflight = plan["action"] == ADOPT
         if adopt_after_preflight:
@@ -424,9 +431,6 @@ class LoopController:
                     self._pause_for_dynamic_preflight_failure(loop_id)
                     return EXIT_MANUAL_ACTION
 
-            if adopt_after_preflight:
-                self._advance_phase()
-
             # Start heartbeat.
             hb_interval = self.state.get("heartbeat", {}).get(
                 "interval_sec",
@@ -436,6 +440,12 @@ class LoopController:
             self.heartbeat.start()
 
             self.events.emit("LOOP_RESUMED", loop_id, "running")
+
+            if adopt_after_preflight:
+                self._complete_recovered_phase(plan)
+                if self.state.get("status") != "running":
+                    return self._map_exit_code()
+
             self._persist_state()
 
             return self.run_main_loop()
@@ -560,6 +570,13 @@ class LoopController:
                 }
         self._persist_state()
 
+        # Snapshot pre-IDs for plan phase from durable state so resume can bind
+        # the same iteration deterministically.
+        pre_ids = None
+        if phase_key == "plan":
+            existing_ids = self.state.get("plan_binding", {}).get("existing_ids", [])
+            pre_ids = set(existing_ids)
+
         self.events.emit(
             "PHASE_STARTED",
             loop_id,
@@ -568,12 +585,28 @@ class LoopController:
             phase_key=phase_key,
         )
 
-        # Snapshot pre-IDs for plan phase from durable state so resume can bind
-        # the same iteration deterministically.
-        pre_ids = None
-        if phase_key == "plan":
-            existing_ids = self.state.get("plan_binding", {}).get("existing_ids", [])
-            pre_ids = set(existing_ids)
+        pre_validation = self._validate_phase_postcondition(
+            phase_key,
+            iteration_id,
+            pre_ids=pre_ids,
+        )
+        pre_satisfied = bool(pre_validation.get("ok"))
+        if pre_satisfied and self.state.get("_recovery_mode") == "retry":
+            self.events.emit(
+                "PHASE_POSTCONDITION_ADOPTED",
+                loop_id,
+                "running",
+                round_index=round_idx,
+                phase_key=phase_key,
+                payload={"reason": "retry_pre_satisfied"},
+            )
+            return self._complete_phase_success(
+                phase_key,
+                round_idx,
+                pre_validation,
+                adopted=True,
+                adoption_payload={"reason": "retry_pre_satisfied"},
+            )
 
         # Select external current auth.
         account = self.accounts.select_account(self.state)
@@ -643,6 +676,37 @@ class LoopController:
 
         # Handle runtime failure.
         exit_class = runtime_result.get("runtime_exit_class", "internal_error")
+        if runtime_result.get("timed_out") or exit_class != "success":
+            validation = self._validate_phase_postcondition(
+                phase_key,
+                iteration_id,
+                pre_ids=pre_ids,
+            )
+            if validation.get("ok") and not pre_satisfied:
+                self.events.emit(
+                    "PHASE_POSTCONDITION_ADOPTED",
+                    loop_id,
+                    "running",
+                    round_index=round_idx,
+                    phase_key=phase_key,
+                    payload={
+                        "reason": "postcondition_satisfied_after_runtime_failure",
+                        "runtime_exit_class": exit_class,
+                        "timed_out": bool(runtime_result.get("timed_out")),
+                    },
+                )
+                return self._complete_phase_success(
+                    phase_key,
+                    round_idx,
+                    validation,
+                    runtime_result=runtime_result,
+                    adopted=True,
+                    adoption_payload={
+                        "reason": "postcondition_satisfied_after_runtime_failure",
+                        "runtime_exit_class": exit_class,
+                    },
+                )
+
         if runtime_result.get("timed_out"):
             self.events.emit(
                 "PHASE_TIMEOUT",
@@ -709,11 +773,10 @@ class LoopController:
             return self._handle_phase_failure(phase_key, round_idx)
 
         # Validate postcondition.
-        validation = self.validator.validate(
+        validation = self._validate_phase_postcondition(
             phase_key,
             iteration_id,
             pre_ids=pre_ids,
-            primary_metric_name=self._objective_primary_metric_name(),
         )
 
         if not validation["ok"]:
@@ -728,14 +791,71 @@ class LoopController:
             )
             return self._handle_phase_failure(phase_key, round_idx)
 
-        # Phase succeeded.
+        return self._complete_phase_success(
+            phase_key,
+            round_idx,
+            validation,
+            runtime_result=runtime_result,
+        )
+
+    def _validate_phase_postcondition(
+        self,
+        phase_key: str,
+        iteration_id: str | None,
+        *,
+        pre_ids: set[str] | None = None,
+    ) -> dict[str, Any]:
+        return self.validator.validate(
+            phase_key,
+            iteration_id,
+            pre_ids=pre_ids,
+            primary_metric_name=self._objective_primary_metric_name(),
+        )
+
+    def _complete_recovered_phase(self, plan: dict[str, Any]) -> dict[str, Any]:
+        """Adopt a recovered phase through the normal success transition path."""
+        phase_key = plan["phase_key"]
+        validation = plan.get("postcondition")
+        if not isinstance(validation, dict) or not validation.get("ok"):
+            validation = self._validate_phase_postcondition(
+                phase_key,
+                plan.get("iteration_id"),
+            )
+        if not validation.get("ok"):
+            raise RuntimeError(
+                f"cannot adopt recovered {phase_key} phase: {validation.get('payload')}"
+            )
+        return self._complete_phase_success(
+            phase_key,
+            int(self.state.get("current_round_index", 0)),
+            validation,
+            adopted=True,
+            adoption_payload={"reason": plan.get("reason")},
+        )
+
+    def _complete_phase_success(
+        self,
+        phase_key: str,
+        round_idx: int,
+        validation: dict[str, Any],
+        *,
+        runtime_result: dict[str, Any] | None = None,
+        adopted: bool = False,
+        adoption_payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload = {"classification": validation.get("classification")}
+        if adopted:
+            payload["adopted_postcondition"] = True
+            if adoption_payload:
+                payload.update(adoption_payload)
+
         self.events.emit(
             "PHASE_COMPLETED",
-            loop_id,
+            self.state["loop_id"],
             "running",
             round_index=round_idx,
             phase_key=phase_key,
-            payload={"classification": validation.get("classification")},
+            payload=payload,
         )
 
         # Bind iteration_id after plan.
@@ -743,8 +863,8 @@ class LoopController:
             self.state["current_iteration_id"] = validation.get("iteration_id")
             self.state.pop("plan_binding", None)
 
-        # Track GPU hours for run phases.
-        if phase_key in ("run_screening", "run_full"):
+        # Track GPU hours for run phases when a runtime actually executed.
+        if phase_key in ("run_screening", "run_full") and runtime_result is not None:
             duration_sec = runtime_result.get("duration_sec", 0)
             gpu_count = self.state["budget"].get("gpu_count", 1)
             gpu_hours = (duration_sec / 3600.0) * gpu_count
@@ -803,6 +923,7 @@ class LoopController:
 
         elif decision in _DECISION_HALT:
             halt_reason = _DECISION_HALT[decision]
+            self._update_best_tracking(round_idx)
             self.state["status"] = "stopped"
             self.state["halt_reason"] = halt_reason
             self.state["budget"]["completed_rounds"] += 1
@@ -863,7 +984,84 @@ class LoopController:
             self.state["current_phase_key"] = "eval"
             self._reset_phase_retry_state()
             return True
+        if (
+            phase_key == "run_screening"
+            and validation.get("classification") == "passed"
+            and self._screening_meets_target()
+        ):
+            metric_name = self._objective_primary_metric_name()
+            metric_value = self._current_screening_metric(metric_name)
+            self.events.emit(
+                "SCREENING_TARGET_MET",
+                self.state["loop_id"],
+                "running",
+                round_index=self.state.get("current_round_index"),
+                phase_key=phase_key,
+                payload={
+                    "next_phase": "eval",
+                    "reason": "screening_target_met",
+                    "metric_name": metric_name,
+                    "metric_value": metric_value,
+                    "target": (
+                        self.state.get("objective", {})
+                        .get("primary_metric", {})
+                        .get("target")
+                    ),
+                },
+            )
+            self.state["current_phase_key"] = "eval"
+            self._reset_phase_retry_state()
+            return True
         return False
+
+    def _current_iteration(self) -> dict[str, Any] | None:
+        iter_id = self.state.get("current_iteration_id")
+        if not iter_id:
+            return None
+        log = self.validator.load_iteration_log()
+        for it in log.get("iterations", []):
+            if it.get("id") == iter_id:
+                return it
+        return None
+
+    def _current_screening_metric(self, metric_name: str | None) -> Any:
+        if not metric_name:
+            return None
+        iteration = self._current_iteration()
+        if not isinstance(iteration, dict):
+            return None
+        screening = iteration.get("screening")
+        if not isinstance(screening, dict):
+            return None
+        metrics = screening.get("metrics")
+        if not isinstance(metrics, dict):
+            return None
+        return metrics.get(metric_name)
+
+    def _screening_meets_target(self) -> bool:
+        objective = self.state.get("objective", {}).get("primary_metric", {})
+        metric_name = self._objective_primary_metric_name()
+        direction = objective.get("direction")
+        target = objective.get("target")
+
+        if not metric_name or direction not in ("maximize", "minimize"):
+            return False
+        if target is None:
+            return False
+
+        value = self._current_screening_metric(metric_name)
+        if value is None:
+            return False
+
+        try:
+            value_num = _numeric_metric_value(value, metric_name)
+            target_num = float(target)
+        except (TypeError, ValueError):
+            return False
+
+        if direction == "maximize":
+            return value_num >= target_num
+        return value_num <= target_num
 
     def _plan_context(
         self,
@@ -1142,7 +1340,10 @@ class LoopController:
                     .get("name")
                 )
                 if pm_name and pm_name in metrics:
-                    new_val = _numeric_metric_value(metrics[pm_name], pm_name)
+                    try:
+                        new_val = _numeric_metric_value(metrics[pm_name], pm_name)
+                    except ValueError:
+                        return
                     old_val = self.state["best"].get("primary_metric")
                     old_num = (
                         _numeric_metric_value(old_val, pm_name)

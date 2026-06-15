@@ -47,9 +47,10 @@ Use this Skill only for WF10 experiment-loop state. It owns
   checklist, preserve slice/glossary boundaries, route implementation through
   `$code-debug`, and require a semantic commit before status `training`.
 - `run`: select latest `training` iteration, resolve Train/Eval scripts from
-  `CLAUDE.md`, use WF5 protocol metric keys, record `run_manifest` with run
-  artifact bundle paths, tracked metrics, screening result when relevant, and
-  canonical failure/manual-mode behavior.
+  `CLAUDE.md`, run `config_diff.planned_command` exactly when present, verify
+  or materialize run-local config paths before launch, use WF5 protocol metric
+  keys, record `run_manifest` with run artifact bundle paths, tracked metrics,
+  screening result when relevant, and canonical failure/manual-mode behavior.
 - `eval`: refresh context, invoke `$evaluate` when needed, compare baseline,
   previous, and best metrics, record decision, lessons, lesson candidates,
   slice/drift observations, complexity/boundary observations, reports, and

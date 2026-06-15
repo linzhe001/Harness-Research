@@ -52,6 +52,15 @@ These are mandatory behavior rules for `$iterate`.
 
 - Must operate on the latest `training` iteration unless the user explicitly redirects.
 - Must build the command from locked entry scripts in `CLAUDE.md` and the chosen config.
+- If `config_diff.planned_command` exists, must run that exact command. Do not
+  substitute a generic training dry-run, preflight-only command, or unrelated
+  smoke command for a planned run/eval command.
+- Before launching `config_diff.planned_command`, must verify every
+  `config_diff.run_local_config` path and every `--config` path in the planned
+  command. If a path is missing and `config_diff` includes enough `base_config`
+  plus override content to materialize it, write the run-local config first.
+  Otherwise record a `planned_command_not_runnable` failure and do not launch an
+  unrelated command.
 - Must resolve the tracked metrics from the baseline or evaluation protocol established in WF5.
 - Must update `run_manifest` in `iteration_log.json` before returning.
 - Must record, when available:
@@ -83,6 +92,11 @@ These are mandatory behavior rules for `$iterate`.
   `run_manifest` may mirror the screening bundle until a full run replaces it.
 - Full runs must preserve `screening.run_manifest` before replacing top-level
   `run_manifest` with the full run bundle.
+- When a screening/proxy run is the planned objective path and its primary
+  metric already meets the WF10 target, auto-iterate may skip `run_full` and
+  advance directly to `eval`; the screening bundle must remain in
+  `screening.run_manifest` and top-level `run_manifest` until a real full run
+  exists.
 - Must end with one of:
   - `status=running` when metrics were collected and eval can proceed
   - `status=training` when the run failed and needs rerun or manual intervention

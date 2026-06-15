@@ -42,21 +42,28 @@ def recovery_action(
     Returns ``(action, reason)`` where action is one of
     ``RERUN``, ``ADOPT``, ``FAIL``.
     """
-    if phase_attempt > max_phase_attempts:
-        return FAIL, f"phase_attempt={phase_attempt} > max={max_phase_attempts}"
-
     if phase_key == "plan":
-        return _recover_plan(iteration_id, iterations, existing_ids=existing_ids)
+        action, reason = _recover_plan(
+            iteration_id,
+            iterations,
+            existing_ids=existing_ids,
+        )
     elif phase_key == "code":
-        return _recover_code(iteration_id, iterations)
+        action, reason = _recover_code(iteration_id, iterations)
     elif phase_key == "run_screening":
-        return _recover_run_screening(iteration_id, iterations)
+        action, reason = _recover_run_screening(iteration_id, iterations)
     elif phase_key == "run_full":
-        return _recover_run_full(iteration_id, iterations)
+        action, reason = _recover_run_full(iteration_id, iterations)
     elif phase_key == "eval":
-        return _recover_eval(iteration_id, iterations)
+        action, reason = _recover_eval(iteration_id, iterations)
     else:
         return FAIL, f"Unknown phase_key: {phase_key}"
+
+    if action in (ADOPT, FAIL):
+        return action, reason
+    if phase_attempt > max_phase_attempts:
+        return FAIL, f"phase_attempt={phase_attempt} > max={max_phase_attempts}"
+    return action, reason
 
 
 # -- plan -------------------------------------------------------------------
@@ -242,6 +249,69 @@ class RecoveryEngine:
         payload = validation.get("payload")
         return f"adopted {phase_key} state failed postcondition: {payload}"
 
+    @staticmethod
+    def _retry_ceiling_reason(
+        phase_attempt: int,
+        max_phase_attempts: int,
+    ) -> str:
+        return f"phase_attempt={phase_attempt} > max={max_phase_attempts}"
+
+    @classmethod
+    def _apply_retry_ceiling(
+        cls,
+        result: dict[str, Any],
+        *,
+        phase_attempt: int,
+        max_phase_attempts: int,
+        iterations: list[dict[str, Any]],
+    ) -> None:
+        if result.get("action") != RERUN:
+            return
+        if phase_attempt <= max_phase_attempts:
+            return
+        if cls._can_retry_after_git_sandbox_fix(result, iterations):
+            result["retry_ceiling_bypassed"] = "git_sandbox_commit_access"
+            result["reason"] = (
+                f"{cls._retry_ceiling_reason(phase_attempt, max_phase_attempts)}; "
+                f"{result.get('reason')}; retrying after git sandbox access fix"
+            )
+            return
+
+        ceiling_reason = cls._retry_ceiling_reason(
+            phase_attempt,
+            max_phase_attempts,
+        )
+        existing_reason = result.get("reason")
+        if isinstance(existing_reason, str) and existing_reason:
+            result["reason"] = f"{ceiling_reason}; {existing_reason}"
+        else:
+            result["reason"] = ceiling_reason
+        result["action"] = FAIL
+
+    @staticmethod
+    def _can_retry_after_git_sandbox_fix(
+        result: dict[str, Any],
+        iterations: list[dict[str, Any]],
+    ) -> bool:
+        if result.get("phase_key") != "code":
+            return False
+        iteration_id = result.get("iteration_id")
+        if not isinstance(iteration_id, str):
+            return False
+        iteration = _get_iteration(iterations, iteration_id)
+        if not isinstance(iteration, dict):
+            return False
+        blocker = iteration.get("code_phase_blocker")
+        if not isinstance(blocker, dict):
+            return False
+        if blocker.get("source_change_required") is not False:
+            return False
+        validations = blocker.get("validation_passed")
+        if not isinstance(validations, list) or not validations:
+            return False
+        reason = str(blocker.get("reason", "")).lower()
+        return "git" in reason and ("read-only" in reason or "sandbox" in reason)
+
     def recover(
         self,
         state: dict[str, Any],
@@ -271,7 +341,7 @@ class RecoveryEngine:
             phase_key=phase_key,
             iteration_id=iteration_id,
             iterations=iterations,
-            phase_attempt=phase_attempt,
+            phase_attempt=min(phase_attempt, max_phase_attempts),
             max_phase_attempts=max_phase_attempts,
             existing_ids=existing_ids,
         )
@@ -311,4 +381,10 @@ class RecoveryEngine:
             elif phase_key == "plan" and validation.get("iteration_id"):
                 result["adopted_iteration_id"] = validation["iteration_id"]
 
+        self._apply_retry_ceiling(
+            result,
+            phase_attempt=phase_attempt,
+            max_phase_attempts=max_phase_attempts,
+            iterations=iterations,
+        )
         return result

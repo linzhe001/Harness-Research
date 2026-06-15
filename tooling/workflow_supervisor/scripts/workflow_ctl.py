@@ -877,8 +877,38 @@ def write_stage_summary(workspace_root: Path, state: dict[str, Any]) -> None:
     atomic_write_text(run_dir / "stage_summary.md", "\n".join(lines))
 
 
+def _process_is_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _clear_stale_lock(path: Path) -> None:
+    if not path.exists():
+        return
+    lock = load_json(path)
+    if not isinstance(lock, dict):
+        raise ValueError(f"invalid supervisor lock at {path}: expected object")
+    pid = lock.get("pid")
+    if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
+        raise ValueError(f"supervisor lock already exists with invalid pid: {path}")
+    if _process_is_alive(pid):
+        raise ValueError(f"supervisor lock already exists: {path}")
+    current_lock = load_json_if_exists(path, None)
+    if current_lock is None:
+        return
+    if current_lock != lock:
+        raise ValueError(f"supervisor lock changed while checking stale lock: {path}")
+    path.unlink()
+
+
 def acquire_lock(workspace_root: Path, run_id: str) -> None:
     path = lock_path(workspace_root)
+    _clear_stale_lock(path)
     if path.exists():
         raise ValueError(f"supervisor lock already exists: {path}")
     atomic_write_json(
@@ -8598,6 +8628,81 @@ def resume_supervised_node_request(
                 payload={"mode": "build_ready_for_iterate"},
             )
             return emit_status(workspace_root, args.json)
+
+        if segment == "iterate" and node_id == "iterate_delegate_auto_iterate":
+            decision = answer_decision(answer_record)
+            if decision in {"resume", "recover"}:
+                resume_result = run_auto_iterate_command(
+                    workspace_root,
+                    "resume",
+                    [],
+                )
+                append_event(
+                    workspace_root,
+                    "AUTO_ITERATE_DELEGATED",
+                    run_id=run_id,
+                    segment="iterate",
+                    node_id="iterate_delegate_auto_iterate",
+                    status="resumed",
+                    payload={
+                        "exit_code": resume_result["exit_code"],
+                        "command": resume_result["command"],
+                        "decision": decision,
+                    },
+                )
+                exit_code, _status_result = sync_auto_iterate_status(
+                    workspace_root,
+                    run_id=run_id,
+                    state=state,
+                    start_result=resume_result,
+                )
+                pending = load_json_if_exists(pending_request_path(workspace_root), {})
+                if (
+                    exit_code == EXIT_OK
+                    and isinstance(pending, dict)
+                    and pending.get("request_id") == request.get("request_id")
+                ):
+                    pending_request_path(workspace_root).unlink(missing_ok=True)
+                return emit_status(workspace_root, args.json, exit_code=exit_code)
+            if decision == "stop":
+                stop_result = run_auto_iterate_command(workspace_root, "stop", [])
+                append_event(
+                    workspace_root,
+                    "AUTO_ITERATE_DELEGATED",
+                    run_id=run_id,
+                    segment="iterate",
+                    node_id="iterate_delegate_auto_iterate",
+                    status="stop_requested",
+                    payload={
+                        "exit_code": stop_result["exit_code"],
+                        "command": stop_result["command"],
+                    },
+                )
+                exit_code, _status_result = sync_auto_iterate_status(
+                    workspace_root,
+                    run_id=run_id,
+                    state=state,
+                    start_result=stop_result,
+                )
+                pending = load_json_if_exists(pending_request_path(workspace_root), {})
+                if (
+                    exit_code == EXIT_OK
+                    and isinstance(pending, dict)
+                    and pending.get("request_id") == request.get("request_id")
+                ):
+                    pending_request_path(workspace_root).unlink(missing_ok=True)
+                return emit_status(workspace_root, args.json, exit_code=exit_code)
+            if decision == "revise_goal":
+                print(
+                    "revise_goal requires auto_iterate_ctl override before resume",
+                    file=sys.stderr,
+                )
+                return EXIT_MANUAL_ACTION
+            print(
+                "answer decision must be resume, recover, stop, or revise_goal",
+                file=sys.stderr,
+            )
+            return EXIT_INVALID_INPUT
 
         if segment == "release" and node_id == "release_final_exp_matrix":
             release_action = release_action_from_goal(goal)

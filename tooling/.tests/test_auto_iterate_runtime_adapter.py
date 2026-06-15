@@ -26,7 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
 from auto_iterate.lock import LockManager
 from auto_iterate.postcondition import PostconditionValidator, bind_iteration_id
-from auto_iterate.recovery import ADOPT, RERUN, RecoveryEngine
+from auto_iterate.recovery import ADOPT, FAIL, RERUN, RecoveryEngine
 from auto_iterate.runtime import (
     BriefValidationError,
     HeartbeatWorker,
@@ -153,6 +153,8 @@ class TestRenderPrompt:
         assert "Forbidden directions" in prompt
         assert "config_diff object" in prompt
         assert "codex_review" in prompt
+        assert "exit immediately" in prompt
+        assert "Do not render docs-site" in prompt
 
     def test_eval_prompt(self) -> None:
         state = load_json(FIXTURES / "state.valid.json")
@@ -179,6 +181,10 @@ class TestRenderPrompt:
         state = load_json(FIXTURES / "state.valid.json")
         brief = build_brief(state, "run_screening")
         prompt = render_prompt(brief, iteration_id="iter3")
+        assert "config_diff.planned_command" in prompt
+        assert "do not substitute a generic training dry-run" in prompt
+        assert "config_diff.run_local_config" in prompt
+        assert "materialize the run-local config first" in prompt
         assert "screening.run_manifest" in prompt
         assert "artifact_contract_version" in prompt
         assert "run_type=screening" in prompt
@@ -249,6 +255,11 @@ class TestResultAndClassify:
         )
         assert "--full-auto" in cmd
         assert "--dangerously-bypass-approvals-and-sandbox" not in cmd
+
+    def test_build_codex_command_code_phase_uses_danger_full_access(self) -> None:
+        cmd = build_codex_command("/tmp/work", "code")
+        assert "--dangerously-bypass-approvals-and-sandbox" in cmd
+        assert "--full-auto" not in cmd
 
     def test_build_codex_command_non_run_phase_keeps_full_auto(self) -> None:
         cmd = build_codex_command("/tmp/work", "plan")
@@ -360,6 +371,28 @@ class TestPhaseSupervisorDryRun:
         assert brief_path.exists()
         loaded = load_json(brief_path)
         assert loaded["phase_key"] == "eval"
+
+    def test_run_phase_removes_stale_result_file(self, tmp_path: Path) -> None:
+        state = load_json(FIXTURES / "state.valid.json")
+        brief = build_brief(state, "plan")
+        runtime_dir = tmp_path / "runtime"
+        runtime_dir.mkdir()
+        result_path = runtime_dir / "round3_plan_result.json"
+        result_path.write_text('{"stale": true}\n', encoding="utf-8")
+
+        supervisor = PhaseSupervisor(
+            workspace_root=tmp_path,
+            runtime_dir=runtime_dir,
+        )
+        supervisor.run_phase(
+            brief=brief,
+            account_id="acc1",
+            codex_home="/tmp/fake",
+            timeout_sec=10,
+            dry_run=True,
+        )
+
+        assert not result_path.exists()
 
 
 # ===================================================================
@@ -704,6 +737,98 @@ class TestPostconditionValidator:
         result = v.validate("run_screening", "iter3")
         assert result["ok"] is True
         assert result["payload"]["screening_status"] == "failed"
+
+    def test_run_screening_rejects_command_mismatch(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
+             "config_diff": {
+                 "planned_command": (
+                     "PYTHONPATH=src python scripts/run_planned_eval.py "
+                     "--config configs/example_eval.yaml"
+                 ),
+             },
+             "screening": {
+                 "recommended": True,
+                 "status": "passed",
+                 "metrics": {"PSNR": 30.1},
+             },
+             "run_manifest": {
+                 "command": "python scripts/train.py --dry-run",
+                 "exp_dir": "experiments/iter3_screen",
+             }},
+        ])
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is False
+        assert "config_diff.planned_command" in result["payload"]["error"]
+
+    def test_run_screening_rejects_missing_planned_config_path(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        planned_command = (
+            "python train.py --config runs/iter3/requested_config.yaml"
+        )
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
+             "config_diff": {
+                 "planned_command": planned_command,
+                 "run_local_config": "runs/iter3/requested_config.yaml",
+             },
+             "screening": {
+                 "recommended": True,
+                 "status": "passed",
+                 "metrics": {"PSNR": 30.1},
+             },
+             "run_manifest": {
+                 "command": planned_command,
+                 "exp_dir": "experiments/iter3_screen",
+             }},
+        ])
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is False
+        assert "planned config path" in result["payload"]["error"]
+        assert "runs/iter3/requested_config.yaml" in result["payload"]["error"]
+
+    def test_run_screening_accepts_existing_planned_config_path(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        planned_config = tmp_path / "runs" / "iter3" / "requested_config.yaml"
+        planned_config.parent.mkdir(parents=True)
+        planned_config.write_text("seed: 1\n", encoding="utf-8")
+        planned_command = (
+            "python train.py --config runs/iter3/requested_config.yaml"
+        )
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
+             "config_diff": {
+                 "planned_command": planned_command,
+                 "run_local_config": "runs/iter3/requested_config.yaml",
+             },
+             "screening": {
+                 "recommended": True,
+                 "status": "passed",
+                 "metrics": {"PSNR": 30.1},
+             },
+             "run_manifest": {
+                 "command": planned_command,
+                 "exp_dir": "experiments/iter3_screen",
+             }},
+        ])
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is True
 
     def test_run_screening_failed_requires_metrics(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -1170,6 +1295,31 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "must be numeric" in result["payload"]["error"]
 
+    def test_eval_allows_null_primary_metric_for_failed_debug_iteration(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "DEBUG", "lessons": ["x"],
+             "metrics": {"accuracy": None},
+             "full_run": {
+                 "status": "recoverable_failed",
+                 "metrics": {"accuracy": None},
+                 "error": "training guard blocked full run",
+             },
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+
+        result = v.validate("eval", "iter3", primary_metric_name="accuracy")
+
+        assert result["ok"] is True
+        assert result["payload"]["decision"] == "DEBUG"
+
     def test_run_full_requires_primary_metric_when_bound(
         self,
         tmp_path: Path,
@@ -1346,6 +1496,100 @@ class TestRecoveryEngine:
 
         assert result["action"] == RERUN
         assert "git_message" in str(result["postcondition"]["payload"])
+
+    def test_recovery_adopts_code_when_phase_attempt_exceeded(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "training",
+                    "git_commit": "abc123",
+                    "git_message": "train(research): test recovery adoption",
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "code",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 3,
+            },
+            max_phase_attempts=2,
+        )
+
+        assert result["action"] == ADOPT
+        assert result["postcondition"]["ok"] is True
+
+    def test_recovery_fails_after_ceiling_when_adoption_revalidation_fails(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "training",
+                    "git_commit": "abc123",
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "code",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 3,
+            },
+            max_phase_attempts=2,
+        )
+
+        assert result["action"] == FAIL
+        assert "phase_attempt=3 > max=2" in result["reason"]
+        assert "git_message" in str(result["postcondition"]["payload"])
+
+    def test_recovery_allows_one_code_retry_after_git_sandbox_fix(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        engine = self._make_engine(
+            tmp_path,
+            [
+                {
+                    "id": "iter3",
+                    "status": "coding",
+                    "code_phase_blocker": {
+                        "reason": (
+                            "Semantic commit could not be created because "
+                            ".git is read-only in the current sandbox"
+                        ),
+                        "validation_passed": [
+                            "python -m py_compile src/example.py",
+                            "ruff check --select=E,F,I src/example.py",
+                        ],
+                        "source_change_required": False,
+                    },
+                }
+            ],
+        )
+
+        result = engine.recover(
+            {
+                "current_phase_key": "code",
+                "current_iteration_id": "iter3",
+                "phase_attempt": 3,
+            },
+            max_phase_attempts=2,
+        )
+
+        assert result["action"] == RERUN
+        assert result["retry_ceiling_bypassed"] == "git_sandbox_commit_access"
+        assert "retrying after git sandbox access fix" in result["reason"]
 
     def test_recovery_revalidates_screening_adoption(self, tmp_path: Path) -> None:
         engine = self._make_engine(

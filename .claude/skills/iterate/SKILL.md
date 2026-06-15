@@ -56,13 +56,19 @@ report the blocker.
 ### `run [config_path]`
 
 Select the latest `training` iteration. Resolve Train/Eval scripts from
-`CLAUDE.md`, infer or use the config path, build the command from `config_diff`,
-and run training in the background when possible. Record `run_manifest` with
-run artifact bundle paths, `training_trace`, checkpoint path, duration, exit
-code, and only metrics defined by the active evaluation protocol. For screening
-runs, store the bundle in `screening.run_manifest` and mirror it in top-level
-`run_manifest` until a full run replaces the top-level bundle. On successful
-eval, set status `running`.
+`CLAUDE.md`, infer or use the config path, and build the command from
+`config_diff`. If `config_diff.planned_command` exists, run that exact command;
+do not substitute a generic training dry-run, preflight-only command, or
+unrelated smoke command for a planned run/eval command. Before launching it, verify any
+`config_diff.run_local_config` path and any `--config` path; materialize a
+missing run-local config only when `config_diff` includes enough `base_config`
+plus override content, otherwise record `planned_command_not_runnable` without
+launching an unrelated command. Record `run_manifest` with run artifact bundle
+paths, `training_trace`, checkpoint path, duration, exit code, and only metrics
+defined by the active evaluation protocol. For screening runs, store the bundle
+in `screening.run_manifest` and mirror it in top-level `run_manifest` until a
+full run replaces the top-level bundle. On successful eval, set status
+`running`.
 For OOM, NaN, crash, or missing checkpoint, keep status `training` and report
 the concrete error. If `--manual` or cluster execution is required, register the
 command and expected outputs without inventing metrics.
