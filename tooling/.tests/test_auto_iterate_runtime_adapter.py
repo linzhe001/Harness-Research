@@ -798,6 +798,37 @@ class TestPostconditionValidator:
         assert "planned config path" in result["payload"]["error"]
         assert "runs/iter3/requested_config.yaml" in result["payload"]["error"]
 
+    def test_run_screening_failed_accepts_planned_command_not_runnable(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        planned_command = (
+            "python train.py --config runs/iter3/requested_config.yaml"
+        )
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "training",
+             "git_commit": "abc123",
+             "config_diff": {
+                 "planned_command": planned_command,
+                 "run_local_config": "runs/iter3/requested_config.yaml",
+             },
+             "screening": {
+                 "recommended": True,
+                 "status": "failed",
+                 "metrics": {"PSNR": 25.4},
+             },
+             "run_manifest": {
+                 "command": planned_command,
+                 "exp_dir": "experiments/iter3_screen",
+                 "error": "planned_command_not_runnable",
+             }},
+        ])
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is True
+        assert result["payload"]["screening_status"] == "failed"
+
     def test_run_screening_accepts_existing_planned_config_path(
         self,
         tmp_path: Path,

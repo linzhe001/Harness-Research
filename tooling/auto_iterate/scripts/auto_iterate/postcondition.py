@@ -148,6 +148,8 @@ def _planned_command_error(
     root: Path,
     iteration: dict,
     run_manifest: dict[str, Any],
+    *,
+    screening_status: str | None = None,
 ) -> str | None:
     config_diff = iteration.get("config_diff")
     if not isinstance(config_diff, dict):
@@ -163,6 +165,11 @@ def _planned_command_error(
             "screening.run_manifest.command must match "
             "config_diff.planned_command"
         )
+    if (
+        screening_status == "failed"
+        and run_manifest.get("error") == "planned_command_not_runnable"
+    ):
+        return None
     config_path_error = _planned_config_path_error(root, config_diff)
     if config_path_error:
         return config_path_error
@@ -644,7 +651,12 @@ class PostconditionValidator:
             return _fail("run_screening", "postcondition_failed", iteration_id,
                          {"error": manifest_error})
         if status in ("passed", "failed") and isinstance(screening_manifest, dict):
-            command_error = _planned_command_error(self.root, it, screening_manifest)
+            command_error = _planned_command_error(
+                self.root,
+                it,
+                screening_manifest,
+                screening_status=status,
+            )
             if command_error:
                 return _fail("run_screening", "postcondition_failed",
                              iteration_id, {"error": command_error})
