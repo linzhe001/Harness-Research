@@ -192,6 +192,9 @@ def test_iterate_contract_covers_eval_iteration_reports() -> None:
     contract = contract_by_skill(REPO_ROOT, "iterate")
     assert contract is not None
 
+    assert "wf10_state_preflight" in contract["required_actions"]
+    assert "single_next_command" in contract["required_actions"]
+    assert "run_local_promotion_check" in contract["required_actions"]
     assert "iteration_report_write" in contract["gate_ledger_required_when"]
     assert "docs/iterations/" in contract["sensitive_paths"]
     assert (

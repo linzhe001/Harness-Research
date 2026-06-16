@@ -37,6 +37,25 @@ Use this Skill only for WF10 experiment-loop state. It owns
   `iteration_log.json` and Gate ledger by path.
 - Include at most 5 Gate ledger summaries in prompts or status context.
 
+## Preflight And Next Action
+
+Before recommending or executing a sub-command, resolve the latest iteration
+from `iteration_log.json`: `id`, `status`, `decision`,
+`config_diff.planned_command`, target script existence, `git_commit`,
+`run_manifest`, and metrics/report availability.
+
+Recommend exactly one next command unless the operator explicitly asks for a
+full playbook. Map status to action: `planned` with missing code -> `code`;
+`training` with committed code and runnable command -> `run`; `running` with
+run artifacts -> `eval`; `completed` with `NEXT_ROUND` or `DEBUG` -> `plan`.
+Do not recommend `code` for `training`, `run` for a missing planned command
+target, or `eval` before run artifacts exist.
+
+If a run-local script becomes reusable across another slice, training path, or
+follow-up iteration, recommend `$change classify` to promote it into stable
+`src/`, `scripts/`, `tests`, and `project_map.json` surfaces instead of
+cloning more `runs/wf10/iter*/` scripts.
+
 ## Commands
 
 - `plan`: ensure no blocking unfinished iteration, allocate ID, check accepted

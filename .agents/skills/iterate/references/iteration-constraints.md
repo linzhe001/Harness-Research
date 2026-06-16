@@ -17,6 +17,44 @@ These are mandatory behavior rules for `$iterate`.
 - `.agents/state/` is volatile local context only; never move canonical project state there.
 - Keep `.agents/state/` as the reserved local context directory, but create context files inside it only when needed.
 
+## Preflight And Recommendation Rules
+
+Before any `$iterate` sub-command or WF10 command recommendation:
+
+- Must resolve the latest iteration from `iteration_log.json`, including:
+  - `id`
+  - `status`
+  - `decision`
+  - `config_diff.planned_command`
+  - planned command target script existence when a script path is present
+  - `git_commit`
+  - `run_manifest`
+  - metrics and report availability
+- Must recommend exactly one immediate next command unless the operator asks for
+  a full playbook. A full playbook must still label the current command first.
+- Must map state to action:
+  - no active iteration, or latest `completed` with `NEXT_ROUND`/`DEBUG` -> `plan`
+  - latest `planned` and implementation missing -> `code`
+  - latest `training` with committed code and runnable planned command -> `run`
+  - latest `running` with run artifacts -> `eval`
+  - latest `completed` with `CONTINUE` -> orchestrator handoff, not another iteration command
+- Must not recommend:
+  - `code` when the latest iteration is already `training` or `running`
+  - `run` when the planned command target script or required config path is missing
+  - `eval` before a run artifact bundle or preserved manual-run registration exists
+  - a multi-command chain as the current instruction unless explicitly requested
+
+Run-local versus stable-code boundary:
+
+- A single-iteration probe may live under `runs/wf10/<iter-id>/`.
+- If the same run-local capability is reused for another slice, a training
+  route, an adapter/reranker follow-up, or more than one future iteration, must
+  recommend `$change classify` to promote it into stable `src/`, `scripts/`,
+  `tests`, and `project_map.json` surfaces before further expansion.
+- `$iterate code` must not become the default home for reusable architecture.
+  Use `$change classify` for direction or architecture changes and `$code-debug`
+  for stable implementation fixes.
+
 ## Sub-command Obligations
 
 ### `plan`
@@ -57,10 +95,11 @@ These are mandatory behavior rules for `$iterate`.
   smoke command for a planned run/eval command.
 - Before launching `config_diff.planned_command`, must verify every
   `config_diff.run_local_config` path and every `--config` path in the planned
-  command. If a path is missing and `config_diff` includes enough `base_config`
-  plus override content to materialize it, write the run-local config first.
-  Otherwise record a `planned_command_not_runnable` failure and do not launch an
-  unrelated command.
+  command. It must also verify the planned command target script when the
+  command names a workspace script path. If a path is missing and `config_diff`
+  includes enough `base_config` plus override content to materialize it, write
+  the run-local config first. Otherwise record a
+  `planned_command_not_runnable` failure and do not launch an unrelated command.
 - Must resolve the tracked metrics from the baseline or evaluation protocol established in WF5.
 - Must update `run_manifest` in `iteration_log.json` before returning.
 - Must record, when available:
@@ -166,3 +205,6 @@ Every `$iterate` sub-command response must make the state transition explicit:
 - new status
 - files updated
 - recommended next command
+
+The recommended next command must be singular unless the operator explicitly
+asked for a full playbook.

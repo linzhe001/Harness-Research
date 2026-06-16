@@ -34,6 +34,25 @@ Load active iteration plus 5 most recent summaries; reference full
 `iteration_log.json` and Gate ledger by path. Include at most 5 Gate ledger
 summaries in prompts or status context.
 
+## Preflight And Next Action
+
+Before recommending or executing a sub-command, resolve the latest iteration
+from `iteration_log.json`: `id`, `status`, `decision`,
+`config_diff.planned_command`, target script existence, `git_commit`,
+`run_manifest`, and metrics/report availability.
+
+Recommend exactly one immediate command unless the operator asks for a full
+playbook. Map state to action: `planned` with missing code -> `code`;
+`training` with committed code and runnable command -> `run`; `running` with
+run artifacts -> `eval`; `completed` with `NEXT_ROUND` or `DEBUG` -> `plan`.
+Do not recommend `code` for `training`, `run` for a missing planned command
+target, or `eval` before run artifacts exist.
+
+If a run-local script is reused for another slice, training route, or follow-up
+iteration, recommend `/change classify` to promote it into stable `src/`,
+`scripts`, `tests`, and `project_map.json` surfaces instead of cloning more
+`runs/wf10/iter*/` scripts.
+
 ## Commands
 
 ### `plan [hypothesis]`
@@ -115,6 +134,8 @@ status, decision, and key change.
   pieces are missing, report `NOT_RUN` and keep the iteration incomplete.
 - Compare against baseline and previous best during eval.
 - `git_commit` is required after `code` completes.
+- The recommended next command must be singular unless a full playbook was
+  explicitly requested.
 - Core training/evaluation logic must stay in `CLAUDE.md` Entry Scripts;
   auxiliary scripts may support but not replace them.
 - Do not promote raw observations to `MEMORY.md`; follow lesson-quality rules.
@@ -123,9 +144,3 @@ status, decision, and key change.
 
 After stable Markdown outputs are finalized, invoke `/docs-site` or report
 `docs_site_boundary_report`. Do not render for temporary drafts.
-
-## Durable Docs Render
-
-After stable Markdown is finalized, invoke `/docs-site` or report
-`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
-temporary drafts.

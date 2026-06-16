@@ -2484,7 +2484,10 @@
         ]
       },
       "required_actions": [
+        "wf10_state_preflight",
         "iteration_log_update",
+        "single_next_command",
+        "run_local_promotion_check",
         "decision_vocabulary",
         "lesson_quality_check_or_NOT_RUN",
         "gate_ledger",
