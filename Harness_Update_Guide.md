@@ -10,6 +10,7 @@ same-worktree dual-repo project.
 For full framework bootstrap, see:
 
 - [AI_AGENT_SETUP.md](./AI_AGENT_SETUP.md)
+- [Legacy Docs Migration](./workflow_handbook/pages/legacy_docs_migration.md)
 
 In this layout:
 
@@ -161,12 +162,27 @@ Then update the Harness framework with a fast-forward pull:
 test -d .harness
 hgit remote -v
 hgit status --short
+HARNESS_BEFORE=$(hgit rev-parse HEAD)
 hgit fetch origin
 hgit pull --ff-only origin "$(hgit branch --show-current)"
+HARNESS_AFTER=$(hgit rev-parse HEAD)
 hgit status --short
+printf 'Harness updated: %s -> %s\n' "$HARNESS_BEFORE" "$HARNESS_AFTER"
 ```
 
 Expected result after the final status command: empty output.
+Keep `HARNESS_BEFORE` and `HARNESS_AFTER` available for the migration review
+below. If you use a wrapper, it should print or persist equivalent before/after
+Harness commit refs.
+
+If the variables were lost after a successful pull, recover them from Harness
+git metadata when possible:
+
+```bash
+HARNESS_BEFORE=$(hgit rev-parse ORIG_HEAD)
+HARNESS_AFTER=$(hgit rev-parse HEAD)
+hgit reflog --date=iso -5
+```
 
 If `hgit remote -v` does not point at the Harness Research remote, fix the
 Harness remote before pulling. Do not use the research repo remote for Harness:
@@ -347,7 +363,67 @@ If any of these changed:
 
 read them as framework updates. Do not commit them into the research repo.
 
-### 3. Generate candidate guidance inputs
+### 3. Compare old and new Harness behavior before migrating
+
+Before changing research-owned files, compare the just-pulled Harness range
+against the version the target workspace was using. This step decides whether
+the pull is only a framework refresh or also requires a project migration.
+
+Use the `HARNESS_BEFORE` and `HARNESS_AFTER` refs captured during the pull:
+
+```bash
+: "${HARNESS_BEFORE:?missing pre-pull Harness ref}"
+: "${HARNESS_AFTER:?missing post-pull Harness ref}"
+
+hgit diff --name-status "$HARNESS_BEFORE..$HARNESS_AFTER" -- \
+  AI_AGENT_SETUP.md Harness_Update_Guide.md \
+  .claude .agents workflow_handbook templates schemas tooling
+
+hgit diff "$HARNESS_BEFORE..$HARNESS_AFTER" -- \
+  schemas/skill_contracts.json templates/docs workflow_handbook/pages \
+  .agents/references .agents/skills .claude/shared .claude/skills \
+  tooling/evidence tooling/workflow_supervisor tooling/auto_iterate
+```
+
+Then isolate migration-sensitive surfaces:
+
+```bash
+hgit diff "$HARNESS_BEFORE..$HARNESS_AFTER" --name-only | rg \
+  '^(templates/docs|schemas/|workflow_handbook/pages/legacy_docs_migration.md|\.agents/references/context-layering-policy.md|\.agents/references/contract-gating-rule.md|\.agents/references/evidence-chain-rule.md|tooling/evidence/)'
+```
+
+If this command returns paths, read
+`workflow_handbook/pages/legacy_docs_migration.md` before editing project docs.
+Do not infer facts, approvals, dataset paths, metrics, or successful runs from
+the new Harness templates. Templates are migration inputs only.
+
+### 4. Plan the target-workspace migration
+
+Write a short migration plan before modifying project-owned files. For a small
+update, the plan can live in the current conversation. For a larger workspace
+migration, create a persistent plan such as
+`docs/90_legacy/Harness_Update_Migration_Plan.md` in the research repo.
+
+The plan should record:
+
+- `HARNESS_BEFORE` and `HARNESS_AFTER`
+- the Harness surfaces that changed
+- affected research-owned files such as `AGENTS.md`, `CLAUDE.md`, `README.md`,
+  `docs/**`, `MEMORY.md`, `PROJECT_STATE.json`, `iteration_log.json`, and
+  `project_map.json`
+- which files will be copied, merged, archived under `docs/90_legacy/**`, or
+  left unchanged
+- which gates will run and any expected `NOT_RUN` reasons
+- approval decisions needed before a draft becomes an Approved Contract or a
+  claim boundary changes
+
+For contract, fact, protocol, discovery, or memory migrations, use
+`workflow_handbook/pages/legacy_docs_migration.md` as the operating guide. Old
+docs are Source Artifacts until reclassified. Old `approved`, `final`, or
+`validated` wording is not current Human Approval unless there is current
+Approval Evidence.
+
+### 5. Generate candidate guidance inputs
 
 Harness updates do not automatically merge project-specific root guidance.
 Generate temporary candidates, compare them with the research-owned files, then
@@ -377,7 +453,7 @@ fi
 `README_new.md` is a comparison input because there is no dedicated
 `README.md.template`. Do not copy it directly over the project README.
 
-### 4. Compare candidates with project-owned files
+### 6. Compare candidates with project-owned files
 
 Check at least:
 
@@ -435,7 +511,7 @@ rm -f README_new.md
 rmdir .harness_update_candidates 2>/dev/null || true
 ```
 
-### 5. Check dynamic context updates
+### 7. Check dynamic context updates
 
 If the project uses the dynamic context layout, also compare the framework
 templates and schemas before refreshing project-owned docs:
@@ -454,6 +530,26 @@ Do not overwrite approved contract docs automatically. Treat template changes as
 new guidance and merge them into `docs/10_contract/**`, `docs/30_evidence/**`,
 `docs/35_protocol/**`, `.evidence/schemas/**`, or committed docchains only
 after reviewing the current project state.
+
+When docs layout, contract docs, memory, discovery, protocol, or
+`docs/90_legacy/**` are affected, follow
+`workflow_handbook/pages/legacy_docs_migration.md`:
+
+- move old `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, and
+  `docs/Execution_Readiness_Packet.md` into `docs/05_intake/**`
+- migrate old contract text into `docs/10_contract/**` as `Status: draft`
+  unless current Approval Evidence exists
+- place current facts, Conclusion Evidence inputs, and Protocol Drafts under
+  `docs/20_facts/**`, `docs/30_evidence/**`, and `docs/35_protocol/**`
+- put observations, phenomena, hypotheses, and next-run hints in
+  `docs/45_discoveries/Discovery_Ledger.md`
+- promote only accepted lessons to `docs/50_memory/Lessons.md` or `MEMORY.md`
+- archive superseded narrative docs under `docs/90_legacy/**`
+
+Do not overwrite Approved Contracts automatically. If the migration changes a
+contract boundary, mark the changed contract `draft` or `superseded`, build a
+Review Packet, and wait for explicit Human Approval before treating it as
+approved again.
 
 If a project has not yet opted into dynamic context and wants to do so after a
 harness update, initialize without overwriting existing docs:
@@ -482,7 +578,7 @@ docs; leave `.evidence/protocol_compiler/**` and `.evidence/review_packets/**`
 as local/generated review artifacts unless the project explicitly archives
 them.
 
-### 6. Check WF10 run artifact contract updates
+### 8. Check WF10 run artifact contract updates
 
 If any of these changed:
 
@@ -521,7 +617,7 @@ Do not hand-edit `iteration_log.json` to invent successful runs. If the
 artifact directory, stdout log, config snapshot, or git snapshot cannot be
 found, keep the result out of strong Conclusion Evidence until rerun.
 
-### 7. Check workflow supervisor and hook updates
+### 9. Check workflow supervisor and hook updates
 
 If any of these changed:
 
@@ -563,7 +659,7 @@ If your repo versions `controller.local.yaml` / `accounts.local.yaml` as shared
 defaults, update those tracked files in place while keeping generated credential
 directories outside the repo.
 
-### 8. Check the research repo separately
+### 10. Check the research repo separately
 
 ```bash
 git status --short
@@ -571,6 +667,10 @@ git status --short
 
 Harness-owned files should not show up there as files to add. If they do, hide
 them via `.git/info/exclude` in the research repo instead of tracking them.
+
+After a project migration, commit the research-owned migration slice with normal
+`git`. Commit Harness-owned framework changes only with `hgit`. Keep generated
+review artifacts out of commits unless the project explicitly archives them.
 
 ## Common Problems
 
@@ -651,15 +751,22 @@ After every harness pull:
 
 1. verify `hgit status`
 2. read updated framework docs
-3. generate candidate templates and `README_new.md`
-4. diff candidates against project-owned files
-5. merge relevant guidance into project-owned `CLAUDE.md`, `AGENTS.md`,
+3. compare `HARNESS_BEFORE..HARNESS_AFTER` to identify migration-sensitive
+   Harness changes
+4. write a migration plan before changing research-owned docs or state
+5. generate candidate templates and `README_new.md`
+6. diff candidates against project-owned files
+7. merge relevant guidance into project-owned `CLAUDE.md`, `AGENTS.md`,
    `README.md`, or `docs/auto_iterate_goal.md` only after reviewing current
    project state, then delete candidates
-6. verify normal `git status` is still clean with respect to harness paths and
+8. use `workflow_handbook/pages/legacy_docs_migration.md` when old docs,
+   contracts, protocol, discovery, memory, or `docs/90_legacy/**` are affected
+9. verify normal `git status` is still clean with respect to harness paths and
    is still able to see research-owned files
-7. run workflow-supervisor, hook-contract, handbook, and run-artifact checks
+10. run workflow-supervisor, hook-contract, handbook, and run-artifact checks
    when those paths changed
+11. commit research-owned migration slices with normal `git`; use `hgit` only
+    for intentional Harness framework changes
 
 For every harness push:
 
