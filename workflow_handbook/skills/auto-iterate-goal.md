@@ -83,10 +83,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `goal_write`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `start_auto_iterate_without_goal_validation`
-- `manual_edit_auto_iterate`
+- `start_auto_iterate_without_goal_validation [workflow_default/notice; exception=overlay_allowed]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

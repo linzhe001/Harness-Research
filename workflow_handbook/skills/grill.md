@@ -50,6 +50,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs/05_intake/Research_Intent_Draft.md`
 - `docs/05_intake/Grill_Round_Log.md`
 - `docs/05_intake/Execution_Readiness_Packet.md`
+- `docs/05_intake/`
 
 ## Final Outputs
 
@@ -94,14 +95,14 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `readiness_json_write`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_evidence`
-- `direct_edit_auto_iterate`
-- `direct_edit_workflow_supervisor`
-- `protocol_as_approved_contract`
-- `packet_as_approval`
-- `stage_transition_without_user_approval`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_workflow_supervisor [hard_invariant/block; exception=never]`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `packet_as_approval [hard_invariant/block; exception=never]`
+- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
 
 ## Exit Condition
 

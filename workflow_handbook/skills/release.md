@@ -91,11 +91,11 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `submission_package_write`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `release_claim_outside_claim_boundary`
-- `submit_without_explicit_user_request`
-- `overwrite_package_without_confirmation`
+- `release_claim_outside_claim_boundary [workflow_default/ledger; exception=human_approval_required]`
+- `submit_without_explicit_user_request [hard_invariant/block; exception=never]`
+- `overwrite_package_without_confirmation [ownership_boundary/notice; exception=owner_delegation_required]`
 
 ## Exit Condition
 

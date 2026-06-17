@@ -69,6 +69,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/documentation-style.md`
 - `.agents/references/language-policy.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/commit-checkpoint-rule.md`
 - `.agents/skills/workflow-supervisor/SKILL.md`
 - `AGENTS.md`
 - `PROJECT_STATE.json`
@@ -89,21 +90,23 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `workflow_state_gate_or_NOT_RUN`
 - `build_review_packet_or_NOT_RUN`
 - `gate_ledger`
+- `worker_command_gates_or_NOT_RUN`
 - `supervisor_runtime_write`
 - `human_interrupt_created`
 - `approval_resume`
 - `worker_result_validation`
 - `WF10_readiness`
+- `worker_command_gate`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_evidence`
-- `direct_edit_auto_iterate`
-- `direct_edit_workflow_supervisor`
-- `approve_without_explicit_human_approval`
-- `stage_transition_without_user_approval`
-- `packet_as_approval`
-- `start_auto_iterate_without_goal_validation`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_workflow_supervisor [hard_invariant/block; exception=never]`
+- `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
+- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
+- `packet_as_approval [hard_invariant/block; exception=never]`
+- `start_auto_iterate_without_goal_validation [workflow_default/notice; exception=overlay_allowed]`
 
 ## Exit Condition
 

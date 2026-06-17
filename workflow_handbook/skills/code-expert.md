@@ -74,6 +74,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/project-map-rule.md`
 - `.agents/references/pre-training-rule.md`
 - `.agents/references/sliced-commit-rule.md`
+- `.agents/references/commit-checkpoint-rule.md`
 - `.agents/skills/code-expert/SKILL.md`
 - `.agents/skills/code-expert/references/generation-order.md`
 - `AGENTS.md`
@@ -96,18 +97,20 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `compile_doc_or_NOT_RUN`
+- `roadmap_implementation_completeness_gate`
 - `stable_code_change`
 - `project_map_write`
 - `codebase_map_write`
 - `canonical_state_edit`
 - `codebase_map_docchain`
 - `docs_site_boundary_report`
+- `roadmap_implementation_completeness`
 
-## Cannot Do
+## Constraints
 
-- `stable_code_without_project_map_read`
-- `project_map_stale`
-- `training_without_semantic_commit`
+- `stable_code_without_project_map_read [ownership_boundary/notice; exception=owner_delegation_required]`
+- `project_map_stale [ownership_boundary/notice; exception=owner_delegation_required]`
+- `training_without_semantic_commit [advisory/notice; exception=not_required]`
 
 ## Exit Condition
 

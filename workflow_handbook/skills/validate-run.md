@@ -63,6 +63,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/workflow-guide.md`
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/reviewer-independence.md`
@@ -91,15 +92,17 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
+- `validate_run_verdict_gate`
 - `WF10_readiness`
 - `validate_report_write`
 - `evidence_table_write`
 - `docs_site_boundary_report`
+- `validate_run_verdict`
 
-## Cannot Do
+## Constraints
 
-- `WF9_PASS_without_semantic_review`
-- `WF9_PASS_without_smoke_evidence`
+- `WF9_PASS_without_semantic_review [workflow_default/ledger; exception=human_approval_required]`
+- `WF9_PASS_without_smoke_evidence [workflow_default/ledger; exception=human_approval_required]`
 
 ## Exit Condition
 

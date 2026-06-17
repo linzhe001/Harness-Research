@@ -81,10 +81,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `WF12_readiness`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `ignore_unresolved_protocol_drift`
-- `protocol_as_approved_contract`
+- `ignore_unresolved_protocol_drift [workflow_default/notice; exception=overlay_allowed]`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

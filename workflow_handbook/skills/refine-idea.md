@@ -90,10 +90,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `canonical_state_edit`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `protocol_as_approved_contract`
-- `architecture_decision_in_build_plan`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `architecture_decision_in_build_plan [workflow_default/notice; exception=overlay_allowed]`
 
 ## Exit Condition
 

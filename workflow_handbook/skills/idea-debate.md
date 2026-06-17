@@ -90,10 +90,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `canonical_state_edit`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `protocol_as_approved_contract`
-- `direct_edit_evidence`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

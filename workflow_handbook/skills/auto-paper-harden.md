@@ -72,6 +72,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `PROJECT_STATE.json`
 - `project_map.json`
 - `auto_paper_output/`
+- `docs/30_evidence/Experiment_Evidence_Index.json`
+- `docs/30_evidence/Experiment_Evidence_Index.md`
 - `docs/10_contract/Claim_Boundary.md`
 
 ## Must Prove
@@ -80,15 +82,16 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `auto_paper_harden`
+- `run_request_register_write`
 - `human_gate`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_auto_iterate`
-- `manual_edit_auto_iterate`
-- `direct_edit_evidence`
-- `manual_edit_evidence_chain`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

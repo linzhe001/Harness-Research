@@ -75,6 +75,7 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `.agents/references/context-layering-policy.md`
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/pre-training-rule.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/ubiquitous-language.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`

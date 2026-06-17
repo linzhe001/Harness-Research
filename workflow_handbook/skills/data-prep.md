@@ -99,10 +99,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `CLAUDE_dataset_sync`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_evidence`
-- `direct_edit_auto_iterate`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

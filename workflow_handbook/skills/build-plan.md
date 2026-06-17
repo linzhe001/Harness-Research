@@ -69,6 +69,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/project-map-rule.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/sliced-commit-rule.md`
 - `.agents/skills/build-plan/SKILL.md`
 - `.agents/skills/build-plan/references/implementation-roadmap.md`
@@ -96,10 +97,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `canonical_state_edit`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `architecture_decision_in_build_plan`
-- `project_map_stale`
+- `architecture_decision_in_build_plan [workflow_default/notice; exception=overlay_allowed]`
+- `project_map_stale [ownership_boundary/notice; exception=owner_delegation_required]`
 
 ## Exit Condition
 

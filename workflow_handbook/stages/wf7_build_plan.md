@@ -71,6 +71,7 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/project-map-rule.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/sliced-commit-rule.md`
 - `.agents/skills/build-plan/SKILL.md`
 - `.agents/skills/build-plan/references/implementation-roadmap.md`

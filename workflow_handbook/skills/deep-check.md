@@ -94,10 +94,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `contract_conflict`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `protocol_as_approved_contract`
-- `approve_without_explicit_human_approval`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

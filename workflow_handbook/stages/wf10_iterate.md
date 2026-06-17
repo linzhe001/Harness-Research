@@ -65,7 +65,12 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `current_doc: docs/50_memory/`
 - `canonical_state: iteration_log.json`
 - `canonical_state: MEMORY.md`
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.json`
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.md`
 - `legacy_compat: docs/iterations/ -> docs/40_iterations/`
+- `tool_trace: .evidence/light/index.json`
+- `implementation: runs/wf10/`
+- `current_doc: docs/45_discoveries/`
 
 ## Required Reads
 
@@ -73,14 +78,20 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/lesson-quality-rule.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/reviewer-independence.md`
 - `.agents/references/review-tracing.md`
+- `.agents/references/commit-checkpoint-rule.md`
 - `.agents/skills/iterate/SKILL.md`
 - `.agents/skills/iterate/references/iteration-log-schema.json`
 - `.agents/skills/iterate/references/iteration-context.md`
 - `.agents/skills/iterate/references/iteration-constraints.md`
+- `schemas/iteration_log.schema.json`
+- `schemas/run_code_manifest.schema.json`
+- `schemas/run_promotion_plan.schema.json`
+- `schemas/light_evidence_index.schema.json`
 - `AGENTS.md`
 - `PROJECT_STATE.json`
 - `iteration_log.json`
@@ -89,19 +100,40 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `docs/10_contract/Baseline_Contract.md`
 - `docs/50_memory/Lessons.md`
 - `MEMORY.md`
+- `auto_paper_output/`
+- `docs/30_evidence/Experiment_Evidence_Index.json`
+- `docs/30_evidence/Experiment_Evidence_Index.md`
+- `.evidence/light/index.json`
+- `runs/wf10/`
+- `docs/45_discoveries/Discovery_Ledger.md`
 
 ## Gates
 
+- `wf10_state_preflight`
 - `iteration_log_update`
+- `single_next_command`
+- `run_local_promotion_check`
 - `decision_vocabulary`
+- `build_experiment_evidence_index_or_NOT_RUN`
 - `lesson_quality_check_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
+- `iteration_log_v2_strict`
+- `action_state_next_action_update`
+- `run_code_manifest_or_config_only_record`
+- `promotion_plan_or_NOT_READY`
+- `build_light_evidence_index_or_NOT_RUN`
+- `discovery_ledger_update_or_NOT_RUN`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `WF11_handoff`
+- `experiment_evidence_index_write`
 - `docs_site_boundary_report`
+- `run_code_manifest_write`
+- `promotion_plan_write`
+- `light_evidence_index_write`
+- `discovery_ledger_write`
 
 ## Exit Condition
 

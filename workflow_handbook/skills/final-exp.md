@@ -83,10 +83,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `final_experiment_matrix_write`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `final_exp_outside_claim_boundary`
-- `WF11_without_approved_contracts`
+- `final_exp_outside_claim_boundary [workflow_default/ledger; exception=human_approval_required]`
+- `WF11_without_approved_contracts [workflow_default/ledger; exception=human_approval_required]`
 
 ## Exit Condition
 

@@ -86,10 +86,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `protocol_doc_write`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `manual_edit_evidence_chain`
-- `current_doc_without_docchain`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
+- `current_doc_without_docchain [advisory/notice; exception=not_required]`
 
 ## Exit Condition
 

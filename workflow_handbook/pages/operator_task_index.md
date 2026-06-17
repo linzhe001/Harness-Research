@@ -61,6 +61,7 @@ what you want
 | 跑多轮实验 | `$run`，必要时接 `$analyze` | iterate / auto-iterate, then evaluate | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |
 | 成熟代码库收到新需求 | `$change` | change-intake route classification | Change Request JSON 和 route confidence | route 影响 evaluation、claim boundary、architecture 或 new research direction |
 | 写论文、完善 GitHub 或准备 release | `$write` | auto-paper / docs-site / scoped release gate | manuscript artifacts、WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、approval 缺失或 claim 超出证据 |
+| 旧 workspace 需要适配新 docs layout | `$change` | docs migration plus dynamic-context gates | `workflow_handbook/pages/legacy_docs_migration.md`、`docs/90_legacy/**`、Gate ledger | old approval 不可审计、Evidence Chain 缺 source、contract 需要重新批准 |
 | 排查内部 node 失败 | Detailed Reference | Stage / Skill lookup | Stage page、Skill page、declared artifacts、Gate ledger | 失败需要 human steering 或 contract change |
 
 常用状态命令：
@@ -104,6 +105,7 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
 ## Related Pages
 
 - [[page:workflow_supervisor_model|Runtime Routing Model]]
+- `workflow_handbook/pages/legacy_docs_migration.md`
 - [[page:evidence_approval_model|Evidence And Approval Model]]
 - [[page:auto_iterate_model|Auto-Iterate Model]]
 - [[page:workflow_layers|Detailed Workflow Map]]

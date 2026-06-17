@@ -97,10 +97,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `canonical_state_edit`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `protocol_as_approved_contract`
-- `project_map_stale`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `project_map_stale [ownership_boundary/notice; exception=owner_delegation_required]`
 
 ## Exit Condition
 

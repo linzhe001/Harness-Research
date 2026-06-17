@@ -94,10 +94,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `environment_section_write`
 - `setup_command_run`
 
-## Cannot Do
+## Constraints
 
-- `training_without_semantic_commit`
-- `direct_edit_auto_iterate`
+- `training_without_semantic_commit [advisory/notice; exception=not_required]`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

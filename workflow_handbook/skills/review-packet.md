@@ -85,10 +85,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `WF12_readiness`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `approve_without_explicit_human_approval`
-- `packet_as_approval`
+- `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
+- `packet_as_approval [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

@@ -131,6 +131,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `schemas/skill_contracts.json`
 - `schemas/skill_contracts.schema.json`
 - `tooling/.tests/test_codex_hooks_contracts.py`
+- `.agents/references/commit-checkpoint-rule.md`
 - `.agents/skills/harness-maintenance/SKILL.md`
 - `AGENTS.md`
 - `CLAUDE.md`
@@ -150,12 +151,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `skill_routing_change`
 - `permission_policy_change`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_auto_iterate`
-- `direct_edit_evidence`
-- `manual_edit_auto_iterate`
-- `manual_edit_evidence_chain`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

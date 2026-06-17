@@ -80,10 +80,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `contract_readiness`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `protocol_as_approved_contract`
-- `manual_edit_evidence_chain`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

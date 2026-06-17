@@ -92,12 +92,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `human_doc_html_write`
 - `preview_index_write`
 
-## Cannot Do
+## Constraints
 
-- `manual_edit_evidence_chain`
-- `direct_edit_evidence`
-- `edit_source_markdown_during_render`
-- `html_as_source_of_truth`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `edit_source_markdown_during_render [hard_invariant/block; exception=never]`
+- `html_as_source_of_truth [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

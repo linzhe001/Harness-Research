@@ -59,7 +59,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Tool-Owned Outputs
 
-- none
+- `tool_trace: .auto_paper/`
 
 ## Must Read
 
@@ -82,7 +82,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `auto_paper_log.json`
 - `docs/auto_paper_goal.md`
 - `auto_paper_output/`
+- `iteration_log.json`
+- `docs/30_evidence/Experiment_Evidence_Index.json`
+- `docs/30_evidence/Experiment_Evidence_Index.md`
+- `tooling/auto_paper/`
 - `docs/10_contract/Claim_Boundary.md`
+- `docs/45_discoveries/Discovery_Ledger.md`
 
 ## Must Prove
 
@@ -91,15 +96,16 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs_site_boundary_report`
 - `auto_paper_gate`
 - `latex_patch`
+- `run_request_register_write`
 - `human_gate`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_auto_iterate`
-- `manual_edit_auto_iterate`
-- `direct_edit_evidence`
-- `manual_edit_evidence_chain`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

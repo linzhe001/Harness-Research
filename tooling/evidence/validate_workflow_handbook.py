@@ -59,7 +59,7 @@ REQUIRED_HEADINGS = {
         "Can Write",
         "Must Read",
         "Must Prove",
-        "Cannot Do",
+        "Constraints",
     ],
     "artifact": [
         "Purpose",

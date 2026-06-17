@@ -73,6 +73,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/context-layering-policy.md`
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/pre-training-rule.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/ubiquitous-language.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
@@ -110,11 +111,11 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `stable_code_change`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `training_without_semantic_commit`
-- `approve_without_explicit_human_approval`
-- `protocol_as_approved_contract`
+- `training_without_semantic_commit [advisory/notice; exception=not_required]`
+- `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
+- `protocol_as_approved_contract [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

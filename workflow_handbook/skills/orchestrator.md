@@ -90,11 +90,11 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `WF11_readiness`
 - `WF12_readiness`
 
-## Cannot Do
+## Constraints
 
-- `stage_transition_without_user_approval`
-- `direct_edit_auto_iterate`
-- `direct_edit_evidence`
+- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 

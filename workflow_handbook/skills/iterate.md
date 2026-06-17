@@ -52,17 +52,27 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `iteration_log.json`
 - `docs/40_iterations/`
 - `docs/iterations/`
+- `docs/30_evidence/Experiment_Evidence_Index.json`
+- `docs/30_evidence/Experiment_Evidence_Index.md`
 - `docs/50_memory/`
 - `MEMORY.md`
+- `runs/wf10/`
+- `.evidence/light/index.json`
+- `docs/45_discoveries/`
 
 ## Final Outputs
 
 - `current_doc: docs/40_iterations/`
 - `current_doc: docs/50_memory/`
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.json`
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.md`
+- `current_doc: docs/45_discoveries/`
 
 ## Tool-Owned Outputs
 
-- none
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.json`
+- `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.md`
+- `tool_trace: .evidence/light/index.json`
 
 ## Must Read
 
@@ -70,14 +80,20 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/lesson-quality-rule.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/reviewer-independence.md`
 - `.agents/references/review-tracing.md`
+- `.agents/references/commit-checkpoint-rule.md`
 - `.agents/skills/iterate/SKILL.md`
 - `.agents/skills/iterate/references/iteration-log-schema.json`
 - `.agents/skills/iterate/references/iteration-context.md`
 - `.agents/skills/iterate/references/iteration-constraints.md`
+- `schemas/iteration_log.schema.json`
+- `schemas/run_code_manifest.schema.json`
+- `schemas/run_promotion_plan.schema.json`
+- `schemas/light_evidence_index.schema.json`
 - `AGENTS.md`
 - `PROJECT_STATE.json`
 - `iteration_log.json`
@@ -86,25 +102,46 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs/10_contract/Baseline_Contract.md`
 - `docs/50_memory/Lessons.md`
 - `MEMORY.md`
+- `auto_paper_output/`
+- `docs/30_evidence/Experiment_Evidence_Index.json`
+- `docs/30_evidence/Experiment_Evidence_Index.md`
+- `.evidence/light/index.json`
+- `runs/wf10/`
+- `docs/45_discoveries/Discovery_Ledger.md`
 
 ## Must Prove
 
+- `wf10_state_preflight`
 - `iteration_log_update`
+- `single_next_command`
+- `run_local_promotion_check`
 - `decision_vocabulary`
+- `build_experiment_evidence_index_or_NOT_RUN`
 - `lesson_quality_check_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
+- `iteration_log_v2_strict`
+- `action_state_next_action_update`
+- `run_code_manifest_or_config_only_record`
+- `promotion_plan_or_NOT_READY`
+- `build_light_evidence_index_or_NOT_RUN`
+- `discovery_ledger_update_or_NOT_RUN`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
 - `WF11_handoff`
+- `experiment_evidence_index_write`
 - `docs_site_boundary_report`
+- `run_code_manifest_write`
+- `promotion_plan_write`
+- `light_evidence_index_write`
+- `discovery_ledger_write`
 
-## Cannot Do
+## Constraints
 
-- `auto_observation_direct_to_MEMORY`
-- `manual_edit_auto_iterate`
-- `stage_transition_from_iterate`
+- `auto_observation_direct_to_MEMORY [advisory/notice; exception=not_required]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `stage_transition_from_iterate [ownership_boundary/notice; exception=owner_delegation_required]`
 
 ## Exit Condition
 

@@ -96,12 +96,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs_or_evidence_chain_review`
 - `heavy_review`
 
-## Cannot Do
+## Constraints
 
-- `modify_subject_files_during_code_review`
-- `review_without_line_references`
-- `unverified_model_finding_as_fact`
-- `heavy_review_without_trace`
+- `modify_subject_files_during_code_review [ownership_boundary/notice; exception=owner_delegation_required]`
+- `review_without_line_references [advisory/notice; exception=not_required]`
+- `unverified_model_finding_as_fact [advisory/notice; exception=not_required]`
+- `heavy_review_without_trace [advisory/notice; exception=not_required]`
 
 ## Exit Condition
 

@@ -66,6 +66,7 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `.agents/references/workflow-guide.md`
 - `.agents/references/contract-gating-rule.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/run-artifact-contract.md`
 - `.agents/references/documentation-evidence-rule.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/reviewer-independence.md`
@@ -94,10 +95,12 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
+- `validate_run_verdict_gate`
 - `WF10_readiness`
 - `validate_report_write`
 - `evidence_table_write`
 - `docs_site_boundary_report`
+- `validate_run_verdict`
 
 ## Exit Condition
 

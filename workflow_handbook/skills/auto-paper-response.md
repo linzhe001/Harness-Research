@@ -83,12 +83,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `human_gate`
 - `docs_site_boundary_report`
 
-## Cannot Do
+## Constraints
 
-- `direct_edit_auto_iterate`
-- `manual_edit_auto_iterate`
-- `direct_edit_evidence`
-- `manual_edit_evidence_chain`
+- `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `manual_edit_auto_iterate [hard_invariant/block; exception=never]`
+- `direct_edit_evidence [hard_invariant/block; exception=never]`
+- `manual_edit_evidence_chain [hard_invariant/block; exception=never]`
 
 ## Exit Condition
 
