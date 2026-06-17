@@ -26,9 +26,9 @@ from state import (
     utc_now,
 )
 
-RESEARCH_INTENT = Path("docs/Research_Intent_Draft.md")
-ROUND_LOG = Path("docs/Grill_Round_Log.md")
-READINESS_PACKET = Path("docs/Execution_Readiness_Packet.md")
+RESEARCH_INTENT = Path("docs/05_intake/Research_Intent_Draft.md")
+ROUND_LOG = Path("docs/05_intake/Grill_Round_Log.md")
+READINESS_PACKET = Path("docs/05_intake/Execution_Readiness_Packet.md")
 READINESS_JSON = Path(".workflow_supervisor/readiness.json")
 ROUND_TABLE_MARKER = "| --- | --- | --- | --- | --- | --- |"
 LEGACY_ROUND_TABLE_MARKER = "| --- | --- | --- | --- |"
@@ -300,8 +300,9 @@ Valid decisions:
 - command: tooling/grill/draft.py init
 - result: PASS
 - reason: initialized draft-only Grill artifacts
-- artifacts: docs/Research_Intent_Draft.md; docs/Grill_Round_Log.md;
-  docs/Execution_Readiness_Packet.md
+- artifacts: docs/05_intake/Research_Intent_Draft.md;
+  docs/05_intake/Grill_Round_Log.md;
+  docs/05_intake/Execution_Readiness_Packet.md
 """
 
 

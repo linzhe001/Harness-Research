@@ -1,7 +1,9 @@
 # Lessons
 
-This file stores candidate and accepted project lessons. `MEMORY.md` should
-only receive accepted lessons.
+This file stores promoted lesson candidates and accepted project lessons.
+Mutable observations, phenomena, findings, and hypotheses start in
+`docs/45_discoveries/Discovery_Ledger.md`. `MEMORY.md` should only receive
+accepted lessons.
 
 ## Lesson Template
 
@@ -21,6 +23,10 @@ One sentence.
 | Evidence | Path | What It Supports |
 |---|---|---|
 | Metric comparison | | |
+
+#### Discovery Source
+
+- Discovery entry:
 
 #### Alternative Explanations
 

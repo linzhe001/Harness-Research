@@ -13,7 +13,7 @@ iteration records.
 - Shared rules: `code-style.md`, `language-policy.md`,
   `documentation-evidence-rule.md`, `documentation-style.md`,
   `contract-gating-rule.md`, `run-artifact-contract.md`,
-  `lesson-quality-rule.md`.
+  `lesson-quality-rule.md`, `commit-checkpoint-rule.md`.
 
 ## State Rules
 
@@ -60,8 +60,8 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   scope: `config_only`, `run_local_code`, `stable_candidate`, or
   `delegated_build`.
 - `code`: select latest `planned`; set `coding`; write context; invoke
-  `/code-debug`; require real `git_commit` before `ready_to_run`; for
-  `run_local_code` or `stable_candidate`, write
+  `/code-debug`; run a `slice` or `experiment` commit checkpoint before
+  `ready_to_run`; for `run_local_code` or `stable_candidate`, write
   `runs/wf10/<iter>/code_manifest.json`.
 - `run_screening` / `run_full`: select latest `ready_to_run`; resolve
   Train/Eval scripts from `CLAUDE.md`; run `config_diff.planned_command`
@@ -75,7 +75,10 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   useful; compare against baseline, previous best, and previous iteration;
   record metrics or documented failure, lessons, decision, and completion.
   Include vertical slice boundary notes and complexity and boundary observations
-  when stable code surfaces change. Refresh `.evidence/light/index.json` with
+  when stable code surfaces change. Record mutable observations, phenomena,
+  findings, and next-experiment hypotheses in
+  `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`. Refresh
+  `.evidence/light/index.json` with
   `tooling/evidence/build_light_evidence_index.py`; run
   `tooling/evidence/build_experiment_evidence_index.py` only for detailed
   claim/writing evidence, or report `NOT_RUN`.
@@ -102,7 +105,9 @@ If run-local code becomes reusable, recommend `/iterate promote` or
 - Decisions are `NEXT_ROUND`, `DEBUG`, `CONTINUE`, `PIVOT`, `ABORT`.
 - `git_commit` is required after `code`; do not update `PROJECT_STATE.json`.
 - Core train/eval logic stays in `CLAUDE.md` Entry Scripts.
-- Do not promote raw observations to `MEMORY.md`; follow lesson-quality rules.
+- Do not promote raw observations to `MEMORY.md`; keep them in
+  `docs/45_discoveries/Discovery_Ledger.md` until lesson-quality rules promote
+  them.
 - Near WF10 handoff, report Gate ledger and run `check_workflow_state.py` or
   mark it `NOT_RUN`.
 

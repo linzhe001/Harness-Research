@@ -37,13 +37,15 @@ def test_grill_init_writes_draft_docs_without_evidence_runtime(
     )
 
     assert code == 0
-    intent = (root / "docs" / "Research_Intent_Draft.md").read_text(
+    intent = (root / "docs" / "05_intake" / "Research_Intent_Draft.md").read_text(
         encoding="utf-8"
     )
-    log = (root / "docs" / "Grill_Round_Log.md").read_text(encoding="utf-8")
-    packet = (root / "docs" / "Execution_Readiness_Packet.md").read_text(
+    log = (root / "docs" / "05_intake" / "Grill_Round_Log.md").read_text(
         encoding="utf-8"
     )
+    packet = (
+        root / "docs" / "05_intake" / "Execution_Readiness_Packet.md"
+    ).read_text(encoding="utf-8")
     assert "Status: draft" in intent
     assert "does not complete WF1-WF3" in intent
     assert "## Grill Maturity Checklist" in intent
@@ -70,7 +72,8 @@ def test_grill_init_does_not_overwrite_without_force(tmp_path: Path) -> None:
     root = make_workspace(tmp_path)
     docs = root / "docs"
     docs.mkdir()
-    existing = docs / "Research_Intent_Draft.md"
+    existing = docs / "05_intake" / "Research_Intent_Draft.md"
+    existing.parent.mkdir(parents=True)
     existing.write_text("custom draft\n", encoding="utf-8")
 
     code = draft.main(
@@ -106,7 +109,9 @@ def test_grill_round_appends_next_round(tmp_path: Path) -> None:
     )
 
     assert code == 0
-    log = (root / "docs" / "Grill_Round_Log.md").read_text(encoding="utf-8")
+    log = (root / "docs" / "05_intake" / "Grill_Round_Log.md").read_text(
+        encoding="utf-8"
+    )
     assert "| 2 | skeptic | baseline risk clarified |" in log
     assert "baseline choice is still underspecified" in log
     assert "Which baseline would make the idea unnecessary?" in log
@@ -196,9 +201,9 @@ def test_grill_packet_redacts_readiness_values(tmp_path: Path) -> None:
     )
 
     assert code == 0
-    packet = (root / "docs" / "Execution_Readiness_Packet.md").read_text(
-        encoding="utf-8"
-    )
+    packet = (
+        root / "docs" / "05_intake" / "Execution_Readiness_Packet.md"
+    ).read_text(encoding="utf-8")
     assert "/data/<redacted>" in packet
     assert "/secret/data/root" not in packet
     assert "hf_access_policy" in packet

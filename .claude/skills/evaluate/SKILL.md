@@ -25,7 +25,8 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For run artifact bundle requirements, see [../../shared/run-artifact-contract.md](../../shared/run-artifact-contract.md).
-For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write findings and candidates to iteration docs or `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
+For commit checkpoints, see [../../shared/commit-checkpoint-rule.md](../../shared/commit-checkpoint-rule.md).
+For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write observations, phenomena, findings, hypotheses, and next-experiment hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified lesson candidates to `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
 
 Context budget: load active iteration plus 5 recent summaries, reference full
 history by path, and keep the report under 1200 words unless requested.
@@ -96,6 +97,7 @@ history by path, and keep the report under 1200 words unless requested.
    - Write to `docs/40_iterations/iter{N}.md` (create `docs/40_iterations/` if directory doesn't exist)
    - Mirror `docs/iterations/iter{N}.md` only when legacy compatibility is required
    - Also update `docs/Stage_Report.md` as a summary index pointing to the latest iteration report
+   - Update `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`
 
    **Standalone invocation report**:
    - Write directly to `docs/Stage_Report.md`
@@ -117,6 +119,9 @@ history by path, and keep the report under 1200 words unless requested.
    `tooling/evidence/build_experiment_evidence_index.py` so `/write` can use
    experiment evidence without treating `iteration_log.json` as the sole source
    of truth. If not run, report `NOT_RUN` with the reason.
+
+   Use an `experiment` commit checkpoint for completed evaluation/discovery
+   slices before long follow-up runs or handoff.
 
 7. **Update Project State** (standalone invocation only)
 

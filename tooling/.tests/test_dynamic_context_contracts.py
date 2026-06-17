@@ -10,6 +10,9 @@ def test_dynamic_context_templates_exist() -> None:
     required = [
         "OPERATOR_CONTEXT.md.template",
         "templates/docs/00_START_HERE.md",
+        "templates/docs/05_intake/Research_Intent_Draft.md",
+        "templates/docs/05_intake/Grill_Round_Log.md",
+        "templates/docs/05_intake/Execution_Readiness_Packet.md",
         "templates/docs/10_contract/Project_Contract.md",
         "templates/docs/10_contract/Evaluation_Contract.md",
         "templates/docs/10_contract/Baseline_Contract.md",
@@ -20,6 +23,7 @@ def test_dynamic_context_templates_exist() -> None:
         "templates/docs/30_evidence/Validation_Table.md",
         "templates/docs/35_protocol/Research_Protocol.md",
         "templates/docs/40_iterations/latest.md",
+        "templates/docs/45_discoveries/Discovery_Ledger.md",
         "templates/docs/50_memory/Lessons.md",
         "schemas/evidence_chain.schema.json",
         "schemas/source_manifest.schema.json",
@@ -58,6 +62,7 @@ def test_dynamic_context_templates_exist() -> None:
 def test_agents_and_claude_shared_rules_are_mirrored() -> None:
     mirrored = [
         "context-layering-policy.md",
+        "commit-checkpoint-rule.md",
         "research-invariants.md",
         "evidence-chain-rule.md",
         "contract-gating-rule.md",

@@ -20,7 +20,7 @@ Use these layers when loading, writing, or auditing context:
 | L5 Dynamic protocol | Current-project protocol draft from evidence | `docs/35_protocol/**` | AI-generated, evidence-backed, reviewable |
 | L6 Approved contracts | Human-approved project/eval/claim boundaries | `docs/10_contract/**` | Execution authority after approval |
 | L7 Project facts/docs | Current code, data, environment, facts | `docs/20_facts/**`, `CLAUDE.md` | Must come from current artifacts |
-| L8 Runtime state/lessons | Iterations, decisions, accepted lessons | `iteration_log.json`, `docs/40_iterations/**`, `docs/50_memory/**`, `MEMORY.md` | Runtime truth and promoted memory |
+| L8 Runtime state/discovery/lessons | Iterations, decisions, mutable discoveries, accepted lessons | `iteration_log.json`, `docs/40_iterations/**`, `docs/45_discoveries/**`, `docs/50_memory/**`, `MEMORY.md` | Runtime truth, discovery candidates, and promoted memory |
 
 ## Loading Defaults
 
@@ -38,4 +38,6 @@ Use these layers when loading, writing, or auditing context:
 - Do not turn old project memories into rules for a new project.
 - Do not turn research evidence into an approved contract without human review.
 - Do not let auto-iteration observations enter `MEMORY.md` directly.
+- Do put mutable observations, phenomena, findings, and hypotheses in
+  `docs/45_discoveries/**` before considering lesson promotion.
 - Do not write project facts from memory; re-read current repo artifacts.

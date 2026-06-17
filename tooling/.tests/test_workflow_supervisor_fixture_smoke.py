@@ -125,8 +125,8 @@ def test_harness_sh_grill_shorthand_uses_fixture_workspace(
 
     assert proc.returncode == workflow_ctl.EXIT_OK, proc.stderr
     payload = json.loads(proc.stdout)
-    assert "docs/Research_Intent_Draft.md" in payload["written"]
-    assert (root / "docs" / "Research_Intent_Draft.md").exists()
+    assert "docs/05_intake/Research_Intent_Draft.md" in payload["written"]
+    assert (root / "docs" / "05_intake" / "Research_Intent_Draft.md").exists()
 
 
 def test_supervisor_interrupted_resumed_run_on_fixture_target_workspace(

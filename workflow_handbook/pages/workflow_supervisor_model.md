@@ -55,7 +55,7 @@ Visible aliases define the operator surface:
 
 When Grill discusses external data access, dataset acquisition, or baseline
 clone intent, it must record that intent in the `Execution Intent Ledger` inside
-`docs/Execution_Readiness_Packet.md`. If Grill writes
+`docs/05_intake/Execution_Readiness_Packet.md`. If Grill writes
 `.workflow_supervisor/readiness.json` through tooling, it should mirror the same
 intent as `kind: policy` readiness inputs with stable keys such as
 `hf_access_policy`, `non_hf_registration_policy`, `baseline_clone_policy`,
@@ -125,10 +125,10 @@ dataset, clones/copies/adopts the baseline, writes `docs/Dataset_Stats.md`,
 `project_map.json`, then runs protocol and Review Packet gates. Local sources
 can be copied directly. On start it writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
-`.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
-`docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
+`.workflow_supervisor/readiness.json`, `docs/05_intake/Execution_Readiness_Packet.md`,
+`docs/05_intake/Research_Intent_Draft.md`, and `docs/05_intake/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or exactly labeled
-contextual dataset/baseline URLs. `docs/Research_Intent_Draft.md` is the primary
+contextual dataset/baseline URLs. `docs/05_intake/Research_Intent_Draft.md` is the primary
 narrative intent source for scope and clone intent, but ordinary literature,
 method, or baseline-comparison URLs in that draft are not executable acquisition
 inputs. Before any download or clone, it writes

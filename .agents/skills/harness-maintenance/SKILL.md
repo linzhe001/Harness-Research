@@ -15,6 +15,7 @@ Read these first:
 - `../../../schemas/skill_contracts.schema.json`
 - `../../../tooling/.tests/test_codex_hooks_contracts.py`
 - `../../../.agents/references/code-style.md`
+- `../../../.agents/references/commit-checkpoint-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/ubiquitous-language.md` when workflow terms or operator-facing docs change
 - `../../../tooling/codex_hooks/Lightweight_Hook_Policy_Guide.md` when hook policy behavior is involved and the file exists
@@ -43,11 +44,13 @@ Do not use this skill for ordinary research project implementation under `src/`,
    `Conclusion Evidence`, `Evidence Chain`, `Gate Evidence`, or
    `Execution Evidence` is meant.
 6. Update focused tests for hook, contract, detection, generator, or permission behavior changes.
-7. Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` after contract or hook changes.
-8. Run `pytest tooling/.tests/test_codex_hooks_contracts.py` after hook detection, policy, generator, or status changes.
-9. Run `python -m py_compile <modified python files>` and `ruff check --select=E,F,I <modified python files>` after Python edits.
-10. Do not hand-edit `.evidence/**` or `.auto_iterate/**`; use owning tools or controller.
-11. Report a Gate ledger for hook, skill contract, routing, permission, generator, or trust behavior changes.
+7. Use the `guardrail` commit checkpoint profile for completed hook, contract,
+   schema, routing, permission, generator, or supervisor-policy slices.
+8. Run `python tooling/codex_hooks/check_contracts.py --workspace-root .` after contract or hook changes.
+9. Run `pytest tooling/.tests/test_codex_hooks_contracts.py` after hook detection, policy, generator, or status changes.
+10. Run `python -m py_compile <modified python files>` and `ruff check --select=E,F,I <modified python files>` after Python edits.
+11. Do not hand-edit `.evidence/**` or `.auto_iterate/**`; use owning tools or controller.
+12. Report a Gate ledger for hook, skill contract, routing, permission, generator, or trust behavior changes.
 
 ## Codex Adaptation
 

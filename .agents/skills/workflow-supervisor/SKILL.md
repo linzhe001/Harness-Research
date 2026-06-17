@@ -15,6 +15,7 @@ Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.
 - `../../../.agents/references/workflow-supervisor-runtime.md`
 - `../../../tooling/workflow_supervisor/config/default_nodes.json`
 - `../../../tooling/workflow_supervisor/config/gate_policy.yaml`
+- `../../../.agents/references/commit-checkpoint-rule.md`
 - Workflow, context, contract, evidence, language, and ubiquitous-language rules
   under `../../../.agents/references/`
 
@@ -30,7 +31,7 @@ Common commands:
 ```bash
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json  # or worker-status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --goal-file docs/Research_Intent_Draft.md --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --goal-file docs/05_intake/Research_Intent_Draft.md --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --auto
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment iterate --goal "<goal>" --auto-goal docs/auto_iterate_goal.md
@@ -55,7 +56,7 @@ draft, do not ask them to hand-build CLI arguments.
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start \
   --segment prepare \
   --complete \
-  --goal-file docs/Research_Intent_Draft.md \
+  --goal-file docs/05_intake/Research_Intent_Draft.md \
   --json
 ```
 
@@ -72,12 +73,9 @@ baselines become typed pending requests. Do not silently add
   requires-approval distinctions from the Grill bridge.
 - `build`: normal path `build_refine_arch -> build_plan -> build_code_expert ->
   build_validate_run`; `build_code_debug` is failure recovery. Build reaches
-  `build_ready_for_iterate` only after validate-run gates pass and
-  `validate-run verdict: PASS`. A foundation slice alone is
-  `build_foundation_ready` unless explicitly requested. Durable non-tool-owned
-  outputs must be committed before each node is accepted; WF8 also requires one
-  distinct semantic commit per `docs/Implementation_Roadmap.md` `commit_plan`
-  row, with bundled/missing slice commits failing postconditions.
+  `build_ready_for_iterate` only after validate-run gates pass. Durable outputs
+  need commit checkpoints; WF8 needs one per roadmap `commit_plan` row. Routine
+  loops run action-local checks; heavy checks run at checkpoint profiles.
 - `iterate`: delegates to `auto_iterate_ctl.py`; `monitor-iterate` maps
   `status --json`, manual action, or pause into supervisor state.
 - `change`: deterministic Change Intake; writes a Change Request JSON and

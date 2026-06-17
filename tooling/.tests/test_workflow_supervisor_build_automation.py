@@ -45,6 +45,7 @@ def make_workspace(tmp_path: Path) -> Path:
         config_dir / "default_nodes.json",
     )
     (root / "docs").mkdir()
+    (root / "docs" / "05_intake").mkdir(parents=True)
     (root / "docs" / "Baseline_Report.md").write_text(
         "# Baseline\n",
         encoding="utf-8",
@@ -750,7 +751,7 @@ def test_prepare_complete_acquires_dataset_and_baseline(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "# Readiness\n",
         encoding="utf-8",
     )
@@ -928,7 +929,7 @@ def test_prepare_complete_blocks_unapproved_remote_sources_at_plan(
     capsys,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "# Readiness\n",
         encoding="utf-8",
     )
@@ -996,7 +997,7 @@ def test_resume_acquisition_plan_with_local_answer_overrides_remote_bridge(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "# Readiness\n",
         encoding="utf-8",
     )
@@ -1171,7 +1172,7 @@ def test_recover_auto_resume_answered_prepare_dataset_request(
     monkeypatch,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "# Readiness\n",
         encoding="utf-8",
     )
@@ -1340,7 +1341,7 @@ def test_prepare_complete_bridges_grill_readiness_packet(
     baseline_source.mkdir()
     (baseline_source / "train.py").write_text("print('baseline')\n", encoding="utf-8")
 
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -1360,11 +1361,11 @@ def test_prepare_complete_bridges_grill_readiness_packet(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Research_Intent_Draft.md").write_text(
+    (root / "docs" / "05_intake" / "Research_Intent_Draft.md").write_text(
         "# Research Intent Draft\n",
         encoding="utf-8",
     )
-    (root / "docs" / "Grill_Round_Log.md").write_text(
+    (root / "docs" / "05_intake" / "Grill_Round_Log.md").write_text(
         "# Grill Round Log\n",
         encoding="utf-8",
     )
@@ -1495,7 +1496,7 @@ def test_grill_bridge_uses_readiness_dataset_root_wsl_without_candidate_url(
             ],
         },
     )
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -1598,7 +1599,7 @@ def test_grill_bridge_does_not_promote_deferred_table_urls_to_values(
             ],
         },
     )
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -1658,7 +1659,7 @@ def test_grill_bridge_does_not_promote_deferred_table_urls_to_values(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Research_Intent_Draft.md").write_text(
+    (root / "docs" / "05_intake" / "Research_Intent_Draft.md").write_text(
         "\n".join(
             [
                 "# Research Intent Draft",
@@ -1713,7 +1714,7 @@ def test_grill_bridge_uses_executable_baseline_source_ledger(
     tmp_path: Path,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -1868,7 +1869,7 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
     tmp_path: Path,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -1919,7 +1920,7 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Research_Intent_Draft.md").write_text(
+    (root / "docs" / "05_intake" / "Research_Intent_Draft.md").write_text(
         "\n".join(
             [
                 "# Research Intent Draft",
@@ -1939,7 +1940,7 @@ def test_grill_bridge_uses_source_specific_hf_and_baseline_clone_policy(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Grill_Round_Log.md").write_text(
+    (root / "docs" / "05_intake" / "Grill_Round_Log.md").write_text(
         "# Grill Round Log\n",
         encoding="utf-8",
     )
@@ -2009,7 +2010,7 @@ def test_grill_bridge_does_not_treat_literature_baseline_url_as_repo(
     tmp_path: Path,
 ) -> None:
     root = make_workspace(tmp_path)
-    (root / "docs" / "Execution_Readiness_Packet.md").write_text(
+    (root / "docs" / "05_intake" / "Execution_Readiness_Packet.md").write_text(
         "\n".join(
             [
                 "# Execution Readiness Packet",
@@ -2025,7 +2026,7 @@ def test_grill_bridge_does_not_treat_literature_baseline_url_as_repo(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Research_Intent_Draft.md").write_text(
+    (root / "docs" / "05_intake" / "Research_Intent_Draft.md").write_text(
         "\n".join(
             [
                 "# Research Intent Draft",
@@ -2044,7 +2045,7 @@ def test_grill_bridge_does_not_treat_literature_baseline_url_as_repo(
         ),
         encoding="utf-8",
     )
-    (root / "docs" / "Grill_Round_Log.md").write_text(
+    (root / "docs" / "05_intake" / "Grill_Round_Log.md").write_text(
         "# Grill Round Log\n",
         encoding="utf-8",
     )
@@ -2131,7 +2132,7 @@ def test_data_prep_records_failed_candidate_and_tries_next(
                     "source": "https://github.com/ZcsrenlongZ/SelfSVD",
                     "decision": "rejected",
                     "reason": "operator_reported_unavailable baidu_request_gated",
-                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                    "source_ref": "docs/05_intake/Execution_Readiness_Packet.md",
                 },
                 {
                     "dataset_id": "dataset_missing_remote",
@@ -2139,7 +2140,7 @@ def test_data_prep_records_failed_candidate_and_tries_next(
                     "source": "https://example.invalid/missing.zip",
                     "decision": "candidate",
                     "reason": "candidate public url",
-                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                    "source_ref": "docs/05_intake/Execution_Readiness_Packet.md",
                 },
                 {
                     "dataset_id": "dataset_local_fallback",
@@ -2147,7 +2148,7 @@ def test_data_prep_records_failed_candidate_and_tries_next(
                     "source": str(local_source),
                     "decision": "candidate",
                     "reason": "verified local fallback",
-                    "source_ref": "docs/Execution_Readiness_Packet.md",
+                    "source_ref": "docs/05_intake/Execution_Readiness_Packet.md",
                 },
             ]
         },

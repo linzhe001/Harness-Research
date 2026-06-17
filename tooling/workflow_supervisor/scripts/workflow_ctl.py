@@ -173,9 +173,9 @@ SEGMENT_GATE_PROFILES = {
     "change": "change_intake",
 }
 GRILL_ARTIFACT_REFS = (
-    "docs/Execution_Readiness_Packet.md",
-    "docs/Research_Intent_Draft.md",
-    "docs/Grill_Round_Log.md",
+    "docs/05_intake/Execution_Readiness_Packet.md",
+    "docs/05_intake/Research_Intent_Draft.md",
+    "docs/05_intake/Grill_Round_Log.md",
 )
 GRILL_BRIDGE_KEYS = {
     "dataset_source",
@@ -2560,7 +2560,7 @@ def build_grill_bridge(
             values["baseline_repo"] = bridge_candidate(
                 executable_baselines[0]["source"],
                 source_ref=executable_baselines[0].get(
-                    "source_ref", "docs/Execution_Readiness_Packet.md"
+                    "source_ref", "docs/05_intake/Execution_Readiness_Packet.md"
                 ),
                 confidence="baseline_source_ledger",
                 notes="parsed from executable Baseline Source Ledger row",
@@ -4281,19 +4281,22 @@ def render_worker_prompt(
             "report docs_site_boundary_report unless a docs-site boundary render "
             "is explicitly requested.\n"
             "- Make the smallest code/config/doc changes needed for this node.\n"
-            "- Run concrete commands that prove the node postconditions below.\n"
+            "- Run concrete commands that prove the node postconditions below; "
+            "defer validation-heavy unrelated checks to commit checkpoints.\n"
             "- For each `command_passes` postcondition, include a Gate ledger "
             "entry whose `command` exactly matches the postcondition command "
             "string, with result PASS, FAIL, or NOT_RUN. Do not mark PASS unless "
             "that gate was actually satisfied.\n"
-            "- For build nodes that edit durable non-tool-owned files, create a "
-            "semantic git commit before returning success. For roadmap "
-            "`commit_plan` rows, complete, validate, and commit one row before "
-            "starting the next independent row. Report each commit hash and "
-            "subject in the Gate ledger.\n"
-            "- The supervisor verifies roadmap sliced commits from the run "
-            "`base_git_commit` and verifies that non-tool-owned worktree paths "
-            "are clean before accepting build nodes.\n"
+            "- For nodes that edit durable non-tool-owned files, create an "
+            "automatic commit checkpoint before returning success. Select the "
+            "`slice`, `guardrail`, `docs`, `experiment`, or `release` profile "
+            "from the touched surface. For roadmap `commit_plan` rows, complete "
+            "and commit one row before starting the next independent row. "
+            "Report each commit hash, subject, validation profile, and Gate "
+            "ledger.\n"
+            "- The supervisor verifies sliced commits from the run "
+            "`base_git_commit` and verifies that accepted non-tool-owned slice "
+            "paths are clean before accepting build nodes.\n"
             "- Run each listed evidence tool exactly when its inputs exist. If a "
             "tool cannot run, include a NOT_RUN Gate ledger entry with the reason.\n"
             "- If a command fails, debug and rerun within the node budget before "
@@ -6350,7 +6353,7 @@ def write_prepare_review_packet_node_record(
             "started_at": utc_now(),
             "finished_at": utc_now(),
             "input_refs": [
-                "docs/Execution_Readiness_Packet.md",
+                "docs/05_intake/Execution_Readiness_Packet.md",
                 readiness_ref,
                 protocol_ref,
             ],

@@ -1,6 +1,6 @@
 # Workflow Supervisor
 
-Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and direct `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**`; use tooling, not manual edits. Use `.claude/shared/workflow-supervisor-runtime.md` as the compact runtime reference; skip historical design docs by default.
+Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and direct `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**`; use tooling, not manual edits. Use `.claude/shared/workflow-supervisor-runtime.md` and `.claude/shared/commit-checkpoint-rule.md` as compact runtime references; skip historical design docs by default.
 Core commands:
 
 ```bash
@@ -38,15 +38,15 @@ If it reports `answer_pending_request`, `manual_recover`, an unanswered pending
 request, or a pending `APPROVE_ACTION` without Approval Evidence, report the
 pending request and do not start a new run. Do not ask the operator to type a
 separate resume command for a request that already has an `answer_record`. If
-no run is active and `docs/Research_Intent_Draft.md` plus either
-`docs/Execution_Readiness_Packet.md` or `docs/Grill_Round_Log.md` exists, start
+no run is active and `docs/05_intake/Research_Intent_Draft.md` plus either
+`docs/05_intake/Execution_Readiness_Packet.md` or `docs/05_intake/Grill_Round_Log.md` exists, start
 full prepare with:
 
 ```bash
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start \
   --segment prepare \
   --complete \
-  --goal-file docs/Research_Intent_Draft.md \
+  --goal-file docs/05_intake/Research_Intent_Draft.md \
   --json
 ```
 
@@ -81,10 +81,10 @@ handoff supports Hugging Face dataset downloads when Grill records
 the first baseline set; this does not authorize deferred, rejected, or
 requires-approval sources. On `--complete`, the supervisor writes
 runtime `grill_bridge.json` and `acquisition_plan.json` by reading
-`.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
-`docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`. It uses only
+`.workflow_supervisor/readiness.json`, `docs/05_intake/Execution_Readiness_Packet.md`,
+`docs/05_intake/Research_Intent_Draft.md`, and `docs/05_intake/Grill_Round_Log.md`. It uses only
 structured readiness rows, explicit `key: value` lines, or exactly labeled
-contextual dataset/baseline URLs. Treat `docs/Research_Intent_Draft.md` as the
+contextual dataset/baseline URLs. Treat `docs/05_intake/Research_Intent_Draft.md` as the
 primary narrative intent source for scope and clone intent, but do not treat
 ordinary literature, method, or baseline-comparison URLs in that draft as
 executable acquisition inputs. Redacted or ambiguous values become typed input
@@ -104,15 +104,16 @@ inputs, policy blockers, worker failures, or gate failures pause for HITL.
 `build_code_debug` is recovery. Build becomes `build_ready_for_iterate` only
 after validate-run gates pass and `validate-run verdict: PASS`; a foundation
 slice alone is `build_foundation_ready` unless explicitly requested.
-Durable non-tool-owned outputs must be committed before each build node is
-accepted. WF8 also requires one distinct semantic commit per
-`docs/Implementation_Roadmap.md` `commit_plan` row; bundled or missing slice
-commits fail node postconditions. Worker prompts include postconditions,
-evidence tools, and write patterns; workers must run concrete checks and record
-PASS/FAIL/NOT_RUN in Gate ledger, not prose. Each `command_passes` gate needs an
-exact matching `command`: build uses `roadmap implementation completeness` for
-code nodes and `validate-run verdict` for WF9; missing runnable evidence is not
-PASS. Build postconditions verify `git_worktree_clean`; code nodes also verify
+Durable non-tool-owned outputs must pass an automatic commit checkpoint before
+each build node is accepted. WF8 also requires one distinct checkpoint commit
+per `docs/Implementation_Roadmap.md` `commit_plan` row; bundled or missing
+slice commits fail node postconditions. Worker prompts include postconditions,
+evidence tools, write patterns, and validation profiles; workers must run
+action-local checks during the node and defer validation-heavy unrelated checks
+to the checkpoint profile. Each `command_passes` gate needs an exact matching
+`command`: build uses `roadmap implementation completeness` for code nodes and
+`validate-run verdict` for WF9; missing runnable evidence is not PASS. Build
+postconditions verify accepted slice paths are clean; code nodes also verify
 `sliced_commits_recorded` from the run `base_git_commit`.
 Codex workers write their JSON result to a temporary
 `.agents/state/workflow_supervisor_worker_results/**` handoff path; the

@@ -198,7 +198,8 @@ class TestRenderPrompt:
         brief = build_brief(state, "code")
         prompt = render_prompt(brief, iteration_id="iter3")
         assert "code" in prompt.lower()
-        assert "git commit" in prompt.lower() or "semantic git" in prompt.lower()
+        assert "commit checkpoint" in prompt.lower()
+        assert "git_commit" in prompt
 
 
 # ===================================================================

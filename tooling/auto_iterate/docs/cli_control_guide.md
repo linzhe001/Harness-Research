@@ -51,6 +51,11 @@ records without `action_state` fall back to the older phase sequence for
 compatibility, but new loops should write strict `iteration_log.json`
 `schema_version: "2"`.
 
+Code and evaluation phases use automatic commit checkpoints. Routine phases run
+only action-local checks; validation-heavy framework checks run at the selected
+checkpoint profile before the phase records `git_commit` or hands off to a long
+run.
+
 ## 3. Pausing and Stopping
 
 **Pause** (graceful, at next phase boundary):

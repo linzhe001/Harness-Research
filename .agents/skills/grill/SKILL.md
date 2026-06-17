@@ -56,12 +56,12 @@ are clear.
 
 ## Outputs
 Grill may create or refresh:
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
+- `docs/05_intake/Research_Intent_Draft.md`
+- `docs/05_intake/Grill_Round_Log.md`
+- `docs/05_intake/Execution_Readiness_Packet.md`
 - `.workflow_supervisor/readiness.json` only through Grill/supervisor tooling
 
-In `docs/Execution_Readiness_Packet.md`, keep four compact ledgers:
+In `docs/05_intake/Execution_Readiness_Packet.md`, keep four compact ledgers:
 - `Dataset Access Ledger`: id, source/entrypoint, access verdict, probe,
   execution decision, notes.
 - `Baseline Source Ledger`: id/name, role, code repository URL or entrypoint,

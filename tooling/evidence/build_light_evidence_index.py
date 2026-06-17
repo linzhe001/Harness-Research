@@ -256,6 +256,65 @@ def docchain_records(root: Path) -> list[dict[str, Any]]:
     return records
 
 
+def discovery_records(root: Path) -> list[dict[str, Any]]:
+    path = root / "docs" / "45_discoveries" / "Discovery_Ledger.md"
+    if not path.is_file():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or "---" in stripped:
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 7 or cells[0].lower() in {"id", "pending"}:
+            continue
+        identifier, _date, level, status, summary, evidence_refs, _hint = cells[:7]
+        if not identifier:
+            continue
+        records.append(
+            {
+                "id": f"discovery:{identifier}",
+                "kind": "discovery",
+                "summary": summary or identifier,
+                "status": status or "open",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [
+                    source_ref(
+                        root,
+                        path.relative_to(root).as_posix(),
+                        "discovery_ledger",
+                    )
+                ],
+                "detail_ref": path.relative_to(root).as_posix(),
+                "level": level or "observation",
+                "evidence_refs": evidence_refs,
+            }
+        )
+    if not records:
+        records.append(
+            {
+                "id": "discovery:ledger",
+                "kind": "discovery",
+                "summary": "Discovery ledger exists but has no active entries",
+                "status": "empty",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [
+                    source_ref(
+                        root,
+                        path.relative_to(root).as_posix(),
+                        "discovery_ledger",
+                    )
+                ],
+                "detail_ref": path.relative_to(root).as_posix(),
+            }
+        )
+    return records
+
+
 def build_light_index(root: Path) -> dict[str, Any]:
     log_path = root / "iteration_log.json"
     log = load_json(log_path) if log_path.is_file() else {"iterations": []}
@@ -276,6 +335,7 @@ def build_light_index(root: Path) -> dict[str, Any]:
         if promotion is not None:
             records.append(promotion)
     records.extend(docchain_records(root))
+    records.extend(discovery_records(root))
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),

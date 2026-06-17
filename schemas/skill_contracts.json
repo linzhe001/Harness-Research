@@ -79,7 +79,31 @@
           "requires_tool": false,
           "notes": "Workflow state and indexes; not Human Approval by themselves."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "stage_transition_without_user_approval",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "doc-compiler",
@@ -181,7 +205,24 @@
           "is_final": false,
           "requires_tool": true
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "current_doc_without_docchain",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        }
+      ],
+      "default_validation_profile": "docs"
     },
     {
       "skill": "docs-site",
@@ -272,7 +313,38 @@
           "requires_tool": true,
           "notes": "Generated preview and manifest data for HTML hover/navigation behavior."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "edit_source_markdown_during_render",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "html_as_source_of_truth",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "docs"
     },
     {
       "skill": "review-packet",
@@ -365,7 +437,24 @@
           "requires_tool": true,
           "notes": "Review Packet is decision input, not approval."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "approve_without_explicit_human_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "packet_as_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "release"
     },
     {
       "skill": "protocol-compiler",
@@ -442,7 +531,24 @@
           "is_final": false,
           "requires_tool": true
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "docs"
     },
     {
       "skill": "protocol-drift-check",
@@ -519,7 +625,24 @@
           "requires_tool": false,
           "notes": "Drift notes do not approve contracts."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "ignore_unresolved_protocol_drift",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "notice",
+          "exception_policy": "overlay_allowed"
+        },
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "docs"
     },
     {
       "skill": "survey-idea",
@@ -612,7 +735,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "idea-debate",
@@ -704,7 +844,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "refine-idea",
@@ -791,7 +948,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "architecture_decision_in_build_plan",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "notice",
+          "exception_policy": "overlay_allowed"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "data-prep",
@@ -928,7 +1102,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "baseline-repro",
@@ -1095,7 +1286,31 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "training_without_semantic_commit",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "approve_without_explicit_human_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "refine-arch",
@@ -1198,7 +1413,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "project_map_stale",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "deep-check",
@@ -1295,7 +1527,24 @@
           "requires_tool": false,
           "notes": "Review notes do not approve contracts."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "approve_without_explicit_human_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "evaluate",
@@ -1316,7 +1565,8 @@
           ".agents/references/run-artifact-contract.md",
           ".agents/references/reviewer-independence.md",
           ".agents/references/review-tracing.md",
-          ".agents/references/language-policy.md"
+          ".agents/references/language-policy.md",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/evaluate/SKILL.md",
@@ -1339,7 +1589,8 @@
           "docs/30_evidence/Experiment_Evidence_Index.json",
           "docs/30_evidence/Experiment_Evidence_Index.md",
           ".evidence/light/index.json",
-          "runs/wf10/"
+          "runs/wf10/",
+          "docs/45_discoveries/Discovery_Ledger.md"
         ]
       },
       "required_actions": [
@@ -1354,7 +1605,8 @@
         "run_code_manifest_or_config_only_record",
         "promotion_plan_or_NOT_READY",
         "build_light_evidence_index_or_NOT_RUN",
-        "run_local_promotion_check"
+        "run_local_promotion_check",
+        "discovery_ledger_update_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "stage_transition_from_iterate",
@@ -1370,7 +1622,8 @@
         "docs_site_boundary_report",
         "run_code_manifest_write",
         "promotion_plan_write",
-        "light_evidence_index_write"
+        "light_evidence_index_write",
+        "discovery_ledger_write"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -1387,7 +1640,8 @@
         "MEMORY.md",
         "docs/Stage_Report.md",
         "runs/wf10/",
-        ".evidence/light/index.json"
+        ".evidence/light/index.json",
+        "docs/45_discoveries/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -1400,7 +1654,8 @@
           "MEMORY.md",
           "docs/Stage_Report.md",
           "runs/wf10/",
-          ".evidence/light/index.json"
+          ".evidence/light/index.json",
+          "docs/45_discoveries/"
         ]
       },
       "artifact_outputs": [
@@ -1466,8 +1721,42 @@
           "is_final": false,
           "requires_tool": false,
           "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
+        },
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/45_discoveries/"
+          ],
+          "owner": "evaluate",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Mutable discovery ledger for observations, phenomena, findings, hypotheses, and next-experiment hints."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "stage_transition_from_iterate",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "auto_observation_direct_to_MEMORY",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "experiment"
     },
     {
       "skill": "init-project",
@@ -1509,9 +1798,9 @@
         ],
         "project_optional": [
           "OPERATOR_CONTEXT.md",
-          "docs/Research_Intent_Draft.md",
-          "docs/Grill_Round_Log.md",
-          "docs/Execution_Readiness_Packet.md",
+          "docs/05_intake/Research_Intent_Draft.md",
+          "docs/05_intake/Grill_Round_Log.md",
+          "docs/05_intake/Execution_Readiness_Packet.md",
           ".workflow_supervisor/readiness.json",
           "docs/Feasibility_Report.md",
           "docs/Dataset_Stats.md",
@@ -1602,7 +1891,24 @@
           "requires_tool": true,
           "notes": "Scaffold with evidence tooling; do not hand-edit traces."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "env-setup",
@@ -1707,7 +2013,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "training_without_semantic_commit",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "build-plan",
@@ -1812,7 +2135,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "architecture_decision_in_build_plan",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "notice",
+          "exception_policy": "overlay_allowed"
+        },
+        {
+          "id": "project_map_stale",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "code-expert",
@@ -1831,7 +2171,8 @@
           ".agents/references/language-policy.md",
           ".agents/references/project-map-rule.md",
           ".agents/references/pre-training-rule.md",
-          ".agents/references/sliced-commit-rule.md"
+          ".agents/references/sliced-commit-rule.md",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/code-expert/SKILL.md",
@@ -1941,7 +2282,31 @@
           "requires_tool": true,
           "notes": "Evidence Chain artifacts for docs/20_facts/Codebase_Map.md generated by compile_doc.py; manual .evidence edits remain forbidden."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "stable_code_without_project_map_read",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "project_map_stale",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "training_without_semantic_commit",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "code-debug",
@@ -1959,7 +2324,8 @@
           ".agents/references/language-policy.md",
           ".agents/references/project-map-rule.md",
           ".agents/references/pre-training-rule.md",
-          ".agents/references/sliced-commit-rule.md"
+          ".agents/references/sliced-commit-rule.md",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/code-debug/SKILL.md",
@@ -2062,7 +2428,31 @@
           "requires_tool": true,
           "notes": "Evidence Chain artifacts for docs/20_facts/Codebase_Map.md generated by compile_doc.py; manual .evidence edits remain forbidden."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "stable_code_without_project_map_read",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "project_map_stale",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "training_without_semantic_commit",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "harness-maintenance",
@@ -2133,7 +2523,8 @@
           "tooling/codex_hooks/README.md",
           "schemas/skill_contracts.json",
           "schemas/skill_contracts.schema.json",
-          "tooling/.tests/test_codex_hooks_contracts.py"
+          "tooling/.tests/test_codex_hooks_contracts.py",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/harness-maintenance/SKILL.md"
@@ -2300,7 +2691,38 @@
           "requires_tool": false,
           "notes": "Grill helper tooling for readiness artifacts."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "guardrail"
     },
     {
       "skill": "code-review",
@@ -2390,7 +2812,38 @@
           "requires_tool": false,
           "notes": "Review trace only; subject-file fixes route to code-debug or harness-maintenance."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "modify_subject_files_during_code_review",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "review_without_line_references",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "unverified_model_finding_as_fact",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "heavy_review_without_trace",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "validate-run",
@@ -2495,7 +2948,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "WF9_PASS_without_semantic_review",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "ledger",
+          "exception_policy": "human_approval_required"
+        },
+        {
+          "id": "WF9_PASS_without_smoke_evidence",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "ledger",
+          "exception_policy": "human_approval_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "iterate",
@@ -2520,7 +2990,8 @@
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/reviewer-independence.md",
-          ".agents/references/review-tracing.md"
+          ".agents/references/review-tracing.md",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/iterate/SKILL.md",
@@ -2547,7 +3018,8 @@
           "docs/30_evidence/Experiment_Evidence_Index.json",
           "docs/30_evidence/Experiment_Evidence_Index.md",
           ".evidence/light/index.json",
-          "runs/wf10/"
+          "runs/wf10/",
+          "docs/45_discoveries/Discovery_Ledger.md"
         ]
       },
       "required_actions": [
@@ -2564,7 +3036,8 @@
         "action_state_next_action_update",
         "run_code_manifest_or_config_only_record",
         "promotion_plan_or_NOT_READY",
-        "build_light_evidence_index_or_NOT_RUN"
+        "build_light_evidence_index_or_NOT_RUN",
+        "discovery_ledger_update_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "auto_observation_direct_to_MEMORY",
@@ -2580,7 +3053,8 @@
         "docs_site_boundary_report",
         "run_code_manifest_write",
         "promotion_plan_write",
-        "light_evidence_index_write"
+        "light_evidence_index_write",
+        "discovery_ledger_write"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -2596,7 +3070,8 @@
         "docs/50_memory/",
         "MEMORY.md",
         "runs/wf10/",
-        ".evidence/light/index.json"
+        ".evidence/light/index.json",
+        "docs/45_discoveries/"
       ],
       "write_scope": {
         "allowed_paths": [
@@ -2608,7 +3083,8 @@
           "docs/50_memory/",
           "MEMORY.md",
           "runs/wf10/",
-          ".evidence/light/index.json"
+          ".evidence/light/index.json",
+          "docs/45_discoveries/"
         ]
       },
       "artifact_outputs": [
@@ -2673,8 +3149,42 @@
           "is_final": false,
           "requires_tool": false,
           "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
+        },
+        {
+          "kind": "current_doc",
+          "paths": [
+            "docs/45_discoveries/"
+          ],
+          "owner": "iterate",
+          "is_final": true,
+          "requires_tool": false,
+          "notes": "Mutable discovery ledger for observations, phenomena, findings, hypotheses, and next-experiment hints."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "auto_observation_direct_to_MEMORY",
+          "kind": "forbidden_action",
+          "tier": "advisory",
+          "enforcement": "notice",
+          "exception_policy": "not_required"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "stage_transition_from_iterate",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        }
+      ],
+      "default_validation_profile": "experiment"
     },
     {
       "skill": "auto-paper",
@@ -2719,7 +3229,8 @@
           "docs/30_evidence/Experiment_Evidence_Index.json",
           "docs/30_evidence/Experiment_Evidence_Index.md",
           "tooling/auto_paper/",
-          "docs/10_contract/Claim_Boundary.md"
+          "docs/10_contract/Claim_Boundary.md",
+          "docs/45_discoveries/Discovery_Ledger.md"
         ]
       },
       "required_actions": [
@@ -2788,7 +3299,38 @@
           "requires_tool": true,
           "notes": "Controller-owned auto-paper runtime state written by tooling/auto_paper/scripts/auto_paper_ctl.py."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-intake",
@@ -2865,7 +3407,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-research",
@@ -2940,7 +3513,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-argument",
@@ -3014,7 +3618,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-citation",
@@ -3084,7 +3719,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-layout",
@@ -3155,7 +3821,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-patch",
@@ -3228,7 +3925,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-harden",
@@ -3307,7 +4035,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-response",
@@ -3381,7 +4140,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-data",
@@ -3455,7 +4245,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-paper-figure",
@@ -3530,7 +4351,38 @@
           "is_final": true,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "manual_edit_evidence_chain",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "auto-iterate-goal",
@@ -3601,7 +4453,24 @@
           "requires_tool": false,
           "notes": ".auto_iterate/ is controller-owned runtime state, not a manual Skill output."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "start_auto_iterate_without_goal_validation",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "notice",
+          "exception_policy": "overlay_allowed"
+        },
+        {
+          "id": "manual_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "experiment"
     },
     {
       "skill": "final-exp",
@@ -3680,7 +4549,24 @@
           "is_final": false,
           "requires_tool": false
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "final_exp_outside_claim_boundary",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "ledger",
+          "exception_policy": "human_approval_required"
+        },
+        {
+          "id": "WF11_without_approved_contracts",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "ledger",
+          "exception_policy": "human_approval_required"
+        }
+      ],
+      "default_validation_profile": "release"
     },
     {
       "skill": "release",
@@ -3788,7 +4674,31 @@
           "requires_tool": false,
           "notes": "Broad legacy docs write surface; prefer docs/60_release/ for release docs."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "release_claim_outside_claim_boundary",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "ledger",
+          "exception_policy": "human_approval_required"
+        },
+        {
+          "id": "submit_without_explicit_user_request",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "overwrite_package_without_confirmation",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        }
+      ],
+      "default_validation_profile": "release"
     },
     {
       "skill": "grill",
@@ -3826,9 +4736,9 @@
           "docs/Idea_Debate.md",
           "docs/Refined_Idea.md",
           "docs/30_evidence/Open_Questions.md",
-          "docs/Research_Intent_Draft.md",
-          "docs/Grill_Round_Log.md",
-          "docs/Execution_Readiness_Packet.md"
+          "docs/05_intake/Research_Intent_Draft.md",
+          "docs/05_intake/Grill_Round_Log.md",
+          "docs/05_intake/Execution_Readiness_Packet.md"
         ]
       },
       "required_actions": [
@@ -3853,25 +4763,27 @@
         "docs_site_boundary_report"
       ],
       "sensitive_paths": [
-        "docs/Research_Intent_Draft.md",
-        "docs/Grill_Round_Log.md",
-        "docs/Execution_Readiness_Packet.md",
-        ".workflow_supervisor/readiness.json"
+        "docs/05_intake/Research_Intent_Draft.md",
+        "docs/05_intake/Grill_Round_Log.md",
+        "docs/05_intake/Execution_Readiness_Packet.md",
+        ".workflow_supervisor/readiness.json",
+        "docs/05_intake/"
       ],
       "write_scope": {
         "allowed_paths": [
-          "docs/Research_Intent_Draft.md",
-          "docs/Grill_Round_Log.md",
-          "docs/Execution_Readiness_Packet.md"
+          "docs/05_intake/Research_Intent_Draft.md",
+          "docs/05_intake/Grill_Round_Log.md",
+          "docs/05_intake/Execution_Readiness_Packet.md",
+          "docs/05_intake/"
         ]
       },
       "artifact_outputs": [
         {
           "kind": "current_doc",
           "paths": [
-            "docs/Research_Intent_Draft.md",
-            "docs/Grill_Round_Log.md",
-            "docs/Execution_Readiness_Packet.md"
+            "docs/05_intake/Research_Intent_Draft.md",
+            "docs/05_intake/Grill_Round_Log.md",
+            "docs/05_intake/Execution_Readiness_Packet.md"
           ],
           "owner": "grill",
           "is_final": false,
@@ -3887,8 +4799,63 @@
           "is_final": false,
           "requires_tool": true,
           "notes": "Exact local/private candidate inputs; use tooling and verify before promotion."
+        },
+        {
+          "kind": "guidance",
+          "paths": [
+            "docs/05_intake/"
+          ],
+          "owner": "grill",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Mutable intake candidates, not Approved Contracts or Current Facts."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_workflow_supervisor",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "protocol_as_approved_contract",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "packet_as_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "stage_transition_without_user_approval",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "workflow-supervisor",
@@ -3912,7 +4879,8 @@
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/language-policy.md",
-          ".agents/references/ubiquitous-language.md"
+          ".agents/references/ubiquitous-language.md",
+          ".agents/references/commit-checkpoint-rule.md"
         ],
         "skill": [
           ".agents/skills/workflow-supervisor/SKILL.md"
@@ -3922,9 +4890,9 @@
           "PROJECT_STATE.json",
           "iteration_log.json",
           "project_map.json",
-          "docs/Research_Intent_Draft.md",
-          "docs/Grill_Round_Log.md",
-          "docs/Execution_Readiness_Packet.md"
+          "docs/05_intake/Research_Intent_Draft.md",
+          "docs/05_intake/Grill_Round_Log.md",
+          "docs/05_intake/Execution_Readiness_Packet.md"
         ],
         "project_optional": [
           "docs/10_contract/Project_Contract.md",
@@ -3981,7 +4949,59 @@
           "requires_tool": true,
           "notes": "Controller-owned runtime state; inspect for recovery but do not hand-edit."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_workflow_supervisor",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "approve_without_explicit_human_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "stage_transition_without_user_approval",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "packet_as_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "start_auto_iterate_without_goal_validation",
+          "kind": "forbidden_action",
+          "tier": "workflow_default",
+          "enforcement": "notice",
+          "exception_policy": "overlay_allowed"
+        }
+      ],
+      "default_validation_profile": "slice"
     },
     {
       "skill": "change-intake",
@@ -4074,7 +5094,52 @@
           "requires_tool": true,
           "notes": "Machine-readable Change Request JSON belongs to supervisor runtime."
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "id": "direct_edit_evidence",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_auto_iterate",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "direct_edit_workflow_supervisor",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "approve_without_explicit_human_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        },
+        {
+          "id": "stage_transition_without_user_approval",
+          "kind": "forbidden_action",
+          "tier": "ownership_boundary",
+          "enforcement": "notice",
+          "exception_policy": "owner_delegation_required"
+        },
+        {
+          "id": "packet_as_approval",
+          "kind": "forbidden_action",
+          "tier": "hard_invariant",
+          "enforcement": "block",
+          "exception_policy": "never"
+        }
+      ],
+      "default_validation_profile": "slice"
     }
   ]
 }

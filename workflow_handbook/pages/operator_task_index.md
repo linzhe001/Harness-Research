@@ -53,7 +53,7 @@ what you want
 
 | 我想做什么 | 可见入口 | 内部运行 | 先看什么状态或产物 | 什么时候停下来 |
 | --- | --- | --- | --- | --- |
-| 澄清粗糙 research idea | `$grill` | Grill drafting and readiness candidate capture | `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
+| 澄清粗糙 research idea | `$grill` | Grill drafting and readiness candidate capture | `docs/05_intake/Research_Intent_Draft.md`, `docs/05_intake/Grill_Round_Log.md`, `docs/05_intake/Execution_Readiness_Packet.md`, `.workflow_supervisor/readiness.json` | operator 需要选择 continue、pivot、abandon 或 prepare |
 | 获取或验证数据集和 baseline | `$prepare` | workflow-supervisor `prepare --complete`，必要时加 explicit source/target | `grill_bridge.json`, `docs/Dataset_Stats.md`, `docs/Baseline_Report.md`, Review Packet | Grill 值 redacted/ambiguous、远端操作未授权、worker/gate failure |
 | 判断能否进入执行 | `$prepare` | workflow-supervisor `prepare --dry-run` | readiness preflight 和 Gate ledger | readiness 输入缺失、无效或过期 |
 | 处理 pending request | `$prepare` / `$build` / `$write` | `workflow_ctl status --json`，然后 scoped `workflow_ctl approve ...` 或 `resume ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
@@ -66,7 +66,7 @@ what you want
 常用状态命令：
 
 Grill 中讨论过的数据下载、HF access、baseline clone 或跳过 gated source 的
-意图，应先看 `docs/Execution_Readiness_Packet.md` 的
+意图，应先看 `docs/05_intake/Execution_Readiness_Packet.md` 的
 `Execution Intent Ledger`。这些行只是 candidate readiness policy；真正执行时仍由
 `$prepare` 的 workflow-supervisor runtime 验证并形成 Gate ledger。
 

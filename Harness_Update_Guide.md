@@ -412,8 +412,8 @@ Current expected behavior after this Harness update:
   internal `init-project update-from-grill` mode unless guidance initialization
   is skipped
 - internal `init-project update-from-grill` reads
-  `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`,
-  `docs/Execution_Readiness_Packet.md`, and supervisor-produced
+  `docs/05_intake/Research_Intent_Draft.md`, `docs/05_intake/Grill_Round_Log.md`,
+  `docs/05_intake/Execution_Readiness_Packet.md`, and supervisor-produced
   `.workflow_supervisor/readiness.json` when present
 - the handoff may initialize or refresh `CLAUDE.md`, `AGENTS.md`, and
   `README.md`
@@ -424,7 +424,7 @@ Current expected behavior after this Harness update:
   `update-from-grill` is expected unless another tool already produced it
 - a visible `$prepare` request after accepted Grill output should run status
   first, then route to full prepare with
-  `--goal-file docs/Research_Intent_Draft.md --complete` when no run is active;
+  `--goal-file docs/05_intake/Research_Intent_Draft.md --complete` when no run is active;
   shell CLI commands still require explicit segment/goal arguments
 
 After all relevant guidance is merged:
@@ -545,8 +545,8 @@ python tooling/evidence/validate_workflow_handbook.py --workspace-root .
 Current supervisor behavior to remember after a pull:
 
 - visible `$prepare` routing can read `$grill` outputs such as
-  `docs/Execution_Readiness_Packet.md`, `docs/Research_Intent_Draft.md`,
-  `docs/Grill_Round_Log.md`, and optional
+  `docs/05_intake/Execution_Readiness_Packet.md`, `docs/05_intake/Research_Intent_Draft.md`,
+  `docs/05_intake/Grill_Round_Log.md`, and optional
   `.workflow_supervisor/readiness.json`
 - the inferred bridge is written by the supervisor under
   `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json`

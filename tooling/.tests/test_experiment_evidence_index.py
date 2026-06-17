@@ -83,6 +83,21 @@ def test_build_experiment_evidence_index_writes_paper_facing_outputs(
         json.dumps({"iterations": [iteration]}) + "\n",
         encoding="utf-8",
     )
+    discovery = tmp_path / "docs" / "45_discoveries" / "Discovery_Ledger.md"
+    discovery.parent.mkdir(parents=True)
+    discovery.write_text(
+        "\n".join(
+            [
+                "# Discovery Ledger",
+                "",
+                "| ID | Date | Level | Status | Summary | Evidence Refs | Next Experiment Hint |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
+                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after config change | iteration_log.json | ablate config |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--workspace-root", str(tmp_path)],
@@ -148,6 +163,21 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
         + "\n",
         encoding="utf-8",
     )
+    discovery = tmp_path / "docs" / "45_discoveries" / "Discovery_Ledger.md"
+    discovery.parent.mkdir(parents=True)
+    discovery.write_text(
+        "\n".join(
+            [
+                "# Discovery Ledger",
+                "",
+                "| ID | Date | Level | Status | Summary | Evidence Refs | Next Experiment Hint |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
+                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after config change | iteration_log.json | ablate config |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     result = subprocess.run(
         [sys.executable, str(LIGHT_SCRIPT), "--workspace-root", str(tmp_path)],
@@ -165,6 +195,12 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
     assert run_records
     assert run_records[0]["summary"]
     assert run_records[0]["source_refs"]
+    discoveries = [
+        item for item in data["records"] if item["id"] == "discovery:d1"
+    ]
+    assert discoveries
+    assert discoveries[0]["kind"] == "discovery"
+    assert discoveries[0]["level"] == "phenomenon"
 
 
 def test_migrate_iteration_log_v2_writes_strict_fields_and_manifest(

@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover - defensive fallback for partial install
     intent_route_prompt = None  # type: ignore[assignment]
 
 CONTRACTS_PATH = Path("schemas/skill_contracts.json")
+CONTRACT_OVERLAYS_DIR = Path("contract_overlays")
 SLICED_COMMIT_RULE_PATH = ".agents/references/sliced-commit-rule.md"
 COMMIT_GUIDANCE_FILES = (SLICED_COMMIT_RULE_PATH,)
 RUNTIME_DIR = Path(".harness_hooks")
@@ -117,6 +118,28 @@ HOOK_INTENT_ROUTER_ROUTES = {
 
 ENFORCEMENT_NONE = "none"
 ENFORCEMENT_CONTEXT_ONLY = "context_only"
+CONSTRAINT_TIERS = {
+    "hard_invariant",
+    "ownership_boundary",
+    "workflow_default",
+    "advisory",
+}
+CONSTRAINT_ENFORCEMENT = {"block", "notice", "ledger"}
+CONSTRAINT_EXCEPTION_POLICIES = {
+    "never",
+    "owner_delegation_required",
+    "human_approval_required",
+    "overlay_allowed",
+    "not_required",
+}
+CONSTRAINT_KINDS = {
+    "forbidden_action",
+    "required_action",
+    "boundary",
+    "gate",
+    "notice",
+}
+VALIDATION_PROFILES = {"slice", "guardrail", "docs", "experiment", "release"}
 
 KNOWN_REQUIRED_ACTIONS = {
     "approval_tool_only_after_explicit_human_approval",
@@ -142,6 +165,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "decision_vocabulary",
     "dataset_acquisition_decision_request_or_NOT_RUN",
     "dataset_acquisition_or_NOT_RUN",
+    "discovery_ledger_update_or_NOT_RUN",
     "docchain_gate_when_current_docs_change",
     "docs_site_boundary_report",
     "docs_site_render_or_NOT_RUN",
@@ -551,6 +575,121 @@ def load_contracts(root: Path) -> list[dict[str, Any]]:
     return list(data.get("contracts", []))
 
 
+def load_contract_overlays(root: Path) -> list[dict[str, Any]]:
+    overlays_dir = root / CONTRACT_OVERLAYS_DIR
+    if not overlays_dir.is_dir():
+        return []
+    overlays: list[dict[str, Any]] = []
+    for path in sorted(overlays_dir.glob("*.json")):
+        data = load_json(path, None)
+        if isinstance(data, dict):
+            data.setdefault("_path", rel_path(path, root))
+            overlays.append(data)
+    return overlays
+
+
+def active_overlays_for_skill(root: Path, skill: str) -> list[dict[str, Any]]:
+    return [
+        overlay
+        for overlay in load_contract_overlays(root)
+        if overlay.get("base_skill") == skill and overlay.get("status") == "active"
+    ]
+
+
+def _dedupe_strings(values: list[Any]) -> list[str]:
+    return list(dict.fromkeys(str(value) for value in values if isinstance(value, str)))
+
+
+def _append_unique(target: list[Any], values: list[Any]) -> list[Any]:
+    existing = {
+        json.dumps(value, sort_keys=True, ensure_ascii=False)
+        for value in target
+        if isinstance(value, (dict, list, str, int, float, bool)) or value is None
+    }
+    for value in values:
+        key = json.dumps(value, sort_keys=True, ensure_ascii=False)
+        if key not in existing:
+            target.append(value)
+            existing.add(key)
+    return target
+
+
+def apply_contract_overlay(
+    base_contract: dict[str, Any],
+    overlay: dict[str, Any],
+) -> dict[str, Any]:
+    effective = json.loads(json.dumps(base_contract))
+    patch = overlay.get("patch", {})
+    if not isinstance(patch, dict):
+        patch = {}
+
+    for source_key, target_key in (
+        ("add_required_actions", "required_actions"),
+        ("add_gate_ledger_required_when", "gate_ledger_required_when"),
+        ("add_sensitive_paths", "sensitive_paths"),
+    ):
+        values = patch.get(source_key, [])
+        if isinstance(values, list):
+            current = effective.setdefault(target_key, [])
+            if isinstance(current, list):
+                current[:] = _dedupe_strings([*current, *values])
+
+    add_reads = patch.get("add_required_read_set", {})
+    if isinstance(add_reads, dict):
+        read_set = effective.setdefault("required_read_set", {})
+        if isinstance(read_set, dict):
+            for section, values in add_reads.items():
+                if not isinstance(values, list):
+                    continue
+                current = read_set.setdefault(section, [])
+                if isinstance(current, list):
+                    current[:] = _dedupe_strings([*current, *values])
+
+    add_allowed = patch.get("add_allowed_paths", [])
+    write_scope = effective.setdefault("write_scope", {})
+    if isinstance(add_allowed, list) and isinstance(write_scope, dict):
+        current = write_scope.setdefault("allowed_paths", [])
+        if isinstance(current, list):
+            current[:] = _dedupe_strings([*current, *add_allowed])
+
+    add_outputs = patch.get("add_artifact_outputs", [])
+    if isinstance(add_outputs, list):
+        outputs = effective.setdefault("artifact_outputs", [])
+        if isinstance(outputs, list):
+            _append_unique(outputs, add_outputs)
+
+    add_constraints = patch.get("add_constraints", [])
+    if isinstance(add_constraints, list):
+        constraints = effective.setdefault("constraints", [])
+        if isinstance(constraints, list):
+            _append_unique(constraints, add_constraints)
+
+    exceptions = overlay.get("exceptions", [])
+    if isinstance(exceptions, list) and exceptions:
+        effective.setdefault("constraint_exceptions", [])
+        if isinstance(effective["constraint_exceptions"], list):
+            _append_unique(effective["constraint_exceptions"], exceptions)
+
+    applied = effective.setdefault("applied_overlays", [])
+    if isinstance(applied, list):
+        applied.append(
+            {
+                "overlay_id": overlay.get("overlay_id"),
+                "path": overlay.get("_path"),
+                "status": overlay.get("status"),
+            }
+        )
+    return effective
+
+
+def effective_contract(root: Path, contract: dict[str, Any]) -> dict[str, Any]:
+    skill = str(contract.get("skill", ""))
+    effective = contract
+    for overlay in active_overlays_for_skill(root, skill):
+        effective = apply_contract_overlay(effective, overlay)
+    return effective
+
+
 def is_harness_workspace(root: Path) -> bool:
     return (root / CONTRACTS_PATH).exists()
 
@@ -558,7 +697,7 @@ def is_harness_workspace(root: Path) -> bool:
 def contract_by_skill(root: Path, skill: str) -> dict[str, Any] | None:
     for contract in load_contracts(root):
         if contract.get("skill") == skill:
-            return contract
+            return effective_contract(root, contract)
     return None
 
 
@@ -1259,6 +1398,12 @@ def validate_contract_files(root: Path) -> list[str]:
         for action in contract.get("forbidden_actions", []):
             if action not in KNOWN_FORBIDDEN_ACTIONS:
                 errors.append(f"{skill}: unknown forbidden action: {action}")
+        errors.extend(validate_contract_constraints(str(skill), contract))
+        profile = contract.get("default_validation_profile")
+        if profile not in VALIDATION_PROFILES:
+            errors.append(
+                f"{skill}: default_validation_profile is invalid: {profile}"
+            )
         write_scope = contract.get("write_scope")
         if write_scope is None:
             errors.append(f"{skill}: write_scope.allowed_paths is required")
@@ -1375,6 +1520,173 @@ def validate_contract_files(root: Path) -> list[str]:
                     f"{owner}: guardrail path {pattern} is not covered by "
                     "write_scope.allowed_paths"
                 )
+    errors.extend(validate_contract_overlays(root))
+    return errors
+
+
+def constraints_by_id(contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    constraints = contract.get("constraints", [])
+    result: dict[str, dict[str, Any]] = {}
+    if not isinstance(constraints, list):
+        return result
+    for constraint in constraints:
+        if not isinstance(constraint, dict):
+            continue
+        identifier = constraint.get("id")
+        if isinstance(identifier, str):
+            result[identifier] = constraint
+    return result
+
+
+def validate_contract_constraints(
+    skill: str,
+    contract: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    constraints = contract.get("constraints")
+    if not isinstance(constraints, list) or not constraints:
+        return [f"{skill}: constraints must be a non-empty list"]
+    seen: set[str] = set()
+    for index, constraint in enumerate(constraints):
+        if not isinstance(constraint, dict):
+            errors.append(f"{skill}: constraints[{index}] must be object")
+            continue
+        identifier = constraint.get("id")
+        if not isinstance(identifier, str) or not identifier:
+            errors.append(f"{skill}: constraints[{index}].id is required")
+            continue
+        if identifier in seen:
+            errors.append(f"{skill}: duplicate constraint id: {identifier}")
+        seen.add(identifier)
+        kind = constraint.get("kind")
+        tier = constraint.get("tier")
+        enforcement = constraint.get("enforcement")
+        exception_policy = constraint.get("exception_policy")
+        if kind not in CONSTRAINT_KINDS:
+            errors.append(f"{skill}: constraint {identifier} has bad kind: {kind}")
+        if tier not in CONSTRAINT_TIERS:
+            errors.append(f"{skill}: constraint {identifier} has bad tier: {tier}")
+        if enforcement not in CONSTRAINT_ENFORCEMENT:
+            errors.append(
+                f"{skill}: constraint {identifier} has bad enforcement: "
+                f"{enforcement}"
+            )
+        if exception_policy not in CONSTRAINT_EXCEPTION_POLICIES:
+            errors.append(
+                f"{skill}: constraint {identifier} has bad exception_policy: "
+                f"{exception_policy}"
+            )
+        if tier == "hard_invariant" and exception_policy != "never":
+            errors.append(
+                f"{skill}: hard invariant {identifier} must use "
+                "exception_policy=never"
+            )
+        if kind == "forbidden_action" and identifier not in KNOWN_FORBIDDEN_ACTIONS:
+            errors.append(f"{skill}: unknown forbidden constraint: {identifier}")
+    for action in contract.get("forbidden_actions", []):
+        if action not in seen:
+            errors.append(
+                f"{skill}: deprecated forbidden action {action} must be mirrored "
+                "in constraints"
+            )
+    return errors
+
+
+def validate_contract_overlays(root: Path) -> list[str]:
+    errors: list[str] = []
+    base_contracts = {
+        str(contract.get("skill")): contract for contract in load_contracts(root)
+    }
+    for overlay in load_contract_overlays(root):
+        label = str(overlay.get("_path") or overlay.get("overlay_id") or "<overlay>")
+        overlay_id = overlay.get("overlay_id")
+        if not isinstance(overlay_id, str) or not overlay_id:
+            errors.append(f"{label}: overlay_id is required")
+        base_skill = overlay.get("base_skill")
+        if not isinstance(base_skill, str) or base_skill not in base_contracts:
+            errors.append(f"{label}: base_skill is missing or unknown")
+            continue
+        status = overlay.get("status")
+        if status not in {
+            "draft",
+            "active",
+            "candidate_for_promotion",
+            "promoted",
+            "rejected",
+            "expired",
+        }:
+            errors.append(f"{label}: invalid status: {status}")
+        if not isinstance(overlay.get("scope"), dict):
+            errors.append(f"{label}: scope object is required")
+        if not isinstance(overlay.get("expires_at"), str) or not overlay.get(
+            "expires_at"
+        ):
+            errors.append(f"{label}: expires_at is required")
+        patch = overlay.get("patch", {})
+        if patch is not None and not isinstance(patch, dict):
+            errors.append(f"{label}: patch must be object")
+        if isinstance(patch, dict):
+            for field in (
+                "add_required_actions",
+                "add_gate_ledger_required_when",
+                "add_sensitive_paths",
+                "add_allowed_paths",
+            ):
+                values = patch.get(field, [])
+                if values and (
+                    not isinstance(values, list)
+                    or not all(isinstance(value, str) for value in values)
+                ):
+                    errors.append(f"{label}: patch.{field} must be a string list")
+            constraints = patch.get("add_constraints", [])
+            if constraints:
+                errors.extend(
+                    validate_contract_constraints(
+                        f"{label} patch",
+                        {
+                            "constraints": constraints,
+                            "forbidden_actions": [
+                                item.get("id")
+                                for item in constraints
+                                if isinstance(item, dict)
+                                and item.get("kind") == "forbidden_action"
+                            ],
+                        },
+                    )
+                )
+        base_by_id = constraints_by_id(base_contracts[base_skill])
+        exceptions = overlay.get("exceptions", [])
+        if exceptions is None:
+            exceptions = []
+        if not isinstance(exceptions, list):
+            errors.append(f"{label}: exceptions must be a list")
+            continue
+        for index, exception in enumerate(exceptions):
+            if not isinstance(exception, dict):
+                errors.append(f"{label}: exceptions[{index}] must be object")
+                continue
+            target = exception.get("constraint_id") or exception.get(
+                "forbidden_action"
+            )
+            if not isinstance(target, str) or not target:
+                errors.append(f"{label}: exceptions[{index}] needs constraint_id")
+                continue
+            constraint = base_by_id.get(target)
+            if constraint is None:
+                errors.append(f"{label}: exception target is unknown: {target}")
+                continue
+            if constraint.get("tier") == "hard_invariant":
+                errors.append(f"{label}: cannot except hard invariant {target}")
+            if not isinstance(exception.get("scope"), dict):
+                errors.append(f"{label}: exception {target} needs scope")
+            if not isinstance(exception.get("reason"), str) or not exception.get(
+                "reason"
+            ):
+                errors.append(f"{label}: exception {target} needs reason")
+            if not isinstance(
+                exception.get("expires_at"), str
+            ) or not exception.get("expires_at"):
+                errors.append(f"{label}: exception {target} needs expires_at")
     return errors
 
 

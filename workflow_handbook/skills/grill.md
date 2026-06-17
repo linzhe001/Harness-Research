@@ -47,9 +47,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Can Write
 
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
+- `docs/05_intake/Research_Intent_Draft.md`
+- `docs/05_intake/Grill_Round_Log.md`
+- `docs/05_intake/Execution_Readiness_Packet.md`
 
 ## Final Outputs
 
@@ -78,9 +78,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs/Idea_Debate.md`
 - `docs/Refined_Idea.md`
 - `docs/30_evidence/Open_Questions.md`
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
+- `docs/05_intake/Research_Intent_Draft.md`
+- `docs/05_intake/Grill_Round_Log.md`
+- `docs/05_intake/Execution_Readiness_Packet.md`
 
 ## Must Prove
 

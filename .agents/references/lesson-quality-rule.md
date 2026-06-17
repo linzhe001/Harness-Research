@@ -7,6 +7,7 @@ Prevent raw observations from being promoted into durable project memory.
 ## Levels
 
 - Observation: a run-level result, log event, or metric change.
+- Phenomenon: a surprising or repeated pattern worth testing.
 - Finding: a bounded comparison with evidence, but limited explanation.
 - Lesson: an evidence-backed interpretation with boundary and future action.
 - Invariant candidate: a possible cross-project process rule requiring repeated
@@ -26,16 +27,19 @@ A lesson may be accepted into `MEMORY.md` only when it has:
 
 ## Storage
 
-- Raw observations stay in iteration reports or auto summaries.
+- Raw observations and phenomena stay in iteration reports, auto summaries, or
+  `docs/45_discoveries/Discovery_Ledger.md`.
 - Findings and candidate lessons may live in `docs/50_memory/Lessons.md`.
 - `MEMORY.md` stores accepted lessons only.
 - Research invariants store only cross-project process rules approved by a human.
 
 ## Promotion Flow
 
-1. `$iterate eval` or `$evaluate` records observations, findings, and
-   `lesson_candidates` in the iteration report and `iteration_log.json`.
-2. Candidate lessons may be mirrored to `docs/50_memory/Lessons.md` with
+1. `$iterate eval` or `$evaluate` records observations, phenomena, findings,
+   hypotheses, and `lesson_candidates` in the iteration report,
+   `iteration_log.json`, and `docs/45_discoveries/Discovery_Ledger.md` when
+   useful.
+2. Candidate lessons may be promoted to `docs/50_memory/Lessons.md` with
    `promotion_status: candidate`, evidence references, confidence, boundary,
    and unresolved alternatives.
 3. A human or review step may mark a candidate `accepted` only after the

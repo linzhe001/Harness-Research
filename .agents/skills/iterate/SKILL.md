@@ -11,8 +11,9 @@ Use this Skill only for WF10 experiment-loop state. It owns
 
 ## Read First
 
-- Workflow, context, contract, lesson, code-style, review, language, and docs
-  rules under `../../../.agents/references/`
+- Workflow, context, contract, lesson, code-style, review, language, docs, and
+  commit checkpoint rules under `../../../.agents/references/`
+- `../../../.agents/references/commit-checkpoint-rule.md`
 - `../../../.agents/references/run-artifact-contract.md`
 - `./references/iteration-log-schema.json`
 - `./references/iteration-context.md`
@@ -78,12 +79,13 @@ surfaces instead of cloning more `runs/wf10/iter*/` scripts.
   `run_local_code`, `stable_candidate`, or `delegated_build`.
 - `code`: select latest planned iteration, write context, apply code-style
   checklist, preserve slice/glossary boundaries, route implementation through
-  `$code-debug`, and require a semantic commit before status `ready_to_run`.
+  `$code-debug`, and run a `slice` or `experiment` commit checkpoint before
+  status `ready_to_run`.
   For `run_local_code` or `stable_candidate`, write
   `runs/wf10/<iter>/code_manifest.json`.
 - `run_screening` / `run_full`: select latest `ready_to_run` iteration, resolve
-  Train/Eval scripts from
-  `CLAUDE.md`, run `config_diff.planned_command` exactly when present, verify
+  Train/Eval scripts from `CLAUDE.md`, run `config_diff.planned_command`
+  exactly when present, verify
   or materialize run-local config paths before launch, use WF5 protocol metric
   keys, record `run_manifest` with run artifact bundle paths, tracked metrics,
   screening result when relevant, and canonical failure/manual-mode behavior.
@@ -94,10 +96,11 @@ surfaces instead of cloning more `runs/wf10/iter*/` scripts.
 - `debug`, `compare`, `ablate`: operate inside the same iteration unless an
   explicit ablation command creates sub-iterations; update `action_state`.
 - `eval`: refresh context, invoke `$evaluate` when needed, compare baseline,
-  previous, and best metrics, record decision, lessons, lesson candidates,
-  slice/drift observations, complexity/boundary observations, reports, and
-  completion state. After completed run evidence is written, refresh the light
-  Evidence layer with `tooling/evidence/build_light_evidence_index.py`.
+  previous, and best metrics, record decision, lessons, slice/drift,
+  complexity/boundary observations, reports, and completion state. Record
+  mutable observations, phenomena, findings, and next-experiment hypotheses in
+  `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`; then refresh
+  the light Evidence layer with `tooling/evidence/build_light_evidence_index.py`.
   Refresh
   `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
   `tooling/evidence/build_experiment_evidence_index.py` only when detailed
@@ -112,16 +115,12 @@ surfaces instead of cloning more `runs/wf10/iter*/` scripts.
 
 - Append `MEMORY.md` only for accepted lessons satisfying
   `lesson-quality-rule.md`; raw observations stay in iteration reports or
-  `docs/50_memory/Lessons.md`.
+  `docs/45_discoveries/Discovery_Ledger.md`; lesson candidates may be promoted
+  into `docs/50_memory/Lessons.md`.
 - When `iteration_log.json`, lesson files, or accepted memory changed, report a
   Gate ledger.
 - Run `check_workflow_state.py` near WF10 handoff points; for routine in-loop
   updates, report whether it was run or deferred.
-
-## Docs
-
-After stable Markdown outputs are finalized, invoke `$docs-site` or report
-`docs_site_boundary_report`.
 
 ## Durable Docs Render
 

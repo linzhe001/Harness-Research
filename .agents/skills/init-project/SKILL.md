@@ -17,8 +17,8 @@ research contracts.
   `../../../.agents/references/`
 - Existing `PROJECT_STATE.json`, `CLAUDE.md`, `AGENTS.md`, `README.md`, and
   `OPERATOR_CONTEXT.md` when present
-- For `update-from-grill`: `docs/Research_Intent_Draft.md`,
-  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+- For `update-from-grill`: `docs/05_intake/Research_Intent_Draft.md`,
+  `docs/05_intake/Grill_Round_Log.md`, `docs/05_intake/Execution_Readiness_Packet.md`, and
   `.workflow_supervisor/readiness.json` only if supervisor tooling produced it
 
 ## Modes

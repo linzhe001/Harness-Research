@@ -11,8 +11,8 @@ existing `## Custom` section.
 - Template: `templates/claude-md-template.md`.
 - Shared rules: `language-policy.md`, `ubiquitous-language.md`,
   `documentation-evidence-rule.md`, and `documentation-style.md`.
-- For `update-from-grill`: `docs/Research_Intent_Draft.md`,
-  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+- For `update-from-grill`: `docs/05_intake/Research_Intent_Draft.md`,
+  `docs/05_intake/Grill_Round_Log.md`, `docs/05_intake/Execution_Readiness_Packet.md`, and
   `.workflow_supervisor/readiness.json` only if tooling produced it.
 
 ## Modes
@@ -66,8 +66,8 @@ Use immediately after explicit operator acceptance of a Grill draft or
 `grill_draft_ready`.
 
 1. Read Grill handoff artifacts from disk:
-   `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, and
-   `docs/Execution_Readiness_Packet.md`.
+   `docs/05_intake/Research_Intent_Draft.md`, `docs/05_intake/Grill_Round_Log.md`, and
+   `docs/05_intake/Execution_Readiness_Packet.md`.
 2. Read `.workflow_supervisor/readiness.json` only if it exists.
 3. Read current guidance/state files when present. Missing
    `PROJECT_STATE.json` is expected in a fresh target workspace.

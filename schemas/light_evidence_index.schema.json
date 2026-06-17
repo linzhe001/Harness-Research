@@ -35,7 +35,8 @@
               "promotion",
               "gate",
               "docchain",
-              "approval"
+              "approval",
+              "discovery"
             ]
           },
           "summary": {

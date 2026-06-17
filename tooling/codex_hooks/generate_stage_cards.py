@@ -317,6 +317,28 @@ def _first_values(values: list[Any], limit: int = 8) -> list[str]:
     return [str(value) for value in values[:limit]]
 
 
+def _constraint_items(contract: dict[str, Any], limit: int = 32) -> list[str]:
+    values = contract.get("constraints", [])
+    if not isinstance(values, list) or not values:
+        values = [
+            {"id": value, "tier": "legacy", "enforcement": "legacy"}
+            for value in contract.get("forbidden_actions", [])
+        ]
+    rendered: list[str] = []
+    for constraint in values[:limit]:
+        if not isinstance(constraint, dict):
+            continue
+        rendered.append(
+            "{id} [{tier}/{enforcement}; exception={exception}]".format(
+                id=constraint.get("id", "unknown"),
+                tier=constraint.get("tier", "unknown"),
+                enforcement=constraint.get("enforcement", "unknown"),
+                exception=constraint.get("exception_policy", "unknown"),
+            )
+        )
+    return rendered
+
+
 def _quote(value: str) -> str:
     escaped = value.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
@@ -534,9 +556,9 @@ def render_skill_page(root: Path, contract: dict[str, Any], position: int) -> st
             + _first_values(contract.get("gate_ledger_required_when", []), limit=32)
         ),
         "",
-        "## Cannot Do",
+        "## Constraints",
         "",
-        _list_items(_first_values(contract.get("forbidden_actions", []), limit=32)),
+        _list_items(_constraint_items(contract, limit=32)),
         "",
         "## Exit Condition",
         "",

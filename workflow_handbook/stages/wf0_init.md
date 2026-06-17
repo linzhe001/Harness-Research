@@ -90,9 +90,9 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `CLAUDE.md`
 - `README.md`
 - `OPERATOR_CONTEXT.md`
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
+- `docs/05_intake/Research_Intent_Draft.md`
+- `docs/05_intake/Grill_Round_Log.md`
+- `docs/05_intake/Execution_Readiness_Packet.md`
 - `.workflow_supervisor/readiness.json`
 - `docs/Feasibility_Report.md`
 - `docs/Dataset_Stats.md`

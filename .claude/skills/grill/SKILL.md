@@ -40,7 +40,7 @@ layering, contract gating, documentation rules, language policy, and
 ubiquitous language before durable edits. Keep exact local/private values in
 `.workflow_supervisor/readiness.json` through tooling; redact public Markdown.
 When datasets are discussed, record a structured `Dataset Access Ledger` or
-equivalent table in `docs/Execution_Readiness_Packet.md`: dataset id, source
+equivalent table in `docs/05_intake/Execution_Readiness_Packet.md`: dataset id, source
 URL or official entrypoint, access verdict, non-destructive download probe,
 execution decision, and notes. Execution decision must be explicit:
 `candidate`, `rejected`, `requires_approval`, or `deferred`. Use repository,
@@ -62,7 +62,7 @@ source is found. Record baseline candidates in a `Baseline Source Ledger` or
 equivalent table with baseline id/name, role, code repository URL or official
 code entrypoint, repo/code probe result, execution decision, and notes.
 Before recommending or accepting `grill_draft_ready`, make sure
-`docs/Execution_Readiness_Packet.md` has non-placeholder Execution Intent,
+`docs/05_intake/Execution_Readiness_Packet.md` has non-placeholder Execution Intent,
 Dataset Access, and Baseline Source ledgers. Every active dataset and executable
 baseline/negative control must have either a concrete acquisition source plus
 `Execution Decision: candidate`, or an explicit non-executable decision such as
@@ -74,7 +74,7 @@ release URL, or exact local path; model family names are non-executable until
 source, access policy, and target are clear.
 
 When external acquisition, clone, or access intent is discussed, also record an
-`Execution Intent Ledger` in `docs/Execution_Readiness_Packet.md` and mirror the
+`Execution Intent Ledger` in `docs/05_intake/Execution_Readiness_Packet.md` and mirror the
 same intent as machine-readable readiness inputs when
 `.workflow_supervisor/readiness.json` is written through Grill tooling. Use
 stable keys so `prepare --complete` can consume them without guessing from
@@ -102,9 +102,9 @@ may include `repo`, `ref`, and `target`. Weight targets belong in
 `approved_weights` schema exists.
 
 Outputs:
-- `docs/Research_Intent_Draft.md`
-- `docs/Grill_Round_Log.md`
-- `docs/Execution_Readiness_Packet.md`
+- `docs/05_intake/Research_Intent_Draft.md`
+- `docs/05_intake/Grill_Round_Log.md`
+- `docs/05_intake/Execution_Readiness_Packet.md`
 - `.workflow_supervisor/readiness.json` only when Grill readiness tooling is
   run with a write action, or when supervisor tooling produces it
 
@@ -125,8 +125,8 @@ build planning, and WF10 iteration.
 When the operator explicitly confirms `grill_draft_ready` or asks to proceed
 from an accepted Grill draft, continue in the same turn with the internal
 `init-project update-from-grill` mode unless the operator asks to skip guidance
-initialization. The handoff reads `docs/Research_Intent_Draft.md`,
-`docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+initialization. The handoff reads `docs/05_intake/Research_Intent_Draft.md`,
+`docs/05_intake/Grill_Round_Log.md`, `docs/05_intake/Execution_Readiness_Packet.md`, and
 `.workflow_supervisor/readiness.json` when supervisor tooling has produced it.
 It initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and `README.md` from
 candidate Grill context only; dataset and baseline items remain candidate

@@ -66,8 +66,8 @@ Render section bodies from project state rather than inventing new structure:
 - `init` creates the minimal `CLAUDE.md`.
 - `update` fills only sections whose source artifacts are known.
 - `update-from-grill` initializes or refreshes `CLAUDE.md`, `AGENTS.md`, and
-  `README.md` from `docs/Research_Intent_Draft.md`,
-  `docs/Grill_Round_Log.md`, `docs/Execution_Readiness_Packet.md`, and
+  `README.md` from `docs/05_intake/Research_Intent_Draft.md`,
+  `docs/05_intake/Grill_Round_Log.md`, `docs/05_intake/Execution_Readiness_Packet.md`, and
   supervisor-produced `.workflow_supervisor/readiness.json` when present.
   Treat dataset and baseline details as candidate until prepare / WF4-WF5
   verify them.

@@ -125,8 +125,8 @@ Review Packet 准备。
 - 更窄的自动化范围应写入 `approved_datasets`、`approved_baselines`、
   `target_paths`、`unknowns` 和 `operator_approved_at`。
 - full prepare 从对话启动时，supervisor 会读取
-  `.workflow_supervisor/readiness.json`、`docs/Execution_Readiness_Packet.md`、
-  `docs/Research_Intent_Draft.md` 和 `docs/Grill_Round_Log.md`，把结构化
+  `.workflow_supervisor/readiness.json`、`docs/05_intake/Execution_Readiness_Packet.md`、
+  `docs/05_intake/Research_Intent_Draft.md` 和 `docs/05_intake/Grill_Round_Log.md`，把结构化
   dataset / baseline 输入桥接到 prepare。
 - Redacted 或 ambiguous 值不会被猜测，会变成 typed pending request。
 

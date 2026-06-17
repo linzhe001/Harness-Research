@@ -10,6 +10,7 @@ description: "Internal Harness instruction source for evaluate. Route through vi
 Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
+- `../../../.agents/references/commit-checkpoint-rule.md`
 - `../../../.agents/references/lesson-quality-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/run-artifact-contract.md`
@@ -21,6 +22,7 @@ Read these first:
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
+- `../../../docs/45_discoveries/Discovery_Ledger.md` if it exists
 - `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
@@ -37,7 +39,9 @@ Use this skill when the user wants training or evaluation results interpreted an
    - gradient and numerical issues
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
 4. Produce the canonical report using `./references/stage-report.md`.
-5. Write findings and lesson candidates to the iteration report and, when useful, `docs/50_memory/Lessons.md`.
+5. Write observations, phenomena, findings, hypotheses, and next-experiment
+   hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified
+   lesson candidates to `docs/50_memory/Lessons.md`.
 6. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
 7. Recommend exactly one of:
    - `NEXT_ROUND` — ordinary improvement round, stay in WF10
@@ -50,7 +54,12 @@ Use this skill when the user wants training or evaluation results interpreted an
 10. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
     `tooling/evidence/build_experiment_evidence_index.py` after completed run
     evidence is written, or report `NOT_RUN` with the reason.
-11. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, `iteration_log.json`, or the experiment evidence index are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
+11. Use an `experiment` commit checkpoint for completed evaluation/discovery
+    slices before long follow-up runs or handoff.
+12. Report a Gate ledger when iteration reports, stage reports, discovery
+    ledgers, lesson files, `MEMORY.md`, `iteration_log.json`, or the experiment
+    evidence index are written. If lesson-quality or workflow-state checks are
+    not run, mark them `NOT_RUN` with the reason.
 
 ## Context Budget
 

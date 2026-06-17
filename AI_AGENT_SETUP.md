@@ -574,9 +574,9 @@ Bridge behavior:
 
 ```text
 $grill artifacts
-  -> docs/Execution_Readiness_Packet.md
-  -> docs/Research_Intent_Draft.md
-  -> docs/Grill_Round_Log.md
+  -> docs/05_intake/Execution_Readiness_Packet.md
+  -> docs/05_intake/Research_Intent_Draft.md
+  -> docs/05_intake/Grill_Round_Log.md
   -> optional .workflow_supervisor/readiness.json
   -> workflow_ctl prepare --complete
   -> .workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json

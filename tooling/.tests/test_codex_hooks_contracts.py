@@ -28,6 +28,7 @@ import harness_contracts  # noqa: E402
 import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
     CONTRACTS_PATH,
+    CONTRACT_OVERLAYS_DIR,
     LAST_ROUTE_PATH,
     READ_LEDGER_PATH,
     READ_LEDGERS_DIR,
@@ -37,6 +38,7 @@ from harness_contracts import (  # noqa: E402
     classify_prompt_intent,
     consume_gate_ledger_notice,
     contract_by_skill,
+    constraints_by_id,
     daily_context_for_workspace,
     detect_skill,
     detect_skill_match,
@@ -44,6 +46,7 @@ from harness_contracts import (  # noqa: E402
     is_git_commit_command,
     is_harness_workspace,
     load_contracts,
+    load_contract_overlays,
     load_pending,
     load_read_ledger,
     load_read_ledger_for_event,
@@ -97,6 +100,15 @@ def _write_contracts(root: Path, contracts: list[dict[str, object]]) -> None:
     )
 
 
+def _write_overlay(root: Path, name: str, overlay: dict[str, object]) -> None:
+    overlays_dir = root / CONTRACT_OVERLAYS_DIR
+    overlays_dir.mkdir(parents=True, exist_ok=True)
+    (overlays_dir / name).write_text(
+        json.dumps(overlay, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 @pytest.fixture(autouse=True)
 def clean_hook_runtime(tmp_path: Path) -> None:
     runtime = REPO_ROOT / RUNTIME_DIR
@@ -117,6 +129,96 @@ def test_skill_contract_files_are_valid() -> None:
     for contract in load_contracts(REPO_ROOT):
         assert contract.get("write_scope", {}).get("allowed_paths"), contract["skill"]
         assert contract.get("artifact_outputs"), contract["skill"]
+        assert contract.get("constraints"), contract["skill"]
+        assert contract.get("default_validation_profile"), contract["skill"]
+
+
+def test_contract_constraints_tier_for_hard_and_advisory_boundaries() -> None:
+    contracts = {contract["skill"]: contract for contract in load_contracts(REPO_ROOT)}
+
+    grill_constraints = constraints_by_id(contracts["grill"])
+    assert (
+        grill_constraints["direct_edit_workflow_supervisor"]["tier"]
+        == "hard_invariant"
+    )
+    iterate_constraints = constraints_by_id(contracts["iterate"])
+    assert iterate_constraints["stage_transition_from_iterate"]["tier"] in {
+        "ownership_boundary",
+        "workflow_default",
+    }
+    assert (
+        iterate_constraints["auto_observation_direct_to_MEMORY"]["tier"]
+        == "advisory"
+    )
+
+
+def test_contract_overlay_applies_to_effective_contract(tmp_path: Path) -> None:
+    base = contract_by_skill(REPO_ROOT, "iterate")
+    assert base is not None
+    _write_contracts(tmp_path, [base])
+    _write_overlay(
+        tmp_path,
+        "wf10-run-probe.json",
+        {
+            "schema_version": "0.1",
+            "overlay_id": "wf10-run-probe-v1",
+            "base_skill": "iterate",
+            "status": "active",
+            "scope": {"workflow_branch": "run_probe"},
+            "expires_at": "2026-07-17",
+            "patch": {
+                "add_required_actions": ["probe_run_manifest_or_NOT_RUN"],
+                "add_allowed_paths": ["runs/wf10/run_probe/"],
+                "add_constraints": [
+                    {
+                        "id": "probe_result_write",
+                        "kind": "gate",
+                        "tier": "workflow_default",
+                        "enforcement": "ledger",
+                        "exception_policy": "overlay_allowed",
+                    }
+                ],
+            },
+        },
+    )
+
+    effective = contract_by_skill(tmp_path, "iterate")
+    assert effective is not None
+    assert "probe_run_manifest_or_NOT_RUN" in effective["required_actions"]
+    assert "runs/wf10/run_probe/" in effective["write_scope"]["allowed_paths"]
+    assert "probe_result_write" in constraints_by_id(effective)
+    assert load_contract_overlays(tmp_path)[0]["overlay_id"] == "wf10-run-probe-v1"
+
+
+def test_contract_overlay_cannot_except_hard_invariant(tmp_path: Path) -> None:
+    base = contract_by_skill(REPO_ROOT, "grill")
+    assert base is not None
+    _write_contracts(tmp_path, [base])
+    _write_overlay(
+        tmp_path,
+        "bad.json",
+        {
+            "schema_version": "0.1",
+            "overlay_id": "bad",
+            "base_skill": "grill",
+            "status": "active",
+            "scope": {"workflow_branch": "bad"},
+            "expires_at": "2026-07-17",
+            "patch": {},
+            "exceptions": [
+                {
+                    "constraint_id": "direct_edit_workflow_supervisor",
+                    "scope": {"only_action": "bad"},
+                    "reason": "test invalid exception",
+                    "expires_at": "2026-07-17",
+                }
+            ],
+        },
+    )
+
+    errors = validate_contract_files(tmp_path)
+    assert any("cannot except hard invariant" in error for error in errors)
+
 
 
 def _frontmatter_skill_names(surface: str) -> set[str]:
@@ -419,11 +521,22 @@ def test_run_write_experiment_evidence_bridge_contracts() -> None:
         )
         assert json_path in contract["write_scope"]["allowed_paths"]
         assert md_path in contract["write_scope"]["allowed_paths"]
+        assert "discovery_ledger_update_or_NOT_RUN" in contract["required_actions"]
+        assert "docs/45_discoveries/" in contract["write_scope"]["allowed_paths"]
+        assert (
+            "docs/45_discoveries/Discovery_Ledger.md"
+            in contract["required_read_set"]["project_optional"]
+        )
         assert any(
             output["kind"] == "conclusion_evidence"
             and output["requires_tool"] is True
             and json_path in output["paths"]
             and md_path in output["paths"]
+            for output in contract["artifact_outputs"]
+        )
+        assert any(
+            output["kind"] == "current_doc"
+            and "docs/45_discoveries/" in output["paths"]
             for output in contract["artifact_outputs"]
         )
 
@@ -481,9 +594,9 @@ def test_grill_hands_accepted_draft_to_init_project() -> None:
     assert "`init-project update-from-grill`" in agents_skill
     assert "`init-project update-from-grill`" in claude_skill
     for text in [agents_skill, claude_skill]:
-        assert "docs/Research_Intent_Draft.md" in text
-        assert "docs/Grill_Round_Log.md" in text
-        assert "docs/Execution_Readiness_Packet.md" in text
+        assert "docs/05_intake/Research_Intent_Draft.md" in text
+        assert "docs/05_intake/Grill_Round_Log.md" in text
+        assert "docs/05_intake/Execution_Readiness_Packet.md" in text
         assert "README.md" in text
 
 
@@ -528,9 +641,9 @@ def test_init_project_contract_supports_grill_handoff() -> None:
     assert "$init-project update-from-grill" in contract["triggers"]
     assert "README.md" in contract["required_read_set"]["project_when_present"]
     for path in [
-        "docs/Research_Intent_Draft.md",
-        "docs/Grill_Round_Log.md",
-        "docs/Execution_Readiness_Packet.md",
+        "docs/05_intake/Research_Intent_Draft.md",
+        "docs/05_intake/Grill_Round_Log.md",
+        "docs/05_intake/Execution_Readiness_Packet.md",
         ".workflow_supervisor/readiness.json",
     ]:
         assert path in contract["required_read_set"]["project_optional"]
@@ -566,9 +679,9 @@ def test_init_project_skill_describes_update_from_grill_mode() -> None:
         assert "WF1-WF3" in text
 
     for text in [agents_skill, claude_skill]:
-        assert "docs/Research_Intent_Draft.md" in text
-        assert "docs/Grill_Round_Log.md" in text
-        assert "docs/Execution_Readiness_Packet.md" in text
+        assert "docs/05_intake/Research_Intent_Draft.md" in text
+        assert "docs/05_intake/Grill_Round_Log.md" in text
+        assert "docs/05_intake/Execution_Readiness_Packet.md" in text
         assert ".workflow_supervisor/readiness.json" in text
         assert "Do not create `PROJECT_STATE.json`, `project_map.json`, or" in text
         lowered = text.lower()
@@ -590,7 +703,7 @@ def test_workflow_supervisor_skill_describes_bare_post_grill_start() -> None:
         assert "status --json" in text
         assert "--segment prepare" in text
         assert "--complete" in text
-        assert "--goal-file docs/Research_Intent_Draft.md" in text
+        assert "--goal-file docs/05_intake/Research_Intent_Draft.md" in text
         assert "typed pending requests" in text
         assert "recover --repair-stale-running --auto-resume-answered --json" in text
         assert "resume_answered_pending_request" in text

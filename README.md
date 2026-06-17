@@ -309,8 +309,8 @@ generation. External dataset downloads and baseline clones require
 readiness fields: `approved_datasets`, `approved_baselines`, `target_paths`,
 `unknowns`, and `operator_approved_at`. On start, full prepare also writes
 `.workflow_supervisor/runs/<run_id>/runtime/grill_bridge.json` by reading
-`.workflow_supervisor/readiness.json`, `docs/Execution_Readiness_Packet.md`,
-`docs/Research_Intent_Draft.md`, and `docs/Grill_Round_Log.md`, so a
+`.workflow_supervisor/readiness.json`, `docs/05_intake/Execution_Readiness_Packet.md`,
+`docs/05_intake/Research_Intent_Draft.md`, and `docs/05_intake/Grill_Round_Log.md`, so a
 conversation-triggered `$prepare` / `$build` aliases can use Grill's structured
 dataset/baseline answers through the internal workflow-supervisor source
 without the operator hand-building CLI arguments.
@@ -318,7 +318,7 @@ After readiness preflight, it writes `runtime/acquisition_plan.json` before any
 download or clone and pauses if the plan contains unapproved remote sources.
 For a bare `$prepare` after accepted Grill output, the agent should first run
 supervisor `status --json`; if no run is active, it should start full prepare
-with `--goal-file docs/Research_Intent_Draft.md --complete` and let the Grill
+with `--goal-file docs/05_intake/Research_Intent_Draft.md --complete` and let the Grill
 bridge resolve dataset/baseline inputs. The shell CLI still requires an
 explicit segment/goal command; the no-parameter behavior is the visible alias
 routing behavior.

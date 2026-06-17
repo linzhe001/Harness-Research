@@ -16,7 +16,7 @@
           "triggers",
           "required_read_set",
           "required_actions",
-          "forbidden_actions",
+          "constraints",
           "gate_ledger_required_when",
           "write_scope",
           "artifact_outputs"
@@ -61,7 +61,65 @@
           },
           "forbidden_actions": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "type": "string" },
+            "description": "Deprecated mirror for legacy hook/tests. New policy reads constraints[]."
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "kind",
+                "tier",
+                "enforcement",
+                "exception_policy"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.-]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "forbidden_action",
+                    "required_action",
+                    "boundary",
+                    "gate",
+                    "notice"
+                  ]
+                },
+                "tier": {
+                  "type": "string",
+                  "enum": [
+                    "hard_invariant",
+                    "ownership_boundary",
+                    "workflow_default",
+                    "advisory"
+                  ]
+                },
+                "enforcement": {
+                  "type": "string",
+                  "enum": ["block", "notice", "ledger"]
+                },
+                "exception_policy": {
+                  "type": "string",
+                  "enum": [
+                    "never",
+                    "owner_delegation_required",
+                    "human_approval_required",
+                    "overlay_allowed",
+                    "not_required"
+                  ]
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
           },
           "gate_ledger_required_when": {
             "type": "array",
@@ -137,6 +195,10 @@
               "additionalProperties": false
             },
             "minItems": 1
+          },
+          "default_validation_profile": {
+            "type": "string",
+            "enum": ["slice", "guardrail", "docs", "experiment", "release"]
           }
         },
         "additionalProperties": false

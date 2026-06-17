@@ -97,7 +97,7 @@
       "preconditions": [
         {
           "type": "artifact_exists",
-          "path": "docs/Execution_Readiness_Packet.md"
+          "path": "docs/05_intake/Execution_Readiness_Packet.md"
         }
       ],
       "postconditions": [
@@ -200,7 +200,7 @@
       "preconditions": [
         {
           "type": "artifact_exists",
-          "path": "docs/Execution_Readiness_Packet.md"
+          "path": "docs/05_intake/Execution_Readiness_Packet.md"
         }
       ],
       "postconditions": [
