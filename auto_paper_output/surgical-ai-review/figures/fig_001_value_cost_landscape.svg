@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Clinical Value-Cost Landscape of Surgical AI and Navigation Systems</title>
+  <desc id="desc">Conceptual value-cost landscape for surgical AI and navigation systems. Hardware-agnostic AI navigation is shown as a hypothesized target zone, not as a proven ranking.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#243447"/>
+    </marker>
+    <style>
+      .title{font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;fill:#17212b}
+      .subtitle{font-family:Arial,Helvetica,sans-serif;font-size:19px;fill:#56616d}
+      .axis{stroke:#243447;stroke-width:3;marker-end:url(#arrow)}
+      .grid{stroke:#d9dee5;stroke-width:1.5;stroke-dasharray:7 8}
+      .label{font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;fill:#17212b}
+      .small{font-family:Arial,Helvetica,sans-serif;font-size:17px;fill:#46515d}
+      .note{font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;fill:#6b4e00}
+      .tag{font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;fill:#17212b}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="800" y="58" text-anchor="middle" class="title">Clinical Value-Cost Landscape</text>
+  <text x="800" y="90" text-anchor="middle" class="subtitle">Conceptual framework, not proven ranking</text>
+
+  <rect x="170" y="140" width="1260" height="610" rx="16" fill="#fbfcfe" stroke="#d6dce4" stroke-width="2"/>
+  <line x1="800" y1="160" x2="800" y2="720" class="grid"/>
+  <line x1="200" y1="445" x2="1400" y2="445" class="grid"/>
+  <line x1="230" y1="710" x2="1370" y2="710" class="axis"/>
+  <line x1="230" y1="710" x2="230" y2="170" class="axis"/>
+
+  <text x="800" y="835" text-anchor="middle" class="label">Incremental cost / total cost</text>
+  <text x="92" y="455" text-anchor="middle" transform="rotate(-90 92 455)" class="label">Incremental clinical value</text>
+  <text x="304" y="742" class="small">lower cost</text>
+  <text x="1255" y="742" class="small">higher cost</text>
+  <text x="124" y="690" class="small">lower value</text>
+  <text x="124" y="190" class="small">higher value</text>
+
+  <ellipse cx="455" cy="535" rx="175" ry="95" fill="#8bb9dd" fill-opacity="0.28" stroke="#3f78a8" stroke-width="3"/>
+  <text x="455" y="518" text-anchor="middle" class="label">Traditional</text>
+  <text x="455" y="548" text-anchor="middle" class="label">laparoscopy</text>
+  <text x="455" y="580" text-anchor="middle" class="small">baseline comparator</text>
+
+  <ellipse cx="1030" cy="375" rx="255" ry="178" fill="#d98f77" fill-opacity="0.23" stroke="#b6573d" stroke-width="3"/>
+  <text x="1030" y="340" text-anchor="middle" class="label">High-end robotic</text>
+  <text x="1030" y="370" text-anchor="middle" class="label">platforms</text>
+  <text x="1030" y="402" text-anchor="middle" class="small">higher cost, variable value</text>
+  <text x="1030" y="432" text-anchor="middle" class="small">context and procedure dependent</text>
+
+  <ellipse cx="585" cy="420" rx="205" ry="108" fill="#c6b7e8" fill-opacity="0.30" stroke="#7e65bd" stroke-width="3"/>
+  <text x="585" y="400" text-anchor="middle" class="label">Current 2D</text>
+  <text x="585" y="430" text-anchor="middle" class="label">surgical AI</text>
+  <text x="585" y="462" text-anchor="middle" class="small">early clinical value</text>
+
+  <ellipse cx="665" cy="255" rx="245" ry="118" fill="#8fd3a5" fill-opacity="0.27" stroke="#23834a" stroke-width="4" stroke-dasharray="12 10"/>
+  <text x="665" y="228" text-anchor="middle" class="label">Hardware-agnostic</text>
+  <text x="665" y="258" text-anchor="middle" class="label">AI navigation</text>
+  <text x="665" y="291" text-anchor="middle" class="small">hypothesized target zone</text>
+
+  <rect x="1085" y="610" width="285" height="72" rx="10" fill="#fff7d7" stroke="#e2b84c" stroke-width="2"/>
+  <text x="1227" y="638" text-anchor="middle" class="note">USER_GATE</text>
+  <text x="1227" y="664" text-anchor="middle" class="small">numeric coordinates need data</text>
+</svg>

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Three-Lane Roadmap toward Hardware-Agnostic Surgical Spatial Intelligence</title>
+  <desc id="desc">Three-lane roadmap with evidence strength fading from current evidence to hypothesis. No dates or adoption claims are shown.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2e3e4e"/>
+    </marker>
+    <style>
+      .title{font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;fill:#17212b}
+      .subtitle{font-family:Arial,Helvetica,sans-serif;font-size:18px;fill:#56616d}
+      .laneTitle{font-family:Arial,Helvetica,sans-serif;font-size:23px;font-weight:700;fill:#17212b}
+      .milestone{font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;fill:#17212b}
+      .small{font-family:Arial,Helvetica,sans-serif;font-size:15px;fill:#52606d}
+      .note{font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;fill:#6b4e00}
+      .axis{stroke:#2e3e4e;stroke-width:3;marker-end:url(#arrow)}
+      .dash{stroke-dasharray:9 8}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="800" y="58" text-anchor="middle" class="title">Three-Lane Roadmap</text>
+  <text x="800" y="88" text-anchor="middle" class="subtitle">Hardware-agnostic surgical spatial intelligence; evidence strength fades to the right</text>
+
+  <line x1="245" y1="165" x2="1430" y2="165" class="axis"/>
+  <text x="250" y="145" class="small">current evidence</text>
+  <text x="715" y="145" class="small">emerging capability</text>
+  <text x="1240" y="145" class="small">roadmap hypothesis</text>
+
+  <text x="105" y="275" class="laneTitle">A. Data and</text>
+  <text x="105" y="305" class="laneTitle">deployment</text>
+  <text x="105" y="335" class="laneTitle">terminal</text>
+  <rect x="260" y="235" width="205" height="80" rx="14" fill="#2d6f9f" opacity="0.90"/>
+  <text x="362" y="270" text-anchor="middle" class="milestone" fill="#fff">public datasets</text>
+  <text x="362" y="296" text-anchor="middle" class="small" fill="#fff">LC, CVS, video</text>
+  <rect x="500" y="235" width="205" height="80" rx="14" fill="#4d89b4" opacity="0.78"/>
+  <text x="602" y="270" text-anchor="middle" class="milestone">multi-center video</text>
+  <text x="602" y="296" text-anchor="middle" class="small">broader capture</text>
+  <rect x="740" y="235" width="205" height="80" rx="14" fill="#7ba8c8" opacity="0.62"/>
+  <text x="842" y="270" text-anchor="middle" class="milestone">silent deployment</text>
+  <text x="842" y="296" text-anchor="middle" class="small">passive logging</text>
+  <rect x="980" y="235" width="205" height="80" rx="14" fill="#a8c4d8" opacity="0.50" stroke="#4d89b4" stroke-width="2" class="dash"/>
+  <text x="1082" y="270" text-anchor="middle" class="milestone">feedback + outcomes</text>
+  <text x="1082" y="296" text-anchor="middle" class="small">needs linkage</text>
+  <rect x="1220" y="235" width="205" height="80" rx="14" fill="#d5e3ed" opacity="0.75" stroke="#4d89b4" stroke-width="2" class="dash"/>
+  <text x="1322" y="270" text-anchor="middle" class="milestone">cross-device</text>
+  <text x="1322" y="296" text-anchor="middle" class="small">data flywheel</text>
+
+  <text x="105" y="465" class="laneTitle">B. Model</text>
+  <text x="105" y="495" class="laneTitle">capability</text>
+  <rect x="260" y="425" width="185" height="78" rx="14" fill="#58865b" opacity="0.88"/>
+  <text x="352" y="456" text-anchor="middle" class="milestone" fill="#fff">2D scene</text>
+  <text x="352" y="482" text-anchor="middle" class="small" fill="#fff">understanding</text>
+  <rect x="475" y="425" width="185" height="78" rx="14" fill="#75a073" opacity="0.76"/>
+  <text x="567" y="456" text-anchor="middle" class="milestone">depth / pose</text>
+  <text x="567" y="482" text-anchor="middle" class="small">pointmap</text>
+  <rect x="690" y="425" width="185" height="78" rx="14" fill="#94b690" opacity="0.63"/>
+  <text x="782" y="456" text-anchor="middle" class="milestone">rough-prior</text>
+  <text x="782" y="482" text-anchor="middle" class="small">3D refine</text>
+  <rect x="905" y="425" width="185" height="78" rx="14" fill="#b5ceb2" opacity="0.54" stroke="#6b986b" stroke-width="2" class="dash"/>
+  <text x="997" y="456" text-anchor="middle" class="milestone">latent spatial</text>
+  <text x="997" y="482" text-anchor="middle" class="small">memory</text>
+  <rect x="1120" y="425" width="185" height="78" rx="14" fill="#d5e5d2" opacity="0.80" stroke="#6b986b" stroke-width="2" class="dash"/>
+  <text x="1212" y="456" text-anchor="middle" class="milestone">multi-rep</text>
+  <text x="1212" y="482" text-anchor="middle" class="small">decoder</text>
+  <rect x="1335" y="425" width="120" height="78" rx="14" fill="#e7f0e4" opacity="0.88" stroke="#6b986b" stroke-width="2" class="dash"/>
+  <text x="1395" y="456" text-anchor="middle" class="milestone">world</text>
+  <text x="1395" y="482" text-anchor="middle" class="small">model</text>
+
+  <text x="105" y="655" class="laneTitle">C. Clinical</text>
+  <text x="105" y="685" class="laneTitle">task</text>
+  <rect x="260" y="615" width="205" height="80" rx="14" fill="#9a5d42" opacity="0.90"/>
+  <text x="362" y="648" text-anchor="middle" class="milestone" fill="#fff">LC phase/tool/CVS</text>
+  <text x="362" y="674" text-anchor="middle" class="small" fill="#fff">entry point</text>
+  <rect x="500" y="615" width="205" height="80" rx="14" fill="#b47c60" opacity="0.76"/>
+  <text x="602" y="648" text-anchor="middle" class="milestone">Go / No-Go</text>
+  <text x="602" y="674" text-anchor="middle" class="small">safety cues</text>
+  <rect x="740" y="615" width="205" height="80" rx="14" fill="#caa08b" opacity="0.62"/>
+  <text x="842" y="648" text-anchor="middle" class="milestone">image-intensive</text>
+  <text x="842" y="674" text-anchor="middle" class="small">3D registration</text>
+  <rect x="980" y="615" width="205" height="80" rx="14" fill="#dec1b3" opacity="0.52" stroke="#b47c60" stroke-width="2" class="dash"/>
+  <text x="1082" y="648" text-anchor="middle" class="milestone">AR risk map</text>
+  <text x="1082" y="674" text-anchor="middle" class="small">needs validation</text>
+  <rect x="1220" y="615" width="205" height="80" rx="14" fill="#eee0d9" opacity="0.82" stroke="#b47c60" stroke-width="2" class="dash"/>
+  <text x="1322" y="648" text-anchor="middle" class="milestone">cross-procedure</text>
+  <text x="1322" y="674" text-anchor="middle" class="small">assistance</text>
+
+  <rect x="545" y="785" width="510" height="54" rx="12" fill="#fff7d7" stroke="#e2b84c"/>
+  <text x="800" y="818" text-anchor="middle" class="note">Roadmap hypothesis: no dates, no automatic LC-to-all-surgery claim</text>
+</svg>

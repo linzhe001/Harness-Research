@@ -1,0 +1,30 @@
+paper_id: "surgical-ai-review"
+workflow: "build_from_materials"
+target_venue: "Chinese citation-supported technical review"
+target_name: "从机器人中心到空间模型中心：通用手术导航的趋势综述"
+draft_path: "auto_paper_output/surgical-ai-review/review_draft.md"
+tex_roots: []
+bib_paths: []
+figure_paths:
+  - "auto_paper_output/surgical-ai-review/figures/fig_001_value_cost_landscape.svg"
+  - "auto_paper_output/surgical-ai-review/figures/fig_002_dataset_concentration.svg"
+  - "auto_paper_output/surgical-ai-review/figures/fig_003_layered_spatial_world_models.svg"
+  - "auto_paper_output/surgical-ai-review/figures/fig_004_three_lane_roadmap.svg"
+figure_requirement_status: "accepted_with_user_gates_for_empirical_dataset_panels"
+materials_dir: "auto_paper_output/surgical-ai-review"
+reference_paths:
+  - "手术AI文献调研.pdf"
+  - "auto_paper_output/surgical-ai-review/source_pdf_text.txt"
+  - "auto_paper_output/surgical-ai-review/source_index.md"
+experiment_evidence_index: "not_applicable_review_article_no_local_experiments"
+artifact_dir: "auto_paper_output/surgical-ai-review"
+output_language: "zh-CN"
+citation_target_count: "25+ candidate references; verified subset plus metadata-only plan"
+compile_command: "not_applicable_markdown_review"
+human_gate_policy: "USER_GATE for unverified citation metadata and empirical figure data"
+forbidden_directions:
+  - "Do not claim surgical AI has broadly proven reductions in complications or patient outcomes."
+  - "Do not claim NeRF, 3DGS, SLAM, SDF, or foundation models solve full clinical navigation."
+  - "Do not claim high-end robots have no value."
+  - "Do not position LC as the endpoint for complete 3D navigation."
+  - "Do not treat the source PDF's literature mentions as verified references without external checks."

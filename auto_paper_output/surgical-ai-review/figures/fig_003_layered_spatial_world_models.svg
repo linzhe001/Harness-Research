@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Layer-wise Research Landscape for Surgical Spatial World Models</title>
+  <desc id="desc">Layered research landscape for surgical spatial world models, showing components rather than a verified clinical system.</desc>
+  <defs>
+    <marker id="arrowDown" markerWidth="10" markerHeight="10" refX="5" refY="8" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,0 L5,9 z" fill="#415161"/>
+    </marker>
+    <style>
+      .title{font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;fill:#17212b}
+      .subtitle{font-family:Arial,Helvetica,sans-serif;font-size:18px;fill:#56616d}
+      .layer{font-family:Arial,Helvetica,sans-serif;font-size:23px;font-weight:700;fill:#17212b}
+      .head{font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;fill:#5a6570}
+      .text{font-family:Arial,Helvetica,sans-serif;font-size:16px;fill:#354250}
+      .warn{font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;fill:#8a5b00}
+      .box{rx:14;stroke:#cfd7e2;stroke-width:2}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="800" y="54" text-anchor="middle" class="title">Layer-wise Research Landscape</text>
+  <text x="800" y="84" text-anchor="middle" class="subtitle">Surgical spatial world models: components, not a verified clinical system</text>
+
+  <text x="500" y="125" text-anchor="middle" class="head">Representative methods</text>
+  <text x="850" y="125" text-anchor="middle" class="head">What it solves</text>
+  <text x="1200" y="125" text-anchor="middle" class="head">Why not enough</text>
+
+  <g transform="translate(120,145)">
+    <rect width="1360" height="92" fill="#eef4fb" class="box"/>
+    <text x="35" y="38" class="layer">1 Coarse 3D Prior</text>
+    <text x="380" y="36" class="text">CT/MRI atlas, rough mesh</text>
+    <text x="730" y="36" class="text">scale, anatomy hypothesis</text>
+    <text x="1080" y="36" class="warn">deformation and mismatch</text>
+    <text x="380" y="64" class="text">preoperative plan</text>
+    <text x="730" y="64" class="text">hidden structure prior</text>
+    <text x="1080" y="64" class="warn">not intraoperative truth</text>
+  </g>
+  <g transform="translate(120,255)">
+    <rect width="1360" height="92" fill="#eef8f1" class="box"/>
+    <text x="35" y="38" class="layer">2 RGB Observation</text>
+    <text x="380" y="36" class="text">endoscopic video, ICG</text>
+    <text x="730" y="36" class="text">visible surface semantics</text>
+    <text x="1080" y="36" class="warn">occlusion, smoke, blood</text>
+    <text x="380" y="64" class="text">tool and phase cues</text>
+    <text x="730" y="64" class="text">scene understanding</text>
+    <text x="1080" y="64" class="warn">hidden anatomy unseen</text>
+  </g>
+  <g transform="translate(120,365)">
+    <rect width="1360" height="92" fill="#fbf4ea" class="box"/>
+    <text x="35" y="38" class="layer">3 Geometry Inference</text>
+    <text x="380" y="36" class="text">depth / pose / pointmap</text>
+    <text x="730" y="36" class="text">camera and local geometry</text>
+    <text x="1080" y="36" class="warn">scale drift, dynamic tissue</text>
+    <text x="380" y="64" class="text">Endo3R, DUSt3R-like ideas</text>
+    <text x="730" y="64" class="text">correspondence</text>
+    <text x="1080" y="64" class="warn">not long-term navigation</text>
+  </g>
+  <g transform="translate(120,475)">
+    <rect width="1360" height="92" fill="#f3eefb" class="box"/>
+    <text x="35" y="38" class="layer">4 Latent Spatial Memory</text>
+    <text x="380" y="36" class="text">persistent memory tokens</text>
+    <text x="730" y="36" class="text">online spatial state</text>
+    <text x="1080" y="36" class="warn">route hypothesis</text>
+    <text x="380" y="64" class="text">uncertainty-gated update</text>
+    <text x="730" y="64" class="text">prior + RGB fusion</text>
+    <text x="1080" y="64" class="warn">needs validation</text>
+  </g>
+  <g transform="translate(120,585)">
+    <rect width="1360" height="92" fill="#eef6f8" class="box"/>
+    <text x="35" y="38" class="layer">5 Multi-Representation Decoder</text>
+    <text x="380" y="36" class="text">NeRF, 3DGS, mesh, SDF</text>
+    <text x="730" y="36" class="text">rendering and geometry</text>
+    <text x="1080" y="36" class="warn">decoder, not the answer</text>
+    <text x="380" y="64" class="text">pose, topology graph</text>
+    <text x="730" y="64" class="text">task-specific outputs</text>
+    <text x="1080" y="64" class="warn">clinical evidence gap</text>
+  </g>
+  <g transform="translate(120,695)">
+    <rect width="1360" height="92" fill="#fff5f1" class="box"/>
+    <text x="35" y="38" class="layer">6 Navigation Interface</text>
+    <text x="380" y="36" class="text">risk map, AR, uncertainty</text>
+    <text x="730" y="36" class="text">surgeon-facing decision aid</text>
+    <text x="1080" y="36" class="warn">human factors and safety</text>
+    <text x="380" y="64" class="text">failure detection</text>
+    <text x="730" y="64" class="text">navigation output</text>
+    <text x="1080" y="64" class="warn">outcome proof needed</text>
+  </g>
+
+  <line x1="800" y1="238" x2="800" y2="252" stroke="#415161" stroke-width="3" marker-end="url(#arrowDown)"/>
+  <line x1="800" y1="348" x2="800" y2="362" stroke="#415161" stroke-width="3" marker-end="url(#arrowDown)"/>
+  <line x1="800" y1="458" x2="800" y2="472" stroke="#415161" stroke-width="3" marker-end="url(#arrowDown)"/>
+  <line x1="800" y1="568" x2="800" y2="582" stroke="#415161" stroke-width="3" marker-end="url(#arrowDown)"/>
+  <line x1="800" y1="678" x2="800" y2="692" stroke="#415161" stroke-width="3" marker-end="url(#arrowDown)"/>
+</svg>

@@ -1,0 +1,22 @@
+paper_id: "surgical-ai-review-blog"
+workflow: "build_from_materials"
+target_venue: "technical blog"
+target_name: "手术AI综述博客"
+draft_path: "auto_paper_output/surgical-ai-review-blog/blog_review.md"
+tex_roots: []
+bib_paths: []
+figure_paths: []
+materials_dir: "auto_paper_output/surgical-ai-review-blog"
+reference_paths:
+  - "手术AI文献调研.pdf"
+  - "auto_paper_output/surgical-ai-review-blog/source_pdf_text.txt"
+experiment_evidence_index: "none: writing task is based on supplied PDF dialogue, not code experiments"
+artifact_dir: "auto_paper_output/surgical-ai-review-blog"
+output_language: "zh-CN"
+citation_target_count: 0
+compile_command: "NOT_RUN: Markdown blog draft does not require LaTeX compile"
+human_gate_policy: "ask_when_claim_or_evidence_boundary_is_unclear"
+forbidden_directions:
+  - "Do not present citations mentioned inside the PDF dialogue as independently verified bibliography."
+  - "Do not claim patient-outcome improvement for surgical AI systems unless the supplied source explicitly states it."
+  - "Do not frame the proposed route as a proven clinical endpoint; frame it as a trend judgment and route hypothesis."
