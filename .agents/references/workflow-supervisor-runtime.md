@@ -68,6 +68,7 @@ process cleanup. Preferred order:
 
 ```bash
 tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh worker-status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh recover --repair-stale-running --auto-resume-answered --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh tail --lines 80
 tooling/workflow_supervisor/scripts/workflow_ctl.sh stop --reason "stuck worker recovery" --json
@@ -100,6 +101,23 @@ Worker prompts must include:
 Workers must run listed `evidence_tools` when inputs exist. If a tool cannot
 run, the worker result must include a `NOT_RUN` Gate ledger entry with the
 reason.
+
+Workers must also report semantic progress through:
+
+```bash
+tooling/workflow_supervisor/scripts/workflow_ctl.sh worker-event \
+  --run-id <run_id> --node-id <node_id> --phase <phase> \
+  --message "<compact status>" --json
+```
+
+Allowed phases are `starting`, `reading`, `planning`, `editing`, `testing`,
+`committing`, `handoff`, `blocked`, and `done`. This writes supervisor-owned
+telemetry under `.workflow_supervisor/runs/<run_id>/runtime/`; workers must use
+the CLI and must not hand-edit `.workflow_supervisor/**`. `status --json` and
+`worker-status --json` read this telemetry, expose `worker_pid` /
+`process_alive`, and classify the active worker as `healthy`, `quiet_alive`,
+`stalled`, `timed_out`, `dirty_no_result`, `worker_exited_no_result`,
+`result_ready`, or `unknown`.
 
 Build workers must create semantic git commits for durable non-tool-owned
 outputs before returning success. WF8 code workers must complete, validate, and

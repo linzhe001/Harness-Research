@@ -4,7 +4,7 @@ Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and 
 Core commands:
 
 ```bash
-tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json  # or worker-status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>"
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
@@ -119,14 +119,14 @@ Codex workers write their JSON result to a temporary
 supervisor validates and adopts that result into `.workflow_supervisor/**`.
 Missing handoff JSON may be synthesized only when concrete artifact/schema
 postconditions pass and no required command or git commit gate is missing.
-Worker prompts are budgeted by segment. The supervisor truncates long goal
-context before delegation, includes only compact postconditions and write
-patterns, and tells workers to stop at `node_retry_limit` /
-`gate_cycle_limit` with a structured `failed` or `interrupt_requested` result
-instead of repeatedly reading broad context or self-rescuing through more gate
-cycles. If a node needs more context than the prompt contains, the worker must
-read the referenced local artifact path directly and record that command in
-Gate ledger. Runs record their risk profile from `tooling/workflow_supervisor/config/gate_policy.yaml`.
+Worker prompts are budgeted by segment: compact postconditions, evidence tools,
+write patterns, truncated goal context, `node_retry_limit`, and
+`gate_cycle_limit`. Workers read referenced artifacts directly when needed and
+record those reads in Gate ledger; runs record risk profile from
+`tooling/workflow_supervisor/config/gate_policy.yaml`.
+Workers must report live semantic progress with `worker-event`; never hand-write
+`.workflow_supervisor/**`. `status --json` and `worker-status --json` expose
+`active_worker.telemetry_state` for stuck-worker recovery.
 
 Harness hooks do not block ordinary build writes to declared implementation
 surfaces such as `src/`, `scripts/`, `configs/`, `project_map.json`, and owned

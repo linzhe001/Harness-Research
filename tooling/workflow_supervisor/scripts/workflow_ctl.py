@@ -61,6 +61,19 @@ VALID_WORKER_STATUSES = {
     "not_run",
 }
 VALID_GATE_RESULTS = {"PASS", "FAIL", "NOT_RUN"}
+VALID_WORKER_EVENT_PHASES = {
+    "starting",
+    "reading",
+    "planning",
+    "editing",
+    "testing",
+    "committing",
+    "handoff",
+    "blocked",
+    "done",
+}
+WORKER_TELEMETRY_QUIET_AFTER_SECONDS = 300
+WORKER_TELEMETRY_STALL_AFTER_SECONDS = 600
 DIRECT_USER_QUESTION_MARKERS = (
     "asked the user",
     "ask the user",
@@ -764,6 +777,158 @@ def append_event(
     return seq
 
 
+def parse_utc_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def seconds_since(value: Any) -> int | None:
+    parsed = parse_utc_timestamp(value)
+    if parsed is None:
+        return None
+    delta = datetime.now(timezone.utc) - parsed
+    return max(0, int(delta.total_seconds()))
+
+
+def worker_runtime_paths(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+) -> dict[str, str]:
+    base = supervisor_root(workspace_root) / "runs" / run_id / "runtime"
+    handoff_base = (
+        workspace_root
+        / ".agents"
+        / "state"
+        / "workflow_supervisor_worker_results"
+        / run_id
+    )
+    return {
+        "result": (base / f"{node_id}.worker_result.json").relative_to(
+            workspace_root
+        ).as_posix(),
+        "handoff_result": (handoff_base / f"{node_id}.worker_result.json").relative_to(
+            workspace_root
+        ).as_posix(),
+        "prompt": (base / f"{node_id}.prompt.txt").relative_to(
+            workspace_root
+        ).as_posix(),
+        "stdout": (base / f"{node_id}.stdout.log").relative_to(
+            workspace_root
+        ).as_posix(),
+        "stderr": (base / f"{node_id}.stderr.log").relative_to(
+            workspace_root
+        ).as_posix(),
+        "worker_status": (base / f"{node_id}.worker_status.json").relative_to(
+            workspace_root
+        ).as_posix(),
+        "worker_events": (base / f"{node_id}.worker_events.jsonl").relative_to(
+            workspace_root
+        ).as_posix(),
+    }
+
+
+def worker_telemetry_refs(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+) -> dict[str, str]:
+    paths = worker_runtime_paths(workspace_root, run_id=run_id, node_id=node_id)
+    return {
+        "worker_status_ref": paths["worker_status"],
+        "worker_events_ref": paths["worker_events"],
+        "stdout_ref": paths["stdout"],
+        "stderr_ref": paths["stderr"],
+        "result_ref": paths["result"],
+        "handoff_result_ref": paths["handoff_result"],
+    }
+
+
+def append_worker_event(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+    phase: str,
+    message: str,
+    source: str = "worker",
+    command: str | None = None,
+    result: str | None = None,
+    artifacts: list[str] | None = None,
+    timeout_seconds: int | None = None,
+    pid: int | None = None,
+    skill: str | None = None,
+) -> dict[str, Any]:
+    if phase not in VALID_WORKER_EVENT_PHASES:
+        raise ValueError(
+            f"phase must be one of {sorted(VALID_WORKER_EVENT_PHASES)}"
+        )
+    if result is not None and result not in VALID_GATE_RESULTS:
+        raise ValueError(f"result must be one of {sorted(VALID_GATE_RESULTS)}")
+    paths = worker_runtime_paths(workspace_root, run_id=run_id, node_id=node_id)
+    now = utc_now()
+    event = {
+        "v": 1,
+        "ts": now,
+        "run_id": run_id,
+        "node_id": node_id,
+        "phase": phase,
+        "message": message,
+        "source": source,
+        "command": command,
+        "result": result,
+        "artifacts": artifacts or [],
+        "worker_pid": pid,
+    }
+    event_path = workspace_root / paths["worker_events"]
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    with event_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, sort_keys=True) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    status_path = workspace_root / paths["worker_status"]
+    previous = load_json_if_exists(status_path, {})
+    if not isinstance(previous, dict):
+        previous = {}
+    started_at = previous.get("started_at") if previous.get("started_at") else now
+    snapshot: dict[str, Any] = {
+        **previous,
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "node_id": node_id,
+        "skill": skill if skill is not None else previous.get("skill"),
+        "worker_pid": pid if pid is not None else previous.get("worker_pid"),
+        "started_at": started_at,
+        "updated_at": now,
+        "last_semantic_event_at": now,
+        "phase": phase,
+        "last_message": message,
+        "current_command": command,
+        "reported_result": result,
+        "artifacts": artifacts or previous.get("artifacts", []),
+        "timeout_seconds": (
+            timeout_seconds
+            if timeout_seconds is not None
+            else previous.get("timeout_seconds")
+        ),
+        **worker_telemetry_refs(workspace_root, run_id=run_id, node_id=node_id),
+    }
+    atomic_write_json(status_path, snapshot)
+    return snapshot
+
+
 def load_state(workspace_root: Path) -> dict[str, Any]:
     data = load_json(state_path(workspace_root))
     if not isinstance(data, dict):
@@ -1030,6 +1195,178 @@ def run_manifest(
                 complete_prepare=complete_prepare,
             ),
         },
+    }
+
+
+def active_node_definition(
+    workspace_root: Path,
+    state: dict[str, Any],
+) -> dict[str, Any] | None:
+    node_id = state.get("current_node_id")
+    segment = state.get("segment")
+    if not isinstance(node_id, str) or not node_id:
+        return None
+    if not isinstance(segment, str) or not segment:
+        return None
+    try:
+        registry = load_node_registry(workspace_root)
+    except ValueError:
+        return None
+    for node in registry.get("nodes", []):
+        if (
+            isinstance(node, dict)
+            and node.get("node_id") == node_id
+            and node.get("segment") == segment
+        ):
+            return node
+    return None
+
+
+def durable_dirty_paths(workspace_root: Path) -> list[str]:
+    if not (workspace_root / ".git").exists():
+        return []
+    return [
+        path
+        for path in git_status_paths(workspace_root)
+        if not any(
+            path.startswith(pattern)
+            for pattern in GIT_WORKTREE_CLEAN_IGNORE_PREFIXES
+        )
+    ]
+
+
+def load_worker_status(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+) -> dict[str, Any] | None:
+    path = workspace_root / worker_runtime_paths(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+    )["worker_status"]
+    if not path.exists():
+        return None
+    data = load_json(path)
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def result_path_exists(
+    workspace_root: Path,
+    *,
+    run_id: str,
+    node_id: str,
+) -> bool:
+    paths = worker_runtime_paths(workspace_root, run_id=run_id, node_id=node_id)
+    return (workspace_root / paths["result"]).exists() or (
+        workspace_root / paths["handoff_result"]
+    ).exists()
+
+
+def process_liveness(pid: Any) -> bool | None:
+    if not isinstance(pid, int) or pid <= 0:
+        return None
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def classify_worker_state(
+    workspace_root: Path,
+    *,
+    state: dict[str, Any],
+) -> dict[str, Any] | None:
+    run_id = state.get("active_run_id")
+    node_id = state.get("current_node_id")
+    if not isinstance(run_id, str) or not run_id:
+        return None
+    if not isinstance(node_id, str) or not node_id:
+        return None
+    node = active_node_definition(workspace_root, state)
+    status = load_worker_status(workspace_root, run_id=run_id, node_id=node_id)
+    status_timeout = status.get("timeout_seconds") if isinstance(status, dict) else None
+    if isinstance(node, dict):
+        timeout_seconds = int(node.get("timeout_seconds", 900))
+    elif isinstance(status_timeout, int):
+        timeout_seconds = status_timeout
+    else:
+        timeout_seconds = None
+    refs = worker_telemetry_refs(workspace_root, run_id=run_id, node_id=node_id)
+    dirty_paths = durable_dirty_paths(workspace_root)
+    has_result = result_path_exists(workspace_root, run_id=run_id, node_id=node_id)
+    started_at = status.get("started_at") if isinstance(status, dict) else None
+    last_semantic_event_at = (
+        status.get("last_semantic_event_at") if isinstance(status, dict) else None
+    )
+    elapsed_seconds = seconds_since(started_at)
+    semantic_age_seconds = seconds_since(last_semantic_event_at)
+    phase = status.get("phase") if isinstance(status, dict) else None
+    worker_pid = status.get("worker_pid") if isinstance(status, dict) else None
+    process_alive = process_liveness(worker_pid)
+    telemetry_state = "unknown"
+    recommended_action = "inspect_tail"
+    if has_result:
+        telemetry_state = "result_ready"
+        recommended_action = "recover"
+    elif process_alive is False and status is not None:
+        telemetry_state = "worker_exited_no_result"
+        recommended_action = "recover"
+    elif dirty_paths and status is not None and phase in {"blocked", "done"}:
+        telemetry_state = "dirty_no_result"
+        recommended_action = "manual_recovery"
+    elif timeout_seconds is not None and elapsed_seconds is not None and (
+        elapsed_seconds >= timeout_seconds
+    ):
+        telemetry_state = "timed_out"
+        recommended_action = "stop"
+    elif semantic_age_seconds is None:
+        telemetry_state = "unknown"
+        recommended_action = "inspect_tail"
+    elif semantic_age_seconds >= WORKER_TELEMETRY_STALL_AFTER_SECONDS:
+        telemetry_state = "stalled"
+        recommended_action = "recover"
+    elif semantic_age_seconds >= WORKER_TELEMETRY_QUIET_AFTER_SECONDS:
+        telemetry_state = "quiet_alive"
+        recommended_action = "inspect_tail"
+    else:
+        telemetry_state = "healthy"
+        recommended_action = "wait"
+    if state.get("status") != "running" and telemetry_state not in {"result_ready"}:
+        recommended_action = "status_only"
+    return {
+        "run_id": run_id,
+        "node_id": node_id,
+        "skill": node.get("skill") if isinstance(node, dict) else None,
+        "telemetry_state": telemetry_state,
+        "recommended_action": recommended_action,
+        "elapsed_seconds": elapsed_seconds,
+        "timeout_seconds": timeout_seconds,
+        "semantic_age_seconds": semantic_age_seconds,
+        "last_semantic_event_at": last_semantic_event_at,
+        "last_phase": phase,
+        "worker_pid": worker_pid,
+        "process_alive": process_alive,
+        "last_message": status.get("last_message")
+        if isinstance(status, dict)
+        else None,
+        "current_command": status.get("current_command")
+        if isinstance(status, dict)
+        else None,
+        "reported_result": status.get("reported_result")
+        if isinstance(status, dict)
+        else None,
+        "dirty_paths": dirty_paths,
+        "dirty_paths_count": len(dirty_paths),
+        "result_exists": has_result,
+        "status_exists": status is not None,
+        **refs,
     }
 
 
@@ -3963,6 +4300,13 @@ def render_worker_prompt(
             "declaring failure.\n"
             "- Do not exceed node_retry_limit or gate_cycle_limit; return a compact "
             "failed or interrupt_requested worker result instead.\n"
+            "- Report semantic progress through `workflow_ctl.py worker-event`; "
+            "do not hand-write `.workflow_supervisor/**`. Call worker-event at "
+            "node start, each long phase, before and after important commands, "
+            "before handoff, and whenever blocked.\n"
+            "- If there is no concrete progress for about 5 minutes, report "
+            "`phase=blocked` with the blocker or write an interrupt_requested "
+            "worker result.\n"
             "- For build_validate_run, run the project's actual smoke/validation "
             "command when one is discoverable; otherwise return interrupt_requested "
             "with the missing command as the reason.\n"
@@ -3996,6 +4340,12 @@ def render_worker_prompt(
             "The result must include gate_ledger entries for every command or gate "
             "that mattered, observed_writes, artifact_refs, and any contract "
             "violations. The supervisor will reject prose-only completion claims.\n"
+            "\n"
+            "Worker telemetry command template:\n"
+            "python tooling/workflow_supervisor/scripts/workflow_ctl.py "
+            f"worker-event --run-id {run_id} --node-id {node_id} "
+            "--phase <starting|reading|planning|editing|testing|committing|"
+            "handoff|blocked|done> --message <compact status> --json\n"
         )
 
     prompt = render_with_goal(goal_text)
@@ -4005,39 +4355,6 @@ def render_worker_prompt(
         goal=goal,
         render_with_goal=render_with_goal,
     )
-
-
-def worker_runtime_paths(
-    workspace_root: Path,
-    *,
-    run_id: str,
-    node_id: str,
-) -> dict[str, str]:
-    base = supervisor_root(workspace_root) / "runs" / run_id / "runtime"
-    handoff_base = (
-        workspace_root
-        / ".agents"
-        / "state"
-        / "workflow_supervisor_worker_results"
-        / run_id
-    )
-    return {
-        "result": (base / f"{node_id}.worker_result.json").relative_to(
-            workspace_root
-        ).as_posix(),
-        "handoff_result": (handoff_base / f"{node_id}.worker_result.json").relative_to(
-            workspace_root
-        ).as_posix(),
-        "prompt": (base / f"{node_id}.prompt.txt").relative_to(
-            workspace_root
-        ).as_posix(),
-        "stdout": (base / f"{node_id}.stdout.log").relative_to(
-            workspace_root
-        ).as_posix(),
-        "stderr": (base / f"{node_id}.stderr.log").relative_to(
-            workspace_root
-        ).as_posix(),
-    }
 
 
 def run_worker_command(
@@ -4062,9 +4379,29 @@ def run_worker_command(
         result_ref=paths["result"],
     )
     atomic_write_text(prompt_path, prompt)
+    append_worker_event(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+        phase="starting",
+        message="command worker prompt written",
+        source="supervisor",
+        timeout_seconds=int(node.get("timeout_seconds", 900)),
+        skill=str(node.get("skill") or ""),
+        artifacts=[paths["prompt"]],
+    )
 
     command_template = args.worker_command
     if not command_template:
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="blocked",
+            message="worker command is not configured",
+            source="supervisor",
+            artifacts=[paths["prompt"]],
+        )
         return worker_result_payload(
             run_id=run_id,
             node=node,
@@ -4103,22 +4440,33 @@ def run_worker_command(
         prompt_ref=paths["prompt"],
     )
     command = shlex.split(rendered)
+    timeout_seconds = int(node.get("timeout_seconds", 900))
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             command,
             cwd=workspace_root,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            check=False,
-            timeout=int(node.get("timeout_seconds", 900)),
         )
-    except (subprocess.TimeoutExpired, OSError) as exc:
+    except OSError as exc:
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="blocked",
+            message=f"worker command failed before subprocess start: {exc}",
+            source="supervisor",
+            command=rendered,
+            result="FAIL",
+            artifacts=[paths["prompt"]],
+        )
         return worker_result_payload(
             run_id=run_id,
             node=node,
             status="failed",
             exit_code=1,
-            summary=f"worker command failed before result collection: {exc}",
+            summary=f"worker command failed before subprocess start: {exc}",
             artifact_refs=[paths["prompt"]],
             gate_ledger=[
                 {
@@ -4132,9 +4480,68 @@ def run_worker_command(
             stdout_ref=None,
             stderr_ref=None,
         )
-    atomic_write_text(stdout_path, proc.stdout)
-    atomic_write_text(stderr_path, proc.stderr)
+    append_worker_event(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+        phase="testing",
+        message="command worker subprocess started",
+        source="supervisor",
+        command=rendered,
+        pid=proc.pid,
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as exc:
+        proc.kill()
+        stdout, stderr = proc.communicate()
+        atomic_write_text(stdout_path, stdout or "")
+        atomic_write_text(stderr_path, (stderr or "") + f"\n{exc}\n")
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="blocked",
+            message=f"worker command timed out after {timeout_seconds} seconds",
+            source="supervisor",
+            command=rendered,
+            result="FAIL",
+            artifacts=[paths["stdout"], paths["stderr"]],
+            pid=proc.pid,
+        )
+        return worker_result_payload(
+            run_id=run_id,
+            node=node,
+            status="failed",
+            exit_code=1,
+            summary=f"worker command timed out after {timeout_seconds} seconds",
+            artifact_refs=[paths["stdout"], paths["stderr"]],
+            gate_ledger=[
+                {
+                    "command": rendered,
+                    "result": "FAIL",
+                    "reason": str(exc),
+                    "artifacts": [paths["stdout"], paths["stderr"]],
+                }
+            ],
+            observed_writes=[],
+            stdout_ref=paths["stdout"],
+            stderr_ref=paths["stderr"],
+        )
+    atomic_write_text(stdout_path, stdout)
+    atomic_write_text(stderr_path, stderr)
     if not result_path.exists():
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="blocked",
+            message="worker command did not write worker result JSON",
+            source="supervisor",
+            command=rendered,
+            result="FAIL",
+            artifacts=[paths["stdout"], paths["stderr"]],
+        )
         return worker_result_payload(
             run_id=run_id,
             node=node,
@@ -4159,6 +4566,16 @@ def run_worker_command(
         raise ValueError("worker result must be an object")
     loaded.setdefault("stdout_ref", paths["stdout"])
     loaded.setdefault("stderr_ref", paths["stderr"])
+    append_worker_event(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+        phase="done",
+        message="worker result JSON loaded",
+        source="supervisor",
+        result="PASS" if loaded.get("status") == "success" else "FAIL",
+        artifacts=[paths["result"], paths["stdout"], paths["stderr"]],
+    )
     return loaded
 
 
@@ -4282,7 +4699,29 @@ def run_codex_worker(
         result_ref=paths["handoff_result"],
     )
     atomic_write_text(prompt_path, prompt)
+    append_worker_event(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+        phase="starting",
+        message="codex worker prompt written",
+        source="supervisor",
+        timeout_seconds=int(node.get("timeout_seconds", 900)),
+        skill=str(node.get("skill") or ""),
+        artifacts=[paths["prompt"]],
+    )
     if codex is None:
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="blocked",
+            message="codex worker runtime is unavailable",
+            source="supervisor",
+            command="codex exec",
+            result="NOT_RUN",
+            artifacts=[paths["prompt"]],
+        )
         return worker_result_payload(
             run_id=run_id,
             node=node,
@@ -4318,24 +4757,62 @@ def run_codex_worker(
     env = os.environ.copy()
     if args.codex_home:
         env["CODEX_HOME"] = str(Path(args.codex_home).expanduser())
+    timeout_seconds = int(node.get("timeout_seconds", 900))
     with stdout_path.open("w", encoding="utf-8") as out, stderr_path.open(
         "w", encoding="utf-8"
     ) as err:
         try:
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 command,
                 cwd=workspace_root,
-                input=prompt,
+                stdin=subprocess.PIPE,
                 text=True,
                 stdout=out,
                 stderr=err,
                 env=env,
-                check=False,
-                timeout=int(node.get("timeout_seconds", 900)),
             )
+            append_worker_event(
+                workspace_root,
+                run_id=run_id,
+                node_id=node_id,
+                phase="testing",
+                message="codex worker subprocess started",
+                source="supervisor",
+                command=" ".join(command),
+                pid=proc.pid,
+            )
+            proc.communicate(input=prompt, timeout=timeout_seconds)
             codex_exit_code = proc.returncode
-        except (subprocess.TimeoutExpired, OSError) as exc:
+        except subprocess.TimeoutExpired as exc:
+            proc.kill()
+            proc.communicate()
             err.write(str(exc))
+            append_worker_event(
+                workspace_root,
+                run_id=run_id,
+                node_id=node_id,
+                phase="blocked",
+                message=f"codex worker timed out after {timeout_seconds} seconds",
+                source="supervisor",
+                command=" ".join(command),
+                result="FAIL",
+                artifacts=[paths["prompt"], paths["stdout"], paths["stderr"]],
+                pid=proc.pid,
+            )
+            codex_exit_code = 1
+        except OSError as exc:
+            err.write(str(exc))
+            append_worker_event(
+                workspace_root,
+                run_id=run_id,
+                node_id=node_id,
+                phase="blocked",
+                message=f"codex worker failed before result collection: {exc}",
+                source="supervisor",
+                command=" ".join(command),
+                result="FAIL",
+                artifacts=[paths["prompt"], paths["stdout"], paths["stderr"]],
+            )
             codex_exit_code = 1
     if result_path.exists():
         loaded = load_json(result_path)
@@ -4343,6 +4820,16 @@ def run_codex_worker(
             raise ValueError("worker result must be an object")
         loaded.setdefault("stdout_ref", paths["stdout"])
         loaded.setdefault("stderr_ref", paths["stderr"])
+        append_worker_event(
+            workspace_root,
+            run_id=run_id,
+            node_id=node_id,
+            phase="done",
+            message="codex worker handoff JSON loaded",
+            source="supervisor",
+            result="PASS" if loaded.get("status") == "success" else "FAIL",
+            artifacts=[paths["handoff_result"], paths["stdout"], paths["stderr"]],
+        )
         return loaded
     if codex_exit_code == 0:
         synthetic = synthetic_codex_success_from_postconditions(
@@ -4353,7 +4840,28 @@ def run_codex_worker(
             paths=paths,
         )
         if synthetic is not None:
+            append_worker_event(
+                workspace_root,
+                run_id=run_id,
+                node_id=node_id,
+                phase="done",
+                message="codex worker success synthesized from postconditions",
+                source="supervisor",
+                result="PASS",
+                artifacts=[paths["prompt"], paths["stdout"], paths["stderr"]],
+            )
             return synthetic
+    append_worker_event(
+        workspace_root,
+        run_id=run_id,
+        node_id=node_id,
+        phase="blocked",
+        message="codex worker did not write worker result JSON",
+        source="supervisor",
+        command=" ".join(command),
+        result="FAIL",
+        artifacts=[paths["prompt"], paths["stdout"], paths["stderr"]],
+    )
     return worker_result_payload(
         run_id=run_id,
         node=node,
@@ -7964,6 +8472,9 @@ def status_payload(workspace_root: Path) -> dict[str, Any]:
         "pending_request_ref": pending_ref,
         "last_event_seq": latest_event_seq(workspace_root),
     }
+    active_worker = classify_worker_state(workspace_root, state=state)
+    if active_worker is not None:
+        payload["active_worker"] = active_worker
     acquisition_plan_ref = state.get("acquisition_plan_ref")
     if isinstance(acquisition_plan_ref, str) and acquisition_plan_ref:
         payload["acquisition_plan_ref"] = acquisition_plan_ref
@@ -8992,6 +9503,7 @@ def command_recover(args: argparse.Namespace) -> int:
         except ValueError as exc:
             pending_errors.append(str(exc))
     recommended_action = "status_only"
+    active_worker = classify_worker_state(workspace_root, state=state)
     if errors or pending_errors:
         recommended_action = "manual_recover"
     elif state.get("status") == "paused" and pending_request_id:
@@ -9000,6 +9512,12 @@ def command_recover(args: argparse.Namespace) -> int:
             if pending_answered
             else "answer_pending_request"
         )
+    elif (
+        state.get("status") == "running"
+        and active_worker is not None
+        and active_worker.get("recommended_action") != "wait"
+    ):
+        recommended_action = str(active_worker.get("recommended_action"))
     if (
         args.auto_resume_answered
         and recommended_action == "resume_answered_pending_request"
@@ -9022,6 +9540,8 @@ def command_recover(args: argparse.Namespace) -> int:
         "pending_answered": pending_answered,
         "recommended_action": recommended_action,
     }
+    if active_worker is not None:
+        payload["active_worker"] = active_worker
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -9045,6 +9565,53 @@ def command_tail(args: argparse.Namespace) -> int:
                 f"{event.get('seq')} {event.get('event')} "
                 f"{event.get('status')} {event.get('run_id')}"
             )
+    return EXIT_OK
+
+
+def command_worker_event(args: argparse.Namespace) -> int:
+    workspace_root = repo_root(args.workspace_root)
+    snapshot = append_worker_event(
+        workspace_root,
+        run_id=args.run_id,
+        node_id=args.node_id,
+        phase=args.phase,
+        message=args.message,
+        source="worker",
+        command=args.command_text,
+        result=args.result,
+        artifacts=args.artifact or [],
+    )
+    if args.json:
+        print(json.dumps(snapshot, indent=2, sort_keys=True))
+    else:
+        print(f"{snapshot['phase']} {snapshot['node_id']}: {snapshot['last_message']}")
+    return EXIT_OK
+
+
+def command_worker_status(args: argparse.Namespace) -> int:
+    workspace_root = repo_root(args.workspace_root)
+    if args.run_id and args.node_id:
+        state = {
+            "active_run_id": args.run_id,
+            "current_node_id": args.node_id,
+            "status": "running",
+            "segment": None,
+        }
+    else:
+        if not state_path(workspace_root).exists():
+            return EXIT_NO_ACTIVE_RUN
+        state = load_state(workspace_root)
+    payload = classify_worker_state(workspace_root, state=state)
+    if payload is None:
+        return EXIT_NO_ACTIVE_RUN
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(
+            f"{payload.get('telemetry_state')} "
+            f"node={payload.get('node_id')} "
+            f"action={payload.get('recommended_action')}"
+        )
     return EXIT_OK
 
 
@@ -9959,6 +10526,27 @@ def build_parser() -> argparse.ArgumentParser:
     tail.add_argument("--jsonl", action="store_true")
     tail.add_argument("--lines", type=int, default=30)
     tail.set_defaults(func=command_tail)
+
+    worker_event = subparsers.add_parser("worker-event")
+    worker_event.add_argument("--run-id", required=True)
+    worker_event.add_argument("--node-id", required=True)
+    worker_event.add_argument(
+        "--phase",
+        required=True,
+        choices=sorted(VALID_WORKER_EVENT_PHASES),
+    )
+    worker_event.add_argument("--message", required=True)
+    worker_event.add_argument("--command", dest="command_text")
+    worker_event.add_argument("--result", choices=sorted(VALID_GATE_RESULTS))
+    worker_event.add_argument("--artifact", action="append")
+    worker_event.add_argument("--json", action="store_true")
+    worker_event.set_defaults(func=command_worker_event)
+
+    worker_status = subparsers.add_parser("worker-status")
+    worker_status.add_argument("--run-id")
+    worker_status.add_argument("--node-id")
+    worker_status.add_argument("--json", action="store_true")
+    worker_status.set_defaults(func=command_worker_status)
 
     worker = subparsers.add_parser("validate-worker-result")
     worker.add_argument("--result", required=True)

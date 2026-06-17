@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -70,6 +71,11 @@ def init_git_workspace(root: Path) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
+
+
+def init_cli_workspace(root: Path) -> None:
+    root.mkdir()
+    (root / "schemas").mkdir()
 
 
 def commit_paths(root: Path, message: str, *paths: str) -> str:
@@ -213,6 +219,12 @@ def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
         ".agents/state/workflow_supervisor_worker_results/"
     )
     assert not paths["handoff_result"].startswith(".workflow_supervisor/")
+    assert paths["worker_status"].endswith(
+        "build_validate_run.worker_status.json"
+    )
+    assert paths["worker_events"].endswith(
+        "build_validate_run.worker_events.jsonl"
+    )
     assert "temporary worker handoff" in prompt
     assert "Automation budget:" in prompt
     assert "Evidence tools for this node:" in prompt
@@ -225,6 +237,264 @@ def test_codex_worker_handoff_path_avoids_supervisor_runtime() -> None:
     assert "sliced commits" in prompt
     assert '"command": "validate-run verdict"' in prompt
     assert "Do not use apply_patch for this handoff file" in prompt
+    assert "workflow_ctl.py worker-event" in prompt
+    assert "do not hand-write `.workflow_supervisor/**`" in prompt
+
+
+def test_worker_event_updates_telemetry_snapshot(tmp_path: Path, capsys) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "worker-event",
+            "--run-id",
+            "sup_20260605_000000",
+            "--node-id",
+            "build_plan",
+            "--phase",
+            "testing",
+            "--message",
+            "running roadmap validation",
+            "--command",
+            "pytest tests/test_plan.py",
+            "--result",
+            "PASS",
+            "--artifact",
+            "docs/Implementation_Roadmap.md",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    snapshot = json.loads(capsys.readouterr().out)
+    assert snapshot["phase"] == "testing"
+    assert snapshot["last_message"] == "running roadmap validation"
+    assert snapshot["reported_result"] == "PASS"
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id="sup_20260605_000000",
+        node_id="build_plan",
+    )
+    assert (root / paths["worker_status"]).exists()
+    events_text = (root / paths["worker_events"]).read_text(encoding="utf-8")
+    assert "running roadmap validation" in events_text
+
+
+def test_status_json_includes_active_worker_telemetry(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+    run_id = "sup_20260605_000000"
+    state = workflow_ctl.base_state(run_id, "build")
+    state["current_node_id"] = "build_plan"
+    workflow_ctl.atomic_write_json(workflow_ctl.state_path(root), state)
+    workflow_ctl.atomic_write_json(
+        workflow_ctl.lock_path(root),
+        {"run_id": run_id, "pid": 123, "acquired_at": "2026-06-05T00:00:00Z"},
+    )
+    workflow_ctl.append_worker_event(
+        root,
+        run_id=run_id,
+        node_id="build_plan",
+        phase="editing",
+        message="updating roadmap",
+        source="worker",
+    )
+
+    code = workflow_ctl.main(
+        ["--workspace-root", str(root), "status", "--json"]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    active = payload["active_worker"]
+    assert active["node_id"] == "build_plan"
+    assert active["telemetry_state"] == "healthy"
+    assert active["recommended_action"] == "wait"
+    assert active["last_phase"] == "editing"
+
+
+def test_worker_status_reports_stalled_worker(tmp_path: Path, capsys) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+    run_id = "sup_20260605_000000"
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id=run_id,
+        node_id="build_plan",
+    )
+    stale_time = "2026-06-05T00:00:00Z"
+    workflow_ctl.atomic_write_json(
+        root / paths["worker_status"],
+        {
+            "schema_version": 1,
+            "run_id": run_id,
+            "node_id": "build_plan",
+            "started_at": stale_time,
+            "last_semantic_event_at": stale_time,
+            "phase": "editing",
+            "last_message": "old event",
+            "timeout_seconds": 999999999,
+        },
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "worker-status",
+            "--run-id",
+            run_id,
+            "--node-id",
+            "build_plan",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["telemetry_state"] == "stalled"
+    assert payload["recommended_action"] == "recover"
+
+
+def test_worker_status_includes_process_liveness(tmp_path: Path, capsys) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+    run_id = "sup_20260605_000000"
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id=run_id,
+        node_id="build_plan",
+    )
+    workflow_ctl.atomic_write_json(
+        root / paths["worker_status"],
+        {
+            "schema_version": 1,
+            "run_id": run_id,
+            "node_id": "build_plan",
+            "started_at": workflow_ctl.utc_now(),
+            "last_semantic_event_at": workflow_ctl.utc_now(),
+            "phase": "testing",
+            "last_message": "running command",
+            "worker_pid": os.getpid(),
+        },
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "worker-status",
+            "--run-id",
+            run_id,
+            "--node-id",
+            "build_plan",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["worker_pid"] == os.getpid()
+    assert payload["process_alive"] is True
+    assert payload["telemetry_state"] == "healthy"
+
+
+def test_worker_status_reports_exited_worker_without_result(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+    run_id = "sup_20260605_000000"
+    proc = subprocess.Popen([sys.executable, "-c", "pass"])
+    proc.wait(timeout=10)
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id=run_id,
+        node_id="build_plan",
+    )
+    workflow_ctl.atomic_write_json(
+        root / paths["worker_status"],
+        {
+            "schema_version": 1,
+            "run_id": run_id,
+            "node_id": "build_plan",
+            "started_at": workflow_ctl.utc_now(),
+            "last_semantic_event_at": workflow_ctl.utc_now(),
+            "phase": "testing",
+            "last_message": "subprocess started",
+            "worker_pid": proc.pid,
+        },
+    )
+
+    code = workflow_ctl.main(
+        [
+            "--workspace-root",
+            str(root),
+            "worker-status",
+            "--run-id",
+            run_id,
+            "--node-id",
+            "build_plan",
+            "--json",
+        ]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["worker_pid"] == proc.pid
+    assert payload["process_alive"] is False
+    assert payload["telemetry_state"] == "worker_exited_no_result"
+    assert payload["recommended_action"] == "recover"
+
+
+def test_recover_uses_worker_telemetry_recommendation(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "workspace"
+    init_cli_workspace(root)
+    run_id = "sup_20260605_000000"
+    state = workflow_ctl.base_state(run_id, "build")
+    state["current_node_id"] = "build_plan"
+    workflow_ctl.atomic_write_json(workflow_ctl.state_path(root), state)
+    workflow_ctl.atomic_write_json(
+        workflow_ctl.lock_path(root),
+        {"run_id": run_id, "pid": 123, "acquired_at": "2026-06-05T00:00:00Z"},
+    )
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id=run_id,
+        node_id="build_plan",
+    )
+    workflow_ctl.atomic_write_json(
+        root / paths["worker_status"],
+        {
+            "schema_version": 1,
+            "run_id": run_id,
+            "node_id": "build_plan",
+            "started_at": "2026-06-05T00:00:00Z",
+            "last_semantic_event_at": "2026-06-05T00:00:00Z",
+            "phase": "editing",
+            "last_message": "old event",
+            "timeout_seconds": 999999999,
+        },
+    )
+
+    code = workflow_ctl.main(
+        ["--workspace-root", str(root), "recover", "--json"]
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["recommended_action"] == "recover"
+    assert payload["active_worker"]["telemetry_state"] == "stalled"
 
 
 def test_command_passes_postcondition_requires_matching_gate() -> None:
@@ -379,16 +649,23 @@ def test_codex_worker_synthesizes_success_when_handoff_missing_but_artifact_pass
     (root / "docs").mkdir()
     (root / "docs" / "Technical_Spec.md").write_text("# Spec\n", encoding="utf-8")
 
-    class Completed:
+    class FakePopen:
+        pid = 4321
         returncode = 0
 
-    def fake_run(command, **kwargs):
-        assert command[:3] == ["/usr/bin/codex", "exec", "--full-auto"]
-        assert command[-3:] == ["--cd", str(root), "-"]
-        return Completed()
+        def __init__(self, command, **kwargs):
+            assert command[:3] == ["/usr/bin/codex", "exec", "--full-auto"]
+            assert command[-3:] == ["--cd", str(root), "-"]
+            assert kwargs["cwd"] == root
+            assert kwargs["text"] is True
+
+        def communicate(self, input=None, timeout=None):
+            assert input
+            assert timeout == 900
+            return None
 
     monkeypatch.setattr(workflow_ctl.shutil, "which", lambda _name: "/usr/bin/codex")
-    monkeypatch.setattr(workflow_ctl.subprocess, "run", fake_run)
+    monkeypatch.setattr(workflow_ctl.subprocess, "Popen", FakePopen)
 
     result = workflow_ctl.run_codex_worker(
         root,
@@ -416,6 +693,13 @@ def test_codex_worker_synthesizes_success_when_handoff_missing_but_artifact_pass
     ]
     assert any(gate["result"] == "PASS" for gate in result["gate_ledger"])
     assert workflow_ctl.validate_worker_result(REPO_ROOT, result) == []
+    paths = workflow_ctl.worker_runtime_paths(
+        root,
+        run_id="sup_20260605_000000",
+        node_id="build_refine_arch",
+    )
+    status = json.loads((root / paths["worker_status"]).read_text(encoding="utf-8"))
+    assert status["worker_pid"] == 4321
 
 
 def test_codex_worker_does_not_synthesize_success_when_command_gate_missing(

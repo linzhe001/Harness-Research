@@ -28,7 +28,7 @@ For stuck workers, follow `Worker Process Safety` in the runtime reference: use 
 Common commands:
 
 ```bash
-tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json
+tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json  # or worker-status --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --goal-file docs/Research_Intent_Draft.md --json
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
@@ -91,6 +91,9 @@ baselines become typed pending requests. Do not silently add
 Workers return schema-validated JSON, not prose decisions. Codex worker result
 handoff lives under `.agents/state/workflow_supervisor_worker_results/**`; the
 supervisor validates and adopts it into `.workflow_supervisor/**`.
+Workers must report live semantic progress with `worker-event`; never hand-write
+`.workflow_supervisor/**`. `status --json` and `worker-status --json` expose
+`active_worker.telemetry_state` for stuck-worker recovery.
 
 For every `command_passes` postcondition, worker results need an exactly
 matching Gate ledger `command`. Build uses `roadmap implementation completeness`
