@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "controller": "auto-paper",
+  "paper_id": "surgical-ai-review-blog",
+  "artifact_dir": "auto_paper_output/surgical-ai-review-blog",
+  "status": "complete",
+  "current_phase_key": "harden",
+  "phase_attempt": 7,
+  "last_decision": "COMPLETE",
+  "halt_reason": "",
+  "last_failure": [],
+  "completed_phases": [
+    "intake",
+    "research",
+    "argument",
+    "citation",
+    "layout",
+    "patch",
+    "harden"
+  ],
+  "started_at": "2026-06-16T15:15:34Z",
+  "updated_at": "2026-06-16T15:15:58Z"
+}

@@ -1,0 +1,7 @@
+{"v": 1, "ts": "2026-06-16T15:15:34Z", "event": "start", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "research", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:38Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "argument", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:43Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "citation", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:46Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "layout", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:50Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "patch", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:54Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "paused", "phase_key": "harden", "payload": {"decision": "NEXT_PHASE"}}
+{"v": 1, "ts": "2026-06-16T15:15:58Z", "event": "resume", "loop_id": "surgical-ai-review-blog", "status": "complete", "phase_key": "harden", "payload": {"decision": "COMPLETE"}}
