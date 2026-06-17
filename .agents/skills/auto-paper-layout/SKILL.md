@@ -16,6 +16,8 @@ Create an executable rewrite plan. Do not edit `.tex` files in layout.
 - `claim_register.md`
 - `citation_support_bank.md`
 - `claim_citation_map.md`
+- `figure_requirement_scan.md` when present
+- `figure_contract.md` and `caption_claim_map.md` when figures are required
 - current draft snippets or line anchors
 
 ## Required Artifacts
@@ -31,6 +33,15 @@ work, method, experiments/results, discussion, and conclusion as applicable.
 
 `latex_patch_plan.md` gives patch order, file path, line anchor, risk, guard
 command, and compile expectation for each unit.
+
+If `figure_requirement_scan.md` has candidate or planned figures/tables, add
+layout units for each accepted figure/table placement. Each unit must specify
+the section, visual purpose, claim IDs, citation IDs, caption risk, and whether
+the next owner is `$auto-paper-figure`, `$run`, or `USER_GATE`.
+
+For Markdown blogs or reviews, layout must still plan citation placement and
+figure/table placement. Do not use `latex_patch_plan.md` as a reason to skip
+article structure, citations, or figure planning.
 
 ## Gate
 

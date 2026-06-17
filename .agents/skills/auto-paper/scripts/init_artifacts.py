@@ -11,7 +11,7 @@ TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "assets" / "templates"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Initialize auto-paper artifacts.")
-    parser.add_argument("--paper-id", required=True, help="Stable ASCII paper slug.")
+    parser.add_argument("--paper-id", help="Stable ASCII paper slug.")
     parser.add_argument(
         "--artifact-dir",
         help="Output artifact directory. Defaults to auto_paper_output/<paper-id>.",
@@ -65,6 +65,8 @@ def main() -> int:
         for path in template_files():
             print(path.name)
         return 0
+    if not args.paper_id:
+        raise SystemExit("--paper-id is required unless --list is used")
     artifact_dir = (
         Path(args.artifact_dir)
         if args.artifact_dir

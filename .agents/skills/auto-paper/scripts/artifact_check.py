@@ -9,6 +9,11 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover - fallback for minimal environments
+    yaml = None  # type: ignore[assignment]
+
 PHASES = (
     "intake",
     "research",
@@ -113,6 +118,27 @@ SHALLOW_PHRASES = {
     "shorten",
     "polish language",
 }
+PLACEHOLDER_RE = re.compile(r"{{[^{}\n]+}}")
+CONFIG_ERROR_FIELDS = {
+    "paper_id",
+    "workflow",
+    "target_venue",
+    "target_name",
+    "draft_path",
+    "artifact_dir",
+    "output_language",
+}
+CONFIG_WARNING_FIELDS = {
+    "compile_command",
+    "materials_dir",
+}
+TABLES_REQUIRING_ROWS = {
+    "source_index.md": "intake",
+    "research_dossier.md": "research",
+    "claim_register.md": "argument",
+    "citation_support_bank.md": "citation",
+    "writing_rationale_matrix.md": "layout",
+}
 
 
 @dataclass(frozen=True)
@@ -134,6 +160,31 @@ def parse_args() -> argparse.Namespace:
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def load_yaml_mapping(path: Path) -> dict[str, object]:
+    text = read_text(path)
+    if yaml is not None:
+        value = yaml.safe_load(text)
+        return value if isinstance(value, dict) else {}
+    result: dict[str, object] = {}
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        result[key.strip()] = value.strip().strip("\"'")
+    return result
+
+
+def unresolved(value: object) -> bool:
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        return (
+            not normalized
+            or normalized == "unknown"
+            or bool(PLACEHOLDER_RE.search(value))
+        )
+    return value is None
 
 
 def split_table_line(line: str) -> list[str]:
@@ -208,6 +259,58 @@ def check_required_files(artifact_dir: Path, phase: str) -> list[Finding]:
     return findings
 
 
+def check_placeholders(artifact_dir: Path, phase: str) -> list[Finding]:
+    findings: list[Finding] = []
+    for relative in required_for_phase(phase):
+        path = artifact_dir / relative
+        if not path.is_file():
+            continue
+        text = read_text(path)
+        matches = sorted(set(PLACEHOLDER_RE.findall(text)))
+        if matches:
+            findings.append(
+                Finding(
+                    "error",
+                    "placeholder",
+                    relative,
+                    "Unresolved template placeholders: "
+                    + ", ".join(matches[:8]),
+                )
+            )
+    return findings
+
+
+def check_config(artifact_dir: Path, phase: str) -> list[Finding]:
+    if not phase_reached(phase, "intake"):
+        return []
+    path = artifact_dir / "config.yaml"
+    if not path.exists():
+        return []
+    config = load_yaml_mapping(path)
+    findings: list[Finding] = []
+    for field in sorted(CONFIG_ERROR_FIELDS):
+        if unresolved(config.get(field)):
+            findings.append(
+                Finding(
+                    "error",
+                    "config",
+                    path.name,
+                    f"`{field}` is missing, unknown, or unresolved.",
+                )
+            )
+    for field in sorted(CONFIG_WARNING_FIELDS):
+        if unresolved(config.get(field)):
+            findings.append(
+                Finding(
+                    "warning",
+                    "config",
+                    path.name,
+                    f"`{field}` is unknown or unresolved.",
+                )
+            )
+    return findings
+
+
 def check_table_columns(
     artifact_dir: Path,
     relative: str,
@@ -228,6 +331,27 @@ def check_table_columns(
             )
         ]
     return []
+
+
+def check_table_rows(artifact_dir: Path, phase: str) -> list[Finding]:
+    findings: list[Finding] = []
+    for relative, owning_phase in TABLES_REQUIRING_ROWS.items():
+        if not phase_reached(phase, owning_phase):
+            continue
+        path = artifact_dir / relative
+        if not path.exists():
+            continue
+        header, rows = first_markdown_table(path)
+        if header and not rows:
+            findings.append(
+                Finding(
+                    "error",
+                    "table-rows",
+                    relative,
+                    "Required table has no source-backed rows.",
+                )
+            )
+    return findings
 
 
 def check_matrix_depth(artifact_dir: Path) -> list[Finding]:
@@ -347,6 +471,9 @@ def check_citation_grades(artifact_dir: Path) -> list[Finding]:
 
 def run_checks(artifact_dir: Path, phase: str) -> list[Finding]:
     findings = check_required_files(artifact_dir, phase)
+    findings.extend(check_placeholders(artifact_dir, phase))
+    findings.extend(check_config(artifact_dir, phase))
+    findings.extend(check_table_rows(artifact_dir, phase))
     if phase_reached(phase, "argument"):
         findings.extend(
             check_table_columns(artifact_dir, "claim_register.md", CLAIM_COLUMNS)

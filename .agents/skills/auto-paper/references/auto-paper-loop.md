@@ -17,7 +17,8 @@ explicitly responsible for creating them.
 | `research` | `$auto-paper-research` | Build source, draft, reference, and style context. |
 | `argument` | `$auto-paper-argument` | Fix central tension, evidence-backed claims, and boundaries. |
 | `citation` | `$auto-paper-citation` | Map claims to support grades and citation keys. |
-| `layout` | `$auto-paper-layout` | Produce paragraph/unit plans before any LaTeX edit. |
+| `layout` | `$auto-paper-layout` | Produce paragraph/unit plans before any LaTeX edit; include citation and figure/table placement for Markdown reviews and blogs. |
+| `figure` | `$auto-paper-figure` | Create figure contracts and caption claim maps when source materials, TeX, or the operator indicate figures/tables are needed. |
 | `patch` | `$auto-paper-patch` | Apply bounded LaTeX changes from the patch plan. |
 | `harden` | `$auto-paper-harden` | Audit artifact chain, claim support, LaTeX, and reviewer risk. |
 
@@ -31,12 +32,24 @@ Use these machine-readable decisions in phase summaries and controller output:
 - `REWORK_CITATION`
 - `REWORK_LAYOUT`
 - `REWORK_PATCH`
+- `RUN_REQUEST`
 - `USER_GATE`
 - `COMPLETE`
 - `ABORT`
 
 `USER_GATE` means missing operator intent, approval, evidence, or claim
 boundary prevents responsible progress.
+
+`RUN_REQUEST` means the paper chain found missing experiment evidence that
+belongs to WF10. Write the request to
+`auto_paper_output/<paper_id>/run_request_register.{json,md}` and stop the
+paper controller until `$run` or `$analyze` refreshes
+`docs/30_evidence/Experiment_Evidence_Index.*`.
+
+Figure/table needs discovered in PDFs or Markdown notes are not optional chat
+memory. Record them in `figure_requirement_scan.md`. If they are accepted for
+the manuscript, route through `$auto-paper-figure` to create figure contracts
+and caption claim maps before `harden`.
 
 ## Failure Routing
 

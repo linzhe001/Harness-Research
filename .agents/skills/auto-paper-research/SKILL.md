@@ -16,12 +16,21 @@ claims that are not supported by author evidence.
 - `source_index.md`
 - `tex_inventory.json`
 - local materials and draft sources named by intake
+- `docs/30_evidence/Experiment_Evidence_Index.{json,md}` when present
 
 ## Workstreams
 
-Scene Analyst reads the current draft, results, figures, tables, notes, and
-repo docs. It outputs author evidence, known claims, known gaps, missing files,
-and source provenance.
+Scene Analyst reads the current draft, results, figures, tables, notes, repo
+docs, and the experiment evidence index when present. It outputs author
+evidence, known claims, known gaps, missing files, and source provenance. It may
+read `iteration_log.json` as a weak signal for experiment intent, but must
+cross-check purpose and result summaries against iteration reports, configs,
+logs, metrics, or run artifacts before using them for paper claims.
+
+When source PDFs or Markdown notes include figure/table suggestions, extract
+the proposed visual purpose, evidence source, required data, and uncertainty
+into `research_dossier.md` and `figure_requirement_scan.md`. Treat figure
+requirements as writing context even when no image asset exists yet.
 
 Exemplar Learner reads reference papers. It outputs section ordering,
 paragraph moves, style profile, and useful sentence functions. It must not
@@ -30,6 +39,11 @@ create author claims.
 SOTA Mapper reads bibliography, related-work notes, and optional external
 search results when the user explicitly requested search. It outputs field map,
 comparison axes, candidate citations, and unsupported areas.
+
+For review/blog work, SOTA Mapper must produce citation candidates for all
+named papers, methods, datasets, systems, and quantitative literature claims.
+If candidates come from an AI dialogue or unverified PDF notes, mark them as
+unverified candidates instead of omitting them.
 
 ## Outputs
 

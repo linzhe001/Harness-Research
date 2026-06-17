@@ -6,11 +6,13 @@ draft_path: "unknown"
 tex_roots: []
 bib_paths: []
 figure_paths: []
+figure_requirement_status: "unknown"
 materials_dir: "unknown"
 reference_paths: []
+experiment_evidence_index: "docs/30_evidence/Experiment_Evidence_Index.json"
 artifact_dir: "{{artifact_dir}}"
 output_language: "unknown"
-citation_target_count: 0
+citation_target_count: "unknown"
 compile_command: "unknown"
 human_gate_policy: "ask_when_claim_or_evidence_boundary_is_unclear"
 forbidden_directions: []

@@ -16,6 +16,7 @@ phase.
 - bibliography files from `config.yaml`
 - `research_dossier.md`
 - optional local reference PDFs or external search results
+- candidate references extracted from PDF or Markdown notes
 
 ## Support Grades
 
@@ -30,6 +31,18 @@ Use the grades from
 - `unsupported`
 
 `metadata_only` is never claim support.
+
+For blogs, reviews, surveys, and tutorials, every external factual claim,
+named method, named dataset, named system, clinical-effectiveness claim,
+economic claim, benchmark claim, and history/trend claim needs either a
+verified citation row or an explicit `unsupported` / `metadata_only` row with a
+revision action. Do not treat "blog" as permission to omit citations.
+
+If the only available reference source is an AI dialogue, a PDF conversation,
+or notes that quote literature without primary-source verification, extract the
+candidate paper metadata into `citation_support_bank.md` with `support_grade:
+metadata_only` or `partial` as appropriate and set
+`needs_user_confirmation: yes`.
 
 ## Outputs
 

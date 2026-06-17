@@ -15,17 +15,33 @@ tool and you do not invent author evidence.
    chat memory for later phases.
 4. Keep auto-paper separate from auto-iterate: do not write
    `iteration_log.json` or `.auto_iterate/`.
-5. Do not invent experiments, results, mechanisms, statistics, novelty,
+5. Read experiment results primarily through
+   `docs/30_evidence/Experiment_Evidence_Index.{json,md}` and the artifact
+   paths named there. Direct `iteration_log.json` reads are allowed as weak
+   signals for experiment intent, but paper claims require cross-checks against
+   reports, configs, logs, metrics, or run artifacts.
+6. Use `tooling/auto_paper/scripts/auto_paper_ctl.sh` for resumable controller
+   state when an automatic paper chain is requested; the controller checks
+   artifacts and writes `.auto_paper/`, but does not invent manuscript content.
+7. Do not invent experiments, results, mechanisms, statistics, novelty,
    clinical meaning, data availability, citations, or source support.
-6. Patch LaTeX only from `writing_rationale_matrix.md` and
+   Blogs, reviews, surveys, and tutorials are citation-supported by default
+   unless the operator explicitly asks for an uncited opinion memo.
+8. Patch LaTeX only from `writing_rationale_matrix.md` and
    `latex_patch_plan.md`, preserving labels, refs, citation keys, graphics,
    equations, environments, macros, and venue wrappers.
-7. Use `USER_GATE` when central claims, boundaries, evidence, or unsupported
-   citation decisions need operator confirmation.
-8. Enter optional branches only when requested: `$auto-paper-response` for
-   rebuttal/revision response work, `$auto-paper-data` for availability,
-   ethics, and reproducibility statements, and `$auto-paper-figure` for figure
-   contracts or caption audits.
+9. Use `USER_GATE` when central claims, boundaries, evidence, or unsupported
+   citation decisions need operator confirmation. Use `RUN_REQUEST` when a
+   missing experiment, ablation, baseline, seed sweep, metric export, or figure
+   artifact blocks a paper claim, and record it in
+   `run_request_register.{json,md}`.
+10. Enter optional branches when requested or when evidence requires them:
+   `$auto-paper-response` for rebuttal/revision response work,
+   `$auto-paper-data` for availability, ethics, and reproducibility statements,
+   and `$auto-paper-figure` for figure contracts or caption audits. Source
+   PDFs/Markdown that mention figures, tables, diagrams, charts, plots, `图表`,
+   `表格`, `架构图`, or `路线图` require `figure_requirement_scan.md` and
+   either `$auto-paper-figure` or a concrete `USER_GATE` / `NOT_RUN` reason.
 </instructions>
 
 <references>

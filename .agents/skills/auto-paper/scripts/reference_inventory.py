@@ -12,10 +12,18 @@ EXCLUDED_PARTS = {
     ".git",
     ".auto_iterate",
     ".auto_paper",
+    ".harness_hooks",
+    ".workflow_supervisor",
     "auto_paper_output",
+    "_site",
+    "_views",
     "outputs",
     "logs",
     "__pycache__",
+}
+EXCLUDED_FILENAMES = {
+    "auto_paper_log.json",
+    "iteration_log.json",
 }
 
 BASE_EXTENSIONS = {
@@ -94,7 +102,9 @@ def allowed_extensions(args: argparse.Namespace) -> dict[str, str]:
 
 
 def has_excluded_part(path: Path) -> bool:
-    return any(part in EXCLUDED_PARTS for part in path.parts)
+    return path.name in EXCLUDED_FILENAMES or any(
+        part in EXCLUDED_PARTS for part in path.parts
+    )
 
 
 def iter_candidates(paths: list[Path], extensions: dict[str, str]) -> list[Path]:

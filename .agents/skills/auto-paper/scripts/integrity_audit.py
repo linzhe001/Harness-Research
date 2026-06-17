@@ -21,6 +21,7 @@ AUDIT_COLUMNS = {
     "downstream_risk",
 }
 ROUTABLE_PHASES = {"research", "argument", "citation", "layout", "patch", "harden"}
+ROUTABLE_DECISIONS = ROUTABLE_PHASES | {"RUN_REQUEST"}
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,12 @@ def fix_action(check: str, path: str, owning_phase: str) -> str:
         return "Rework citation support grade and allowed-use mapping."
     if check == "cross-reference":
         return "Repair artifact identifiers so downstream phases can route claims."
+    if check == "placeholder":
+        return f"Replace unresolved template placeholders in `{path}`."
+    if check == "config":
+        return "Fill config.yaml with concrete paper and artifact paths."
+    if check == "table-rows":
+        return f"Populate `{path}` with source-backed rows before proceeding."
     return f"Rework {owning_phase} artifact content."
 
 
@@ -74,6 +81,9 @@ def downstream_risk(check: str) -> str:
         "matrix-depth": "Patch phase may produce shallow prose-only edits.",
         "citation-grade": "Unsupported claims may be patched into the manuscript.",
         "cross-reference": "Claim, citation, and patch traceability may break.",
+        "placeholder": "Later phases may treat scaffolding text as evidence.",
+        "config": "The controller cannot route paper sources or target constraints.",
+        "table-rows": "Later phases may proceed without durable evidence.",
     }
     return risks.get(check, "Reviewer-facing readiness cannot be established.")
 
@@ -123,7 +133,7 @@ def audit_report_schema_findings(
         start_index += 1
     for row in rows:
         owning_phase = row.get("owning_phase", "").strip()
-        if owning_phase and owning_phase not in ROUTABLE_PHASES:
+        if owning_phase and owning_phase not in ROUTABLE_DECISIONS:
             findings.append(
                 IntegrityFinding(
                     finding_id=f"finding_{start_index:03d}",
