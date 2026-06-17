@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Run Promotion Plan",
+  "description": "Plan and gate record for promoting WF10 run code into stable implementation surfaces.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "source_iteration",
+    "source_paths",
+    "target_paths",
+    "interface_impact",
+    "project_map_updates",
+    "tests",
+    "acceptance_commands",
+    "evidence_refs",
+    "risk",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "source_iteration": {
+      "type": "string"
+    },
+    "source_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interface_impact": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "project_map_updates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptance_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "in_progress",
+        "promoted",
+        "rejected",
+        "blocked"
+      ]
+    },
+    "final_commit": {
+      "type": ["string", "null"]
+    },
+    "requires_human_review": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

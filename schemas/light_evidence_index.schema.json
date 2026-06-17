@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Light Evidence Index",
+  "description": "Compact default Evidence index for daily WF10 and workflow inspection.",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "records"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "light-v1"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "summary",
+          "status",
+          "source_refs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "run",
+              "code",
+              "promotion",
+              "gate",
+              "docchain",
+              "approval"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "iteration_id": {
+            "type": ["string", "null"]
+          },
+          "git_commit": {
+            "type": ["string", "null"]
+          },
+          "primary_metric": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "role"],
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": ["string", "null"]
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "detail_ref": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

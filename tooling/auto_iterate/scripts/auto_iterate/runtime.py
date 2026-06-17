@@ -34,7 +34,20 @@ from .state import atomic_write_json, validate_schema_version
 # Constants
 # ---------------------------------------------------------------------------
 
-VALID_PHASE_KEYS = {"plan", "code", "run_screening", "run_full", "eval"}
+VALID_PHASE_KEYS = {
+    "plan",
+    "code",
+    "run_screening",
+    "run_full",
+    "eval",
+    "debug",
+    "compare",
+    "ablate",
+    "register",
+    "promote",
+    "discard",
+    "stop",
+}
 VALID_RUN_TYPES = {"screening", "full", None}
 VALID_RECOVERY_MODES = {"normal", "retry", "resume"}
 
@@ -55,9 +68,17 @@ PHASE_FAMILY = {
     "run_screening": "run",
     "run_full": "run",
     "eval": "eval",
+    "debug": "debug",
+    "compare": "analyze",
+    "ablate": "run",
+    "register": "run",
+    "promote": "code",
+    "discard": "control",
+    "stop": "control",
 }
 
 _GPU_VISIBLE_PHASES = {"run_screening", "run_full"}
+_HOST_ACCESS_PHASES = {"code", "promote"}
 _QUOTA_OR_RATE_LIMIT_PATTERNS = (
     re.compile(r"you(?:'ve| have) hit your usage limit", re.IGNORECASE),
     re.compile(r"hit your usage limit", re.IGNORECASE),
@@ -105,7 +126,7 @@ def validate_brief(brief: dict[str, Any]) -> None:
         raise BriefValidationError(
             f"phase_key=run_full requires run_type=full, got {rt!r}"
         )
-    if pk in ("plan", "code", "eval") and rt is not None:
+    if pk not in ("run_screening", "run_full") and rt is not None:
         raise BriefValidationError(
             f"phase_key={pk} should have run_type=null, got {rt!r}"
         )
@@ -156,6 +177,13 @@ def build_brief(
                 "run_screening": 14400,
                 "run_full": 28800,
                 "eval": 1800,
+                "debug": 3600,
+                "compare": 1800,
+                "ablate": 3600,
+                "register": 1200,
+                "promote": 3600,
+                "discard": 900,
+                "stop": 300,
             },
         ),
     )
@@ -231,7 +259,11 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- You MUST create a semantic git commit.\n"
-        "- Update iteration status to training with git_commit and git_message.\n"
+        "- Update iteration status to ready_to_run with git_commit and git_message.\n"
+        "- Update action_state.last_action=code and action_state.next_action "
+        "to the next concrete action.\n"
+        "- Keep implementation.scope, implementation.touched_paths, and the "
+        "run code manifest current.\n"
         "- Use $code-debug for actual code modifications.\n"
     ),
     "run_screening": (
@@ -256,6 +288,11 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- If the planned command is not runnable, set screening.status=failed "
         "and record the failed planned command in screening.run_manifest.\n"
         "- Update screening.status to passed|failed|skipped.\n"
+        "- Set iteration status to ready_to_eval when screening should be "
+        "evaluated next, or keep ready_to_run/running only if a full run is "
+        "the next action.\n"
+        "- Update action_state.last_action=run_screening and "
+        "action_state.next_action to run_full, eval, debug, compare, or stop.\n"
         "- When screening.status is passed or failed, record screening.metrics.\n"
         "- When screening.status is passed or failed, record "
         "screening.run_manifest with artifact_contract_version, "
@@ -275,6 +312,11 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- Update full_run.status to completed|recoverable_failed|failed.\n"
+        "- Set iteration status to ready_to_eval for completed or terminal "
+        "failed full runs; use needs_debug for recoverable implementation or "
+        "runtime failures.\n"
+        "- Update action_state.last_action=run_full and action_state.next_action "
+        "to eval, debug, compare, promote, discard, or stop.\n"
         "- Record metrics in full_run.metrics.\n"
         "- Preserve any screening bundle in screening.run_manifest before "
         "overwriting top-level run_manifest.\n"
@@ -303,12 +345,105 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Preserve git_commit, the final top-level run_manifest artifact "
         "bundle, and screening.run_manifest when screening metrics exist "
         "before completion.\n"
+        "- Update action_state.last_action=eval and action_state.next_action "
+        "to plan, debug, promote, discard, or stop.\n"
         "- If screening.status=passed and no full_run exists because the "
         "screening primary metric already met the target, finalize metrics "
         "from screening.metrics and explain the screening-target decision.\n"
         "- If screening.status=failed and no full_run exists, finalize metrics "
         "from screening.metrics and explain the failed-screen decision.\n"
         "- Set iteration status to completed.\n"
+    ),
+    "debug": (
+        "You are in auto_mode. Execute `$iterate debug` for iteration {iteration_id}.\n"
+        "\n"
+        "Phase: debug. Diagnose and repair the current WF10 blocker without "
+        "starting an unrelated iteration.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Read iteration_log.json and the run/code manifests for this iteration.\n"
+        "- Record the blocker, touched paths, validation commands, and outcome.\n"
+        "- Update action_state.last_action=debug and action_state.next_action "
+        "to code, run_screening, run_full, eval, compare, discard, or stop.\n"
+    ),
+    "compare": (
+        "You are in auto_mode. Execute `$iterate compare` for iteration "
+        "{iteration_id}.\n"
+        "\n"
+        "Phase: compare. Compare the active result against baseline, previous "
+        "best, and relevant recent runs.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Do not invent metrics; use only recorded run artifacts and "
+        "iteration_log.json.\n"
+        "- Update action_state.last_action=compare and action_state.next_action "
+        "to eval, ablate, promote, discard, plan, or stop.\n"
+    ),
+    "ablate": (
+        "You are in auto_mode. Execute `$iterate ablate` for iteration "
+        "{iteration_id}.\n"
+        "\n"
+        "Phase: ablate. Create or continue bounded ablation sub-iterations.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Keep ablation work tied to the parent iteration and record "
+        "ablation_summary when available.\n"
+        "- Update action_state.last_action=ablate and action_state.next_action "
+        "to code, run_screening, run_full, eval, compare, or stop.\n"
+    ),
+    "register": (
+        "You are in auto_mode. Execute `$iterate register` for iteration "
+        "{iteration_id}.\n"
+        "\n"
+        "Phase: register. Register an externally executed or manual run without "
+        "inventing missing metrics.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Record command, expected outputs, observed artifact paths, and any "
+        "missing evidence explicitly.\n"
+        "- Set status to ready_to_eval only when the registered run has a "
+        "valid run_manifest bundle; otherwise set needs_more_evidence.\n"
+        "- Update action_state.last_action=register and action_state.next_action "
+        "to eval, compare, debug, discard, or stop.\n"
+    ),
+    "promote": (
+        "You are in auto_mode. Execute `$iterate promote` for iteration "
+        "{iteration_id}.\n"
+        "\n"
+        "Phase: promote. Promote run-local or candidate WF10 code into stable "
+        "implementation surfaces only when the promotion plan and gates support it.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Read implementation.promotion.plan_path and the run code manifest.\n"
+        "- Update stable code, tests, project_map.json, and Codebase_Map.md "
+        "when stable interfaces or responsibilities change.\n"
+        "- Record promotion.status and promoted_commit or rejection reason.\n"
+        "- Update action_state.last_action=promote and action_state.next_action "
+        "to eval, plan, discard, or stop.\n"
+    ),
+    "discard": (
+        "You are in auto_mode. Execute `$iterate discard` for iteration "
+        "{iteration_id}.\n"
+        "\n"
+        "Phase: discard. Close an iteration or branch that should not continue.\n"
+        "\n"
+        "IMPORTANT:\n"
+        "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Preserve the reason and any negative result evidence.\n"
+        "- Set status to abandoned when the iteration is closed.\n"
+        "- Update action_state.last_action=discard and action_state.next_action "
+        "to plan or stop.\n"
+    ),
+    "stop": (
+        "You are in auto_mode. Execute `$iterate status` and stop the loop.\n"
+        "\n"
+        "Phase: stop. Summarize why the run loop should stop and leave "
+        "iteration_log.json unchanged unless a missing stop reason must be recorded.\n"
     ),
 }
 
@@ -499,7 +634,7 @@ def build_codex_command(
     Other phases stay on the safer workspace-write sandbox.
     """
     cmd = ["codex", "exec"]
-    if phase_key == "code" or (
+    if phase_key in _HOST_ACCESS_PHASES or (
         phase_key in _GPU_VISIBLE_PHASES and run_phase_full_access
     ):
         cmd.append("--dangerously-bypass-approvals-and-sandbox")

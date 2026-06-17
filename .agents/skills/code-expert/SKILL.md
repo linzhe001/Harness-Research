@@ -32,7 +32,7 @@ Use this skill for WF8 first-pass code generation only.
 
 1. Read `project_map.json`, `docs/Implementation_Roadmap.md`, `PROJECT_STATE.json`, contracts when present, and the style/rule files before editing.
 2. Apply the pre-edit checklist from `../../../.agents/references/code-style.md`.
-3. Resolve the build scope before editing:
+3. Resolve the build scope before editing, including the current roadmap slice:
    - For standalone `$code-expert [target]`, select the requested roadmap
      slice.
    - For workflow-supervisor `$build`, implement the full

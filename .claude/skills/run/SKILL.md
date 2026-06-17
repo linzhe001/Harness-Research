@@ -16,5 +16,33 @@ Read and follow:
 - `../../../CLAUDE.md`
 - `../../../AGENTS.md`
 
-Route through `/iterate plan`, `/iterate code`, `/iterate run`, and
-`/iterate eval`, or the auto-iterate controller when enabled.
+Route through `/iterate next` by default. `/iterate next` reads the active
+iteration's `action_state.next_action` and then runs exactly one action from
+the WF10 action library: `plan`, `code`, `run_screening`, `run_full`, `eval`,
+`debug`, `compare`, `ablate`, `register`, `promote`, `discard`, or `stop`.
+Direct subcommands remain available when the operator names one explicitly.
+
+Run-time code construction has three weights:
+- `config_only`: create or edit only run-local configs and record no code
+  manifest unless useful.
+- `run_local_code`: create bounded run-local scripts under `runs/wf10/<iter>/`
+  and record `runs/wf10/<iter>/code_manifest.json`.
+- `stable_candidate` or `delegated_build`: use heavier build/code-debug
+  discipline, record the manifest, and require a promotion plan before merging
+  back into stable `src/`, `scripts/`, `configs/`, tests, or `project_map.json`.
+
+When a run-local script or candidate implementation becomes reusable, use
+`/iterate promote` or route through `/change classify` before merging it into
+stable code. Promotion must read the run code manifest, write a promotion plan,
+run acceptance commands or report `NOT_RUN`, and update stable maps when public
+interfaces or responsibilities change.
+
+When `auto_paper_output/*/run_request_register.{json,md}` has pending requests,
+fold the highest-priority unclosed request into the next `/iterate plan` unless
+the operator asks to ignore paper-driven experiments. After `/iterate eval` or
+`/analyze` updates completed run evidence, refresh the default light layer
+`.evidence/light/index.json` with
+`tooling/evidence/build_light_evidence_index.py`. Refresh the paper-facing
+`docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
+`tooling/evidence/build_experiment_evidence_index.py` only when claim or
+writing evidence needs the detailed layer, or report `NOT_RUN`.

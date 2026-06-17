@@ -16,3 +16,9 @@ Read and follow:
 
 Analyze current run artifacts and iteration logs, then produce decision-ready
 insights that guide the next `$run`, a `$grill` pivot, or `$write`.
+
+After updating completed run evidence, refresh
+`docs/30_evidence/Experiment_Evidence_Index.{json,md}` using
+`tooling/evidence/build_experiment_evidence_index.py` so `$write` can consume
+experiment results without treating `iteration_log.json` as the sole source of
+truth. If not run, report `NOT_RUN` with the reason.

@@ -56,6 +56,10 @@ def recovery_action(
         action, reason = _recover_run_full(iteration_id, iterations)
     elif phase_key == "eval":
         action, reason = _recover_eval(iteration_id, iterations)
+    elif phase_key in {"debug", "compare", "ablate", "register", "promote", "discard"}:
+        action, reason = _recover_control_action(phase_key, iteration_id, iterations)
+    elif phase_key == "stop":
+        action, reason = ADOPT, "stop phase is controller-terminal"
     else:
         return FAIL, f"Unknown phase_key: {phase_key}"
 
@@ -114,8 +118,8 @@ def _recover_code(
     status = it.get("status", "")
     if status in ("planned", "coding"):
         return RERUN, f"status={status}, code phase incomplete"
-    if status == "training" and it.get("git_commit"):
-        return ADOPT, "status=training with complete git_commit"
+    if status == "ready_to_run" and it.get("git_commit"):
+        return ADOPT, "status=ready_to_run with complete git_commit"
     return RERUN, f"status={status}, git_commit missing or incomplete"
 
 
@@ -136,8 +140,8 @@ def _recover_run_screening(
     s_status = screening.get("status")
     if s_status in ("passed", "failed", "skipped"):
         return ADOPT, f"screening.status={s_status} (terminal)"
-    if it.get("status") == "training":
-        return RERUN, "screening record missing, iteration still training"
+    if it.get("status") in {"ready_to_run", "running"}:
+        return RERUN, "screening record missing, iteration still ready to run"
     return RERUN, f"screening incomplete, status={s_status}"
 
 
@@ -163,8 +167,8 @@ def _recover_run_full(
         return ADOPT, "full_run.status=failed (terminal)"
     if fr_status == "recoverable_failed":
         return RERUN, "full_run.status=recoverable_failed, will retry"
-    if it.get("status") == "training" and fr_status is None:
-        return RERUN, "no full_run record, iteration still training"
+    if it.get("status") in {"ready_to_run", "running"} and fr_status is None:
+        return RERUN, "no full_run record, iteration still ready to run"
     return RERUN, f"full_run incomplete, status={fr_status}"
 
 
@@ -192,6 +196,28 @@ def _recover_eval(
     ):
         return ADOPT, "iteration already completed with decision and lessons"
     return RERUN, "eval incomplete"
+
+
+# -- control actions --------------------------------------------------------
+
+def _recover_control_action(
+    phase_key: str,
+    iteration_id: str | None,
+    iterations: list[dict[str, Any]],
+) -> tuple[str, str]:
+    if iteration_id is None:
+        return FAIL, "current_iteration_id not bound"
+
+    it = _get_iteration(iterations, iteration_id)
+    if it is None:
+        return FAIL, f"iteration {iteration_id} not found"
+
+    action_state = it.get("action_state")
+    if not isinstance(action_state, dict):
+        return RERUN, "action_state missing"
+    if action_state.get("last_action") == phase_key:
+        return ADOPT, f"action_state.last_action={phase_key}"
+    return RERUN, f"action_state.last_action={action_state.get('last_action')!r}"
 
 
 # ---------------------------------------------------------------------------

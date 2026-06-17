@@ -676,7 +676,7 @@ class TestRuntimeFailureHandling:
                     }
                 return {
                     "ok": True,
-                    "classification": "training",
+                    "classification": "ready_to_run",
                     "iteration_id": "iter1",
                     "payload": {},
                 }
@@ -697,7 +697,7 @@ class TestRuntimeFailureHandling:
         ]
 
         assert result["ok"] is True
-        assert result["classification"] == "training"
+        assert result["classification"] == "ready_to_run"
         assert ctl.state["current_phase_key"] == "run_screening"
         assert any(event["event"] == "PHASE_POSTCONDITION_ADOPTED" for event in events)
         assert any(event["event"] == "PHASE_COMPLETED" for event in events)
@@ -749,7 +749,7 @@ class TestRuntimeFailureHandling:
                 del args, kwargs
                 return {
                     "ok": True,
-                    "classification": "training",
+                    "classification": "ready_to_run",
                     "iteration_id": "iter1",
                     "payload": {},
                 }
@@ -1411,7 +1411,7 @@ class TestScreeningTransitions:
                 "iterations": [
                     {
                         "id": "iter1",
-                        "status": "training",
+                        "status": "ready_to_run",
                         "screening": {
                             "status": "passed",
                             "metrics": {"validation_score": 0.348},

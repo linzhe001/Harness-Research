@@ -73,8 +73,22 @@ _DECISION_HALT: dict[str, str] = {
     "ABORT": "workflow_abort",
 }
 
-# Canonical phase sequence.
+# Compatibility fallback when a legacy iteration has no action_state.next_action.
 _PHASE_SEQUENCE = ["plan", "code", "run_screening", "run_full", "eval"]
+_AUTO_PHASE_KEYS = {
+    "plan",
+    "code",
+    "run_screening",
+    "run_full",
+    "eval",
+    "debug",
+    "compare",
+    "ablate",
+    "register",
+    "promote",
+    "discard",
+    "stop",
+}
 _PERSISTED_POLICY_KEYS = (
     "timeouts",
     "terminate_grace_sec",
@@ -467,6 +481,18 @@ class LoopController:
         while self.state["status"] == "running":
             phase_key = self.state["current_phase_key"]
             round_idx = self.state["current_round_index"]
+            if phase_key == "stop":
+                self.state["status"] = "stopped"
+                self.state["halt_reason"] = "iteration_requested_stop"
+                self._persist_state()
+                self.events.emit(
+                    "LOOP_STOPPED",
+                    self.state["loop_id"],
+                    "stopped",
+                    round_index=round_idx,
+                    payload={"halt_reason": "iteration_requested_stop"},
+                )
+                return self._map_exit_code()
 
             # -- Round boundary checks ------------------------------------
             if phase_key == "plan":
@@ -914,9 +940,16 @@ class LoopController:
             )
             self._rotate_events_if_needed(round_idx)
 
-            # Reset for next round.
-            self.state["current_phase_key"] = "plan"
-            self.state["current_iteration_id"] = None
+            next_action = self._current_iteration_next_action()
+            if (
+                next_action
+                and next_action not in {"plan", "stop"}
+                and decision == "DEBUG"
+            ):
+                self.state["current_phase_key"] = next_action
+            else:
+                self.state["current_phase_key"] = "plan"
+                self.state["current_iteration_id"] = None
             self._reset_phase_retry_state()
             self.state.pop("_recovery_mode", None)
             self._persist_state()
@@ -950,7 +983,11 @@ class LoopController:
     # ==================================================================
 
     def _advance_phase(self) -> None:
-        """Move to the next phase in the sequence."""
+        """Move to the next phase from iteration action_state or legacy sequence."""
+        next_action = self._current_iteration_next_action()
+        if next_action:
+            self._set_next_phase_from_action(next_action)
+            return
         current = self.state["current_phase_key"]
         try:
             idx = _PHASE_SEQUENCE.index(current)
@@ -959,6 +996,39 @@ class LoopController:
                 self._reset_phase_retry_state()
         except ValueError:
             pass
+
+    def _current_iteration_next_action(self) -> str | None:
+        iteration = self._current_iteration()
+        if not isinstance(iteration, dict):
+            return None
+        action_state = iteration.get("action_state")
+        if not isinstance(action_state, dict):
+            return None
+        next_action = action_state.get("next_action")
+        if isinstance(next_action, str) and next_action in _AUTO_PHASE_KEYS:
+            return next_action
+        return None
+
+    def _set_next_phase_from_action(self, next_action: str) -> None:
+        if next_action == "plan":
+            self.state["current_phase_key"] = "plan"
+            self.state["current_iteration_id"] = None
+            self._reset_phase_retry_state()
+            return
+        if next_action == "stop":
+            self.state["status"] = "stopped"
+            self.state["halt_reason"] = "iteration_requested_stop"
+            self._reset_phase_retry_state()
+            self.events.emit(
+                "LOOP_STOPPED",
+                self.state["loop_id"],
+                "stopped",
+                round_index=self.state.get("current_round_index"),
+                payload={"halt_reason": "iteration_requested_stop"},
+            )
+            return
+        self.state["current_phase_key"] = next_action
+        self._reset_phase_retry_state()
 
     def _advance_after_success(
         self, phase_key: str, validation: dict[str, Any]
@@ -969,6 +1039,8 @@ class LoopController:
         full training run. The next phase is eval, where the iteration records
         the failed hypothesis and decision.
         """
+        if self._current_iteration_next_action():
+            return False
         if (
             phase_key == "run_screening"
             and validation.get("classification") == "failed"
@@ -1119,6 +1191,8 @@ class LoopController:
         return recent_lessons, failed_hypotheses
 
     def _should_bypass_screening(self) -> bool:
+        if self._current_iteration_next_action() == "run_screening":
+            return False
         sp = self.state.get("screening_policy", {})
         if not sp.get("enabled", True):
             return True

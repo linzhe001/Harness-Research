@@ -112,6 +112,12 @@ history by path, and keep the report under 1200 words unless requested.
 
    Preserve the template structure and decision vocabulary, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 
+   After completed run evidence is written, refresh
+   `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
+   `tooling/evidence/build_experiment_evidence_index.py` so `/write` can use
+   experiment evidence without treating `iteration_log.json` as the sole source
+   of truth. If not run, report `NOT_RUN` with the reason.
+
 7. **Update Project State** (standalone invocation only)
 
    When **not** called from /iterate eval (i.e., `.claude/current_iteration.json` does not exist):

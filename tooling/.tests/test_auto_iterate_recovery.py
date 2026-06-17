@@ -80,50 +80,50 @@ class TestRecoveryAction:
         assert action == RERUN
 
     def test_code_status_training_with_commit(self) -> None:
-        iters = [{"id": "iter1", "status": "training", "git_commit": "abc"}]
+        iters = [{"id": "iter1", "status": "ready_to_run", "git_commit": "abc"}]
         action, reason = recovery_action("code", "iter1", iters, 1, 2)
         assert action == ADOPT
 
     def test_code_status_training_no_commit(self) -> None:
-        iters = [{"id": "iter1", "status": "training"}]
+        iters = [{"id": "iter1", "status": "ready_to_run"}]
         action, reason = recovery_action("code", "iter1", iters, 1, 2)
         assert action == RERUN
 
     # -- run_screening ------------------------------------------------------
 
     def test_screening_passed(self) -> None:
-        iters = [{"id": "iter1", "status": "training",
+        iters = [{"id": "iter1", "status": "ready_to_run",
                    "screening": {"status": "passed"}}]
         action, reason = recovery_action("run_screening", "iter1", iters, 1, 2)
         assert action == ADOPT
 
     def test_screening_missing(self) -> None:
-        iters = [{"id": "iter1", "status": "training"}]
+        iters = [{"id": "iter1", "status": "ready_to_run"}]
         action, reason = recovery_action("run_screening", "iter1", iters, 1, 2)
         assert action == RERUN
 
     # -- run_full -----------------------------------------------------------
 
     def test_full_completed(self) -> None:
-        iters = [{"id": "iter1", "status": "training",
+        iters = [{"id": "iter1", "status": "ready_to_run",
                    "full_run": {"status": "completed"}}]
         action, reason = recovery_action("run_full", "iter1", iters, 1, 2)
         assert action == ADOPT
 
     def test_full_recoverable_failed(self) -> None:
-        iters = [{"id": "iter1", "status": "training",
+        iters = [{"id": "iter1", "status": "ready_to_run",
                    "full_run": {"status": "recoverable_failed"}}]
         action, reason = recovery_action("run_full", "iter1", iters, 1, 2)
         assert action == RERUN
 
     def test_full_failed_terminal(self) -> None:
-        iters = [{"id": "iter1", "status": "training",
+        iters = [{"id": "iter1", "status": "ready_to_run",
                    "full_run": {"status": "failed"}}]
         action, reason = recovery_action("run_full", "iter1", iters, 1, 2)
         assert action == ADOPT
 
     def test_full_no_record(self) -> None:
-        iters = [{"id": "iter1", "status": "training"}]
+        iters = [{"id": "iter1", "status": "ready_to_run"}]
         action, reason = recovery_action("run_full", "iter1", iters, 1, 2)
         assert action == RERUN
 
@@ -137,7 +137,7 @@ class TestRecoveryAction:
         assert action == ADOPT
 
     def test_eval_incomplete(self) -> None:
-        iters = [{"id": "iter1", "status": "training"}]
+        iters = [{"id": "iter1", "status": "ready_to_run"}]
         action, reason = recovery_action("eval", "iter1", iters, 1, 2)
         assert action == RERUN
 
@@ -175,7 +175,13 @@ class TestRecoveryAction:
 
 class TestRecoveryEngine:
     def _make_engine(self, tmp_path: Path, iterations: list[dict]) -> RecoveryEngine:
-        log = {"project": "test", "iterations": iterations}
+        log = {
+            "schema_version": "2",
+            "project": "test",
+            "baseline_metrics": {},
+            "best_iteration": None,
+            "iterations": iterations,
+        }
         atomic_write_json(tmp_path / "iteration_log.json", log)
         validator = PostconditionValidator(tmp_path)
         return RecoveryEngine(validator)
@@ -190,6 +196,20 @@ class TestRecoveryEngine:
             "config_diff": {},
             "screening": {"recommended": True},
             "codex_review": {"status": "used"},
+            "action_state": {
+                "next_action": "code",
+                "last_action": None,
+                "reason": "test fixture",
+                "blocked_by": [],
+            },
+            "implementation": {
+                "scope": "config_only",
+                "code_manifest_path": None,
+                "touched_paths": [],
+                "stable_api_changed": False,
+                "delegated_build_run_id": None,
+                "promotion": {"status": "not_applicable", "plan_path": None},
+            },
         }
 
     def test_recover_plan_adopt(self, tmp_path: Path) -> None:

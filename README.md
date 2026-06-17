@@ -196,28 +196,35 @@ WF10 iteration_log.json / docs/40_iterations/** (legacy mirror: docs/iterations/
 
 ### 5. 用 Ralph-style loop 承担繁重迭代
 
-WF10 是 Harness 的核心实验循环：
+WF10 是 Harness 的核心实验循环。当前 v2 版本不是固定
+`plan -> code -> run -> eval` 主线，而是由 `iteration_log.json` 中每轮的
+`action_state.next_action` 驱动：
 
 ```text
-$iterate plan
-  -> hypothesis and config_diff
-  |
-  v
-$iterate code
-  -> implementation through $code-debug
-  -> semantic Commit Slice
-  |
-  v
-$iterate run
-  -> train/eval or register manual run
-  -> metrics and run_manifest
-  |
-  v
-$iterate eval
-  -> NEXT_ROUND | DEBUG | CONTINUE | PIVOT | ABORT
+$iterate next
+  -> plan | code | run_screening | run_full | eval
+     | debug | compare | ablate | register | promote | discard | stop
+  -> update action_state and implementation
 ```
 
+`run` 中允许三种重量的代码构建：`config_only` 只改配置；
+`run_local_code` 在 `runs/wf10/<iter>/` 下生成临时脚本并记录
+`code_manifest.json`；`stable_candidate` / `delegated_build` 需要 promotion
+plan，之后才能合并回稳定的 `src/`、`scripts/`、`configs/`、tests 和
+`project_map.json`。
+
 对于调参、微调模型结构、反复实验这种繁重操作，可以使用 Codex auto-iterate controller 运行 Ralph-style multi-round loop。控制器可以减少手动摩擦，但不会替代 Human Approval：合同、Claim Boundary、release readiness 和高风险转向仍然需要人确认。
+
+日常证据查看默认使用 `.evidence/light/index.json`，由
+`tooling/evidence/build_light_evidence_index.py` 生成。`$write` 需要论文级
+细节时再消费 `docs/30_evidence/Experiment_Evidence_Index.{json,md}`，该文件由
+`tooling/evidence/build_experiment_evidence_index.py` 从 completed run records
+和 artifact bundles 生成。`iteration_log.json` may be read as a weak signal,
+but paper-facing purpose/result summaries must be cross-checked against
+reports, configs, logs, metrics, or run artifacts.
+When auto-paper finds missing experiment evidence, it writes
+`auto_paper_output/<paper_id>/run_request_register.{json,md}` and returns
+`RUN_REQUEST`; `$run` folds the pending request into the next WF10 plan.
 
 ## Main Artifacts
 

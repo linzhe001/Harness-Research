@@ -24,6 +24,28 @@ if str(TOOLING_DIR) not in sys.path:
 from run_artifacts import run_artifact_errors  # noqa: E402
 
 _DEFAULT_MANIFEST = object()
+VALID_ACTIONS = {
+    "plan",
+    "code",
+    "run_screening",
+    "run_full",
+    "eval",
+    "debug",
+    "compare",
+    "ablate",
+    "register",
+    "promote",
+    "discard",
+    "stop",
+}
+VALID_IMPLEMENTATION_SCOPES = {
+    "config_only",
+    "run_local_code",
+    "stable_candidate",
+    "delegated_build",
+}
+TERMINAL_PHASES = {"discard", "stop"}
+CONTROL_PHASES = {"debug", "compare", "ablate", "register", "promote", "discard"}
 
 # ---------------------------------------------------------------------------
 # Result dataclass (plain dict for simplicity)
@@ -92,7 +114,16 @@ def _get_ids(iterations: list[dict]) -> set[str]:
 def _existing_planned_iteration_id(
     iterations: list[dict],
 ) -> tuple[str | None, str | None]:
-    blocking_statuses = {"coding", "training", "running"}
+    blocking_statuses = {
+        "coding",
+        "ready_to_run",
+        "running",
+        "ready_to_eval",
+        "needs_debug",
+        "needs_more_evidence",
+        "candidate_for_promotion",
+        "promoting",
+    }
     blocking = sorted(
         it["id"]
         for it in iterations
@@ -389,6 +420,120 @@ def _valid_codex_review(value: Any) -> bool:
     return False
 
 
+def _action_state(iteration: dict[str, Any]) -> dict[str, Any] | None:
+    value = iteration.get("action_state")
+    return value if isinstance(value, dict) else None
+
+
+def _implementation(iteration: dict[str, Any]) -> dict[str, Any] | None:
+    value = iteration.get("implementation")
+    return value if isinstance(value, dict) else None
+
+
+def _action_state_error(
+    iteration: dict[str, Any],
+    *,
+    last_action: str | None = None,
+    allowed_next: set[str] | None = None,
+) -> str | None:
+    action_state = _action_state(iteration)
+    if action_state is None:
+        return "action_state is required"
+    next_action = action_state.get("next_action")
+    if next_action not in VALID_ACTIONS:
+        return f"action_state.next_action is invalid: {next_action!r}"
+    if allowed_next is not None and next_action not in allowed_next:
+        return (
+            "action_state.next_action must be one of "
+            f"{sorted(allowed_next)}, got {next_action!r}"
+        )
+    observed_last = action_state.get("last_action")
+    if last_action is not None and observed_last != last_action:
+        return (
+            f"action_state.last_action must be {last_action!r}, "
+            f"got {observed_last!r}"
+        )
+    if (
+        observed_last is not None
+        and observed_last not in VALID_ACTIONS
+    ):
+        return f"action_state.last_action is invalid: {observed_last!r}"
+    reason = action_state.get("reason")
+    if not isinstance(reason, str) or not reason.strip():
+        return "action_state.reason is required"
+    blocked_by = action_state.get("blocked_by")
+    if blocked_by is not None and (
+        not isinstance(blocked_by, list)
+        or not all(isinstance(item, str) for item in blocked_by)
+    ):
+        return "action_state.blocked_by must be null or a string list"
+    return None
+
+
+def _implementation_error(iteration: dict[str, Any]) -> str | None:
+    implementation = _implementation(iteration)
+    if implementation is None:
+        return "implementation is required"
+    scope = implementation.get("scope")
+    if scope not in VALID_IMPLEMENTATION_SCOPES:
+        return f"implementation.scope is invalid: {scope!r}"
+    touched_paths = implementation.get("touched_paths")
+    if not isinstance(touched_paths, list) or not all(
+        isinstance(item, str) for item in touched_paths
+    ):
+        return "implementation.touched_paths must be a string list"
+    if not isinstance(implementation.get("stable_api_changed"), bool):
+        return "implementation.stable_api_changed must be boolean"
+    if scope == "delegated_build" and not implementation.get("delegated_build_run_id"):
+        return "implementation.delegated_build_run_id is required"
+    promotion = implementation.get("promotion")
+    if not isinstance(promotion, dict):
+        return "implementation.promotion is required"
+    promotion_status = promotion.get("status")
+    if promotion_status not in {
+        "not_applicable",
+        "not_ready",
+        "candidate",
+        "promoting",
+        "promoted",
+        "rejected",
+    }:
+        return f"implementation.promotion.status is invalid: {promotion_status!r}"
+    return None
+
+
+def _base_v2_iteration_error(iteration: dict[str, Any]) -> str | None:
+    action_error = _action_state_error(iteration)
+    if action_error:
+        return action_error
+    return _implementation_error(iteration)
+
+
+def _phase_state_error(
+    iteration: dict[str, Any],
+    phase_key: str,
+    *,
+    allowed_statuses: set[str] | None = None,
+    allowed_next: set[str] | None = None,
+) -> str | None:
+    base_error = _implementation_error(iteration)
+    if base_error:
+        return base_error
+    action_error = _action_state_error(
+        iteration,
+        last_action=phase_key,
+        allowed_next=allowed_next,
+    )
+    if action_error:
+        return action_error
+    if allowed_statuses is not None and iteration.get("status") not in allowed_statuses:
+        return (
+            f"Expected status in {sorted(allowed_statuses)}, "
+            f"got {iteration.get('status')!r}"
+        )
+    return None
+
+
 def iteration_metrics(iteration: dict[str, Any]) -> dict[str, Any]:
     top_level = iteration.get("metrics")
     if isinstance(top_level, dict) and top_level:
@@ -517,6 +662,14 @@ class PostconditionValidator:
                 tracked,
                 primary_metric,
             )
+        elif phase_key in CONTROL_PHASES:
+            return self._validate_control_action(
+                iterations,
+                current_iteration_id,
+                phase_key,
+            )
+        elif phase_key == "stop":
+            return _ok("stop", "stopped", current_iteration_id)
         else:
             return _fail(phase_key, "unknown_phase", current_iteration_id,
                          {"error": f"Unknown phase_key: {phase_key}"})
@@ -571,6 +724,10 @@ class PostconditionValidator:
         if missing:
             return _fail("plan", "postcondition_failed", iter_id,
                          {"missing_fields": missing})
+        base_error = _base_v2_iteration_error(it)
+        if base_error:
+            return _fail("plan", "postcondition_failed", iter_id,
+                         {"error": base_error})
 
         payload = {"adopted_existing": iter_id in pre_ids}
         return _ok("plan", "planned", iter_id, payload)
@@ -589,12 +746,12 @@ class PostconditionValidator:
             return _fail("code", "postcondition_failed", iteration_id,
                          {"error": f"Iteration {iteration_id} not found"})
 
-        if it.get("status") != "training":
+        if it.get("status") != "ready_to_run":
             return _fail(
                 "code",
                 "postcondition_failed",
                 iteration_id,
-                {"error": f"Expected status=training, got {it.get('status')!r}"},
+                {"error": f"Expected status=ready_to_run, got {it.get('status')!r}"},
             )
 
         if not it.get("git_commit"):
@@ -603,8 +760,26 @@ class PostconditionValidator:
         if not it.get("git_message"):
             return _fail("code", "postcondition_failed", iteration_id,
                          {"missing_fields": ["git_message"]})
+        state_error = _phase_state_error(
+            it,
+            "code",
+            allowed_statuses={"ready_to_run"},
+            allowed_next={
+                "run_screening",
+                "run_full",
+                "debug",
+                "compare",
+                "register",
+                "promote",
+                "discard",
+                "stop",
+            },
+        )
+        if state_error:
+            return _fail("code", "postcondition_failed", iteration_id,
+                         {"error": state_error})
 
-        return _ok("code", "training", iteration_id)
+        return _ok("code", "ready_to_run", iteration_id)
 
     # -- run_screening ------------------------------------------------------
 
@@ -674,6 +849,29 @@ class PostconditionValidator:
         if metrics_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
                          {"error": metrics_error})
+        state_error = _phase_state_error(
+            it,
+            "run_screening",
+            allowed_statuses={
+                "ready_to_run",
+                "running",
+                "ready_to_eval",
+                "needs_debug",
+                "needs_more_evidence",
+            },
+            allowed_next={
+                "run_full",
+                "eval",
+                "debug",
+                "compare",
+                "register",
+                "discard",
+                "stop",
+            },
+        )
+        if state_error:
+            return _fail("run_screening", "postcondition_failed", iteration_id,
+                         {"error": state_error})
 
         return _ok("run_screening", status, iteration_id,
                     {"screening_status": status})
@@ -756,6 +954,28 @@ class PostconditionValidator:
             if not full_run.get("error") and not run_manifest.get("error"):
                 return _fail("run_full", "postcondition_failed", iteration_id,
                              {"error": "error is required for failed full_run status"})
+        state_error = _phase_state_error(
+            it,
+            "run_full",
+            allowed_statuses={
+                "ready_to_eval",
+                "needs_debug",
+                "needs_more_evidence",
+                "candidate_for_promotion",
+            },
+            allowed_next={
+                "eval",
+                "debug",
+                "compare",
+                "register",
+                "promote",
+                "discard",
+                "stop",
+            },
+        )
+        if state_error:
+            return _fail("run_full", "postcondition_failed", iteration_id,
+                         {"error": state_error})
 
         return _ok("run_full", status, iteration_id,
                     {"full_run_status": status})
@@ -850,6 +1070,98 @@ class PostconditionValidator:
                 iteration_id,
                 {"error": iteration_report_error(self.root, iteration_id)},
             )
+        state_error = _phase_state_error(
+            it,
+            "eval",
+            allowed_statuses={"completed"},
+            allowed_next={"plan", "debug", "compare", "promote", "discard", "stop"},
+        )
+        if state_error:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": state_error})
 
         return _ok("eval", "completed", iteration_id,
                     {"decision": decision})
+
+    # -- control actions -----------------------------------------------------
+
+    def _validate_control_action(
+        self,
+        iterations: list[dict],
+        iteration_id: str | None,
+        phase_key: str,
+    ) -> dict[str, Any]:
+        if iteration_id is None:
+            return _fail(phase_key, "postcondition_failed", None,
+                         {"error": "current_iteration_id not bound"})
+        it = _get_iteration(iterations, iteration_id)
+        if it is None:
+            return _fail(phase_key, "postcondition_failed", iteration_id,
+                         {"error": f"Iteration {iteration_id} not found"})
+        allowed_next = {
+            "debug": {
+                "code",
+                "run_screening",
+                "run_full",
+                "eval",
+                "compare",
+                "register",
+                "promote",
+                "discard",
+                "stop",
+            },
+            "compare": {"eval", "ablate", "promote", "discard", "plan", "stop"},
+            "ablate": {
+                "code",
+                "run_screening",
+                "run_full",
+                "eval",
+                "compare",
+                "stop",
+            },
+            "register": {"eval", "compare", "debug", "discard", "stop"},
+            "promote": {"eval", "plan", "discard", "stop"},
+            "discard": {"plan", "stop"},
+        }[phase_key]
+        allowed_statuses = {
+            "debug": {
+                "planned",
+                "coding",
+                "ready_to_run",
+                "running",
+                "ready_to_eval",
+                "needs_debug",
+                "needs_more_evidence",
+            },
+            "compare": {
+                "ready_to_eval",
+                "needs_more_evidence",
+                "candidate_for_promotion",
+                "completed",
+            },
+            "ablate": {
+                "planned",
+                "ready_to_run",
+                "running",
+                "ready_to_eval",
+                "completed",
+            },
+            "register": {"ready_to_eval", "needs_more_evidence"},
+            "promote": {"candidate_for_promotion", "promoting", "completed"},
+            "discard": {"abandoned", "completed"},
+        }[phase_key]
+        state_error = _phase_state_error(
+            it,
+            phase_key,
+            allowed_statuses=allowed_statuses,
+            allowed_next=allowed_next,
+        )
+        if state_error:
+            return _fail(phase_key, "postcondition_failed", iteration_id,
+                         {"error": state_error})
+        return _ok(
+            phase_key,
+            str(it.get("status")),
+            iteration_id,
+            {"next_action": _action_state(it)["next_action"]},  # type: ignore[index]
+        )

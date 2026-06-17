@@ -37,7 +37,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    - `docs/20_facts/Project_Glossary.md` if it exists
 
    Apply the Pre-Edit Checklist from [../../shared/code-style.md](../../shared/code-style.md) before writing or editing code.
-   Resolve the build scope before editing. For standalone `/code-expert
+   Resolve the build scope before editing, including the current roadmap slice. For standalone `/code-expert
    [target]`, select the requested roadmap slice. For workflow-supervisor
    `/build`, implement the full `minimal_runnable_slice_set` from
    `docs/Implementation_Roadmap.md` unless the operator explicitly requested

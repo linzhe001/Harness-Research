@@ -43,6 +43,14 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
 
 Remote wrappers must use `--json` output, never parse prose.
 
+The controller's `current_phase_key` is now scheduled from the active
+iteration's `action_state.next_action` when that field exists. Supported phase
+keys are `plan`, `code`, `run_screening`, `run_full`, `eval`, `debug`,
+`compare`, `ablate`, `register`, `promote`, `discard`, and `stop`. Legacy
+records without `action_state` fall back to the older phase sequence for
+compatibility, but new loops should write strict `iteration_log.json`
+`schema_version: "2"`.
+
 ## 3. Pausing and Stopping
 
 **Pause** (graceful, at next phase boundary):

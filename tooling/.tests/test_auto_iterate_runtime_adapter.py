@@ -400,6 +400,82 @@ class TestPhaseSupervisorDryRun:
 # ===================================================================
 
 class TestPostconditionValidator:
+    def _normalize_iteration(self, iteration: dict) -> dict:
+        result = dict(iteration)
+        status = result.get("status")
+        next_action = "stop"
+        last_action = None
+        screening = result.get("screening")
+        full_run = result.get("full_run")
+        if status == "planned":
+            next_action = "code"
+        elif status == "coding":
+            next_action = "code"
+        elif status == "ready_to_run":
+            next_action = "run_screening"
+            last_action = "code"
+            if isinstance(screening, dict) and screening.get("status") in {
+                "passed",
+                "failed",
+                "skipped",
+            }:
+                last_action = "run_screening"
+                next_action = (
+                    "eval" if screening.get("status") == "failed" else "run_full"
+                )
+            if isinstance(full_run, dict) and full_run.get("status") in {
+                "completed",
+                "failed",
+                "recoverable_failed",
+            }:
+                last_action = "run_full"
+                next_action = (
+                    "debug"
+                    if full_run.get("status") == "recoverable_failed"
+                    else "eval"
+                )
+                result["status"] = (
+                    "needs_debug"
+                    if full_run.get("status") == "recoverable_failed"
+                    else "ready_to_eval"
+                )
+        elif status in {"running", "ready_to_eval"}:
+            next_action = "eval"
+            last_action = "run_full"
+        elif status == "completed":
+            next_action = "plan"
+            last_action = "eval"
+        elif status == "needs_debug":
+            next_action = "debug"
+        elif status == "needs_more_evidence":
+            next_action = "compare"
+        elif status == "candidate_for_promotion":
+            next_action = "promote"
+        elif status == "abandoned":
+            next_action = "stop"
+            last_action = "discard"
+        result.setdefault(
+            "action_state",
+            {
+                "next_action": next_action,
+                "last_action": last_action,
+                "reason": "test fixture",
+                "blocked_by": [],
+            },
+        )
+        result.setdefault(
+            "implementation",
+            {
+                "scope": "config_only",
+                "code_manifest_path": None,
+                "touched_paths": [],
+                "stable_api_changed": False,
+                "delegated_build_run_id": None,
+                "promotion": {"status": "not_applicable", "plan_path": None},
+            },
+        )
+        return result
+
     def _make_project(
         self,
         tmp_path: Path,
@@ -409,10 +485,17 @@ class TestPostconditionValidator:
         create_run_artifacts: bool = True,
     ) -> PostconditionValidator:
         """Create a minimal fixture project with the given iterations."""
+        iterations = [self._normalize_iteration(it) for it in iterations]
         if create_run_artifacts:
             for it in iterations:
                 self._complete_run_manifest(tmp_path, it)
-        log = {"project": "test", "iterations": iterations}
+        log = {
+            "schema_version": "2",
+            "project": "test",
+            "baseline_metrics": {},
+            "best_iteration": None,
+            "iterations": iterations,
+        }
         atomic_write_json(tmp_path / "iteration_log.json", log)
         if create_reports:
             report_dir = tmp_path / "docs" / "iterations"
@@ -677,16 +760,16 @@ class TestPostconditionValidator:
 
     def test_code_success(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123", "git_message": "feat: add attention"},
         ])
         result = v.validate("code", "iter3")
         assert result["ok"] is True
-        assert result["classification"] == "training"
+        assert result["classification"] == "ready_to_run"
 
     def test_code_missing_git_commit(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training"},
+            {"id": "iter3", "status": "ready_to_run"},
         ])
         result = v.validate("code", "iter3")
         assert result["ok"] is False
@@ -704,7 +787,7 @@ class TestPostconditionValidator:
 
     def test_run_screening_passed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "screening": {
                  "recommended": True,
@@ -722,7 +805,7 @@ class TestPostconditionValidator:
 
     def test_run_screening_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "screening": {
                  "recommended": True,
@@ -743,7 +826,7 @@ class TestPostconditionValidator:
         tmp_path: Path,
     ) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "config_diff": {
                  "planned_command": (
@@ -775,7 +858,7 @@ class TestPostconditionValidator:
             "python train.py --config runs/iter3/requested_config.yaml"
         )
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "config_diff": {
                  "planned_command": planned_command,
@@ -806,7 +889,7 @@ class TestPostconditionValidator:
             "python train.py --config runs/iter3/requested_config.yaml"
         )
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "config_diff": {
                  "planned_command": planned_command,
@@ -840,7 +923,7 @@ class TestPostconditionValidator:
             "python train.py --config runs/iter3/requested_config.yaml"
         )
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "config_diff": {
                  "planned_command": planned_command,
@@ -863,7 +946,7 @@ class TestPostconditionValidator:
 
     def test_run_screening_failed_requires_metrics(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "screening": {"recommended": True, "status": "failed"},
              "run_manifest": {
@@ -881,7 +964,7 @@ class TestPostconditionValidator:
     ) -> None:
         v = self._make_project(
             tmp_path,
-            [{"id": "iter3", "status": "training",
+            [{"id": "iter3", "status": "ready_to_run",
               "git_commit": "abc123",
               "screening": {
                   "recommended": True,
@@ -901,7 +984,7 @@ class TestPostconditionValidator:
     def test_run_screening_rejects_untracked_metric(self, tmp_path: Path) -> None:
         iteration = {
             "id": "iter3",
-            "status": "training",
+            "status": "ready_to_run",
             "git_commit": "abc123",
             "screening": {
                 "recommended": True,
@@ -935,7 +1018,7 @@ class TestPostconditionValidator:
 
     def test_run_screening_failed_requires_run_manifest(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "screening": {
                  "recommended": True,
                  "status": "failed",
@@ -948,7 +1031,7 @@ class TestPostconditionValidator:
 
     def test_run_screening_missing(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training"},
+            {"id": "iter3", "status": "ready_to_run"},
         ])
         result = v.validate("run_screening", "iter3")
         assert result["ok"] is False
@@ -957,7 +1040,7 @@ class TestPostconditionValidator:
 
     def test_run_full_completed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "full_run": {"status": "completed", "resume_mode": "from_scratch",
                           "metrics": {"PSNR": 31.2}},
@@ -973,7 +1056,7 @@ class TestPostconditionValidator:
     def test_run_full_completed_requires_run_artifacts(self, tmp_path: Path) -> None:
         v = self._make_project(
             tmp_path,
-            [{"id": "iter3", "status": "training",
+            [{"id": "iter3", "status": "ready_to_run",
               "git_commit": "abc123",
               "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}},
               "run_manifest": {
@@ -992,7 +1075,7 @@ class TestPostconditionValidator:
     ) -> None:
         v = self._make_project(
             tmp_path,
-            [{"id": "iter3", "status": "training",
+            [{"id": "iter3", "status": "ready_to_run",
               "git_commit": "abc123",
               "screening": {
                   "recommended": True,
@@ -1015,7 +1098,7 @@ class TestPostconditionValidator:
     ) -> None:
         screening_iteration = {
             "id": "iter3",
-            "status": "training",
+            "status": "ready_to_run",
             "git_commit": "abc123",
             "screening": {
                 "recommended": True,
@@ -1032,7 +1115,7 @@ class TestPostconditionValidator:
 
         v = self._make_project(
             tmp_path,
-            [{"id": "iter3", "status": "training",
+            [{"id": "iter3", "status": "ready_to_run",
               "git_commit": "abc123",
               "screening": {
                   "recommended": True,
@@ -1055,7 +1138,7 @@ class TestPostconditionValidator:
     ) -> None:
         screening_iteration = {
             "id": "iter3",
-            "status": "training",
+            "status": "ready_to_run",
             "git_commit": "abc123",
             "screening": {
                 "recommended": True,
@@ -1072,7 +1155,7 @@ class TestPostconditionValidator:
 
         v = self._make_project(
             tmp_path,
-            [{"id": "iter3", "status": "training",
+            [{"id": "iter3", "status": "ready_to_run",
               "git_commit": "abc123",
               "screening": {
                   "recommended": True,
@@ -1092,7 +1175,7 @@ class TestPostconditionValidator:
 
     def test_run_full_recoverable_failed(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "full_run": {"status": "recoverable_failed", "error": "OOM"}},
         ])
         result = v.validate("run_full", "iter3")
@@ -1101,7 +1184,7 @@ class TestPostconditionValidator:
 
     def test_run_full_completed_requires_metrics(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "full_run": {"status": "completed"}},
         ])
         result = v.validate("run_full", "iter3")
@@ -1110,7 +1193,7 @@ class TestPostconditionValidator:
 
     def test_run_full_completed_requires_run_manifest(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "full_run": {"status": "completed", "metrics": {"PSNR": 31.2}}},
         ])
         result = v.validate("run_full", "iter3")
@@ -1119,7 +1202,7 @@ class TestPostconditionValidator:
 
     def test_run_full_no_full_run(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training"},
+            {"id": "iter3", "status": "ready_to_run"},
         ])
         result = v.validate("run_full", "iter3")
         assert result["ok"] is False
@@ -1356,7 +1439,7 @@ class TestPostconditionValidator:
         tmp_path: Path,
     ) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "git_commit": "abc123",
              "full_run": {"status": "completed", "metrics": {"loss": 0.4}},
              "run_manifest": {
@@ -1390,7 +1473,7 @@ class TestPostconditionValidator:
 
     def test_eval_wrong_status(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
-            {"id": "iter3", "status": "training",
+            {"id": "iter3", "status": "ready_to_run",
              "decision": "NEXT_ROUND", "lessons": ["x"]},
         ])
         result = v.validate("eval", "iter3")
@@ -1415,6 +1498,9 @@ class TestPostconditionValidator:
 # ===================================================================
 
 class TestRecoveryEngine:
+    def _normalize_iteration(self, iteration: dict) -> dict:
+        return TestPostconditionValidator()._normalize_iteration(iteration)
+
     def _make_engine(
         self,
         tmp_path: Path,
@@ -1424,12 +1510,19 @@ class TestRecoveryEngine:
         create_run_artifacts: bool = True,
         primary_metric_name: str | None = None,
     ) -> RecoveryEngine:
+        iterations = [self._normalize_iteration(iteration) for iteration in iterations]
         if create_run_artifacts:
             for iteration in iterations:
                 self._complete_run_manifest(tmp_path, iteration)
         atomic_write_json(
             tmp_path / "iteration_log.json",
-            {"project": "test", "iterations": iterations},
+            {
+                "schema_version": "2",
+                "project": "test",
+                "baseline_metrics": {},
+                "best_iteration": None,
+                "iterations": iterations,
+            },
         )
         if create_reports:
             report_dir = tmp_path / "docs" / "iterations"
@@ -1511,7 +1604,7 @@ class TestRecoveryEngine:
             [
                 {
                     "id": "iter3",
-                    "status": "training",
+                    "status": "ready_to_run",
                     "git_commit": "abc123",
                 }
             ],
@@ -1537,7 +1630,7 @@ class TestRecoveryEngine:
             [
                 {
                     "id": "iter3",
-                    "status": "training",
+                    "status": "ready_to_run",
                     "git_commit": "abc123",
                     "git_message": "train(research): test recovery adoption",
                 }
@@ -1565,7 +1658,7 @@ class TestRecoveryEngine:
             [
                 {
                     "id": "iter3",
-                    "status": "training",
+                    "status": "ready_to_run",
                     "git_commit": "abc123",
                 }
             ],
@@ -1628,7 +1721,7 @@ class TestRecoveryEngine:
             [
                 {
                     "id": "iter3",
-                    "status": "training",
+                    "status": "ready_to_run",
                     "git_commit": "abc123",
                     "screening": {"recommended": True, "status": "failed"},
                     "run_manifest": {

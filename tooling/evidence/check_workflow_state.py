@@ -28,11 +28,43 @@ VALID_STAGE_STATUSES = {"not_started", "in_progress", "completed", "blocked", "a
 VALID_ITERATION_STATUSES = {
     "planned",
     "coding",
-    "training",
+    "ready_to_run",
     "running",
+    "ready_to_eval",
+    "needs_debug",
+    "needs_more_evidence",
+    "candidate_for_promotion",
+    "promoting",
     "completed",
     "abandoned",
+}
+VALID_ITERATION_ACTIONS = {
+    "plan",
+    "code",
+    "run_screening",
+    "run_full",
+    "eval",
     "debug",
+    "compare",
+    "ablate",
+    "register",
+    "promote",
+    "discard",
+    "stop",
+}
+VALID_IMPLEMENTATION_SCOPES = {
+    "config_only",
+    "run_local_code",
+    "stable_candidate",
+    "delegated_build",
+}
+VALID_RUN_PROMOTION_STATUSES = {
+    "not_applicable",
+    "not_ready",
+    "candidate",
+    "promoting",
+    "promoted",
+    "rejected",
 }
 VALID_DECISIONS = {"NEXT_ROUND", "DEBUG", "CONTINUE", "PIVOT", "ABORT"}
 VALID_LESSON_LEVELS = {"observation", "finding", "lesson", "invariant_candidate"}
@@ -695,6 +727,414 @@ def check_lesson_candidates(
             )
 
 
+def _load_json_path(root: Path, relative: str) -> dict[str, Any] | None:
+    path = root / relative
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def check_iteration_action_state(
+    checks: list[dict[str, Any]],
+    iteration: dict[str, Any],
+    iteration_id: str,
+) -> None:
+    action_state = iteration.get("action_state")
+    if not isinstance(action_state, dict):
+        add_check(
+            checks,
+            "iteration_action_state",
+            False,
+            "error",
+            f"{iteration_id} requires action_state.",
+            "iteration_log.json",
+        )
+        return
+    next_action = action_state.get("next_action")
+    if next_action not in VALID_ITERATION_ACTIONS:
+        add_check(
+            checks,
+            "iteration_next_action",
+            False,
+            "error",
+            f"{iteration_id} action_state.next_action is invalid: {next_action!r}.",
+            "iteration_log.json",
+        )
+    last_action = action_state.get("last_action")
+    if last_action is not None and last_action not in VALID_ITERATION_ACTIONS:
+        add_check(
+            checks,
+            "iteration_last_action",
+            False,
+            "error",
+            f"{iteration_id} action_state.last_action is invalid: {last_action!r}.",
+            "iteration_log.json",
+        )
+    if not isinstance(action_state.get("reason"), str) or not action_state[
+        "reason"
+    ].strip():
+        add_check(
+            checks,
+            "iteration_action_reason",
+            False,
+            "error",
+            f"{iteration_id} action_state.reason is required.",
+            "iteration_log.json",
+        )
+    blocked_by = action_state.get("blocked_by")
+    if blocked_by is not None and (
+        not isinstance(blocked_by, list)
+        or not all(isinstance(item, str) for item in blocked_by)
+    ):
+        add_check(
+            checks,
+            "iteration_blocked_by",
+            False,
+            "error",
+            f"{iteration_id} action_state.blocked_by must be null or a string list.",
+            "iteration_log.json",
+        )
+
+
+def check_run_code_manifest(
+    root: Path,
+    checks: list[dict[str, Any]],
+    iteration: dict[str, Any],
+    iteration_id: str,
+    implementation: dict[str, Any],
+) -> None:
+    manifest_path = implementation.get("code_manifest_path")
+    scope = implementation.get("scope")
+    if scope == "config_only" and not manifest_path:
+        return
+    if not isinstance(manifest_path, str) or not manifest_path.strip():
+        add_check(
+            checks,
+            "iteration_code_manifest",
+            False,
+            "error",
+            f"{iteration_id} requires implementation.code_manifest_path.",
+            "iteration_log.json",
+        )
+        return
+    data = _load_json_path(root, manifest_path)
+    if data is None:
+        add_check(
+            checks,
+            "iteration_code_manifest",
+            False,
+            "error",
+            f"{iteration_id} code manifest missing or invalid: {manifest_path}.",
+            manifest_path,
+        )
+        return
+    required = [
+        "schema_version",
+        "iteration_id",
+        "scope",
+        "purpose",
+        "touched_paths",
+        "entry_commands",
+        "validation_commands",
+        "stable_api_changed",
+        "promotion_criteria",
+        "rollback_plan",
+        "limitations",
+    ]
+    missing = [field for field in required if field not in data]
+    if missing:
+        add_check(
+            checks,
+            "iteration_code_manifest_schema",
+            False,
+            "error",
+            f"{iteration_id} code manifest missing fields: {', '.join(missing)}.",
+            manifest_path,
+        )
+    if data.get("iteration_id") != iteration_id:
+        add_check(
+            checks,
+            "iteration_code_manifest_identity",
+            False,
+            "error",
+            f"{iteration_id} code manifest iteration_id mismatch.",
+            manifest_path,
+        )
+    if data.get("scope") != implementation.get("scope"):
+        add_check(
+            checks,
+            "iteration_code_manifest_scope",
+            False,
+            "error",
+            f"{iteration_id} code manifest scope does not match iteration_log.",
+            manifest_path,
+        )
+    if implementation.get("stable_api_changed") and not data.get(
+        "stable_api_changed"
+    ):
+        add_check(
+            checks,
+            "iteration_code_manifest_stable_api",
+            False,
+            "error",
+            f"{iteration_id} stable_api_changed must match code manifest.",
+            manifest_path,
+        )
+    if scope in {"run_local_code", "stable_candidate"} and not data.get(
+        "validation_commands"
+    ):
+        add_check(
+            checks,
+            "iteration_code_manifest_validation",
+            False,
+            "error",
+            f"{iteration_id} {scope} code manifest requires validation_commands.",
+            manifest_path,
+        )
+
+
+def check_promotion_plan(
+    root: Path,
+    checks: list[dict[str, Any]],
+    iteration_id: str,
+    promotion: dict[str, Any],
+) -> None:
+    status = promotion.get("status")
+    if status not in VALID_RUN_PROMOTION_STATUSES:
+        add_check(
+            checks,
+            "iteration_promotion_status",
+            False,
+            "error",
+            f"{iteration_id} invalid promotion.status {status!r}.",
+            "iteration_log.json",
+        )
+        return
+    plan_path = promotion.get("plan_path")
+    if status in {"promoting", "promoted"}:
+        if not isinstance(plan_path, str) or not plan_path.strip():
+            add_check(
+                checks,
+                "iteration_promotion_plan",
+                False,
+                "error",
+                f"{iteration_id} promotion.status={status} requires plan_path.",
+                "iteration_log.json",
+            )
+            return
+        data = _load_json_path(root, plan_path)
+        if data is None:
+            add_check(
+                checks,
+                "iteration_promotion_plan",
+                False,
+                "error",
+                f"{iteration_id} promotion plan missing or invalid: {plan_path}.",
+                plan_path,
+            )
+            return
+        required = [
+            "schema_version",
+            "source_iteration",
+            "source_paths",
+            "target_paths",
+            "interface_impact",
+            "project_map_updates",
+            "tests",
+            "acceptance_commands",
+            "evidence_refs",
+            "risk",
+            "status",
+        ]
+        missing = [field for field in required if field not in data]
+        if missing:
+            add_check(
+                checks,
+                "iteration_promotion_plan_schema",
+                False,
+                "error",
+                f"{iteration_id} promotion plan missing fields: {', '.join(missing)}.",
+                plan_path,
+            )
+        if data.get("source_iteration") != iteration_id:
+            add_check(
+                checks,
+                "iteration_promotion_plan_identity",
+                False,
+                "error",
+                f"{iteration_id} promotion plan source_iteration mismatch.",
+                plan_path,
+            )
+        if status == "promoted" and not promotion.get("promoted_commit"):
+            add_check(
+                checks,
+                "iteration_promoted_commit",
+                False,
+                "error",
+                f"{iteration_id} promoted status requires promoted_commit.",
+                "iteration_log.json",
+            )
+
+
+def check_iteration_implementation(
+    root: Path,
+    checks: list[dict[str, Any]],
+    iteration: dict[str, Any],
+    iteration_id: str,
+) -> None:
+    implementation = iteration.get("implementation")
+    if not isinstance(implementation, dict):
+        add_check(
+            checks,
+            "iteration_implementation",
+            False,
+            "error",
+            f"{iteration_id} requires implementation.",
+            "iteration_log.json",
+        )
+        return
+    scope = implementation.get("scope")
+    if scope not in VALID_IMPLEMENTATION_SCOPES:
+        add_check(
+            checks,
+            "iteration_implementation_scope",
+            False,
+            "error",
+            f"{iteration_id} invalid implementation.scope {scope!r}.",
+            "iteration_log.json",
+        )
+    touched_paths = implementation.get("touched_paths")
+    if not isinstance(touched_paths, list) or not all(
+        isinstance(item, str) for item in touched_paths
+    ):
+        add_check(
+            checks,
+            "iteration_touched_paths",
+            False,
+            "error",
+            f"{iteration_id} implementation.touched_paths must be a string list.",
+            "iteration_log.json",
+        )
+    if not isinstance(implementation.get("stable_api_changed"), bool):
+        add_check(
+            checks,
+            "iteration_stable_api_changed",
+            False,
+            "error",
+            f"{iteration_id} implementation.stable_api_changed must be boolean.",
+            "iteration_log.json",
+        )
+    if scope == "delegated_build" and not implementation.get("delegated_build_run_id"):
+        add_check(
+            checks,
+            "iteration_delegated_build_run_id",
+            False,
+            "error",
+            f"{iteration_id} delegated_build requires delegated_build_run_id.",
+            "iteration_log.json",
+        )
+    promotion = implementation.get("promotion")
+    if not isinstance(promotion, dict):
+        add_check(
+            checks,
+            "iteration_promotion",
+            False,
+            "error",
+            f"{iteration_id} implementation.promotion is required.",
+            "iteration_log.json",
+        )
+    else:
+        check_promotion_plan(root, checks, iteration_id, promotion)
+    check_run_code_manifest(root, checks, iteration, iteration_id, implementation)
+
+
+def check_iteration_git_ready(
+    checks: list[dict[str, Any]],
+    iteration: dict[str, Any],
+    iteration_id: str,
+    *,
+    check_name: str,
+    label: str,
+) -> None:
+    git_commit = iteration.get("git_commit")
+    if not isinstance(git_commit, str) or not git_commit.strip():
+        add_check(
+            checks,
+            check_name,
+            False,
+            "error",
+            f"{iteration_id} {label} requires git_commit.",
+            "iteration_log.json",
+        )
+    git_message = iteration.get("git_message")
+    if not isinstance(git_message, str) or not git_message.strip():
+        add_check(
+            checks,
+            check_name,
+            False,
+            "error",
+            f"{iteration_id} {label} requires git_message.",
+            "iteration_log.json",
+        )
+
+
+def check_iteration_run_manifest_bundle(
+    root: Path,
+    checks: list[dict[str, Any]],
+    iteration: dict[str, Any],
+    iteration_id: str,
+    *,
+    check_prefix: str,
+    label: str,
+) -> None:
+    run_manifest = iteration.get("run_manifest")
+    if not isinstance(run_manifest, dict) or not run_manifest:
+        add_check(
+            checks,
+            f"{check_prefix}_run_manifest",
+            False,
+            "error",
+            f"{iteration_id} {label} requires run_manifest.",
+            "iteration_log.json",
+        )
+        return
+    if (
+        not isinstance(run_manifest.get("command"), str)
+        or not run_manifest.get("command", "").strip()
+    ):
+        add_check(
+            checks,
+            f"{check_prefix}_run_manifest",
+            False,
+            "error",
+            f"{iteration_id} run_manifest requires command.",
+            "iteration_log.json",
+        )
+    if (
+        not isinstance(run_manifest.get("exp_dir"), str)
+        or not run_manifest.get("exp_dir", "").strip()
+    ):
+        add_check(
+            checks,
+            f"{check_prefix}_run_manifest",
+            False,
+            "error",
+            f"{iteration_id} run_manifest requires exp_dir.",
+            "iteration_log.json",
+        )
+    for artifact_error in run_artifact_errors(root, iteration):
+        add_check(
+            checks,
+            f"{check_prefix}_run_artifact_bundle",
+            False,
+            "error",
+            f"{iteration_id} {artifact_error}.",
+            "iteration_log.json",
+        )
+
+
 def check_iteration_log(
     root: Path, checks: list[dict[str, Any]], state: dict[str, Any] | None
 ) -> dict[str, Any] | None:
@@ -703,6 +1143,36 @@ def check_iteration_log(
     )
     if log is None:
         return None
+
+    if log.get("schema_version") != "2":
+        add_check(
+            checks,
+            "iteration_log_schema_version",
+            False,
+            "error",
+            "iteration_log.json must use strict schema_version '2'. Run "
+            "tooling/evidence/migrate_iteration_log_v2.py for legacy logs.",
+            "iteration_log.json",
+        )
+    for field in ("project", "baseline_metrics", "best_iteration"):
+        if field not in log:
+            add_check(
+                checks,
+                "iteration_log_required_fields",
+                False,
+                "error",
+                f"iteration_log.json v2 requires top-level {field}.",
+                "iteration_log.json",
+            )
+    if "baseline_metrics" in log and not isinstance(log.get("baseline_metrics"), dict):
+        add_check(
+            checks,
+            "iteration_log_baseline_metrics",
+            False,
+            "error",
+            "iteration_log.json baseline_metrics must be an object.",
+            "iteration_log.json",
+        )
 
     iterations = log.get("iterations")
     if not isinstance(iterations, list):
@@ -770,6 +1240,8 @@ def check_iteration_log(
                 f"{iteration_id} has unknown status {status!r}.",
                 "iteration_log.json",
             )
+        check_iteration_action_state(checks, iteration, iteration_id)
+        check_iteration_implementation(root, checks, iteration, iteration_id)
         screening = iteration.get("screening")
         if isinstance(screening, dict) and screening.get("status") in {
             "passed",
@@ -829,6 +1301,30 @@ def check_iteration_log(
                         f"{iteration_id} {artifact_error}.",
                         "iteration_log.json",
                     )
+        if status in {
+            "ready_to_run",
+            "running",
+            "ready_to_eval",
+            "candidate_for_promotion",
+            "promoting",
+            "completed",
+        }:
+            check_iteration_git_ready(
+                checks,
+                iteration,
+                iteration_id,
+                check_name="iteration_git_ready",
+                label=f"status={status}",
+            )
+        if status == "ready_to_eval":
+            check_iteration_run_manifest_bundle(
+                root,
+                checks,
+                iteration,
+                iteration_id,
+                check_prefix="iteration_ready_to_eval",
+                label="ready_to_eval entry",
+            )
         if status == "completed":
             decision = iteration.get("decision")
             if decision not in VALID_DECISIONS:
@@ -840,16 +1336,13 @@ def check_iteration_log(
                     f"{iteration_id} completed entry requires a valid decision.",
                     "iteration_log.json",
                 )
-            git_commit = iteration.get("git_commit")
-            if not isinstance(git_commit, str) or not git_commit.strip():
-                add_check(
-                    checks,
-                    "iteration_completed_git_commit",
-                    False,
-                    "error",
-                    f"{iteration_id} completed entry requires git_commit.",
-                    "iteration_log.json",
-                )
+            check_iteration_git_ready(
+                checks,
+                iteration,
+                iteration_id,
+                check_name="iteration_completed_git_commit",
+                label="completed entry",
+            )
             run_manifest = iteration.get("run_manifest")
             if not isinstance(run_manifest, dict) or not run_manifest:
                 add_check(

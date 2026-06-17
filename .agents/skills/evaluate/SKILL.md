@@ -47,7 +47,10 @@ Use this skill when the user wants training or evaluation results interpreted an
    - `ABORT`
 8. If invoked from `$iterate`, do not take over stage-transition ownership.
 9. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
-10. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, or `iteration_log.json` are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
+10. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
+    `tooling/evidence/build_experiment_evidence_index.py` after completed run
+    evidence is written, or report `NOT_RUN` with the reason.
+11. Report a Gate ledger when iteration reports, stage reports, lesson files, `MEMORY.md`, `iteration_log.json`, or the experiment evidence index are written. If lesson-quality or workflow-state checks are not run, mark them `NOT_RUN` with the reason.
 
 ## Context Budget
 

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Run Code Manifest",
+  "description": "Machine-readable manifest for code created or touched during a WF10 run iteration.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "iteration_id",
+    "scope",
+    "purpose",
+    "touched_paths",
+    "entry_commands",
+    "validation_commands",
+    "stable_api_changed",
+    "promotion_criteria",
+    "rollback_plan",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "iteration_id": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "config_only",
+        "run_local_code",
+        "stable_candidate",
+        "delegated_build"
+      ]
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "touched_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entry_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stable_api_changed": {
+      "type": "boolean"
+    },
+    "delegated_build_run_id": {
+      "type": ["string", "null"]
+    },
+    "promotion_criteria": {
+      "type": "string"
+    },
+    "rollback_plan": {
+      "type": "string"
+    },
+    "git_commit": {
+      "type": ["string", "null"]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

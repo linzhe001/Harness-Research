@@ -40,17 +40,42 @@ def base_project_state() -> dict:
 
 def base_iteration_log() -> dict:
     return {
+        "schema_version": "2",
+        "project": "test",
         "evaluation_protocol": {
             "primary_metric": "accuracy",
             "tracked_metrics": [{"name": "accuracy", "goal": "max"}],
         },
+        "baseline_metrics": {"accuracy": 0.7},
         "best_iteration": "iter1",
         "iterations": [
             {
                 "id": "iter1",
+                "date": "2026-04-30",
+                "hypothesis": "A small reviewed change improves accuracy.",
+                "changes_summary": "Test fixture iteration.",
+                "config_diff": {},
                 "status": "completed",
                 "decision": "CONTINUE",
                 "git_commit": "abc123",
+                "git_message": "test: fixture iteration",
+                "action_state": {
+                    "next_action": "stop",
+                    "last_action": "eval",
+                    "reason": "Test fixture completed.",
+                    "blocked_by": [],
+                },
+                "implementation": {
+                    "scope": "config_only",
+                    "code_manifest_path": None,
+                    "touched_paths": [],
+                    "stable_api_changed": False,
+                    "delegated_build_run_id": None,
+                    "promotion": {
+                        "status": "not_applicable",
+                        "plan_path": None,
+                    },
+                },
                 "run_manifest": {
                     "artifact_contract_version": "1",
                     "run_type": "full",
@@ -154,6 +179,26 @@ def test_workflow_state_valid_cross_file_set_passes(tmp_path: Path) -> None:
 
     assert result["ok"] is True
     assert result["error_count"] == 0
+
+
+def test_workflow_state_rejects_legacy_iteration_log(tmp_path: Path) -> None:
+    checker = load_tool("check_workflow_state")
+    legacy = base_iteration_log()
+    legacy.pop("schema_version")
+    legacy.pop("project")
+    legacy.pop("baseline_metrics")
+    for iteration in legacy["iterations"]:
+        iteration.pop("action_state")
+        iteration.pop("implementation")
+    write_json(tmp_path / "iteration_log.json", legacy)
+
+    result = checker.gate_result(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        check["name"] == "iteration_log_schema_version" and not check["ok"]
+        for check in result["checks"]
+    )
 
 
 def test_workflow_state_rejects_stage_name_id_mismatch(tmp_path: Path) -> None:
@@ -453,7 +498,7 @@ def test_workflow_state_rejects_untracked_screening_metric(
     log["iterations"] = [
         {
             "id": "iter1",
-            "status": "training",
+            "status": "ready_to_run",
             "git_commit": "abc123",
             "screening": {
                 "recommended": True,
@@ -499,7 +544,7 @@ def test_workflow_state_rejects_screening_missing_run_manifest(
     log["iterations"] = [
         {
             "id": "iter1",
-            "status": "training",
+            "status": "ready_to_run",
             "screening": {
                 "recommended": True,
                 "status": "passed",

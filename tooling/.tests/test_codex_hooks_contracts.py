@@ -382,6 +382,8 @@ def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
                 for path in output["paths"]
             ):
                 assert output["requires_tool"] is True
+            if any(path.startswith(".auto_paper/") for path in output["paths"]):
+                assert output["requires_tool"] is True
             if output["kind"] == "legacy_compat":
                 assert output.get("replacement")
 
@@ -401,6 +403,43 @@ def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
         for contract in contracts.values()
         for output in contract["artifact_outputs"]
         for path in output["paths"]
+    )
+
+
+def test_run_write_experiment_evidence_bridge_contracts() -> None:
+    json_path = "docs/30_evidence/Experiment_Evidence_Index.json"
+    md_path = "docs/30_evidence/Experiment_Evidence_Index.md"
+
+    for skill in ["iterate", "evaluate"]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        assert (
+            "build_experiment_evidence_index_or_NOT_RUN"
+            in contract["required_actions"]
+        )
+        assert json_path in contract["write_scope"]["allowed_paths"]
+        assert md_path in contract["write_scope"]["allowed_paths"]
+        assert any(
+            output["kind"] == "conclusion_evidence"
+            and output["requires_tool"] is True
+            and json_path in output["paths"]
+            and md_path in output["paths"]
+            for output in contract["artifact_outputs"]
+        )
+
+    auto_paper = contract_by_skill(REPO_ROOT, "auto-paper")
+    assert auto_paper is not None
+    assert json_path in auto_paper["required_read_set"]["project_optional"]
+    assert md_path in auto_paper["required_read_set"]["project_optional"]
+    assert "iteration_log.json" in auto_paper["required_read_set"]["project_optional"]
+    assert json_path not in auto_paper["write_scope"]["allowed_paths"]
+    assert "iteration_log.json" in auto_paper["sensitive_paths"]
+    assert "iteration_log.json" not in auto_paper["write_scope"]["allowed_paths"]
+    assert any(
+        output["kind"] == "tool_trace"
+        and output["requires_tool"] is True
+        and ".auto_paper/" in output["paths"]
+        for output in auto_paper["artifact_outputs"]
     )
 
 

@@ -310,6 +310,24 @@ PIVOT/ABORT signal require protocol review before unattended iteration.
 
 ### WF10: Structured Experiment Iteration (Core)
 
+**Current v2 rule**: WF10 is action-library driven, not a fixed
+`plan -> code -> run -> eval` script. `iteration_log.json` must use
+`schema_version: "2"`. Each iteration records `action_state.next_action`,
+`action_state.last_action`, and `implementation.scope`. `/run` / `/iterate next`
+executes one action from `plan`, `code`, `run_screening`, `run_full`, `eval`,
+`debug`, `compare`, `ablate`, `register`, `promote`, `discard`, or `stop`.
+Use `ready_to_run` after code, `ready_to_eval` after a complete run bundle,
+`needs_debug` for repair, and `needs_more_evidence` for incomplete external
+artifacts. The older `training` wording below is legacy terminology.
+
+Run-time code construction may be `config_only`, `run_local_code`,
+`stable_candidate`, or `delegated_build`. Run-local and candidate code must be
+tracked with `runs/wf10/<iter>/code_manifest.json`; stable promotion requires a
+promotion plan and must update `project_map.json` / `Codebase_Map.md` when
+stable structure changes. Refresh `.evidence/light/index.json` for the default
+Evidence view and generate `docs/30_evidence/Experiment_Evidence_Index.*` only
+when detailed claim or writing evidence is needed.
+
 | | |
 |---|---|
 | **Skill** | `/iterate [plan|code|run|eval|ablate|status|log]` |

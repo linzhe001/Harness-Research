@@ -1320,7 +1320,11 @@
         ],
         "skill": [
           ".agents/skills/evaluate/SKILL.md",
-          ".agents/skills/evaluate/references/stage-report.md"
+          ".agents/skills/evaluate/references/stage-report.md",
+          "schemas/iteration_log.schema.json",
+          "schemas/run_code_manifest.schema.json",
+          "schemas/run_promotion_plan.schema.json",
+          "schemas/light_evidence_index.schema.json"
         ],
         "project_when_present": [
           "AGENTS.md",
@@ -1331,15 +1335,26 @@
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
           "docs/50_memory/Lessons.md",
-          "MEMORY.md"
+          "MEMORY.md",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
+          ".evidence/light/index.json",
+          "runs/wf10/"
         ]
       },
       "required_actions": [
         "decision_vocabulary",
+        "build_experiment_evidence_index_or_NOT_RUN",
         "lesson_quality_check_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "iteration_log_v2_strict",
+        "action_state_next_action_update",
+        "run_code_manifest_or_config_only_record",
+        "promotion_plan_or_NOT_READY",
+        "build_light_evidence_index_or_NOT_RUN",
+        "run_local_promotion_check"
       ],
       "forbidden_actions": [
         "stage_transition_from_iterate",
@@ -1351,7 +1366,11 @@
         "iteration_report_write",
         "lesson_promotion",
         "iteration_log_write",
-        "docs_site_boundary_report"
+        "experiment_evidence_index_write",
+        "docs_site_boundary_report",
+        "run_code_manifest_write",
+        "promotion_plan_write",
+        "light_evidence_index_write"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -1362,18 +1381,26 @@
         "iteration_log.json",
         "docs/40_iterations/",
         "docs/iterations/",
+        "docs/30_evidence/Experiment_Evidence_Index.json",
+        "docs/30_evidence/Experiment_Evidence_Index.md",
         "docs/50_memory/",
         "MEMORY.md",
-        "docs/Stage_Report.md"
+        "docs/Stage_Report.md",
+        "runs/wf10/",
+        ".evidence/light/index.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
           "docs/40_iterations/",
           "docs/iterations/",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
           "docs/50_memory/",
           "MEMORY.md",
-          "docs/Stage_Report.md"
+          "docs/Stage_Report.md",
+          "runs/wf10/",
+          ".evidence/light/index.json"
         ]
       },
       "artifact_outputs": [
@@ -1399,6 +1426,17 @@
           "requires_tool": false
         },
         {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/30_evidence/Experiment_Evidence_Index.json",
+            "docs/30_evidence/Experiment_Evidence_Index.md"
+          ],
+          "owner": "evaluate",
+          "is_final": true,
+          "requires_tool": true,
+          "notes": "Generated from completed WF10 records for paper-facing evidence consumption."
+        },
+        {
           "kind": "legacy_compat",
           "paths": [
             "docs/iterations/"
@@ -1408,6 +1446,26 @@
           "requires_tool": false,
           "replacement": "docs/40_iterations/",
           "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/light/index.json"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Default light Evidence index generated for daily WF10 inspection."
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "runs/wf10/"
+          ],
+          "owner": "evaluate",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
         }
       ]
     },
@@ -2468,7 +2526,11 @@
           ".agents/skills/iterate/SKILL.md",
           ".agents/skills/iterate/references/iteration-log-schema.json",
           ".agents/skills/iterate/references/iteration-context.md",
-          ".agents/skills/iterate/references/iteration-constraints.md"
+          ".agents/skills/iterate/references/iteration-constraints.md",
+          "schemas/iteration_log.schema.json",
+          "schemas/run_code_manifest.schema.json",
+          "schemas/run_promotion_plan.schema.json",
+          "schemas/light_evidence_index.schema.json"
         ],
         "project_when_present": [
           "AGENTS.md",
@@ -2480,7 +2542,12 @@
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
           "docs/50_memory/Lessons.md",
-          "MEMORY.md"
+          "MEMORY.md",
+          "auto_paper_output/",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
+          ".evidence/light/index.json",
+          "runs/wf10/"
         ]
       },
       "required_actions": [
@@ -2489,9 +2556,15 @@
         "single_next_command",
         "run_local_promotion_check",
         "decision_vocabulary",
+        "build_experiment_evidence_index_or_NOT_RUN",
         "lesson_quality_check_or_NOT_RUN",
         "gate_ledger",
-        "docs_site_boundary_report"
+        "docs_site_boundary_report",
+        "iteration_log_v2_strict",
+        "action_state_next_action_update",
+        "run_code_manifest_or_config_only_record",
+        "promotion_plan_or_NOT_READY",
+        "build_light_evidence_index_or_NOT_RUN"
       ],
       "forbidden_actions": [
         "auto_observation_direct_to_MEMORY",
@@ -2503,7 +2576,11 @@
         "iteration_report_write",
         "lesson_promotion",
         "WF11_handoff",
-        "docs_site_boundary_report"
+        "experiment_evidence_index_write",
+        "docs_site_boundary_report",
+        "run_code_manifest_write",
+        "promotion_plan_write",
+        "light_evidence_index_write"
       ],
       "context_budget": {
         "recent_iteration_count_max": 5,
@@ -2514,16 +2591,24 @@
         "iteration_log.json",
         "docs/40_iterations/",
         "docs/iterations/",
+        "docs/30_evidence/Experiment_Evidence_Index.json",
+        "docs/30_evidence/Experiment_Evidence_Index.md",
         "docs/50_memory/",
-        "MEMORY.md"
+        "MEMORY.md",
+        "runs/wf10/",
+        ".evidence/light/index.json"
       ],
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
           "docs/40_iterations/",
           "docs/iterations/",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
           "docs/50_memory/",
-          "MEMORY.md"
+          "MEMORY.md",
+          "runs/wf10/",
+          ".evidence/light/index.json"
         ]
       },
       "artifact_outputs": [
@@ -2548,6 +2633,17 @@
           "requires_tool": false
         },
         {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/30_evidence/Experiment_Evidence_Index.json",
+            "docs/30_evidence/Experiment_Evidence_Index.md"
+          ],
+          "owner": "iterate",
+          "is_final": true,
+          "requires_tool": true,
+          "notes": "Generated from completed WF10 records for paper-facing evidence consumption."
+        },
+        {
           "kind": "legacy_compat",
           "paths": [
             "docs/iterations/"
@@ -2557,6 +2653,26 @@
           "requires_tool": false,
           "replacement": "docs/40_iterations/",
           "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".evidence/light/index.json"
+          ],
+          "owner": "evidence-tooling",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Default light Evidence index generated for daily WF10 inspection."
+        },
+        {
+          "kind": "implementation",
+          "paths": [
+            "runs/wf10/"
+          ],
+          "owner": "iterate",
+          "is_final": false,
+          "requires_tool": false,
+          "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
         }
       ]
     },
@@ -2599,6 +2715,10 @@
           "auto_paper_log.json",
           "docs/auto_paper_goal.md",
           "auto_paper_output/",
+          "iteration_log.json",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
+          "tooling/auto_paper/",
           "docs/10_contract/Claim_Boundary.md"
         ]
       },
@@ -2616,6 +2736,7 @@
       "gate_ledger_required_when": [
         "auto_paper_gate",
         "latex_patch",
+        "run_request_register_write",
         "human_gate",
         "docs_site_boundary_report"
       ],
@@ -2623,6 +2744,8 @@
         "auto_paper_log.json",
         "auto_paper_output/",
         "docs/auto_paper_goal.md",
+        "docs/30_evidence/Experiment_Evidence_Index.json",
+        "docs/30_evidence/Experiment_Evidence_Index.md",
         ".auto_paper/",
         ".auto_iterate/",
         "iteration_log.json"
@@ -2654,6 +2777,16 @@
           "is_final": false,
           "requires_tool": false,
           "notes": ".auto_paper/ is controller-owned runtime state; manual skill work writes durable artifacts under auto_paper_output/."
+        },
+        {
+          "kind": "tool_trace",
+          "paths": [
+            ".auto_paper/"
+          ],
+          "owner": "auto-paper",
+          "is_final": false,
+          "requires_tool": true,
+          "notes": "Controller-owned auto-paper runtime state written by tooling/auto_paper/scripts/auto_paper_ctl.py."
         }
       ]
     },
@@ -2686,7 +2819,10 @@
         ],
         "project_optional": [
           "docs/auto_paper_goal.md",
-          "auto_paper_output/"
+          "auto_paper_output/",
+          "iteration_log.json",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md"
         ]
       },
       "required_actions": [
@@ -2759,7 +2895,10 @@
           "project_map.json"
         ],
         "project_optional": [
-          "auto_paper_output/"
+          "auto_paper_output/",
+          "iteration_log.json",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md"
         ]
       },
       "required_actions": [
@@ -2780,6 +2919,8 @@
       ],
       "sensitive_paths": [
         "auto_paper_output/",
+        "docs/30_evidence/Experiment_Evidence_Index.json",
+        "docs/30_evidence/Experiment_Evidence_Index.md",
         ".auto_paper/",
         ".auto_iterate/",
         "iteration_log.json"
@@ -2830,6 +2971,9 @@
         ],
         "project_optional": [
           "auto_paper_output/",
+          "iteration_log.json",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
           "docs/10_contract/Claim_Boundary.md"
         ]
       },
@@ -3118,6 +3262,8 @@
         ],
         "project_optional": [
           "auto_paper_output/",
+          "docs/30_evidence/Experiment_Evidence_Index.json",
+          "docs/30_evidence/Experiment_Evidence_Index.md",
           "docs/10_contract/Claim_Boundary.md"
         ]
       },
@@ -3134,11 +3280,14 @@
       ],
       "gate_ledger_required_when": [
         "auto_paper_harden",
+        "run_request_register_write",
         "human_gate",
         "docs_site_boundary_report"
       ],
       "sensitive_paths": [
         "auto_paper_output/",
+        "docs/30_evidence/Experiment_Evidence_Index.json",
+        "docs/30_evidence/Experiment_Evidence_Index.md",
         ".auto_paper/",
         ".auto_iterate/",
         "iteration_log.json"
