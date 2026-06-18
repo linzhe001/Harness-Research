@@ -6,8 +6,8 @@ profiles:
     normal_research_writes: allow
     tool_owned_runtime_writes: block
     external_downloads: require_run_policy
-    release_actions: require_human_approval
-    claim_boundary_changes: require_human_approval
+    release_actions: require_explicit_user_request_for_submit
+    claim_boundary_changes: require_claim_delta_evidence
     block_write_globs:
       - .workflow_supervisor/**
       - .evidence/**
@@ -64,8 +64,8 @@ profiles:
   conservative_release:
     inherits: default
     external_downloads: block
-    release_actions: require_human_approval
-    claim_boundary_changes: require_human_approval
+    release_actions: require_explicit_user_request_for_submit
+    claim_boundary_changes: require_claim_delta_evidence
   change_intake:
     inherits: default
     external_downloads: require_run_policy

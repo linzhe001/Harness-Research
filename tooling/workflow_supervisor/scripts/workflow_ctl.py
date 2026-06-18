@@ -5173,17 +5173,18 @@ def route_details(change_type: str, route: str) -> dict[str, list[str]]:
         },
         "claim_boundary_delta": {
             "validation_plan": [
-                "route to Claim Boundary review",
+                "route to Claim Delta Evidence review",
                 "map each new or stronger claim to evidence",
-                "defer release/submission until claim approval is recorded",
+                "defer release/submission when the delta lacks supporting evidence",
             ],
             "human_stop_points": [
-                "Claim Boundary approval is required before stronger claims are used"
+                "pause only when the claim delta leaves the active Automation Policy"
             ],
             "gate_evidence_plan": [
                 "claim-evidence map",
-                "Review Packet",
-                "Human Approval record for Claim Boundary changes",
+                "Claim Delta Evidence",
+                "Gate ledger recording previous boundary, new boundary, "
+                "evidence refs, and policy fit",
             ],
         },
         "new_research_direction": {
@@ -5654,7 +5655,8 @@ def create_release_gate_steer_request(
         ],
         "risk_summary": [
             "Release claims require passing context/docchain gates.",
-            "Claim Boundary approval is required before release claims are used.",
+            "Claim Boundary or Claim Delta Evidence is required before release "
+            "claims are used.",
             "No package or submission command has run.",
             "Gate blockers: " + ", ".join(blockers),
         ],

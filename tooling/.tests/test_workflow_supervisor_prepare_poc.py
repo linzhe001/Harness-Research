@@ -272,17 +272,17 @@ def test_status_json_includes_pending_request_details(
     payload = json.loads(capsys.readouterr().out)
     pending = payload["pending_request_ref"]
     assert pending["request_id"] == payload["state"]["pending_request_id"]
-    assert pending["type"] == "ASK_INPUT"
+    assert pending["type"] == "STEER"
     assert pending["node_id"] == "prepare_data_prep"
-    assert pending["reason"] == "dataset_input_required"
-    assert "Provide --dataset-target" in pending["question"]
+    assert pending["reason"] == "node_precondition_failed"
+    assert "Preconditions failed" in pending["question"]
     assert pending["allowed_responses"] == [
-        "provide_dataset_path",
+        "acknowledge",
         "revise",
         "reject",
     ]
     assert pending["request_snapshot_hash"]
-    assert payload["blocked_by"] == "dataset_input_required"
+    assert payload["blocked_by"] == "node_precondition_failed"
     assert payload["acquisition_plan_ref"].endswith(
         "/runtime/acquisition_plan.json"
     )

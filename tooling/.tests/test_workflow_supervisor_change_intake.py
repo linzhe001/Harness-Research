@@ -114,6 +114,30 @@ def test_change_intake_routes_evaluation_delta_to_review_packet(
     )
 
 
+def test_change_intake_routes_claim_boundary_delta_to_claim_delta_evidence(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = make_workspace(tmp_path)
+
+    code, payload = start_change(
+        root,
+        "Narrow the release claim and update the conclusion boundary.",
+        capsys,
+    )
+
+    assert code == workflow_ctl.EXIT_OK
+    assert payload["state"]["segment_status"] == "change_routed_claim_boundary_review"
+    change_request = load_change_request(root, payload)
+    assert change_request["change_type"] == "claim_boundary_delta"
+    assert change_request["route"] == "claim_boundary_review"
+    assert "Claim_Boundary" in change_request["affected_contracts"]
+    assert "Claim Delta Evidence" in change_request["gate_evidence_plan"]
+    assert not any(
+        "Human Approval" in item for item in change_request["gate_evidence_plan"]
+    )
+
+
 def test_change_intake_routes_harness_guardrail_to_harness_maintenance(
     tmp_path: Path,
     capsys,
