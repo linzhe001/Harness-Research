@@ -36,6 +36,7 @@ When you update harness, the following paths are framework files managed by
 - `tooling/codex_hooks/**`
 - `tooling/evidence/**`
 - `tooling/auto_iterate/**`
+- `tooling/run_health/**`
 - `tooling/workflow_supervisor/**`
 - `tooling/model_api/**`
 - `tooling/.tests/**`
@@ -340,6 +341,7 @@ Typical blocking files are:
 - `workflow_handbook/**`
 - `tooling/codex_hooks/**`
 - `tooling/auto_iterate/**`
+- `tooling/run_health/**`
 - `tooling/workflow_supervisor/**`
 - `tooling/evidence/**`
 - `tooling/model_api/**`
@@ -382,14 +384,14 @@ hgit diff --name-status "$HARNESS_BEFORE..$HARNESS_AFTER" -- \
 hgit diff "$HARNESS_BEFORE..$HARNESS_AFTER" -- \
   schemas/skill_contracts.json templates/docs workflow_handbook/pages \
   .agents/references .agents/skills .claude/shared .claude/skills \
-  tooling/evidence tooling/workflow_supervisor tooling/auto_iterate
+  tooling/evidence tooling/workflow_supervisor tooling/auto_iterate tooling/run_health
 ```
 
 Then isolate migration-sensitive surfaces:
 
 ```bash
 hgit diff "$HARNESS_BEFORE..$HARNESS_AFTER" --name-only | rg \
-  '^(templates/docs|schemas/|workflow_handbook/pages/legacy_docs_migration.md|\.agents/references/context-layering-policy.md|\.agents/references/contract-gating-rule.md|\.agents/references/evidence-chain-rule.md|tooling/evidence/)'
+  '^(templates/docs|schemas/|workflow_handbook/pages/legacy_docs_migration.md|\.agents/references/context-layering-policy.md|\.agents/references/contract-gating-rule.md|\.agents/references/evidence-chain-rule.md|\.agents/references/run-artifact-contract.md|tooling/evidence/|tooling/run_health/)'
 ```
 
 If this command returns paths, read
@@ -414,8 +416,9 @@ The plan should record:
 - which files will be copied, merged, archived under `docs/90_legacy/**`, or
   left unchanged
 - which gates will run and any expected `NOT_RUN` reasons
-- approval decisions needed before a draft becomes an Approved Contract or a
-  claim boundary changes
+- approval decisions needed before a draft becomes an Approved Contract
+- Claim Delta Evidence needed when a paper claim, release claim, or claim
+  boundary changes inside an accepted Automation Policy
 
 For contract, fact, protocol, discovery, or memory migrations, use
 `workflow_handbook/pages/legacy_docs_migration.md` as the operating guide. Old
@@ -541,15 +544,21 @@ When docs layout, contract docs, memory, discovery, protocol, or
   unless current Approval Evidence exists
 - place current facts, Conclusion Evidence inputs, and Protocol Drafts under
   `docs/20_facts/**`, `docs/30_evidence/**`, and `docs/35_protocol/**`
+- put planned WF10 questions, falsifiers, controls, paper-driven run requests,
+  and assurance gaps in `docs/40_iterations/Experiment_Queue.md`
 - put observations, phenomena, hypotheses, and next-run hints in
   `docs/45_discoveries/Discovery_Ledger.md`
+- put searchable findings, method notes, paper context, and open questions in
+  `docs/45_discoveries/Research_Wiki.md`
 - promote only accepted lessons to `docs/50_memory/Lessons.md` or `MEMORY.md`
 - archive superseded narrative docs under `docs/90_legacy/**`
 
 Do not overwrite Approved Contracts automatically. If the migration changes a
 contract boundary, mark the changed contract `draft` or `superseded`, build a
 Review Packet, and wait for explicit Human Approval before treating it as
-approved again.
+approved again. Ordinary paper/release claim deltas inside an accepted
+Automation Policy should record Claim Delta Evidence and Gate ledger output,
+not default to a manual approval pause.
 
 If a project has not yet opted into dynamic context and wants to do so after a
 harness update, initialize without overwriting existing docs:
@@ -590,6 +599,7 @@ If any of these changed:
 - `tooling/run_artifacts.py`
 - `tooling/evidence/check_workflow_state.py`
 - `tooling/auto_iterate/**`
+- `tooling/run_health/**`
 
 run:
 
@@ -602,10 +612,19 @@ pytest tooling/.tests/test_run_artifacts.py \
 
 Current run artifact behavior to remember after a pull:
 
-- meaningful training/evaluation runs require a semantic pre-run commit
+- meaningful training runs require a semantic `pre_train_commit`
+- meaningful evaluation runs require `pre_eval_commit` or
+  `pre_eval_commit_NOT_CHANGED` when the committed training source already
+  covers eval code/configs
+- run-local code/configs under `runs/wf10/<iter>/` are part of the execution
+  boundary even when they will not be promoted to stable code
 - completed metric-bearing iterations need a run artifact bundle with
   `git_commit`, unique `exp_dir`, resolved config, console log, git snapshot,
   and metric artifacts
+- `docs/40_iterations/Experiment_Queue.md` is the durable queue for next-run
+  questions, falsifiers, and assurance gaps
+- `docs/45_discoveries/Research_Wiki.md` is the searchable index for findings,
+  method notes, paper context, and open questions
 - screening/proxy runs store their bundle in `screening.run_manifest`; full runs
   store the final bundle in top-level `run_manifest`
 - full runs must not overwrite `screening.run_manifest`
@@ -622,6 +641,7 @@ found, keep the result out of strong Conclusion Evidence until rerun.
 If any of these changed:
 
 - `tooling/workflow_supervisor/**`
+- `tooling/run_health/**`
 - `.agents/skills/workflow-supervisor/SKILL.md`
 - `.claude/skills/workflow-supervisor/SKILL.md`
 - `schemas/skill_contracts.json`
@@ -651,6 +671,15 @@ Current supervisor behavior to remember after a pull:
 - Codex worker handoffs belong under
   `.agents/state/workflow_supervisor_worker_results/**`; the supervisor adopts
   validated results into `.workflow_supervisor/**`
+- after Grill records an Automation Policy, non-Grill prepare/build/run/analyze/
+  write/change and release validate/package work should auto-proceed inside
+  that policy; submit and approval-recording tools still require explicit
+  operator action
+- claim or claim-boundary changes inside the policy require Claim Delta
+  Evidence and a Gate ledger, not repeated approval prompts
+- `tooling/run_health/watchdog.py` is a notification-free status surface for
+  long runs; it writes pollable JSON/TXT under `/tmp/harness-run-health` by
+  default
 
 When templates add new sections or fields, merge them manually into the
 project goal file or local controller YAML.

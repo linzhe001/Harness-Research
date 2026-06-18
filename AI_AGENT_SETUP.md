@@ -29,7 +29,8 @@ Setup is complete only when all of these are true:
 - incoming template candidates and `README_new.md` have either been merged into
   research-owned project files or removed as temporary setup inputs
 - dynamic-context directories and templates are initialized when the project
-  opts into them
+  opts into them, including `Experiment_Queue.md`, `Discovery_Ledger.md`, and
+  `Research_Wiki.md`
 - the operator can open Codex in the target workspace and start from a visible
   Entrypoint without needing to manually reconstruct framework paths
 - workflow-supervisor runtime is installed enough for `$prepare` / `$build`
@@ -447,7 +448,7 @@ Create common research directories:
 
 ```bash
 mkdir -p src scripts configs baselines experiments tests
-mkdir -p docs docs/40_iterations docs/50_memory docs/90_legacy
+mkdir -p docs docs/40_iterations docs/45_discoveries docs/50_memory docs/90_legacy
 ```
 
 At this point the operator can already ask Codex through visible Entrypoints:
@@ -531,6 +532,10 @@ docs/30_evidence/**
 docs/30_evidence/Validation_Table.md
 docs/35_protocol/**
 docs/40_iterations/**
+docs/40_iterations/Experiment_Queue.md
+docs/45_discoveries/**
+docs/45_discoveries/Discovery_Ledger.md
+docs/45_discoveries/Research_Wiki.md
 docs/50_memory/**
 .evidence/chains/
 schemas/
@@ -638,13 +643,26 @@ auto-iterate-goal route, then inspect controller status:
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh status --json
 ```
 
-WF10 runs must follow the Run Artifact Contract. Before meaningful training or
-evaluation, commit training-related code with a semantic message. Completed
-metric-bearing iterations must point `iteration_log.json` at a run artifact
-bundle with `git_commit`, unique `exp_dir`, resolved config, console log, git
-snapshot, and metric artifacts. Screening/proxy runs store the bundle in
-`screening.run_manifest`; full runs store the final bundle in top-level
-`run_manifest` without overwriting `screening.run_manifest`.
+WF10 runs must follow the Run Artifact Contract. Before meaningful training,
+create or verify a semantic execution commit and record it as
+`pre_train_commit`. Before meaningful evaluation, create or verify
+`pre_eval_commit`, or record `pre_eval_commit_NOT_CHANGED` when the committed
+training source already covers eval code/configs. Run-local code/configs under
+`runs/wf10/<iter>/` are part of this execution boundary even when they will not
+be promoted to stable code. Completed metric-bearing iterations must point
+`iteration_log.json` at a run artifact bundle with `git_commit`, unique
+`exp_dir`, resolved config, console log, git snapshot, and metric artifacts.
+Screening/proxy runs store the bundle in `screening.run_manifest`; full runs
+store the final bundle in top-level `run_manifest` without overwriting
+`screening.run_manifest`. Use `docs/40_iterations/Experiment_Queue.md` for
+next-run requests and assurance gaps, and `docs/45_discoveries/Research_Wiki.md`
+for searchable findings and open questions.
+
+Optional notification-free watchdog check:
+
+```bash
+python tooling/run_health/watchdog.py --base-dir /tmp/harness-run-health --once --json
+```
 
 Optional supervisor smoke check:
 
@@ -653,8 +671,10 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json || true
 tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
 ```
 
-Start only after WF9 has passed and the human accepts the relevant contract
-boundary:
+Start only after WF9 has passed, `docs/auto_iterate_goal.md` validates, and the
+accepted Grill Automation Policy covers the unattended loop. Explicit Human
+Approval is still needed for Grill exit/delegation, approval-recording tools,
+actions outside the Automation Policy, and irreversible external submit.
 
 ```bash
 tooling/auto_iterate/scripts/auto_iterate_ctl.sh start \

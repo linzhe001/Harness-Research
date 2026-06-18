@@ -12,7 +12,11 @@
 
 ## Canonical State
 
-- `PROJECT_STATE.json`: stage and milestone state. Stage transitions require explicit user confirmation.
+- `PROJECT_STATE.json`: stage and milestone state. Non-Grill transitions may
+  auto-proceed only inside the active Grill Automation Policy and with Gate
+  ledger evidence; explicit user confirmation is required for Grill
+  exit/delegation, approval-recording tools, actions outside policy, and
+  irreversible external submit.
 - `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
 - `project_map.json`: stable implementation map for core code and configs.
 - `docs/20_facts/Codebase_Map.md`: operator-facing stable codebase map when present.
@@ -22,6 +26,8 @@
 - `OPERATOR_CONTEXT.md`: optional operator preferences. It may guide defaults, but it is not evidence for project facts. Write it only from explicit operator input; later stages read it without inferring new preferences.
 - `.evidence/`: evidence-chain artifacts for compiled current docs when the dynamic context layout is enabled.
 - `.auto_iterate/`: controller-owned runtime state (if auto-iterate is enabled; do not edit manually).
+- `.workflow_supervisor/`: workflow-supervisor-owned runtime state; inspect via
+  `tooling/workflow_supervisor/scripts/workflow_ctl.sh`, do not edit manually.
 - These canonical state files must stay at the repository root, not under `.agents/`.
 
 ## Context Layers
@@ -33,6 +39,11 @@
 - `.evidence/**` is tool-owned audit state for Evidence Chains, protocol builds, and review packets; do not hand-edit it.
 - Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
 - Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
+- `docs/40_iterations/Experiment_Queue.md` stores concrete next experiments,
+  falsifiers, controls, assurance gaps, and paper-driven run requests.
+- `docs/45_discoveries/Discovery_Ledger.md` stores mutable observations and
+  hypotheses; `docs/45_discoveries/Research_Wiki.md` stores stable searchable
+  findings and open questions.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
@@ -44,6 +55,9 @@
 
 ## Skills
 
+- Prefer visible aliases first: `$grill`, `$prepare`, `$build`, `$run`,
+  `$analyze`, `$write`, and `$change`. Internal skills remain readable route
+  targets, not the first operator surface.
 - Use `$orchestrator` for stage status, gating, rollback, and project-level decisions.
 - Use `$init-project` for WF0 compact guidance setup, staged guidance refresh, and explicit operator-context updates.
 - Use `$init-project update-from-grill` immediately after an accepted Grill
@@ -52,8 +66,9 @@
 - Use `$grill` for draft-only early research intent clarification. After the
   operator confirms `grill_draft_ready`, route directly to
   `$init-project update-from-grill` unless guidance initialization is skipped.
-- Use `$workflow-supervisor` for `harness prepare/build/iterate/release/change`
-  runtime status, typed HITL requests, and worker-result validation.
+- Use `$prepare` / `$build` through workflow-supervisor for
+  `harness prepare/build` runtime status, typed pending requests, and
+  worker-result validation.
 - Use `$doc-compiler` for contract, fact, protocol, or release docs that need evidence-chain JSON.
 - Use `$docs-site` after durable Markdown docs are finalized when
   `docs/_site/**` human-readable HTML should be refreshed; do not use it for
@@ -62,7 +77,10 @@
 - Use `$protocol-drift-check` before turning protocol drafts into contracts or before WF5/WF10/WF11/WF12 gates in dynamic-context projects.
 - Use `$review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
 - After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
-- Use `$iterate` for WF10 `plan -> code -> run -> eval`.
+- Use `$run` for WF10 iteration. The internal `$iterate` source owns
+  `iteration_log.json` and follows `action_state.next_action` across `plan`,
+  `code`, `run_screening`, `run_full`, `eval`, `debug`, `compare`, `ablate`,
+  `register`, `promote`, `discard`, and `stop`.
 - Use `$code-expert` only for first-pass implementation from the roadmap and project map.
 - Use `$code-debug` for post-WF8 implementation code changes, bug fixes, or iteration-driven edits under `src/`, `scripts/`, `configs/`, or `project_map.json`.
 - Use `$harness-maintenance` for Codex hooks, skill contracts, skill routing/triggers, permission policy, `.agents/.claude` skill alignment, and Harness guardrail tests or docs.
@@ -106,21 +124,34 @@
 
 ## Training Rules
 
-- Before running training after training-related code changes, create a semantic commit:
+- Before meaningful training after training-related code changes, create or
+  verify a semantic execution commit and record it as `pre_train_commit`:
   - `train(research): {what changed and why}`
   - `train(baseline/<name>): {what changed and why}`
+- Before meaningful evaluation, create or verify `pre_eval_commit`, or record
+  `pre_eval_commit_NOT_CHANGED` when the committed training source already
+  covers eval code/configs.
+- Run-local code/configs under `runs/wf10/<iter>/` are part of this execution
+  boundary even when they will never be promoted to stable code.
 - After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files.
 - Preserve core train/eval logic in the locked entry scripts referenced from `CLAUDE.md`.
 - Use `.agents/references/pre-training-rule.md` for run-traceability requirements.
 
 ## Workflow Control
 
-- Never auto-advance a workflow stage without explicit user confirmation.
+- After `$grill` records an Automation Policy, `$prepare`, `$build`, `$run`,
+  `$analyze`, `$write`, `$change`, and release validate/package work should
+  auto-proceed inside that policy. Pause only for missing executable inputs,
+  budget/policy violations, explicit approval tools, actions outside policy,
+  unrecoverable worker/controller failures, PIVOT/ABORT steering, or
+  irreversible external submit.
 - Use `.agents/references/workflow-guide.md` for the full stage flow and detailed skill behavior.
 - For every stage transition, current-doc write, stable-code change, canonical-state edit, or WF10/WF11/WF12 readiness check, follow the gate ledger format in `.agents/references/workflow-guide.md` and report command, result, reason, and updated artifacts.
 - High-risk skills may have machine-readable contracts in `schemas/skill_contracts.json`; satisfy the required read set before write actions and follow required/forbidden actions.
 - Use `.agents/references/contract-gating-rule.md` before implementation, validation, iteration, auto-iteration, and release.
 - Use `$protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
+- Record Claim Delta Evidence when a paper claim, release claim, or claim
+  boundary is narrowed, removed, or changed under the active Automation Policy.
 - When writing docs, follow `.agents/references/documentation-evidence-rule.md`: re-read source artifacts and list evidence rather than relying on memory.
 - For compiled current docs, also follow `.agents/references/evidence-chain-rule.md`: write evidence_chain, source_manifest, and doc_audit before replacing current Markdown.
 - After durable Markdown docs are finalized, run `$docs-site` to refresh

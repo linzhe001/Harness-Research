@@ -32,6 +32,9 @@ conda activate {{ENV_NAME}}
 - `OPERATOR_CONTEXT.md` — Optional operator preferences, not project facts; write only from explicit operator input
 - `.evidence/` — Evidence-chain artifacts for compiled current docs when enabled
 - `.auto_iterate/` — Controller-owned runtime state (if auto-iterate is enabled; do not edit manually)
+- `.workflow_supervisor/` — workflow-supervisor-owned runtime state; inspect
+  with `tooling/workflow_supervisor/scripts/workflow_ctl.sh`, do not edit
+  manually
 
 ## Context Layers
 - Read `.claude/shared/context-layering-policy.md` and `.claude/shared/research-invariants.md` before research planning, documentation, iteration, auto-iteration, or release work.
@@ -41,6 +44,12 @@ conda activate {{ENV_NAME}}
 - `.evidence/**` is tool-owned audit state for Evidence Chains, protocol builds, and review packets; do not hand-edit it.
 - Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
 - Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
+- `docs/40_iterations/Experiment_Queue.md` stores concrete follow-up
+  experiments, falsifiers, controls, assurance gaps, and paper-driven run
+  requests.
+- `docs/45_discoveries/Discovery_Ledger.md` stores mutable observations and
+  hypotheses; `docs/45_discoveries/Research_Wiki.md` stores stable searchable
+  findings and open questions.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
@@ -66,6 +75,15 @@ See `.claude/rules/project-map.md` for detailed rules.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - After Python edits, run `python -m py_compile` and `ruff check --select=E,F,I` on modified files when feasible.
 
+## Global Rule: Train/Eval Checkpoints
+- Before meaningful training after training-related changes, create or verify a
+  semantic execution commit and record it as `pre_train_commit`.
+- Before meaningful evaluation, create or verify `pre_eval_commit`, or record
+  `pre_eval_commit_NOT_CHANGED` when the committed training source already
+  covers eval code/configs.
+- Run-local code/configs under `runs/wf10/<iter>/` are part of this execution
+  boundary even when they are never promoted to stable code.
+
 ## Global Rule: Ubiquitous Language
 - Use `.claude/shared/ubiquitous-language.md` for workflow terms and maintain `docs/20_facts/Project_Glossary.md` for project-specific codebase vocabulary.
 - Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
@@ -87,11 +105,22 @@ See `.claude/rules/project-map.md` for detailed rules.
 
 ## Workflow
 WF0(init) -> WF1(survey) -> WF2(idea-debate) -> WF3(refine-idea) -> WF4(data) -> WF5(baseline) -> WF6(arch) -> WF7(plan) -> WF8(code) -> WF9(validate) -> WF10(iterate) -> WF11(final-exp) -> WF12(release)
-WF10 iteration loop: $iterate plan -> $iterate code -> $iterate run -> $iterate eval -> (NEXT_ROUND->repeat | DEBUG->debug round | CONTINUE->WF11 | PIVOT->WF2 idea-debate/refine-idea | ABORT->stop)
+Visible aliases: `/grill`, `/prepare`, `/build`, `/run`, `/analyze`,
+`/write`, `/change` for Claude Code, and the same names with `$` for Codex.
+Internal skills remain route targets, not the first operator surface.
+WF10 iteration loop: `/run` routes to internal iterate. It follows
+`iteration_log.json` `action_state.next_action` across `plan`, `code`,
+`run_screening`, `run_full`, `eval`, `debug`, `compare`, `ablate`,
+`register`, `promote`, `discard`, and `stop`.
 After `/grill` or `$grill` exits `grill_draft_ready`, run
 `/init-project update-from-grill` or `$init-project update-from-grill` to
 initialize `CLAUDE.md`, `AGENTS.md`, and `README.md` from candidate Grill
 context. Do not mark WF1-WF3 complete from that handoff alone.
+After Grill records an Automation Policy, non-Grill flows auto-proceed inside
+that policy. Pause only for missing executable inputs, budget/policy
+violations, explicit approval tools, actions outside policy, PIVOT/ABORT
+steering, unrecoverable worker/controller failures, or irreversible external
+submit.
 Current stage: WF1 (not started)
 
 ## Documentation Evidence and Style Rule
@@ -105,6 +134,8 @@ Current stage: WF1 (not started)
 - Use `/protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
 - Use `/review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
 - After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
+- Record Claim Delta Evidence when a paper claim, release claim, or claim
+  boundary is narrowed, removed, or changed under the active Automation Policy.
 - Before promoting lessons into `MEMORY.md`, read `.claude/shared/lesson-quality-rule.md`.
 - Also read `.claude/shared/documentation-style.md`.
 - Keep docs concise and human-readable; prefer ASCII flow diagrams for workflows.
@@ -113,7 +144,10 @@ Current stage: WF1 (not started)
 ## Gate Evidence
 - Follow the gate ledger format in `.claude/Workflow_Guide.md` when work performs a stage transition, writes current docs, changes stable code, edits canonical state, or prepares WF10/WF11/WF12 readiness.
 - Do not treat skill instructions as proof of compliance. Report the actual gate command, result, reason, and artifacts, or state `NOT_RUN` when the gate could not execute.
-- Codex approval policy, sandboxing, execpolicy `.rules`, and Codex hooks are runtime guardrails only; Harness gates and human approvals still have to be recorded in project files.
+- Codex approval policy, sandboxing, execpolicy `.rules`, and Codex hooks are
+  runtime guardrails only. Harness gates, semantic train/eval commits, Claim
+  Delta Evidence, and explicit approval records still have to be recorded in
+  project files when they are the source of truth.
 
 ## Custom
 ### Codex MCP
