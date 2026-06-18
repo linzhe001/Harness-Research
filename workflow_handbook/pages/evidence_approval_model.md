@@ -39,6 +39,8 @@ html:
 ```text
 Conclusion Evidence -> Evidence Chain -> Review Packet -> Human Approval
 Gate Evidence       -> Gate ledger
+Claim Delta         -> Claim Delta Evidence + Gate ledger
+Automation Policy   -> Grill-scoped delegation for later auto-proceed
 ```
 
 ## Boundaries
@@ -46,11 +48,17 @@ Gate Evidence       -> Gate ledger
 - Conclusion Evidence 支持事实、claim、idea 或 protocol choice。
 - Gate Evidence 证明检查执行和结果。
 - Approval Evidence 只能来自明确的人类批准或可审计 approval artifact。
+- Claim Delta Evidence 记录 claim 或边界如何变化、依赖哪些 Source
+  Artifacts、为什么仍在 Automation Policy 内；它不是 Human Approval。
+- Grill 之后的非 Grill 流程默认用 semantic train/eval commits、run
+  manifest hashes、Gate ledger 和 Claim Delta Evidence 溯源，而不是为每次
+  run/build/change 再请求批准。
 
 ## Common Confusions
 
 - Review Packet 不是 Human Approval。
 - Gate ledger 不是 Evidence Chain。
+- Claim Delta Evidence 不是批准记录。
 - Hover preview 不是 source artifact。
 
 ## Related Pages
@@ -60,4 +68,3 @@ Gate Evidence       -> Gate ledger
 - [[term:Evidence Chain]]
 - [[term:Gate Evidence]]
 - [[term:Human Approval]]
-

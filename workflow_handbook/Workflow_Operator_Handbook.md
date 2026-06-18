@@ -23,7 +23,7 @@ operator intent
   -> visible alias
   -> internal runtime / Skill Contract source
   -> Gate Evidence, typed request, or generated view
-  -> Human Approval or next safe action
+  -> Automation Policy, typed blocker, or next safe action
 ```
 
 生成后的 HTML 站点采用静态知识库视图：左侧导航用于跨页跳转，正文只保留当前任务
@@ -67,7 +67,7 @@ operator intent
 Intent
   -> visible alias
   -> internal runtime / typed request / worker result / Gate ledger
-  -> Human Approval or next safe action
+  -> Automation Policy, typed blocker, or next safe action
 ```
 
 | Visible alias | 内部路由 | 主要顺序或逻辑 | 它不会做什么 |
@@ -136,7 +136,7 @@ operator request
   -> read relevant source artifacts
   -> run or inspect the owning tool
   -> produce structured Gate ledger / pending request / worker result
-  -> ask for Human Approval only when required
+  -> auto-proceed inside Grill Automation Policy
   -> report next safe action
 ```
 
@@ -174,14 +174,24 @@ implementation / validation nodes。
 
 必须暂停或请求 Human Approval 的常见情况：
 
-- contract acceptance、Claim Boundary、release decision 或 high-risk transition。
-- Review Packet 要求 approve/revise/reject。
-- supervisor 创建 `pending_request.json`。
+- Grill exit/delegation 尚未明确，或 Automation Policy 缺失。
+- `approve_contract.py` / `APPROVE_ACTION` 这类工具正在记录真实批准。
+- supervisor 创建 `pending_request.json`，且原因是缺输入、policy blocker、
+  requires-approval 外部资源、worker 无法恢复，或外部不可逆 submit。
 - auto-iterate 返回 `manual_action_required` 或 operator pause。
-- change intake 分类不确定，或影响 evaluation/claim boundary。
+- change intake 分类不确定。
+- action 将离开 Automation Policy、超出预算、违反 forbidden direction，或执行外部提交。
 
 `workflow_ctl approve` 只作用于一个 pending request。它必须保留
 `approval_source`，不能变成 “approve all”。
+
+不需要默认暂停的情况：
+
+- `$run` / `$analyze` 内部的 ordinary train/eval loop，只要有
+  `pre_train_commit` / `pre_eval_commit` 或 `NOT_CHANGED` 记录。
+- build/change/write/release validate/package 在 Automation Policy 内推进。
+- Claim Boundary 或 paper/release claim 的普通收窄、删除或证据化变化，只要记录
+  Claim Delta Evidence 和 Gate ledger。
 
 ## Gate And Approval
 

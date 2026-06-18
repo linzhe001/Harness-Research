@@ -1,26 +1,37 @@
 ---
-description: Must git commit before meaningful training + record git identity in run artifacts
+description: Must git commit before meaningful training/evaluation + record git identity in run artifacts
 globs:
   - "scripts/train*.py"
   - "scripts/run*.py"
+  - "scripts/eval*.py"
   - "src/**/*.py"
   - "baselines/**/train*.py"
   - "baselines/**/run*.py"
+  - "runs/wf10/**"
 ---
 
-# Pre-Training Git & Tracking Rules
+# Pre-Train / Pre-Eval Git & Tracking Rules
 
-## 1. After Claude Modifies Code, Before Running Training
+## 1. After Claude Modifies Code, Before Running Training Or Evaluation
 
-Must execute git add + git commit. Commit message format:
+Must execute git add + git commit for the relevant Commit Slice. Meaningful
+training records this hash as `pre_train_commit`; meaningful evaluation records
+`pre_eval_commit` or `pre_eval_commit_NOT_CHANGED` when the training commit
+already covers the eval logic/configs. Commit message format:
 
 - Research code: `train(research): {semantic description}`
   - Initial: `train(research): init — initial model implementation, backbone+neck+head`
   - Iteration: `train(research): replace MSE loss with SSIM+L1 hybrid loss`
 - Baseline: `train(baseline/{name}): {semantic description}`
   - Example: `train(baseline/3dgs): reproduce official config, 30 epochs`
+- Evaluation: `eval(research): {semantic description}`
+- Claim support: `claim(evidence): {semantic description}`
 
 Semantic description must explain **what was done and why**, not just list file names.
+
+Run-local scripts and configs under `runs/wf10/<iter>/` are Source Artifacts
+for the upcoming execution and must be committed before meaningful train/eval,
+even when they will never merge back into stable code.
 
 The run output directory itself is generated Execution Evidence and is normally
 not committed before the run.
@@ -42,6 +53,8 @@ git_snapshot responsibilities:
 - wandb already auto-records git commit + uncommitted diff; git_snapshot info is supplementary
 - The run directory must record the same commit identity in its run artifact
   bundle; see `../shared/run-artifact-contract.md`.
+Evaluation entrypoints should record the same pre-train/pre-eval commit
+identity when metrics will support conclusions or claims.
 
 ## 3. wandb Integration Requirements
 

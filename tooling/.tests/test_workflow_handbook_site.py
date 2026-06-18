@@ -311,8 +311,14 @@ def test_docs_site_renders_workflow_handbook_references(tmp_path: Path) -> None:
         child["label"] for child in manifest["navigation"][1]["items"][1]["children"]
     ] == ["grill contract", "workflow-supervisor runtime"]
     assert manifest["navigation"][2]["label"] == "Detailed Reference"
-    assert manifest["navigation"][2]["items"][1]["label"] == "Stage Reference"
-    assert manifest["navigation"][2]["items"][2]["label"] == "Skill Reference"
+    assert [
+        item["label"] for item in manifest["navigation"][2]["items"][:4]
+    ] == [
+        "Detailed Workflow Map",
+        "Research Supervision Assets",
+        "Stage Reference",
+        "Skill Reference",
+    ]
     assert 'href="assets/site.css"' in index_html
     assert 'src="assets/evidence-preview.js"' in index_html
     assert '<body class="has-topbar">' in index_html

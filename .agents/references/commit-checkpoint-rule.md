@@ -12,12 +12,26 @@ An agent should create a commit checkpoint when:
 
 - a completed implementation or docs slice is ready
 - `$iterate code` is about to mark an iteration `ready_to_run`
+- `$iterate run`, `run_screening`, `run_full`, or any equivalent automation is
+  about to launch meaningful training
+- `$iterate eval`, `$evaluate`, WF11, or release validation is about to run
+  meaningful metric-bearing evaluation after eval logic, configs, claims, or
+  run-local code changed
 - `$iterate eval` or `$evaluate` writes iteration/discovery/lesson artifacts
+- a Claim Boundary, claim register, paper claim, release claim, or supported
+  conclusion changes under an Automation Policy
 - non-tool-owned dirty paths span more than one ownership domain
 - non-tool-owned dirty paths exceed eight files
 - the next action is a long run, external/manual run registration, or handoff
 
 Do not stage unrelated user changes.
+
+Meaningful train/eval checkpoints are mandatory, not best-effort. Run-local
+code under `runs/wf10/<iter>/`, run-local configs, stable entry scripts, eval
+logic, and durable claim-support docs are Source Artifacts for the upcoming
+execution and must be covered by a semantic commit before the execution starts.
+Dirty worktree executions remain debug/smoke only unless the dirty patch is
+preserved and the limitation is reported.
 
 ## Validation Profiles
 
@@ -33,8 +47,8 @@ Do not stage unrelated user changes.
 - `experiment`: WF10 run-local or iteration evidence changes. Validate
   `iteration_log.json`, run artifact manifests, and discovery ledger updates;
   do not run framework-wide tests by default.
-- `release`: approval, claim boundary, WF11/WF12, or release package changes.
-  Run dynamic-context gates, docchain gates, and release checks.
+- `release`: claim boundary, claim delta, WF11/WF12, or release package
+  changes. Run dynamic-context gates, docchain gates, and release checks.
 
 ## Required Behavior
 
@@ -49,3 +63,20 @@ Before each agent-created commit:
 7. Report the commit hash, subject, profile, and Gate ledger.
 
 Hooks may remind about checkpoints, but hooks are not Gate Evidence.
+
+## Automation Policy
+
+After `$grill` records an Automation Policy, non-Grill workflow actions should
+auto-proceed within that policy instead of repeatedly asking for human approval.
+The replacement for approval spam is evidence:
+
+- every meaningful train/eval starts from a Semantic Execution Commit
+- every run manifest records the commit hash used for execution
+- every claim or claim-boundary delta records Claim Delta Evidence
+- every stage transition records a Gate ledger or `NOT_RUN` reason
+
+Human Approval remains required only for Grill exit/automation delegation and
+for tools whose purpose is to record explicit approval, such as
+`approve_contract.py`. Hooks may warn when a checkpoint seems missing; hooks do
+not block ordinary flow just because a checkpoint or claim delta needs ledger
+text.

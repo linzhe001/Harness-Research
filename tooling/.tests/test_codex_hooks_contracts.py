@@ -1151,7 +1151,7 @@ def test_workflow_handbook_keeps_visible_alias_entrypoints() -> None:
         "Intent\n"
         "  -> visible alias\n"
         "  -> internal runtime / typed request / worker result / Gate ledger\n"
-        "  -> Human Approval or next safe action"
+        "  -> Automation Policy, typed blocker, or next safe action"
     ) in handbook
     assert "| `$grill` |" in handbook
     assert "| `$prepare` |" in handbook

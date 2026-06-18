@@ -37,11 +37,11 @@ researcher idea
   -> clarify intent and constraints
   -> gather Conclusion Evidence
   -> derive Protocol Draft
-  -> get human-approved boundaries
+  -> set Grill automation policy and human-approved contract records when needed
   -> implement in reviewable Commit Slices
   -> validate with Gate Evidence
   -> iterate through Ralph-style loop
-  -> keep claims inside approved Claim Boundary
+  -> keep claims traceable with Claim Delta Evidence
 ```
 
 研究者仍然负责判断：这个问题是否值得做、哪些观察重要、哪些 tradeoff 可以接受、最终 claim 能说到什么程度。Harness 负责降低中间过程的摩擦和认知负担。
@@ -214,7 +214,7 @@ $iterate next
 plan，之后才能合并回稳定的 `src/`、`scripts/`、`configs/`、tests 和
 `project_map.json`。
 
-对于调参、微调模型结构、反复实验这种繁重操作，可以使用 Codex auto-iterate controller 运行 Ralph-style multi-round loop。控制器可以减少手动摩擦，但不会替代 Human Approval：合同、Claim Boundary、release readiness 和高风险转向仍然需要人确认。
+对于调参、微调模型结构、反复实验这种繁重操作，可以使用 Codex auto-iterate controller 运行 Ralph-style multi-round loop。Grill 记录 Automation Policy 后，非 Grill 流程应在该 policy 内自动推进；控制器不再为每轮 run/build/change 默认请求 Human Approval。替代机制是每次 meaningful train/eval 前创建语义 commit、在 run manifest 中记录 hash、用 Gate ledger 和 Claim Delta Evidence 记录 claim 或边界变化。`approve_contract.py` 这类批准记录工具仍只能在明确 Human Approval 后运行。
 
 日常证据查看默认使用 `.evidence/light/index.json`，由
 `tooling/evidence/build_light_evidence_index.py` 生成。`$write` 需要论文级
@@ -348,12 +348,12 @@ schema-validated Change Request under supervisor runtime, and either records a
 route such as `code-debug`, `iterate`, `review_packet`, or `delta_grill`, or
 pauses with `STEER` when the route is uncertain. It does not invoke the routed
 Skill by itself.
-`start --segment release` is a conservative WF12 approval gate: it requires an
-explicit `validate`, `package`, or `submit` action, runs the WF12
-dynamic-context Review Packet gate, and pauses with an exact scoped
-`APPROVE_ACTION` only after dynamic context plus approved Project Contract,
-Evaluation Contract, and Claim Boundary are confirmed. Resume records approval
-and reruns the gate; it does not package or submit.
+`start --segment release` requires an explicit `validate`, `package`, or
+`submit` action. Validate/package may auto-proceed inside the Automation Policy
+with dynamic-context gates, Gate ledger, pre-eval commit evidence, and Claim
+Delta Evidence. External submit still requires an explicit user request.
+`APPROVE_ACTION` / `approve_contract.py` remains only for explicit Human
+Approval records.
 
 ```bash
 tooling/workflow_supervisor/scripts/harness.sh prepare --goal "<goal>" --dry-run
@@ -399,7 +399,7 @@ Harness hooks
   -> external review guard
 ```
 
-Hooks are runtime guardrails, not proof that a research gate passed. Readiness still depends on tooling outputs, tests, Review Packets, Gate Ledger, and explicit Human Approval.
+Hooks are runtime guardrails, not proof that a research gate passed. Readiness still depends on tooling outputs, tests, Review Packets, Gate Ledger, semantic execution commits, Claim Delta Evidence, and explicit Human Approval only where approval is actually being recorded.
 
 Generate the detailed Stage reference:
 
@@ -435,6 +435,18 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh stop
 ```
 
 Risk flags such as `--allow-draft-contract`, `--allow-review-required`, and `--skip-dynamic-preflight` require explicit operator acceptance for that run. They are not permanent approval.
+
+Optional run health probe, without notifications:
+
+```bash
+python tooling/run_health/watchdog.py --base-dir /tmp/harness-run-health --register '{"name":"iter1","type":"training","session":"iter1","session_type":"tmux","gpus":[0],"log_path":"runs/wf10/iter1/train.log"}'
+python tooling/run_health/watchdog.py --base-dir /tmp/harness-run-health --once --json
+python tooling/run_health/watchdog.py --base-dir /tmp/harness-run-health --status --json
+```
+
+The watchdog writes `status/<task>.json`, `status/summary.json`,
+`status/summary.txt`, and `alerts.log`. It does not send remote notifications;
+it is a pollable health/evidence surface for long train/eval loops.
 
 ## Bootstrap
 

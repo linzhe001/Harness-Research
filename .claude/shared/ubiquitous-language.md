@@ -47,6 +47,7 @@ Avoid bare `evidence` in prose when the meaning could be unclear.
 | `Review Packet` | Human decision input. It is not approval. |
 | `Pending Request` | Typed supervisor-owned request for human input, approval, steering, review edit, or escalation. It pauses execution until resolved. |
 | `Human Approval` | Explicit operator approval in the current conversation or auditable artifact. |
+| `Automation Policy` | Grill-scoped operator decision that defines whether later `prepare`, `build`, `run`, `analyze`, `write`, `change`, and release validation may auto-proceed, plus budgets, forbidden directions, external access limits, and stop conditions. |
 | `Operator Context` | Stable operator preferences explicitly provided by the operator. |
 | `Current Facts` | Facts derived from current project artifacts and evidence chains. |
 | `Codebase Map` | Operator-facing current fact document describing stable files, module responsibilities, public interfaces, entry points, and maintenance owners. |
@@ -54,6 +55,11 @@ Avoid bare `evidence` in prose when the meaning could be unclear.
 | `Approved Contract` | Human-approved boundary for project, evaluation, baseline, or claims. |
 | `Claim Boundary` | Approved limit on final/release claims. |
 | `Commit Slice` | Smallest coherent set of files that can be validated, reviewed, and committed as one functional unit. |
+| `Semantic Execution Commit` | Commit created before meaningful train/eval work that records the exact source/config/run-local code state used by the execution. |
+| `Claim Delta Evidence` | Gate Evidence and Conclusion Evidence that record a proposed claim or boundary change, the supporting source artifacts, the previous boundary, and the reason the change is allowed under the Automation Policy. |
+| `Experiment Queue` | Prioritized queue of pending experiment questions, falsifiers, assurance gaps, and run requests that WF10 planning consumes. |
+| `Assurance Axis` | Per-iteration evidence axis such as metric quality, reproducibility, robustness, ablation, failure analysis, compute budget, or claim support. |
+| `Research Wiki` | Mutable researcher-facing index of observations, phenomena, methods, open questions, and accepted findings, backed by source artifacts and distinct from Approved Contracts. |
 | `Drift` | Mismatch between current facts, protocol, contracts, or observed results. |
 | `Decision` | Recorded workflow choice such as `CONTINUE`, `DEBUG`, `PIVOT`, `ABORT`, approval, rejection, or revision request. |
 
@@ -65,6 +71,8 @@ Avoid bare `evidence` in prose when the meaning could be unclear.
   Stage completion, approval, or write authorization.
 - Use `Visible Skill Alias` only for the autocomplete-facing wrapper names;
   do not treat aliases as independent stage ownership or approval.
+- Use `Automation Policy` for the operator's Grill-era delegation decision; do
+  not call later automatic stage movement Human Approval.
 - Use `Conclusion Evidence`, `Gate Evidence`, or `Evidence Chain` when bare
   `evidence` would be ambiguous.
 - Keep project-specific domain and code vocabulary in the project glossary, not
