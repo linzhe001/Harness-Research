@@ -133,9 +133,12 @@ Human approval      = explicit operator decision or auditable approval artifact
 Gate Evidence       = command/review/approval result, not a hook message
 ```
 
-The human operator remains responsible for claim boundaries, contract
-acceptance, high-risk transitions, and release decisions. Hook output is
-guidance for the agent, not approval.
+The human operator remains responsible for defining Grill Automation Policy,
+contract acceptance, explicit approval tools, and irreversible external submit.
+Inside an accepted Automation Policy, ordinary claim or claim-boundary changes
+use Claim Delta Evidence, Gate ledger output, and semantic execution commits
+instead of repeated approval prompts. Hook output is guidance for the agent,
+not approval.
 
 ## Maintenance Checklist
 
