@@ -173,6 +173,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "docs_site_boundary_report",
     "docs_site_render_or_NOT_RUN",
     "experiment_queue_update_or_NOT_RUN",
+    "experiments_context_update_or_NOT_RUN",
     "explicit_user_approval_for_transition",
     "external_model_review_or_NOT_RUN",
     "gap_check",
@@ -186,6 +187,7 @@ KNOWN_REQUIRED_ACTIONS = {
     "iteration_log_v2_strict",
     "iteration_log_update",
     "lesson_quality_check_or_NOT_RUN",
+    "memory_context_update_or_NOT_RUN",
     "protocol_review_or_NOT_RUN",
     "py_compile_or_NOT_RUN",
     "read_project_map_before_stable_code",
@@ -1473,7 +1475,8 @@ def validate_contract_files(root: Path) -> list[str]:
                             "must set requires_tool=true"
                         )
                     if (
-                        not requires_tool
+                        kind != "legacy_compat"
+                        and not requires_tool
                         and write_scope is not None
                         and isinstance(write_scope, dict)
                         and not path_pattern_covered_by(

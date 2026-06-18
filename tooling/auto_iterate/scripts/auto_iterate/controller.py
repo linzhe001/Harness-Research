@@ -221,6 +221,10 @@ class LoopController:
         screening_policy = parsed_goal.get(
             "screening_policy", self.policy.get("screening_policy", {})
         )
+        automation_policy = self.policy.get(
+            "automation_policy",
+            parsed_goal.get("automation_policy", {}),
+        )
 
         self.state = {
             "schema_version": 1,
@@ -238,7 +242,7 @@ class LoopController:
             "objective": obj,
             "initial_hypotheses": parsed_goal.get("initial_hypotheses", []),
             "forbidden_directions": parsed_goal.get("forbidden_directions", []),
-            "automation_policy": parsed_goal.get("automation_policy", {}),
+            "automation_policy": automation_policy,
             "assurance_axes": parsed_goal.get("assurance_axes", []),
             "best": {
                 "iteration_id": None,
@@ -1494,6 +1498,10 @@ class LoopController:
                     policy[key] = copy.deepcopy(state_value)
         if "screening_policy" in self.state:
             policy["screening_policy"] = copy.deepcopy(self.state["screening_policy"])
+        if "automation_policy" in self.state:
+            policy["automation_policy"] = copy.deepcopy(
+                self.state["automation_policy"]
+            )
         return policy
 
     def _ensure_policy_fields_in_state(self) -> None:
@@ -1505,6 +1513,20 @@ class LoopController:
                 fallback_value, dict
             ):
                 self.state[key] = _merge_with_fallback(self.state[key], fallback_value)
+        fallback_automation = self.policy.get(
+            "automation_policy",
+            DEFAULT_POLICY.get("automation_policy", {}),
+        )
+        if "automation_policy" not in self.state:
+            self.state["automation_policy"] = copy.deepcopy(fallback_automation)
+        elif isinstance(self.state.get("automation_policy"), dict) and isinstance(
+            fallback_automation,
+            dict,
+        ):
+            self.state["automation_policy"] = _merge_with_fallback(
+                self.state["automation_policy"],
+                fallback_automation,
+            )
 
     def _reset_phase_retry_state(self) -> None:
         self.state["phase_attempt"] = 1
@@ -1694,7 +1716,11 @@ class LoopController:
         )
         self.state["initial_hypotheses"] = parsed_goal.get("initial_hypotheses", [])
         self.state["forbidden_directions"] = parsed_goal.get("forbidden_directions", [])
-        self.state["automation_policy"] = parsed_goal.get("automation_policy", {})
+        automation_policy = copy.deepcopy(self.policy.get("automation_policy", {}))
+        parsed_automation_policy = parsed_goal.get("automation_policy", {})
+        if isinstance(parsed_automation_policy, dict):
+            automation_policy.update(parsed_automation_policy)
+        self.state["automation_policy"] = automation_policy
         self.state["assurance_axes"] = parsed_goal.get("assurance_axes", [])
 
         patience = parsed_goal.get("patience", {})

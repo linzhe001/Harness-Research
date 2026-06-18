@@ -73,6 +73,14 @@ def read_text_if_exists(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+def first_existing_path(workspace_root: Path, candidates: list[str]) -> Path:
+    for relative in candidates:
+        path = workspace_root / relative
+        if path.exists():
+            return path
+    return workspace_root / candidates[0]
+
+
 def is_meaningful(value: str | None) -> bool:
     if value is None:
         return False
@@ -148,6 +156,9 @@ def parse_markdown_tables(text: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     header: list[str] | None = None
     for line in text.splitlines():
+        if not line.strip():
+            header = None
+            continue
         columns = split_table_row(line)
         if columns is None:
             continue
@@ -184,8 +195,24 @@ def check_protocol_review(
     *,
     allow_review_required: bool,
 ) -> tuple[str, str]:
-    protocol_path = workspace_root / "docs" / "35_protocol" / "Research_Protocol.md"
-    review_path = workspace_root / "docs" / "35_protocol" / "Protocol_Review.md"
+    protocol_path = first_existing_path(
+        workspace_root,
+        [
+            "docs/context/protocol.md",
+            "docs/35_protocol/Research_Protocol.md",
+        ],
+    )
+    review_path = (
+        protocol_path
+        if protocol_path.name == "protocol.md"
+        else first_existing_path(
+            workspace_root,
+            [
+                "docs/35_protocol/Protocol_Review.md",
+                "docs/context/protocol.md",
+            ],
+        )
+    )
     protocol_text = read_text_if_exists(protocol_path)
     review_text = read_text_if_exists(review_path)
 
@@ -196,7 +223,7 @@ def check_protocol_review(
             "research_protocol_exists",
             severity != "error",
             severity,
-            "Missing docs/35_protocol/Research_Protocol.md.",
+            "Missing docs/context/protocol.md.",
             relpath(protocol_path, workspace_root),
         )
         return protocol_text, review_text
@@ -205,7 +232,7 @@ def check_protocol_review(
         "research_protocol_exists",
         True,
         "info",
-        "Research Protocol exists.",
+        "Protocol doc exists.",
         relpath(protocol_path, workspace_root),
     )
 
@@ -219,7 +246,7 @@ def check_protocol_review(
             "protocol_review_required",
             severity != "error",
             severity,
-            "Research_Protocol.md says review is required.",
+            "Protocol doc says review is required.",
             relpath(protocol_path, workspace_root),
         )
     elif review_required in {"no", "false", "not required", "done"}:
@@ -228,7 +255,7 @@ def check_protocol_review(
             "protocol_review_required",
             True,
             "info",
-            "Research_Protocol.md does not require review.",
+            "Protocol doc does not require review.",
             relpath(protocol_path, workspace_root),
         )
     else:
@@ -237,7 +264,7 @@ def check_protocol_review(
             "protocol_review_required",
             True,
             "warn",
-            "Research_Protocol.md has no clear Review required header.",
+            "Protocol doc has no clear Review required header.",
             relpath(protocol_path, workspace_root),
         )
 
@@ -248,7 +275,7 @@ def check_protocol_review(
             "protocol_review_exists",
             severity != "error",
             severity,
-            "Missing docs/35_protocol/Protocol_Review.md.",
+            "Missing protocol review surface.",
             relpath(review_path, workspace_root),
         )
         return protocol_text, review_text
@@ -256,6 +283,7 @@ def check_protocol_review(
     verdict = (
         (
             bullet_value(review_text, "Verdict")
+            or header_value(review_text, "Review verdict")
             or header_value(review_text, "Verdict")
             or ""
         )
@@ -299,14 +327,20 @@ def check_protocol_review(
 def check_open_questions(
     workspace_root: Path, stage: str, checks: list[dict[str, Any]]
 ) -> None:
-    path = workspace_root / "docs" / "30_evidence" / "Open_Questions.md"
+    path = first_existing_path(
+        workspace_root,
+        [
+            "docs/context/evidence.md",
+            "docs/30_evidence/Open_Questions.md",
+        ],
+    )
     if not path.exists():
         add_check(
             checks,
             "open_questions_file",
             True,
             "warn",
-            "Missing docs/30_evidence/Open_Questions.md; "
+            "Missing docs/context/evidence.md; "
             "cannot check evidence blockers.",
             relpath(path, workspace_root),
         )
@@ -361,14 +395,20 @@ def check_open_questions(
 def check_assumptions(
     workspace_root: Path, stage: str, checks: list[dict[str, Any]]
 ) -> None:
-    path = workspace_root / "docs" / "35_protocol" / "Protocol_Assumptions.md"
+    path = first_existing_path(
+        workspace_root,
+        [
+            "docs/context/protocol.md",
+            "docs/35_protocol/Protocol_Assumptions.md",
+        ],
+    )
     if not path.exists():
         add_check(
             checks,
             "protocol_assumptions_file",
             True,
             "warn",
-            "Missing docs/35_protocol/Protocol_Assumptions.md; "
+            "Missing docs/context/protocol.md; "
             "cannot check assumption review triggers.",
             relpath(path, workspace_root),
         )
@@ -421,6 +461,17 @@ def check_assumptions(
 
 
 def negative_result_ids(text: str) -> list[str]:
+    table_ids = [
+        row.get("id", "").strip()
+        for row in parse_markdown_tables(text)
+        if is_meaningful(row.get("id"))
+        and any(
+            is_meaningful(row.get(key))
+            for key in ("finding", "evidence", "reuse_guidance", "hypothesis")
+        )
+    ]
+    if table_ids:
+        return table_ids
     ids = [
         match.group(1).strip()
         for match in re.finditer(
@@ -448,14 +499,20 @@ def check_negative_results(
     *,
     allow_unreviewed_negative: bool,
 ) -> None:
-    path = workspace_root / "docs" / "50_memory" / "Negative_Results.md"
+    path = first_existing_path(
+        workspace_root,
+        [
+            "docs/context/memory.md",
+            "docs/50_memory/Negative_Results.md",
+        ],
+    )
     if not path.exists():
         add_check(
             checks,
             "negative_results_file",
             True,
             "info",
-            "No Negative_Results.md file found.",
+            "No context memory negative-results surface found.",
             relpath(path, workspace_root),
         )
         return
@@ -472,7 +529,13 @@ def check_negative_results(
         )
         return
     changelog_text = read_text_if_exists(
-        workspace_root / "docs" / "35_protocol" / "Protocol_Changelog.md"
+        first_existing_path(
+            workspace_root,
+            [
+                "docs/context/protocol.md",
+                "docs/35_protocol/Protocol_Changelog.md",
+            ],
+        )
     )
     review_surface = f"{review_text}\n{changelog_text}"
     missing = [
@@ -487,8 +550,8 @@ def check_negative_results(
             "unreviewed_negative_results",
             severity != "error",
             severity,
-            "Negative results are not referenced in Protocol_Review or "
-            "Protocol_Changelog: "
+            "Negative results are not referenced in the protocol review or "
+            "changelog surface: "
             + ", ".join(missing),
             relpath(path, workspace_root),
         )
@@ -551,7 +614,13 @@ def check_iteration_decision(
         )
         return
     changelog_text = read_text_if_exists(
-        workspace_root / "docs" / "35_protocol" / "Protocol_Changelog.md"
+        first_existing_path(
+            workspace_root,
+            [
+                "docs/context/protocol.md",
+                "docs/35_protocol/Protocol_Changelog.md",
+            ],
+        )
     )
     review_surface = f"{review_text}\n{changelog_text}"
     token = iteration_id or decision
@@ -655,7 +724,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--allow-review-required",
         action="store_true",
-        help="Warn instead of fail when Research_Protocol.md says review is required.",
+        help="Warn instead of fail when the protocol doc says review is required.",
     )
     parser.add_argument(
         "--allow-unreviewed-negative",

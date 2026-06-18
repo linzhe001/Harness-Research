@@ -51,7 +51,7 @@
     },
     "context_model_version": {
       "type": ["string", "null"],
-      "description": "Optional dynamic context mode marker. Use dynamic-protocol-v1 for numbered evidence/protocol/contract docs."
+      "description": "Optional dynamic context mode marker. Use dynamic-context-v2 for docs/context canonical docs; dynamic-protocol-v1 is legacy numbered context."
     },
     "workflow_mode": {
       "type": ["string", "null"],

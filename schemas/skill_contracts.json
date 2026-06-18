@@ -31,6 +31,7 @@
           "project_map.json"
         ],
         "project_optional": [
+          "docs/context/contracts.md",
           "docs/10_contract/Project_Contract.md",
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
@@ -131,6 +132,10 @@
           "PROJECT_STATE.json"
         ],
         "project_optional": [
+          "docs/context/contracts.md",
+          "docs/context/facts.md",
+          "docs/context/evidence.md",
+          "docs/context/protocol.md",
           "docs/10_contract/Project_Contract.md",
           "docs/20_facts/Project_Facts.md",
           "docs/35_protocol/Research_Protocol.md"
@@ -153,16 +158,12 @@
         "docs_site_boundary_report"
       ],
       "sensitive_paths": [
-        "docs/10_contract/",
-        "docs/20_facts/",
-        "docs/35_protocol/",
+        "docs/context/",
         ".evidence/"
       ],
       "write_scope": {
         "allowed_paths": [
-          "docs/10_contract/",
-          "docs/20_facts/",
-          "docs/35_protocol/",
+          "docs/context/",
           ".evidence/chains/",
           ".evidence/index.json"
         ]
@@ -171,17 +172,26 @@
         {
           "kind": "approved_contract",
           "paths": [
-            "docs/10_contract/"
+            "docs/context/contracts.md"
           ],
           "owner": "doc-compiler",
           "is_final": true,
           "requires_tool": false,
-          "notes": "Approval-facing contract docs; approval still needs Approval Evidence."
+          "notes": "Approval-facing contract sections; approval still needs Approval Evidence."
         },
         {
           "kind": "fact_doc",
           "paths": [
-            "docs/20_facts/"
+            "docs/context/facts.md"
+          ],
+          "owner": "doc-compiler",
+          "is_final": true,
+          "requires_tool": false
+        },
+        {
+          "kind": "conclusion_evidence",
+          "paths": [
+            "docs/context/evidence.md"
           ],
           "owner": "doc-compiler",
           "is_final": true,
@@ -190,7 +200,7 @@
         {
           "kind": "current_doc",
           "paths": [
-            "docs/35_protocol/"
+            "docs/context/protocol.md"
           ],
           "owner": "doc-compiler",
           "is_final": true,
@@ -206,6 +216,19 @@
           "owner": "evidence-tooling",
           "is_final": false,
           "requires_tool": true
+        },
+        {
+          "kind": "legacy_compat",
+          "paths": [
+            "docs/10_contract/",
+            "docs/20_facts/",
+            "docs/35_protocol/"
+          ],
+          "owner": "doc-compiler",
+          "is_final": false,
+          "requires_tool": false,
+          "replacement": "docs/context/",
+          "notes": "Legacy numbered context docs; migrate with migrate_context_v2.py."
         }
       ],
       "constraints": [
@@ -398,14 +421,14 @@
         "docs_site_boundary_report"
       ],
       "sensitive_paths": [
-        "docs/10_contract/",
+        "docs/context/contracts.md",
         "PROJECT_STATE.json",
         ".evidence/review_packets/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/review_packets/",
-          "docs/10_contract/",
+          "docs/context/contracts.md",
           "PROJECT_STATE.json"
         ]
       },
@@ -413,12 +436,23 @@
         {
           "kind": "approved_contract",
           "paths": [
-            "docs/10_contract/"
+            "docs/context/contracts.md"
           ],
           "owner": "review-packet",
           "is_final": true,
           "requires_tool": false,
           "notes": "Related approval records only after explicit Human Approval."
+        },
+        {
+          "kind": "legacy_compat",
+          "paths": [
+            "docs/10_contract/"
+          ],
+          "owner": "review-packet",
+          "is_final": false,
+          "requires_tool": false,
+          "replacement": "docs/context/contracts.md",
+          "notes": "Legacy per-contract files; migrate into named sections in docs/context/contracts.md."
         },
         {
           "kind": "canonical_state",
@@ -481,6 +515,8 @@
           "PROJECT_STATE.json"
         ],
         "project_optional": [
+          "docs/context/evidence.md",
+          "docs/context/protocol.md",
           "docs/30_evidence/Evidence_Index.md",
           "docs/30_evidence/Open_Questions.md",
           "docs/35_protocol/Research_Protocol.md"
@@ -504,20 +540,20 @@
         "docs_site_boundary_report"
       ],
       "sensitive_paths": [
-        "docs/35_protocol/",
+        "docs/context/protocol.md",
         ".evidence/protocol_compiler/"
       ],
       "write_scope": {
         "allowed_paths": [
           ".evidence/protocol_compiler/",
-          "docs/35_protocol/"
+          "docs/context/protocol.md"
         ]
       },
       "artifact_outputs": [
         {
           "kind": "current_doc",
           "paths": [
-            "docs/35_protocol/"
+            "docs/context/protocol.md"
           ],
           "owner": "protocol-compiler",
           "is_final": true,
@@ -532,6 +568,17 @@
           "owner": "evidence-tooling",
           "is_final": false,
           "requires_tool": true
+        },
+        {
+          "kind": "legacy_compat",
+          "paths": [
+            "docs/35_protocol/"
+          ],
+          "owner": "protocol-compiler",
+          "is_final": false,
+          "requires_tool": false,
+          "replacement": "docs/context/protocol.md",
+          "notes": "Legacy protocol docs; migrate into docs/context/protocol.md."
         }
       ],
       "constraints": [
@@ -1587,6 +1634,9 @@
           "iteration_log.json"
         ],
         "project_optional": [
+          "docs/context/contracts.md",
+          "docs/context/experiments.md",
+          "docs/context/memory.md",
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
           "docs/50_memory/Lessons.md",
@@ -1603,7 +1653,7 @@
       "required_actions": [
         "decision_vocabulary",
         "build_experiment_evidence_index_or_NOT_RUN",
-        "lesson_quality_check_or_NOT_RUN",
+        "memory_context_update_or_NOT_RUN",
         "workflow_state_gate_or_NOT_RUN",
         "gate_ledger",
         "docs_site_boundary_report",
@@ -1613,12 +1663,10 @@
         "promotion_plan_or_NOT_READY",
         "build_light_evidence_index_or_NOT_RUN",
         "run_local_promotion_check",
-        "discovery_ledger_update_or_NOT_RUN",
+        "experiments_context_update_or_NOT_RUN",
         "pre_eval_commit_or_NOT_CHANGED",
         "claim_delta_evidence_or_NOT_CHANGED",
-        "assurance_axis_recorded",
-        "experiment_queue_update_or_NOT_RUN",
-        "research_wiki_update_or_NOT_RUN"
+        "assurance_axis_recorded"
       ],
       "forbidden_actions": [
         "stage_transition_from_iterate",
@@ -1628,16 +1676,14 @@
       "gate_ledger_required_when": [
         "stage_report_write",
         "iteration_report_write",
-        "lesson_promotion",
+        "memory_context_write",
         "iteration_log_write",
         "experiment_evidence_index_write",
         "docs_site_boundary_report",
         "run_code_manifest_write",
         "promotion_plan_write",
         "light_evidence_index_write",
-        "discovery_ledger_write",
-        "research_wiki_write",
-        "experiment_queue_write",
+        "experiments_context_write",
         "claim_delta_evidence"
       ],
       "context_budget": {
@@ -1647,6 +1693,8 @@
       },
       "sensitive_paths": [
         "iteration_log.json",
+        "docs/context/experiments.md",
+        "docs/context/memory.md",
         "docs/40_iterations/",
         "docs/iterations/",
         "docs/30_evidence/Experiment_Evidence_Index.json",
@@ -1662,6 +1710,8 @@
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
+          "docs/context/experiments.md",
+          "docs/context/memory.md",
           "docs/40_iterations/",
           "docs/iterations/",
           "docs/30_evidence/Experiment_Evidence_Index.json",
@@ -1679,19 +1729,19 @@
         {
           "kind": "current_doc",
           "paths": [
-            "docs/40_iterations/",
-            "docs/50_memory/",
+            "docs/context/experiments.md",
+            "docs/context/memory.md",
             "docs/Stage_Report.md"
           ],
           "owner": "evaluate",
           "is_final": true,
-          "requires_tool": false
+          "requires_tool": false,
+          "notes": "Canonical v2 WF10 experiment queue, research wiki, discoveries, and memory surface."
         },
         {
           "kind": "canonical_state",
           "paths": [
-            "iteration_log.json",
-            "MEMORY.md"
+            "iteration_log.json"
           ],
           "owner": "evaluate",
           "is_final": false,
@@ -1711,13 +1761,17 @@
         {
           "kind": "legacy_compat",
           "paths": [
-            "docs/iterations/"
+            "docs/40_iterations/",
+            "docs/45_discoveries/",
+            "docs/50_memory/",
+            "docs/iterations/",
+            "MEMORY.md"
           ],
           "owner": "evaluate",
           "is_final": false,
           "requires_tool": false,
-          "replacement": "docs/40_iterations/",
-          "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+          "replacement": "docs/context/",
+          "notes": "Legacy iteration/discovery/memory paths; prefer docs/context/experiments.md and docs/context/memory.md."
         },
         {
           "kind": "tool_trace",
@@ -1738,16 +1792,6 @@
           "is_final": false,
           "requires_tool": false,
           "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
-        },
-        {
-          "kind": "current_doc",
-          "paths": [
-            "docs/45_discoveries/"
-          ],
-          "owner": "evaluate",
-          "is_final": true,
-          "requires_tool": false,
-          "notes": "Mutable discovery ledger for observations, phenomena, findings, hypotheses, and next-experiment hints."
         }
       ],
       "constraints": [
@@ -2506,37 +2550,37 @@
         "workflow language",
         "permission policy",
         "permission boundary",
-        "hook判断",
-        "hook触发",
-        "hook的判断",
-        "hook的触发",
-        "hook的路由",
-        "hook 的判断",
-        "hook 的触发",
-        "hook 的路由",
-        "触发判断",
-        "workflow 语言",
-        "workflow 词汇",
-        "workflow 术语",
-        "workflow 路由",
-        "workflow 触发",
-        "通用语言",
-        "统一语言",
-        "关键概念",
-        "命名规则",
-        "认知负担",
-        "阶段卡片",
-        "维护类任务",
-        "维护任务",
-        "写入面",
-        "prompt 误判",
-        "prompt 路由",
-        "prompt 触发",
-        "权限策略",
-        "权限模型",
-        "权限边界",
-        "权限提升",
-        "提权"
+        "hook\u5224\u65ad",
+        "hook\u89e6\u53d1",
+        "hook\u7684\u5224\u65ad",
+        "hook\u7684\u89e6\u53d1",
+        "hook\u7684\u8def\u7531",
+        "hook \u7684\u5224\u65ad",
+        "hook \u7684\u89e6\u53d1",
+        "hook \u7684\u8def\u7531",
+        "\u89e6\u53d1\u5224\u65ad",
+        "workflow \u8bed\u8a00",
+        "workflow \u8bcd\u6c47",
+        "workflow \u672f\u8bed",
+        "workflow \u8def\u7531",
+        "workflow \u89e6\u53d1",
+        "\u901a\u7528\u8bed\u8a00",
+        "\u7edf\u4e00\u8bed\u8a00",
+        "\u5173\u952e\u6982\u5ff5",
+        "\u547d\u540d\u89c4\u5219",
+        "\u8ba4\u77e5\u8d1f\u62c5",
+        "\u9636\u6bb5\u5361\u7247",
+        "\u7ef4\u62a4\u7c7b\u4efb\u52a1",
+        "\u7ef4\u62a4\u4efb\u52a1",
+        "\u5199\u5165\u9762",
+        "prompt \u8bef\u5224",
+        "prompt \u8def\u7531",
+        "prompt \u89e6\u53d1",
+        "\u6743\u9650\u7b56\u7565",
+        "\u6743\u9650\u6a21\u578b",
+        "\u6743\u9650\u8fb9\u754c",
+        "\u6743\u9650\u63d0\u5347",
+        "\u63d0\u6743"
       ],
       "required_read_set": {
         "harness": [
@@ -2759,10 +2803,10 @@
         "deepseek review",
         "external model review",
         "cross review",
-        "代码审查",
-        "代码 review",
-        "代码检查",
-        "交叉验证"
+        "\u4ee3\u7801\u5ba1\u67e5",
+        "\u4ee3\u7801 review",
+        "\u4ee3\u7801\u68c0\u67e5",
+        "\u4ea4\u53c9\u9a8c\u8bc1"
       ],
       "required_read_set": {
         "harness": [
@@ -3038,6 +3082,9 @@
           "docs/20_facts/Project_Glossary.md"
         ],
         "project_optional": [
+          "docs/context/contracts.md",
+          "docs/context/experiments.md",
+          "docs/context/memory.md",
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
           "docs/50_memory/Lessons.md",
@@ -3059,7 +3106,7 @@
         "run_local_promotion_check",
         "decision_vocabulary",
         "build_experiment_evidence_index_or_NOT_RUN",
-        "lesson_quality_check_or_NOT_RUN",
+        "memory_context_update_or_NOT_RUN",
         "gate_ledger",
         "docs_site_boundary_report",
         "iteration_log_v2_strict",
@@ -3067,13 +3114,11 @@
         "run_code_manifest_or_config_only_record",
         "promotion_plan_or_NOT_READY",
         "build_light_evidence_index_or_NOT_RUN",
-        "discovery_ledger_update_or_NOT_RUN",
+        "experiments_context_update_or_NOT_RUN",
         "pre_train_commit_or_debug_scope",
         "pre_eval_commit_or_NOT_CHANGED",
         "claim_delta_evidence_or_NOT_CHANGED",
-        "assurance_axis_recorded",
-        "experiment_queue_update_or_NOT_RUN",
-        "research_wiki_update_or_NOT_RUN"
+        "assurance_axis_recorded"
       ],
       "forbidden_actions": [
         "auto_observation_direct_to_MEMORY",
@@ -3083,16 +3128,14 @@
       "gate_ledger_required_when": [
         "iteration_log_write",
         "iteration_report_write",
-        "lesson_promotion",
+        "memory_context_write",
         "WF11_handoff",
         "experiment_evidence_index_write",
         "docs_site_boundary_report",
         "run_code_manifest_write",
         "promotion_plan_write",
         "light_evidence_index_write",
-        "discovery_ledger_write",
-        "research_wiki_write",
-        "experiment_queue_write",
+        "experiments_context_write",
         "claim_delta_evidence",
         "pre_train_commit",
         "pre_eval_commit"
@@ -3104,6 +3147,8 @@
       },
       "sensitive_paths": [
         "iteration_log.json",
+        "docs/context/experiments.md",
+        "docs/context/memory.md",
         "docs/40_iterations/",
         "docs/iterations/",
         "docs/30_evidence/Experiment_Evidence_Index.json",
@@ -3118,6 +3163,8 @@
       "write_scope": {
         "allowed_paths": [
           "iteration_log.json",
+          "docs/context/experiments.md",
+          "docs/context/memory.md",
           "docs/40_iterations/",
           "docs/iterations/",
           "docs/30_evidence/Experiment_Evidence_Index.json",
@@ -3134,18 +3181,18 @@
         {
           "kind": "current_doc",
           "paths": [
-            "docs/40_iterations/",
-            "docs/50_memory/"
+            "docs/context/experiments.md",
+            "docs/context/memory.md"
           ],
           "owner": "iterate",
           "is_final": true,
-          "requires_tool": false
+          "requires_tool": false,
+          "notes": "Canonical v2 WF10 experiment queue, research wiki, discoveries, and memory surface."
         },
         {
           "kind": "canonical_state",
           "paths": [
-            "iteration_log.json",
-            "MEMORY.md"
+            "iteration_log.json"
           ],
           "owner": "iterate",
           "is_final": false,
@@ -3165,13 +3212,17 @@
         {
           "kind": "legacy_compat",
           "paths": [
-            "docs/iterations/"
+            "docs/40_iterations/",
+            "docs/45_discoveries/",
+            "docs/50_memory/",
+            "docs/iterations/",
+            "MEMORY.md"
           ],
           "owner": "iterate",
           "is_final": false,
           "requires_tool": false,
-          "replacement": "docs/40_iterations/",
-          "notes": "Legacy iteration report path; prefer docs/40_iterations/."
+          "replacement": "docs/context/",
+          "notes": "Legacy iteration/discovery/memory paths; prefer docs/context/experiments.md and docs/context/memory.md."
         },
         {
           "kind": "tool_trace",
@@ -3192,16 +3243,6 @@
           "is_final": false,
           "requires_tool": false,
           "notes": "Run-local code manifests and promotion plans; stable code promotion must update project_map.json when interfaces change."
-        },
-        {
-          "kind": "current_doc",
-          "paths": [
-            "docs/45_discoveries/"
-          ],
-          "owner": "iterate",
-          "is_final": true,
-          "requires_tool": false,
-          "notes": "Mutable discovery ledger for observations, phenomena, findings, hypotheses, and next-experiment hints."
         }
       ],
       "constraints": [
@@ -3278,6 +3319,8 @@
           "docs/auto_paper_goal.md",
           "auto_paper_output/",
           "iteration_log.json",
+          "docs/context/contracts.md",
+          "docs/context/experiments.md",
           "docs/30_evidence/Experiment_Evidence_Index.json",
           "docs/30_evidence/Experiment_Evidence_Index.md",
           "tooling/auto_paper/",
@@ -3289,7 +3332,7 @@
       "required_actions": [
         "smoke_test_or_NOT_RUN",
         "claim_delta_evidence_or_NOT_CHANGED",
-        "research_wiki_update_or_NOT_RUN",
+        "experiments_context_update_or_NOT_RUN",
         "gate_ledger",
         "docs_site_boundary_report"
       ],
@@ -4491,6 +4534,7 @@
         ],
         "project_optional": [
           "docs/auto_iterate_goal.md",
+          "docs/context/contracts.md",
           "docs/10_contract/Evaluation_Contract.md",
           "docs/10_contract/Baseline_Contract.md",
           "docs/Validate_Run_Report.md"

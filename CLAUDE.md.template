@@ -25,10 +25,12 @@ conda activate {{ENV_NAME}}
 - `PROJECT_STATE.json` — Stage progression (single source of truth for stages)
 - `iteration_log.json` — Experiment history (single source of truth for iterations)
 - `project_map.json` — Stable implementation map (single source of truth for durable files and interfaces)
-- `docs/20_facts/Codebase_Map.md` — Operator-facing stable codebase map when present
+- `docs/context/*.md` — dynamic-context-v2 canonical contracts, facts,
+  evidence, protocol, experiments, and memory docs
+- `docs/20_facts/Codebase_Map.md` — legacy/operator-facing stable codebase map when present
 - `docs/_views/` and `docs/_site/` — Generated evidence-preview data and
   human-readable HTML views; Markdown remains the source of truth
-- `MEMORY.md` — Human-readable append-only lessons and decisions
+- `MEMORY.md` — Optional human-readable accepted lessons bank
 - `OPERATOR_CONTEXT.md` — Optional operator preferences, not project facts; write only from explicit operator input
 - `.evidence/` — Evidence-chain artifacts for compiled current docs when enabled
 - `.auto_iterate/` — Controller-owned runtime state (if auto-iterate is enabled; do not edit manually)
@@ -38,18 +40,17 @@ conda activate {{ENV_NAME}}
 
 ## Context Layers
 - Read `.claude/shared/context-layering-policy.md` and `.claude/shared/research-invariants.md` before research planning, documentation, iteration, auto-iteration, or release work.
-- Current fact-layer summaries belong in `docs/20_facts/`; they must come from project artifacts or evidence chains.
-- `docs/20_facts/Codebase_Map.md` explains stable files, responsibilities, public interfaces, entry points, and maintenance owners.
-- Research Conclusion Evidence tables belong in `docs/30_evidence/`; they record sources and candidate norms, not permanent rules.
+- Dynamic-context-v2 canonical docs belong in `docs/context/`.
+- Current fact-layer summaries belong in `docs/context/facts.md`; they must come from project artifacts or evidence chains.
+- Research Conclusion Evidence inputs belong in `docs/context/evidence.md`; they record sources and candidate norms, not permanent rules.
 - `.evidence/**` is tool-owned audit state for Evidence Chains, protocol builds, and review packets; do not hand-edit it.
-- Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
-- Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
-- `docs/40_iterations/Experiment_Queue.md` stores concrete follow-up
-  experiments, falsifiers, controls, assurance gaps, and paper-driven run
-  requests.
-- `docs/45_discoveries/Discovery_Ledger.md` stores mutable observations and
-  hypotheses; `docs/45_discoveries/Research_Wiki.md` stores stable searchable
-  findings and open questions.
+- Dynamic protocol drafts belong in `docs/context/protocol.md`; they are project-local and evidence-derived.
+- Human-approved contracts belong in `docs/context/contracts.md`; they override protocol drafts and operator preferences.
+- `docs/context/experiments.md` stores the Experiment Queue, mutable
+  discoveries, Research Wiki notes, falsifiers, controls, assurance gaps,
+  paper-driven run requests, findings, and open questions.
+- `docs/context/memory.md` stores candidate and accepted lessons before any
+  optional promotion to root `MEMORY.md`.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
@@ -66,7 +67,7 @@ conda activate {{ENV_NAME}}
 Only **stable implementation files** (src/, baselines/, core configs/scripts) are tracked in project_map.json.
 Volatile experiment assets (per-iteration scripts/configs) are not tracked.
 Read this rule and `project_map.json` before non-trivial stable-code changes,
-and update `project_map.json` plus the existing `docs/20_facts/Codebase_Map.md`
+and update `project_map.json` plus the existing operator-facing codebase map doc
 when stable files or stable interfaces change.
 See `.claude/rules/project-map.md` for detailed rules.
 
@@ -85,7 +86,7 @@ See `.claude/rules/project-map.md` for detailed rules.
   boundary even when they are never promoted to stable code.
 
 ## Global Rule: Ubiquitous Language
-- Use `.claude/shared/ubiquitous-language.md` for workflow terms and maintain `docs/20_facts/Project_Glossary.md` for project-specific codebase vocabulary.
+- Use `.claude/shared/ubiquitous-language.md` for workflow terms and maintain project-specific codebase vocabulary in `docs/context/facts.md` or the legacy `docs/20_facts/Project_Glossary.md` when present.
 - Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
 
 ## Global Rule: Code Review
@@ -126,12 +127,12 @@ Current stage: WF1 (not started)
 ## Documentation Evidence and Style Rule
 - Before writing docs, read `.claude/shared/documentation-evidence-rule.md` and re-read relevant source artifacts from disk.
 - Separate verified facts, inferences, and open questions.
-- Use `/protocol-compiler` to compile `docs/30_evidence/**` into reviewable `docs/35_protocol/**` drafts without field profiles.
+- Use `/protocol-compiler` to compile `docs/context/evidence.md` into reviewable `docs/context/protocol.md` drafts without field profiles.
 - For contract, fact, protocol, or release docs, also read `.claude/shared/evidence-chain-rule.md` and compile evidence_chain/source_manifest/doc_audit before replacing current Markdown.
 - After durable Markdown docs are finalized, run `/docs-site` to refresh
   `docs/_views/**` and `docs/_site/**`, or report `NOT_RUN`.
 - Before implementation, validation, iteration, auto-iteration, or release, read `.claude/shared/contract-gating-rule.md`.
-- Use `/protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
+- Use `/protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/context/protocol.md`.
 - Use `/review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
 - After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
 - Record Claim Delta Evidence when a paper claim, release claim, or claim

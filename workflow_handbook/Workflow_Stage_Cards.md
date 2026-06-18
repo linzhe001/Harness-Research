@@ -144,7 +144,7 @@ WF10-WF12: run iterations, final experiment checks, and release packaging.
 
 怎么启动: `$run` for experiment execution and `$analyze` for result decisions.
 
-完成后得到: `iteration_log.json` and `docs/40_iterations/**` capture runs, lessons, and decisions.
+完成后得到: `iteration_log.json`, `docs/context/experiments.md`, and `docs/context/memory.md` capture runs, lessons, and decisions.
 
 深入阅读: [[stage:WF10|WF10 details]], [[skill:iterate|iterate Skill]]
 

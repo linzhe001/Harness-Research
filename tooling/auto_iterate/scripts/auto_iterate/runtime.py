@@ -17,6 +17,8 @@ contract and ``01_contract_freeze.md`` §6–7 for brief/result schemas.
 
 from __future__ import annotations
 
+import importlib.util
+import json
 import os
 import re
 import subprocess
@@ -79,6 +81,10 @@ PHASE_FAMILY = {
 
 _GPU_VISIBLE_PHASES = {"run_screening", "run_full"}
 _HOST_ACCESS_PHASES = {"code", "promote"}
+_WATCHDOG_PHASES = {"run_screening", "run_full", "eval"}
+_WATCHDOG_POLICY_ENABLED = "status_json_only"
+_TOOLING_DIR = Path(__file__).resolve().parents[3]
+_WATCHDOG_PATH = _TOOLING_DIR / "run_health" / "watchdog.py"
 _QUOTA_OR_RATE_LIMIT_PATTERNS = (
     re.compile(r"you(?:'ve| have) hit your usage limit", re.IGNORECASE),
     re.compile(r"hit your usage limit", re.IGNORECASE),
@@ -95,6 +101,8 @@ _AUTH_FAILURE_PATTERNS = (
     re.compile(r"please run codex login", re.IGNORECASE),
     re.compile(r"\b401\b"),
 )
+
+_WATCHDOG_MODULE: Any | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +142,37 @@ def validate_brief(brief: dict[str, Any]) -> None:
     rm = brief.get("recovery_mode")
     if rm not in VALID_RECOVERY_MODES:
         raise BriefValidationError(f"Invalid recovery_mode: {rm!r}")
+
+
+def _load_watchdog_module() -> Any:
+    """Load the notification-free run health watchdog implementation."""
+    global _WATCHDOG_MODULE
+    if _WATCHDOG_MODULE is not None:
+        return _WATCHDOG_MODULE
+    spec = importlib.util.spec_from_file_location(
+        "harness_run_health_watchdog",
+        _WATCHDOG_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load watchdog module from {_WATCHDOG_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _WATCHDOG_MODULE = module
+    return module
+
+
+def _watchdog_enabled(brief: dict[str, Any]) -> bool:
+    if brief.get("phase_key") not in _WATCHDOG_PHASES:
+        return False
+    policy = brief.get("automation_policy")
+    if not isinstance(policy, dict):
+        return False
+    return policy.get("watchdog_policy") == _WATCHDOG_POLICY_ENABLED
+
+
+def _safe_watchdog_name(value: str) -> str:
+    name = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("._-")
+    return name or "auto_iterate_phase"
 
 
 # ---------------------------------------------------------------------------
@@ -575,9 +614,10 @@ def build_result(
     timed_out: bool,
     stdout_path: str,
     stderr_path: str,
+    watchdog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a runtime result dict per 01§7."""
-    return {
+    result: dict[str, Any] = {
         "schema_version": 1,
         "phase_family": brief.get("phase_family", ""),
         "phase_key": brief.get("phase_key", ""),
@@ -593,6 +633,12 @@ def build_result(
         "stdout_path": stdout_path,
         "stderr_path": stderr_path,
     }
+    if watchdog is not None:
+        result["watchdog"] = watchdog
+        status_path = watchdog.get("status_path")
+        if isinstance(status_path, str) and status_path:
+            result["watchdog_status_path"] = status_path
+    return result
 
 
 def _stderr_matches(
@@ -748,6 +794,13 @@ class PhaseSupervisor:
                                         stdout_path, stderr_path)
 
         prompt = render_prompt(brief, iteration_id=iteration_id)
+        watchdog_registration = self._watchdog_registration(
+            brief,
+            stdout_path=stdout_path,
+            stderr_path=stderr_path,
+            result_path=result_path,
+            iteration_id=iteration_id,
+        )
 
         exit_code, timed_out, duration = self._invoke_codex(
             phase_key=pk,
@@ -758,6 +811,7 @@ class PhaseSupervisor:
             stdout_path=stdout_path,
             stderr_path=stderr_path,
             run_phase_full_access=run_phase_full_access,
+            watchdog_registration=watchdog_registration,
         )
 
         exit_class = classify_exit(exit_code, timed_out, stderr_path=stderr_path)
@@ -786,9 +840,124 @@ class PhaseSupervisor:
             timed_out=timed_out,
             stdout_path=stdout_path,
             stderr_path=stderr_path,
+            watchdog=self._watchdog_payload(watchdog_registration),
         )
         atomic_write_json(result_path, result)
+        final_watchdog_status = self._refresh_watchdog(watchdog_registration)
+        if final_watchdog_status is not None:
+            result.setdefault("watchdog", {})["last_status"] = final_watchdog_status
+            atomic_write_json(result_path, result)
         return result
+
+    # ------------------------------------------------------------------
+    # Watchdog registration
+    # ------------------------------------------------------------------
+
+    def _watchdog_registration(
+        self,
+        brief: dict[str, Any],
+        *,
+        stdout_path: str,
+        stderr_path: str,
+        result_path: str,
+        iteration_id: str | None,
+    ) -> dict[str, Any] | None:
+        if not _watchdog_enabled(brief):
+            return None
+
+        phase_key = str(brief.get("phase_key", "phase"))
+        round_index = str(brief.get("round_index", 0))
+        loop_id = str(brief.get("loop_id") or "loop")
+        name = _safe_watchdog_name(
+            f"{loop_id}_round{round_index}_{phase_key}"
+        )
+        base_dir = self.runtime_dir.parent / "run_health"
+        status_path = base_dir / "status" / f"{name}.json"
+        summary_path = base_dir / "status" / "summary.json"
+        task_type = "training" if phase_key in {"run_screening", "run_full"} else "command"
+        task: dict[str, Any] = {
+            "name": name,
+            "type": task_type,
+            "session_type": "pid",
+            "session": "pending",
+            "log_path": stdout_path,
+            "stderr_path": stderr_path,
+            "output_check": result_path,
+            "registered_by": "auto_iterate",
+            "workspace_root": str(self.workspace_root),
+            "phase_key": phase_key,
+            "loop_id": loop_id,
+            "round_index": brief.get("round_index", 0),
+            "iteration_id": iteration_id,
+            "result_path": result_path,
+        }
+        return {
+            "base_dir": str(base_dir),
+            "task": task,
+            "task_name": name,
+            "status_path": str(status_path),
+            "summary_path": str(summary_path),
+            "registered": False,
+        }
+
+    def _watchdog_payload(
+        self,
+        registration: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        if registration is None:
+            return None
+        task = registration.get("task")
+        phase_key = task.get("phase_key") if isinstance(task, dict) else None
+        iteration_id = task.get("iteration_id") if isinstance(task, dict) else None
+        payload = {
+            "policy": _WATCHDOG_POLICY_ENABLED,
+            "base_dir": registration.get("base_dir"),
+            "task_name": registration.get("task_name"),
+            "status_path": registration.get("status_path"),
+            "summary_path": registration.get("summary_path"),
+            "registered": bool(registration.get("registered")),
+            "phase_key": phase_key,
+            "iteration_id": iteration_id,
+        }
+        if registration.get("error"):
+            payload["error"] = registration["error"]
+        return payload
+
+    def _register_watchdog(
+        self,
+        registration: dict[str, Any] | None,
+        pid: int,
+    ) -> None:
+        if registration is None:
+            return
+        try:
+            module = _load_watchdog_module()
+            task = dict(registration["task"])
+            task["session"] = str(pid)
+            registration["task"] = task
+            module.register_task(registration["base_dir"], json.dumps(task))
+            module.check_all(registration["base_dir"])
+            registration["registered"] = True
+        except Exception as exc:  # noqa: BLE001 - watchdog must not fail runtime
+            registration["error"] = str(exc)
+
+    def _refresh_watchdog(
+        self,
+        registration: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        if registration is None or not registration.get("registered"):
+            return None
+        try:
+            module = _load_watchdog_module()
+            statuses = module.check_all(registration["base_dir"])
+        except Exception as exc:  # noqa: BLE001 - watchdog must not fail runtime
+            registration["error"] = str(exc)
+            return None
+        task_name = registration.get("task_name")
+        for status in statuses:
+            if isinstance(status, dict) and status.get("task") == task_name:
+                return status
+        return None
 
     # ------------------------------------------------------------------
     # Codex invocation
@@ -804,6 +973,7 @@ class PhaseSupervisor:
         stdout_path: str,
         stderr_path: str,
         run_phase_full_access: bool = True,
+        watchdog_registration: dict[str, Any] | None = None,
     ) -> tuple[int, bool, float]:
         """Spawn ``codex exec`` and return ``(exit_code, timed_out, duration_sec)``."""
         env = os.environ.copy()
@@ -828,6 +998,7 @@ class PhaseSupervisor:
                     env=env,
                     cwd=str(self.workspace_root),
                 )
+                self._register_watchdog(watchdog_registration, proc.pid)
                 proc.stdin.write(prompt.encode("utf-8"))  # type: ignore[union-attr]
                 proc.stdin.close()  # type: ignore[union-attr]
 

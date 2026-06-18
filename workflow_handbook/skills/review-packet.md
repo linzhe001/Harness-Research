@@ -46,12 +46,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 ## Can Write
 
 - `.evidence/review_packets/`
-- `docs/10_contract/`
+- `docs/context/contracts.md`
 - `PROJECT_STATE.json`
 
 ## Final Outputs
 
-- `approved_contract: docs/10_contract/`
+- `approved_contract: docs/context/contracts.md`
 
 ## Tool-Owned Outputs
 

@@ -203,6 +203,7 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
 
 _REQUIRED_METRIC_FIELDS = {"name", "direction", "target"}
 _VALID_DIRECTIONS = {"maximize", "minimize"}
+_VALID_WATCHDOG_POLICIES = {"status_json_only", "disabled"}
 
 
 def validate(parsed_goal: dict[str, Any]) -> list[str]:
@@ -258,6 +259,17 @@ def validate(parsed_goal: dict[str, Any]) -> list[str]:
         errors.append("screening_policy.default_steps is required")
     elif not _is_positive_int(sp.get("default_steps")):
         errors.append("screening_policy.default_steps must be a positive integer")
+
+    automation_policy = parsed_goal.get("automation_policy", {})
+    if isinstance(automation_policy, dict):
+        watchdog_policy = automation_policy.get("watchdog_policy")
+        if watchdog_policy is not None and watchdog_policy not in _VALID_WATCHDOG_POLICIES:
+            errors.append(
+                "automation_policy.watchdog_policy must be one of "
+                f"{sorted(_VALID_WATCHDOG_POLICIES)}, got {watchdog_policy!r}"
+            )
+    else:
+        errors.append("automation_policy must be an object when present")
 
     return errors
 

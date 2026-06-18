@@ -13,14 +13,21 @@ Use these layers when loading, writing, or auditing context:
 
 | Layer | Scope | Typical Files | Rule |
 |---|---|---|---|
-| L1 Core invariants | Cross-project process rules | `.claude/shared/*.md` | Stable, framework-owned, domain-neutral |
+| L1 Core invariants | Cross-project process rules | `.agents/references/*.md` | Stable, framework-owned, domain-neutral |
 | L2 Operator context | User preferences and local working style | `OPERATOR_CONTEXT.md` | May influence defaults; never proves project facts |
 | L3 Local/private inputs | Machine config, credentials, local paths | `*.local.*`, `.env.local` | Keep local-only and redact in docs |
-| L4 Research evidence | Papers, repos, datasets, benchmarks, metrics | `docs/30_evidence/**` | Evidence only; do not write as rules |
-| L5 Dynamic protocol | Current-project protocol draft from evidence | `docs/35_protocol/**` | AI-generated, evidence-backed, reviewable |
-| L6 Approved contracts | Human-approved project/eval/claim boundaries | `docs/10_contract/**` | Execution authority after approval |
-| L7 Project facts/docs | Current code, data, environment, facts | `docs/20_facts/**`, `CLAUDE.md` | Must come from current artifacts |
-| L8 Runtime state/discovery/lessons | Iterations, decisions, mutable discoveries, accepted lessons | `iteration_log.json`, `docs/40_iterations/**`, `docs/45_discoveries/**`, `docs/50_memory/**`, `MEMORY.md` | Runtime truth, discovery candidates, and promoted memory |
+| L4 Research evidence | Papers, repos, datasets, benchmarks, metrics | `docs/context/evidence.md` | Evidence only; do not write as rules |
+| L5 Dynamic protocol | Current-project protocol draft from evidence | `docs/context/protocol.md` | AI-generated, evidence-backed, reviewable |
+| L6 Approved contracts | Human-approved project/eval/claim boundaries | `docs/context/contracts.md` | Execution authority after approval |
+| L7 Project facts/docs | Current code, data, environment, facts | `docs/context/facts.md`, `CLAUDE.md` | Must come from current artifacts |
+| L8 Runtime state/discovery/lessons | Iterations, decisions, mutable discoveries, accepted lessons | `iteration_log.json`, `docs/context/experiments.md`, `docs/context/memory.md` | Runtime truth, discovery candidates, and promoted memory |
+
+For new or migrated projects, `PROJECT_STATE.json.context_model_version` should
+be `dynamic-context-v2`, and `docs/context/*.md` is canonical. Legacy numbered
+directories such as `docs/10_contract/**`, `docs/20_facts/**`,
+`docs/30_evidence/**`, `docs/35_protocol/**`, `docs/40_iterations/**`,
+`docs/45_discoveries/**`, and `docs/50_memory/**` are compatibility inputs or
+archive sources unless a project has not yet migrated.
 
 ## Loading Defaults
 
@@ -39,5 +46,5 @@ Use these layers when loading, writing, or auditing context:
 - Do not turn research evidence into an approved contract without human review.
 - Do not let auto-iteration observations enter `MEMORY.md` directly.
 - Do put mutable observations, phenomena, findings, and hypotheses in
-  `docs/45_discoveries/**` before considering lesson promotion.
+  `docs/context/experiments.md` before considering lesson promotion.
 - Do not write project facts from memory; re-read current repo artifacts.

@@ -17,16 +17,16 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import validate_docchain  # noqa: E402
 
-
 TARGET_DIRS = (
+    "docs/context",
     "docs/10_contract",
     "docs/20_facts",
     "docs/35_protocol",
 )
 VALID_STATUSES = {"missing", "draft", "approved", "superseded"}
 EMPTY_VALUES = {"", "n/a", "na", "none", "null", "-"}
-STRICT_CLEAN_PREFIXES = ("docs/10_contract/",)
-PATCH_REQUIRED_PREFIXES = ("docs/20_facts/", "docs/40_iterations/")
+STRICT_CLEAN_PREFIXES = ("docs/10_contract/", "docs/context/contracts.md")
+PATCH_REQUIRED_PREFIXES = ("docs/20_facts/", "docs/40_iterations/", "docs/context/")
 SUPPORTING_RELATIONS = {"supports", "partially_supports"}
 STRONG_CONFIDENCE = {"medium", "high"}
 
@@ -233,7 +233,10 @@ def check_contract_evidence_strength(
     doc_rel: str,
     chain: dict[str, Any],
 ) -> None:
-    if not doc_rel.startswith("docs/10_contract/"):
+    if not (
+        doc_rel.startswith("docs/10_contract/")
+        or doc_rel == "docs/context/contracts.md"
+    ):
         return
     facts = chain.get("facts", [])
     evidence = chain.get("evidence", [])

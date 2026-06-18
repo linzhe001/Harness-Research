@@ -69,6 +69,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `PROJECT_STATE.json`
 - `iteration_log.json`
 - `docs/auto_iterate_goal.md`
+- `docs/context/contracts.md`
 - `docs/10_contract/Evaluation_Contract.md`
 - `docs/10_contract/Baseline_Contract.md`
 - `docs/Validate_Run_Report.md`

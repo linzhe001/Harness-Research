@@ -24,11 +24,10 @@ Read these first:
 - `./references/stage-report.md`
 - `../../../iteration_log.json`
 - `../../../PROJECT_STATE.json`
-- `../../../docs/10_contract/Evaluation_Contract.md` if it exists
-- `../../../docs/45_discoveries/Discovery_Ledger.md` if it exists
-- `../../../docs/45_discoveries/Research_Wiki.md` if it exists
-- `../../../docs/40_iterations/Experiment_Queue.md` if it exists
-- `../../../docs/50_memory/Lessons.md` if it exists
+- `../../../docs/context/contracts.md` if it exists; legacy contract files are
+  fallback inputs before migration
+- `../../../docs/context/experiments.md` if it exists
+- `../../../docs/context/memory.md` if it exists
 
 ## When To Use
 
@@ -50,19 +49,17 @@ Use this skill when the user wants training or evaluation results interpreted an
    covers eval code/configs. Do not use eval output as Conclusion Evidence
    without a committed eval identity.
 6. Produce the canonical report using `./references/stage-report.md`.
-7. Write observations, phenomena, findings, hypotheses, and next-experiment
-   hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified
-   lesson candidates to `docs/50_memory/Lessons.md`.
-8. Append or refresh `docs/40_iterations/Experiment_Queue.md` for concrete
-   follow-up experiments, falsifiers, controls, assurance gaps, or paper-driven
-   run requests; report `NOT_RUN` when no queue update is needed.
-9. Append or refresh `docs/45_discoveries/Research_Wiki.md` for searchable
-   stable observations, method notes, open questions, and finding summaries;
-   report `NOT_RUN` when no wiki update is needed.
+7. Write observations, phenomena, findings, hypotheses, next-experiment hints,
+   Experiment Queue entries, Assurance Axis gaps, and Research Wiki notes to
+   `docs/context/experiments.md`.
+8. Promote only qualified lesson candidates to `docs/context/memory.md`; write
+   root `MEMORY.md` only for accepted lessons when the project keeps that
+   optional bank.
+9. Report `NOT_RUN` when no experiments or memory context update is needed.
 10. Record Claim Delta Evidence when a paper claim, release claim, or claim
    boundary implication changed; otherwise record
    `claim_delta_evidence_NOT_CHANGED`.
-11. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
+11. Do not promote raw run observations directly into root `MEMORY.md`.
 12. Recommend exactly one of:
    - `NEXT_ROUND` — ordinary improvement round, stay in WF10
    - `DEBUG` — fixable technical issue, stay in WF10
@@ -76,10 +73,10 @@ Use this skill when the user wants training or evaluation results interpreted an
     evidence is written, or report `NOT_RUN` with the reason.
 16. Use an `experiment` commit checkpoint for completed evaluation/discovery
     slices before long follow-up runs or handoff.
-17. Report a Gate ledger when iteration reports, stage reports, discovery
-    ledgers, Research Wiki, Experiment Queue, lesson files, `MEMORY.md`,
+17. Report a Gate ledger when `docs/context/experiments.md`,
+    `docs/context/memory.md`, stage reports, optional legacy mirrors,
     `iteration_log.json`, claim delta evidence, or the experiment evidence
-    index are written. If lesson-quality or workflow-state checks are not run,
+    index are written. If memory-quality or workflow-state checks are not run,
     mark them `NOT_RUN` with the reason.
 
 ## Context Budget

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Initialize the dynamic context layout in a research workspace.
+"""Initialize the dynamic-context-v2 layout in a research workspace.
 
 The tool copies framework-owned templates into project-owned docs without
 overwriting existing files by default. It can optionally mark
-``PROJECT_STATE.json`` with ``context_model_version=dynamic-protocol-v1``.
+``PROJECT_STATE.json`` with ``context_model_version=dynamic-context-v2``.
 """
 
 from __future__ import annotations
@@ -15,21 +15,28 @@ import sys
 from pathlib import Path
 from typing import Any
 
-CONTEXT_MODEL_VERSION = "dynamic-protocol-v1"
+CONTEXT_MODEL_VERSION = "dynamic-context-v2"
 
 REQUIRED_DIRS = [
     "docs",
-    "docs/10_contract",
-    "docs/20_facts",
-    "docs/30_evidence",
-    "docs/35_protocol",
-    "docs/40_iterations",
-    "docs/40_iterations/auto",
-    "docs/45_discoveries",
-    "docs/50_memory",
+    "docs/context",
+    "docs/05_intake",
     ".evidence",
     ".evidence/chains",
     "schemas",
+]
+
+DOC_TEMPLATE_PATHS = [
+    "00_START_HERE.md",
+    "05_intake/Research_Intent_Draft.md",
+    "05_intake/Grill_Round_Log.md",
+    "05_intake/Execution_Readiness_Packet.md",
+    "context/contracts.md",
+    "context/facts.md",
+    "context/evidence.md",
+    "context/protocol.md",
+    "context/experiments.md",
+    "context/memory.md",
 ]
 
 
@@ -71,6 +78,32 @@ def copy_tree_no_overwrite(
         return [{"action": "skip_same_tree", "path": str(destination_root)}]
     for source in iter_files(source_root):
         relative = source.relative_to(source_root)
+        destination = destination_root / relative
+        if destination.exists() and not overwrite:
+            actions.append({"action": "skip_exists", "path": str(destination)})
+            continue
+        actions.append(
+            {"action": "copy", "path": str(destination), "source": str(source)}
+        )
+        if not dry_run:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+    return actions
+
+
+def copy_selected_docs_no_overwrite(
+    source_root: Path,
+    destination_root: Path,
+    *,
+    overwrite: bool,
+    dry_run: bool,
+) -> list[dict[str, str]]:
+    actions: list[dict[str, str]] = []
+    for relative_value in DOC_TEMPLATE_PATHS:
+        relative = Path(relative_value)
+        source = source_root / relative
+        if not source.is_file():
+            raise FileNotFoundError(f"template source not found: {source}")
         destination = destination_root / relative
         if destination.exists() and not overwrite:
             actions.append({"action": "skip_exists", "path": str(destination)})
@@ -129,12 +162,20 @@ def remove_legacy_schema_mirror(
     return [{"action": "remove_legacy_schema_mirror", "path": str(legacy_root)}]
 
 
-def contract_status(path: Path) -> str:
+def contract_status(path: Path, contract_key: str | None = None) -> str:
     if not path.exists():
         return "missing"
     try:
-        for line in path.read_text(encoding="utf-8").splitlines()[:12]:
-            if line.lower().startswith("status:"):
+        for line in path.read_text(encoding="utf-8").splitlines()[:48]:
+            lower = line.lower()
+            if contract_key is not None:
+                label = contract_key.replace("_", " ").title().lower()
+                prefix = f"{label} status:"
+                if lower.startswith(prefix):
+                    status = line.split(":", 1)[1].strip().lower()
+                    if status in {"missing", "draft", "approved", "superseded"}:
+                        return status
+            if lower.startswith("status:"):
                 status = line.split(":", 1)[1].strip().lower()
                 if status in {"missing", "draft", "approved", "superseded"}:
                     return status
@@ -156,16 +197,16 @@ def update_project_state(
     contracts = state.setdefault("contracts", {})
 
     contract_files = {
-        "project_contract": "docs/10_contract/Project_Contract.md",
-        "evaluation_contract": "docs/10_contract/Evaluation_Contract.md",
-        "baseline_contract": "docs/10_contract/Baseline_Contract.md",
-        "claim_boundary": "docs/10_contract/Claim_Boundary.md",
+        "project_contract": "docs/context/contracts.md",
+        "evaluation_contract": "docs/context/contracts.md",
+        "baseline_contract": "docs/context/contracts.md",
+        "claim_boundary": "docs/context/contracts.md",
     }
     for key, relative in contract_files.items():
         path = workspace_root / relative
         entry = contracts.setdefault(key, {})
         entry.setdefault("path", relative)
-        entry["status"] = contract_status(path)
+        entry["status"] = contract_status(path, key)
 
     if not dry_run:
         atomic_write_json(state_path, state)
@@ -186,7 +227,7 @@ def initialize_context(
 
     actions.extend(ensure_dirs(workspace, dry_run=dry_run))
     actions.extend(
-        copy_tree_no_overwrite(
+        copy_selected_docs_no_overwrite(
             framework / "templates" / "docs",
             workspace / "docs",
             overwrite=overwrite,

@@ -298,6 +298,7 @@ def test_iterate_contract_covers_eval_iteration_reports() -> None:
     assert "single_next_command" in contract["required_actions"]
     assert "run_local_promotion_check" in contract["required_actions"]
     assert "iteration_report_write" in contract["gate_ledger_required_when"]
+    assert "docs/context/experiments.md" in contract["sensitive_paths"]
     assert "docs/iterations/" in contract["sensitive_paths"]
     assert (
         ".agents/references/run-artifact-contract.md"
@@ -491,13 +492,15 @@ def test_artifact_outputs_mark_tool_owned_and_legacy_paths() -> None:
 
     iterate_outputs = contracts["iterate"]["artifact_outputs"]
     assert any(
-        output["kind"] == "current_doc" and "docs/40_iterations/" in output["paths"]
+        output["kind"] == "current_doc"
+        and "docs/context/experiments.md" in output["paths"]
+        and "docs/context/memory.md" in output["paths"]
         for output in iterate_outputs
     )
     assert any(
         output["kind"] == "legacy_compat"
         and "docs/iterations/" in output["paths"]
-        and output["replacement"] == "docs/40_iterations/"
+        and output["replacement"] == "docs/context/"
         for output in iterate_outputs
     )
     assert not any(
@@ -521,10 +524,14 @@ def test_run_write_experiment_evidence_bridge_contracts() -> None:
         )
         assert json_path in contract["write_scope"]["allowed_paths"]
         assert md_path in contract["write_scope"]["allowed_paths"]
-        assert "discovery_ledger_update_or_NOT_RUN" in contract["required_actions"]
-        assert "docs/45_discoveries/" in contract["write_scope"]["allowed_paths"]
+        assert "experiments_context_update_or_NOT_RUN" in contract[
+            "required_actions"
+        ]
+        assert "docs/context/experiments.md" in contract["write_scope"][
+            "allowed_paths"
+        ]
         assert (
-            "docs/45_discoveries/Discovery_Ledger.md"
+            "docs/context/experiments.md"
             in contract["required_read_set"]["project_optional"]
         )
         assert any(
@@ -536,7 +543,7 @@ def test_run_write_experiment_evidence_bridge_contracts() -> None:
         )
         assert any(
             output["kind"] == "current_doc"
-            and "docs/45_discoveries/" in output["paths"]
+            and "docs/context/experiments.md" in output["paths"]
             for output in contract["artifact_outputs"]
         )
 

@@ -21,6 +21,18 @@ CANONICAL_STAGES = {"status", "wf5-eval-contract", "wf10-auto", "wf11", "wf12"}
 STAGE_ALIASES = {
     "wf5": "wf5-eval-contract",
 }
+CONTRACT_DEFAULT_PATHS = {
+    "project_contract": "docs/10_contract/Project_Contract.md",
+    "evaluation_contract": "docs/10_contract/Evaluation_Contract.md",
+    "baseline_contract": "docs/10_contract/Baseline_Contract.md",
+    "claim_boundary": "docs/10_contract/Claim_Boundary.md",
+}
+CONTRACT_LABELS = {
+    "project_contract": "Project Contract",
+    "evaluation_contract": "Evaluation Contract",
+    "baseline_contract": "Baseline Contract",
+    "claim_boundary": "Claim Boundary",
+}
 
 
 def load_json_if_exists(path: Path) -> dict[str, Any]:
@@ -60,6 +72,23 @@ def read_bool_header(path: Path, label: str) -> bool | None:
     return value.strip().lower() in TRUE_VALUES
 
 
+def read_contract_status(path: Path, key: str) -> str:
+    label = CONTRACT_LABELS[key]
+    value = read_header(path, f"{label} status")
+    if value is not None:
+        status = value.strip().lower()
+        return status if status in VALID_STATUSES else "draft"
+    return read_status(path)
+
+
+def read_contract_human_approved(path: Path, key: str) -> bool | None:
+    label = CONTRACT_LABELS[key]
+    value = read_bool_header(path, f"{label} human approved")
+    if value is not None:
+        return value
+    return read_bool_header(path, "Human approved")
+
+
 def state_contract_status(state: dict[str, Any], key: str) -> str | None:
     contracts = state.get("contracts")
     if not isinstance(contracts, dict):
@@ -79,6 +108,16 @@ def state_contract_entry(state: dict[str, Any], key: str) -> dict[str, Any]:
     return entry if isinstance(entry, dict) else {}
 
 
+def contract_path_from_state(state: dict[str, Any], key: str) -> str:
+    entry = state_contract_entry(state, key)
+    path = entry.get("path")
+    if isinstance(path, str) and path.strip():
+        return path.strip()
+    if state.get("context_model_version") == "dynamic-context-v2":
+        return "docs/context/contracts.md"
+    return CONTRACT_DEFAULT_PATHS[key]
+
+
 def state_has_approval_metadata(state: dict[str, Any], key: str) -> bool:
     entry = state_contract_entry(state, key)
     return all(bool(entry.get(field)) for field in ("approved_at", "approved_by", "approval_source"))
@@ -93,10 +132,11 @@ def state_accepts_draft(state: dict[str, Any], key: str) -> bool:
     )
 
 
-def contract_info(workspace_root: Path, state: dict[str, Any], key: str, relative: str) -> dict[str, Any]:
+def contract_info(workspace_root: Path, state: dict[str, Any], key: str) -> dict[str, Any]:
+    relative = contract_path_from_state(state, key)
     path = workspace_root / relative
-    markdown_status = read_status(path)
-    human_approved = read_bool_header(path, "Human approved")
+    markdown_status = read_contract_status(path, key)
+    human_approved = read_contract_human_approved(path, key)
     state_status = state_contract_status(state, key)
     status = state_status or markdown_status
     if status not in VALID_STATUSES:
@@ -142,10 +182,10 @@ def gate_result(workspace_root: Path, *, stage: str, allow_draft: bool = False) 
     checks: list[dict[str, Any]] = []
 
     contracts = {
-        "project_contract": contract_info(workspace_root, state, "project_contract", "docs/10_contract/Project_Contract.md"),
-        "evaluation_contract": contract_info(workspace_root, state, "evaluation_contract", "docs/10_contract/Evaluation_Contract.md"),
-        "baseline_contract": contract_info(workspace_root, state, "baseline_contract", "docs/10_contract/Baseline_Contract.md"),
-        "claim_boundary": contract_info(workspace_root, state, "claim_boundary", "docs/10_contract/Claim_Boundary.md"),
+        "project_contract": contract_info(workspace_root, state, "project_contract"),
+        "evaluation_contract": contract_info(workspace_root, state, "evaluation_contract"),
+        "baseline_contract": contract_info(workspace_root, state, "baseline_contract"),
+        "claim_boundary": contract_info(workspace_root, state, "claim_boundary"),
     }
 
     if not dynamic:
@@ -171,7 +211,7 @@ def gate_result(workspace_root: Path, *, stage: str, allow_draft: bool = False) 
         approved = eval_contract["status"] == "approved"
         draft_ok = allow_draft or eval_contract["operator_accepted_draft"]
         if not eval_contract["exists"]:
-            add_check(checks, "evaluation_contract_exists", False, "error", "Missing docs/10_contract/Evaluation_Contract.md.")
+            add_check(checks, "evaluation_contract_exists", False, "error", f"Missing {eval_contract['path']}.")
         elif approved and eval_contract["approval_confirmed"]:
             add_check(checks, "evaluation_contract_approved", True, "info", "Evaluation Contract is approved.")
         elif approved:
@@ -195,7 +235,7 @@ def gate_result(workspace_root: Path, *, stage: str, allow_draft: bool = False) 
                 "baseline_contract_exists",
                 False,
                 "error",
-                "Missing docs/10_contract/Baseline_Contract.md; WF5 should draft or approve baseline requirements before later stages depend on reproduced baselines.",
+                f"Missing {baseline_contract['path']}; WF5 should draft or approve baseline requirements before later stages depend on reproduced baselines.",
             )
         elif baseline_contract["status"] == "approved" and baseline_contract["approval_confirmed"]:
             add_check(checks, "baseline_contract_approved", True, "info", "Baseline Contract is approved.")

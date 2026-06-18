@@ -121,6 +121,31 @@ def primary_metric_name(protocol: Any) -> str | None:
     return None
 
 
+def watchdog_status_paths(root: Path, iteration_id: str) -> list[str]:
+    if not iteration_id:
+        return []
+    status_dir = root / ".auto_iterate" / "run_health" / "status"
+    if not status_dir.is_dir():
+        return []
+    matches: list[tuple[str, str]] = []
+    for path in sorted(status_dir.glob("*.json")):
+        if path.name == "summary.json":
+            continue
+        try:
+            data = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        if data.get("iteration_id") != iteration_id:
+            continue
+        phase_key = nonempty(data.get("phase_key"))
+        matches.append((phase_key, relpath(path, root)))
+    priority = {"run_full": 0, "run_screening": 1, "eval": 2}
+    matches.sort(key=lambda item: (priority.get(item[0], 99), item[1]))
+    return [path for _phase, path in matches]
+
+
 def run_record(
     root: Path,
     log: dict[str, Any],
@@ -147,6 +172,17 @@ def run_record(
                 if nonempty(value):
                     source_refs.append(source_ref(root, value, "eval_artifact"))
         detail_ref = nonempty(manifest.get("exp_dir")) or None
+    watchdog_paths = watchdog_status_paths(root, iteration_id)
+    manifest_watchdog_path = (
+        nonempty(manifest.get("watchdog_status_path"))
+        if isinstance(manifest, dict)
+        else ""
+    )
+    watchdog_status_path = manifest_watchdog_path or (
+        watchdog_paths[0] if watchdog_paths else ""
+    )
+    if watchdog_status_path:
+        source_refs.append(source_ref(root, watchdog_status_path, "watchdog_status"))
     summary = (
         iteration.get("changes_summary")
         or iteration.get("hypothesis")
@@ -162,6 +198,19 @@ def run_record(
         "status": status,
         "iteration_id": iteration_id,
         "git_commit": iteration.get("git_commit"),
+        "pre_train_commit": (
+            manifest.get("pre_train_commit") if isinstance(manifest, dict) else None
+        ),
+        "pre_eval_commit": (
+            manifest.get("pre_eval_commit") if isinstance(manifest, dict) else None
+        ),
+        "pre_eval_commit_NOT_CHANGED": (
+            manifest.get("pre_eval_commit_NOT_CHANGED")
+            if isinstance(manifest, dict)
+            else None
+        ),
+        "watchdog_status_path": watchdog_status_path or None,
+        "watchdog_status_paths": watchdog_paths,
         "primary_metric": primary_metric_record(log, iteration),
         "source_refs": source_refs,
         "detail_ref": detail_ref,

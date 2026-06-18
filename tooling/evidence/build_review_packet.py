@@ -20,7 +20,6 @@ import check_docchain_gates  # noqa: E402
 import check_protocol_drift  # noqa: E402
 import check_workflow_state  # noqa: E402
 
-
 STAGE_TO_CONTEXT_STAGE = {
     "status": "status",
     "wf5": "wf5-eval-contract",
@@ -152,6 +151,12 @@ def protocol_changelog_rows(workspace_root: Path) -> list[dict[str, str]]:
 
 def evidence_sources(workspace_root: Path) -> list[list[str]]:
     candidates = [
+        ("docs/context/contracts.md", "Dynamic-context-v2 contracts"),
+        ("docs/context/facts.md", "Dynamic-context-v2 current facts"),
+        ("docs/context/evidence.md", "Dynamic-context-v2 evidence index"),
+        ("docs/context/protocol.md", "Dynamic-context-v2 protocol draft"),
+        ("docs/context/experiments.md", "Dynamic-context-v2 experiment queue and research wiki"),
+        ("docs/context/memory.md", "Dynamic-context-v2 decisions and lesson candidates"),
         ("docs/30_evidence/Evidence_Index.md", "Evidence index and table inventory"),
         ("docs/30_evidence/Metric_Table.md", "Metric candidates and known issues"),
         ("docs/30_evidence/Baseline_Table.md", "Baseline candidates and reproduction status"),

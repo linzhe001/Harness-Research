@@ -24,8 +24,10 @@ state.
   `docs/30_evidence/Experiment_Evidence_Index.{json,md}` and artifact paths
   named there. Direct `iteration_log.json` reads are weak intent signals; paper
   claims require reports, configs, logs, metrics, or run artifacts.
-- Read `docs/45_discoveries/Research_Wiki.md` when present for stable
-  observations and open questions; it is context, not approval.
+- Read `docs/context/experiments.md` when present for Research Wiki context,
+  stable observations, run requests, assurance gaps, and open questions.
+  Legacy `docs/45_discoveries/Research_Wiki.md` is a fallback before
+  dynamic-context-v2 migration; neither file is approval.
 - Do not write `iteration_log.json` or `.auto_iterate/**`; auto-paper state
   uses `auto_paper_log.json`, `.auto_paper/`, and
   `auto_paper_output/<paper_id>/`.

@@ -46,6 +46,11 @@ $run
 ## Boundaries
 
 - `iteration_log.json` 是 experiment source of truth。
+- `docs/context/experiments.md` 是 WF10 planning、queue、Research Wiki、
+  discoveries 和 Assurance Axis 的 canonical working doc；legacy
+  `docs/40_iterations/**` 和 `docs/45_discoveries/**` 只是迁移输入。
+- `docs/context/memory.md` 保存 promoted lessons；不要把 candidate lesson
+  直接写成全局 memory。
 - `$run` executes or delegates experiments; `$analyze` turns results into
   decisions; `$write` handles manuscript, release docs, GitHub readiness, and
   scoped release gates.

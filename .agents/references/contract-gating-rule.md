@@ -7,14 +7,26 @@ contracts.
 
 ## Contract Files
 
-Current projects may use:
+New dynamic-context-v2 projects use one canonical file:
+
+- `docs/context/contracts.md`
+
+It records named sections and headers for:
+
+- `Project Contract status`
+- `Evaluation Contract status`
+- `Baseline Contract status`
+- `Claim Boundary status`
+
+Legacy or not-yet-migrated projects may still use:
 
 - `docs/10_contract/Project_Contract.md`
 - `docs/10_contract/Evaluation_Contract.md`
 - `docs/10_contract/Baseline_Contract.md`
 - `docs/10_contract/Claim_Boundary.md`
 
-Each contract must expose one of these statuses near the top:
+Each contract must expose one of these statuses near the top or in its named
+v2 header:
 
 - `missing`
 - `draft`
@@ -30,7 +42,8 @@ Each contract must expose one of these statuses near the top:
   never become approved contracts by themselves.
 - Gate tooling treats `Status: approved` as confirmed only when both approval
   records exist:
-  - the contract Markdown has `Human approved: yes`
+  - the contract Markdown has `Human approved: yes` or the matching v2 header
+    such as `Evaluation Contract human approved: yes`
   - `PROJECT_STATE.json.contracts.<contract>.status` is `approved` and the
     contract entry includes `approved_at`, `approved_by`, and `approval_source`
 - Approved contracts override dynamic protocols and operator preferences.
@@ -45,7 +58,8 @@ Each contract must expose one of these statuses near the top:
 3. Run `tooling/evidence/check_dynamic_context.py --stage <stage> --review-packet`
    and give the review packet to the operator.
 4. Only after explicit human approval, update both approval records:
-   - contract Markdown: `Status: approved` and `Human approved: yes`
+  - contract Markdown: `Status: approved` and `Human approved: yes`, or the
+    matching v2 named status and approval headers
    - `PROJECT_STATE.json.contracts.<contract>`: `status: approved`,
      `approved_at`, `approved_by`, and `approval_source`
 5. Re-run the dynamic-context gate suite. If it fails, keep the contract in
@@ -95,6 +109,7 @@ controller check, CI job, or approval tool actually ran; otherwise report
 
 ## Legacy Compatibility
 
-Older projects may not have `docs/10_contract/**`. In legacy mode, warn and
-fall back to `PROJECT_STATE.json.evaluation_protocol`,
+Older projects may not have `docs/context/contracts.md` or
+`docs/10_contract/**`. In legacy mode, warn and fall back to
+`PROJECT_STATE.json.evaluation_protocol`,
 `docs/Baseline_Report.md`, and existing workflow artifacts.

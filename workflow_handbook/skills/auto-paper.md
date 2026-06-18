@@ -92,6 +92,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `docs/auto_paper_goal.md`
 - `auto_paper_output/`
 - `iteration_log.json`
+- `docs/context/contracts.md`
+- `docs/context/experiments.md`
 - `docs/30_evidence/Experiment_Evidence_Index.json`
 - `docs/30_evidence/Experiment_Evidence_Index.md`
 - `tooling/auto_paper/`
@@ -103,7 +105,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 - `smoke_test_or_NOT_RUN`
 - `claim_delta_evidence_or_NOT_CHANGED`
-- `research_wiki_update_or_NOT_RUN`
+- `experiments_context_update_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `auto_paper_gate`

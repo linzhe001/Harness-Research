@@ -162,8 +162,8 @@ STAGE_GUIDANCE = {
         ),
         "start": "`$run` for experiment execution and `$analyze` for result decisions.",
         "effect": (
-            "`iteration_log.json` and `docs/40_iterations/**` capture runs, "
-            "lessons, and decisions."
+            "`iteration_log.json`, `docs/context/experiments.md`, and "
+            "`docs/context/memory.md` capture runs, lessons, and decisions."
         ),
     },
     "WF11": {

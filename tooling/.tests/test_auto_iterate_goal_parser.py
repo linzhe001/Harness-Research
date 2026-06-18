@@ -86,6 +86,7 @@ class TestGoalParse:
         assert result["automation_policy"]["commit_checkpoint_policy"] == (
             "pre_train_and_pre_eval_required"
         )
+        assert result["automation_policy"]["watchdog_policy"] == "status_json_only"
         assert "claim_support" in result["assurance_axes"]
 
     def test_parse_invalid_metric_change_file(self) -> None:
@@ -203,6 +204,14 @@ class TestGoalValidation:
         assert any("screening_policy.enabled must be boolean" in e for e in errors)
         assert any("screening_policy.threshold_pct must be an integer from 1 to 100" in e for e in errors)
         assert any("screening_policy.default_steps must be a positive integer" in e for e in errors)
+
+    def test_invalid_watchdog_policy_is_rejected(self) -> None:
+        parsed = parse(FIXTURES / "goal.valid.md")
+        parsed["automation_policy"]["watchdog_policy"] = "notify_me"
+
+        errors = validate(parsed)
+
+        assert any("automation_policy.watchdog_policy" in e for e in errors)
 
     def test_list_placeholders_are_rejected(self, tmp_path: Path) -> None:
         goal_path = tmp_path / "goal.md"
@@ -345,6 +354,7 @@ class TestPolicyConfig:
         assert frozen["retry_policy"]["max_phase_attempts"] == 2
         assert frozen["retry_policy"]["max_external_auth_attempts"] == 6
         assert frozen["heartbeat"]["stale_threshold_sec"] == 120
+        assert frozen["automation_policy"]["watchdog_policy"] == "status_json_only"
 
     def test_merge_with_goal(self) -> None:
         pc = PolicyConfig()
@@ -354,6 +364,7 @@ class TestPolicyConfig:
         # Goal patience should override default.
         assert frozen["patience"]["max_no_improve_rounds"] == 5
         assert frozen["screening_policy"]["enabled"] is True
+        assert frozen["automation_policy"]["watchdog_policy"] == "status_json_only"
 
     def test_cli_overrides_win(self) -> None:
         pc = PolicyConfig()

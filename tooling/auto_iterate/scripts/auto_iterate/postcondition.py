@@ -11,6 +11,7 @@ and §4.5 for the ``current_iteration_id`` binding algorithm.
 from __future__ import annotations
 
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -256,6 +257,81 @@ def _path_is_file(root: Path, value: str) -> bool:
     return (root / path).is_file()
 
 
+def _nonempty_str(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return False
+
+
+def _commit_ref_error(root: Path, value: Any, field_name: str) -> str | None:
+    commit = _nonempty_str(value)
+    if commit is None:
+        return f"{field_name} is required"
+    if not (root / ".git").exists():
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+            cwd=root,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError as exc:
+        return f"{field_name} could not be verified with git: {exc}"
+    if result.returncode != 0:
+        return f"{field_name} does not resolve to a git commit: {commit}"
+    return None
+
+
+def _pre_train_commit_error(
+    root: Path,
+    run_manifest: Any,
+    *,
+    manifest_name: str,
+) -> str | None:
+    if not isinstance(run_manifest, dict):
+        return f"{manifest_name}.pre_train_commit is required"
+    if run_manifest.get("error") == "planned_command_not_runnable":
+        return None
+    return _commit_ref_error(
+        root,
+        run_manifest.get("pre_train_commit"),
+        f"{manifest_name}.pre_train_commit",
+    )
+
+
+def _pre_eval_commit_error(root: Path, iteration: dict[str, Any]) -> str | None:
+    run_manifest = iteration.get("run_manifest")
+    if not isinstance(run_manifest, dict):
+        return "run_manifest.pre_eval_commit is required"
+    pre_eval_commit = _nonempty_str(run_manifest.get("pre_eval_commit"))
+    if pre_eval_commit is not None:
+        return _commit_ref_error(
+            root,
+            pre_eval_commit,
+            "run_manifest.pre_eval_commit",
+        )
+    if _truthy(run_manifest.get("pre_eval_commit_NOT_CHANGED")):
+        return _commit_ref_error(
+            root,
+            run_manifest.get("pre_train_commit"),
+            "run_manifest.pre_train_commit",
+        )
+    return (
+        "run_manifest.pre_eval_commit or "
+        "run_manifest.pre_eval_commit_NOT_CHANGED is required"
+    )
+
+
 def _run_artifact_error(
     root: Path,
     iteration: dict,
@@ -326,6 +402,13 @@ def _screening_run_artifact_error(root: Path, iteration: dict) -> str | None:
                 "screening.run_manifest.exp_dir must differ from "
                 "run_manifest.exp_dir when full_run.status=completed"
             )
+    pre_train_error = _pre_train_commit_error(
+        root,
+        screening_manifest,
+        manifest_name="screening.run_manifest",
+    )
+    if pre_train_error:
+        return pre_train_error
     return None
 
 
@@ -845,6 +928,14 @@ class PostconditionValidator:
             if artifact_error:
                 return _fail("run_screening", "postcondition_failed",
                              iteration_id, {"error": artifact_error})
+            pre_train_error = _pre_train_commit_error(
+                self.root,
+                screening_manifest,
+                manifest_name="screening.run_manifest",
+            )
+            if pre_train_error:
+                return _fail("run_screening", "postcondition_failed",
+                             iteration_id, {"error": pre_train_error})
         metrics_error = _screening_metrics_error(it, tracked_metrics)
         if metrics_error:
             return _fail("run_screening", "postcondition_failed", iteration_id,
@@ -938,6 +1029,14 @@ class PostconditionValidator:
             if artifact_error:
                 return _fail("run_full", "postcondition_failed", iteration_id,
                              {"error": artifact_error})
+            pre_train_error = _pre_train_commit_error(
+                self.root,
+                it.get("run_manifest"),
+                manifest_name="run_manifest",
+            )
+            if pre_train_error:
+                return _fail("run_full", "postcondition_failed", iteration_id,
+                             {"error": pre_train_error})
             screening_artifact_error = _screening_run_artifact_error(
                 self.root,
                 it,
@@ -1059,6 +1158,10 @@ class PostconditionValidator:
         if artifact_error:
             return _fail("eval", "postcondition_failed", iteration_id,
                          {"error": artifact_error})
+        pre_eval_error = _pre_eval_commit_error(self.root, it)
+        if pre_eval_error:
+            return _fail("eval", "postcondition_failed", iteration_id,
+                         {"error": pre_eval_error})
         screening_artifact_error = _screening_run_artifact_error(self.root, it)
         if screening_artifact_error:
             return _fail("eval", "postcondition_failed", iteration_id,

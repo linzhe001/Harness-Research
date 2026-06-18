@@ -39,6 +39,8 @@ def _iteration(exp_dir: str = "experiments/iter1") -> dict:
             "stdout_log_path": f"{exp_dir}/stdout+stderr.log",
             "git_snapshot_path": f"{exp_dir}/git_status/commit.txt",
             "git_commit": "abc123",
+            "pre_train_commit": "abc123",
+            "pre_eval_commit_NOT_CHANGED": True,
             "eval_artifact_paths": [f"{exp_dir}/epochs/1/eval.jsonl"],
         },
     }
@@ -66,6 +68,28 @@ def test_build_experiment_evidence_index_writes_paper_facing_outputs(
 ) -> None:
     iteration = _iteration()
     _write_bundle(tmp_path, iteration)
+    watchdog_status = (
+        tmp_path
+        / ".auto_iterate"
+        / "run_health"
+        / "status"
+        / "auto_round1_run_full.json"
+    )
+    watchdog_status.parent.mkdir(parents=True)
+    watchdog_status.write_text(
+        json.dumps(
+            {
+                "status": "COMPLETED",
+                "task": "auto_round1_run_full",
+                "type": "training",
+                "phase_key": "run_full",
+                "iteration_id": "iter1",
+                "ts": "2026-04-30T00:00:00Z",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     (tmp_path / "docs" / "40_iterations").mkdir(parents=True)
     (tmp_path / "docs" / "40_iterations" / "iter1.md").write_text(
         "\n".join(
@@ -185,6 +209,28 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
         "promotion": {"status": "not_applicable", "plan_path": None},
     }
     _write_bundle(tmp_path, iteration)
+    watchdog_status = (
+        tmp_path
+        / ".auto_iterate"
+        / "run_health"
+        / "status"
+        / "auto_round1_run_full.json"
+    )
+    watchdog_status.parent.mkdir(parents=True)
+    watchdog_status.write_text(
+        json.dumps(
+            {
+                "status": "COMPLETED",
+                "task": "auto_round1_run_full",
+                "type": "training",
+                "phase_key": "run_full",
+                "iteration_id": "iter1",
+                "ts": "2026-04-30T00:00:00Z",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     (tmp_path / "iteration_log.json").write_text(
         json.dumps(
             {
@@ -265,6 +311,11 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
     assert run_records
     assert run_records[0]["summary"]
     assert run_records[0]["source_refs"]
+    assert run_records[0]["pre_train_commit"] == "abc123"
+    assert run_records[0]["pre_eval_commit_NOT_CHANGED"] is True
+    assert run_records[0]["watchdog_status_path"].endswith(
+        "auto_round1_run_full.json"
+    )
     discoveries = [
         item for item in data["records"] if item["id"] == "discovery:d1"
     ]

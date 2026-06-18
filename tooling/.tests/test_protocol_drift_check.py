@@ -53,6 +53,67 @@ def write_clean_protocol_workspace(root: Path) -> None:
     )
 
 
+def write_clean_context_v2_workspace(root: Path) -> None:
+    write_json(
+        root / "PROJECT_STATE.json",
+        {"context_model_version": "dynamic-context-v2"},
+    )
+    write(
+        root / "docs" / "context" / "protocol.md",
+        "\n".join(
+            [
+                "# Protocol",
+                "",
+                "Context doc: protocol",
+                "Context model: dynamic-context-v2",
+                "Status: draft",
+                "Review required: no",
+                "Review verdict: accepted",
+                "",
+                "## Protocol Assumptions",
+                "",
+                "| Assumption | Confidence | Evidence | Review Trigger |",
+                "|---|---|---|---|",
+                "",
+            ]
+        ),
+    )
+    write(
+        root / "docs" / "context" / "evidence.md",
+        "\n".join(
+            [
+                "# Evidence",
+                "",
+                "Context doc: evidence",
+                "Context model: dynamic-context-v2",
+                "",
+                "## Open Questions",
+                "",
+                "| ID | Question | Why It Matters | Blocking Stage | Next Evidence |",
+                "|---|---|---|---|---|",
+                "",
+            ]
+        ),
+    )
+    write(
+        root / "docs" / "context" / "memory.md",
+        "\n".join(
+            [
+                "# Memory",
+                "",
+                "Context doc: memory",
+                "Context model: dynamic-context-v2",
+                "",
+                "## Negative Results",
+                "",
+                "| ID | Date | Finding | Evidence | Reuse Guidance |",
+                "|---|---|---|---|---|",
+                "",
+            ]
+        ),
+    )
+
+
 def test_protocol_drift_gate_passes_legacy_workspace(tmp_path: Path) -> None:
     drift = load_tool("check_protocol_drift")
 
@@ -60,6 +121,23 @@ def test_protocol_drift_gate_passes_legacy_workspace(tmp_path: Path) -> None:
 
     assert result["ok"] is True
     assert result["dynamic_protocol"] is False
+
+
+def test_protocol_drift_gate_passes_dynamic_context_v2_workspace(
+    tmp_path: Path,
+) -> None:
+    drift = load_tool("check_protocol_drift")
+    write_clean_context_v2_workspace(tmp_path)
+
+    result = drift.gate_result(tmp_path, stage="wf10")
+
+    assert result["ok"] is True
+    assert result["dynamic_protocol"] is True
+    assert any(
+        check["name"] == "research_protocol_exists"
+        and check["path"] == "docs/context/protocol.md"
+        for check in result["checks"]
+    )
 
 
 def test_protocol_drift_gate_fails_required_review_for_target_stage(

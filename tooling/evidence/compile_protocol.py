@@ -11,9 +11,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
-EVIDENCE_DIR = Path("docs/30_evidence")
-PROTOCOL_DIR = Path("docs/35_protocol")
+CONTEXT_EVIDENCE_PATH = Path("docs/context/evidence.md")
+CONTEXT_PROTOCOL_PATH = Path("docs/context/protocol.md")
+LEGACY_EVIDENCE_DIR = Path("docs/30_evidence")
 PLACEHOLDER_VALUES = {
     "",
     "n/a",
@@ -71,6 +71,9 @@ def parse_markdown_tables(text: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     header: list[str] | None = None
     for line in text.splitlines():
+        if not line.strip():
+            header = None
+            continue
         columns = split_table_row(line)
         if columns is None:
             continue
@@ -168,7 +171,7 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             ]
         )
         for row in baselines
-    ] or [table_row(["TBD", "No baseline evidence rows found", "docs/30_evidence/Baseline_Table.md", "candidate"])]
+    ] or [table_row(["TBD", "No baseline evidence rows found", "docs/context/evidence.md", "candidate"])]
 
     metric_rows = [
         table_row(
@@ -181,7 +184,7 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             ]
         )
         for row in metrics
-    ] or [table_row(["TBD", "TBD", "No metric evidence rows found", "Needs review", "docs/30_evidence/Metric_Table.md"])]
+    ] or [table_row(["TBD", "TBD", "No metric evidence rows found", "Needs review", "docs/context/evidence.md"])]
 
     dataset_rows = [
         table_row(
@@ -194,7 +197,7 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             ]
         )
         for row in datasets
-    ] or [table_row(["TBD", "TBD", "No dataset evidence rows found", "Needs review", "docs/30_evidence/Dataset_Table.md"])]
+    ] or [table_row(["TBD", "TBD", "No dataset evidence rows found", "Needs review", "docs/context/evidence.md"])]
 
     failure_rows: list[str] = []
     for row in papers:
@@ -208,7 +211,7 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
     for row in questions:
         failure_rows.append(table_row([value(row, "question", "Open question"), value(row, "blocking_stage", "review"), evidence_ref(row), value(row, "next_evidence", "Collect more evidence")]))
     if not failure_rows:
-        failure_rows = [table_row(["No explicit failure evidence rows found", "Human review", "docs/30_evidence/Open_Questions.md", "Keep as open risk until reviewed"])]
+        failure_rows = [table_row(["No explicit failure evidence rows found", "Human review", "docs/context/evidence.md", "Keep as open risk until reviewed"])]
 
     high = sum(1 for row in papers + baselines if confidence_from_text(*row.values()) == "high")
     medium = sum(1 for row in papers + baselines + metrics if confidence_from_text(*row.values()) == "medium")
@@ -219,7 +222,9 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             "# Research Protocol",
             "",
             "Status: draft",
-            "Evidence base: `docs/30_evidence/Evidence_Index.md`",
+            "Context doc: protocol",
+            "Context model: dynamic-context-v2",
+            "Evidence base: `docs/context/evidence.md` plus legacy `docs/30_evidence/**` when present",
             "Evidence chain: N/A",
             "Evidence audit: N/A",
             "Audit result: N/A",
@@ -322,7 +327,7 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             )
         )
     if not assumption_rows:
-        assumption_rows = [table_row(["No evidence-backed protocol assumptions generated yet", "low", "docs/30_evidence/**", "before WF5"])]
+        assumption_rows = [table_row(["No evidence-backed protocol assumptions generated yet", "low", "docs/context/evidence.md", "before WF5"])]
 
     assumptions = "\n".join(
         [
@@ -368,10 +373,10 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             "",
             "| Check | Result | Evidence | Notes |",
             "|---|---|---|---|",
-            table_row(["Evidence coverage", "pending", "docs/30_evidence/**", f"{len(papers) + len(baselines) + len(metrics) + len(datasets)} evidence table row(s) compiled"]),
-            table_row(["Metric suitability", "pending", "docs/30_evidence/Metric_Table.md", f"{len(metrics)} metric candidate(s)"]),
-            table_row(["Baseline coverage", "pending", "docs/30_evidence/Baseline_Table.md", f"{len(baselines)} baseline candidate(s)"]),
-            table_row(["Claim boundary", "pending", "docs/10_contract/Claim_Boundary.md", "Must be reviewed before release claims"]),
+            table_row(["Evidence coverage", "pending", "docs/context/evidence.md", f"{len(papers) + len(baselines) + len(metrics) + len(datasets)} evidence table row(s) compiled"]),
+            table_row(["Metric suitability", "pending", "docs/context/evidence.md", f"{len(metrics)} metric candidate(s)"]),
+            table_row(["Baseline coverage", "pending", "docs/context/evidence.md", f"{len(baselines)} baseline candidate(s)"]),
+            table_row(["Claim boundary", "pending", "docs/context/contracts.md", "Must be reviewed before release claims"]),
             table_row(["Protocol drift", "pending", "tooling/evidence/check_protocol_drift.py", "Run drift gate before WF5/WF10/WF11/WF12"]),
             "",
         ]
@@ -389,34 +394,44 @@ def protocol_docs(tables: dict[str, list[dict[str, str]]], *, generated_date: st
             "",
             "| Date | Change | Reason | Evidence | Reviewer |",
             "|---|---|---|---|---|",
-            table_row([generated_date, "Generated dynamic protocol draft", "Compiled from current evidence tables", "docs/30_evidence/**", "AI draft; human review required"]),
+            table_row([generated_date, "Generated dynamic protocol draft", "Compiled from current evidence tables", "docs/context/evidence.md", "AI draft; human review required"]),
             "",
         ]
     )
 
+    context_protocol = "\n\n".join(
+        [
+            "# Protocol",
+            "Context doc: protocol\nContext model: dynamic-context-v2\nStatus: draft\nReview required: yes\nReview verdict: pending\nGenerated by: `tooling/evidence/compile_protocol.py`",
+            research_protocol.replace("# Research Protocol", "## Research Protocol", 1),
+            assumptions.replace("# Protocol Assumptions", "## Protocol Assumptions", 1),
+            review.replace("# Protocol Review", "## Protocol Review", 1),
+            changelog.replace("# Protocol Changelog", "## Protocol Changelog", 1),
+        ]
+    )
+
     return {
-        "Research_Protocol.md": research_protocol,
-        "Protocol_Assumptions.md": assumptions,
-        "Protocol_Review.md": review,
-        "Protocol_Changelog.md": changelog,
+        "protocol.md": context_protocol,
     }
 
 
 def load_evidence_tables(workspace_root: Path) -> dict[str, list[dict[str, str]]]:
+    context_evidence = CONTEXT_EVIDENCE_PATH.as_posix()
     return {
         "papers": load_table(workspace_root, "docs/30_evidence/Paper_Table.md", ["paper", "claim_used", "limitations"]),
         "repos": load_table(workspace_root, "docs/30_evidence/Repo_Table.md", ["repo", "role", "notes"]),
         "datasets": load_table(workspace_root, "docs/30_evidence/Dataset_Table.md", ["dataset", "role", "split_eval_notes", "license_risk", "evidence"]),
         "baselines": load_table(workspace_root, "docs/30_evidence/Baseline_Table.md", ["baseline", "source", "why_relevant", "notes"]),
         "metrics": load_table(workspace_root, "docs/30_evidence/Metric_Table.md", ["metric", "measures", "known_issues", "evidence"]),
-        "questions": load_table(workspace_root, "docs/30_evidence/Open_Questions.md", ["question", "why_it_matters", "next_evidence"]),
+        "questions": load_table(workspace_root, context_evidence, ["question", "why_it_matters", "next_evidence"])
+        + load_table(workspace_root, "docs/30_evidence/Open_Questions.md", ["question", "why_it_matters", "next_evidence"]),
     }
 
 
 def destination_root(workspace_root: Path, *, apply: bool, current_build_id: str) -> Path:
     if apply:
-        return workspace_root / PROTOCOL_DIR
-    return workspace_root / ".evidence" / "protocol_compiler" / current_build_id / PROTOCOL_DIR
+        return workspace_root / CONTEXT_PROTOCOL_PATH.parent
+    return workspace_root / ".evidence" / "protocol_compiler" / current_build_id / CONTEXT_PROTOCOL_PATH.parent
 
 
 def compile_protocol(
@@ -454,14 +469,14 @@ def compile_protocol(
         "actions": actions,
     }
     if not apply:
-        summary["next_step"] = "Review generated draft, then rerun with --apply --overwrite if it should replace docs/35_protocol."
+        summary["next_step"] = "Review generated draft, then rerun with --apply --overwrite if it should replace docs/context/protocol.md."
     return summary
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Compile draft dynamic protocol docs from Harness evidence tables.")
+    parser = argparse.ArgumentParser(description="Compile draft dynamic-context-v2 protocol docs from Harness evidence tables.")
     parser.add_argument("--workspace-root", type=Path, default=Path.cwd())
-    parser.add_argument("--apply", action="store_true", help="Write to docs/35_protocol instead of .evidence/protocol_compiler.")
+    parser.add_argument("--apply", action="store_true", help="Write to docs/context/protocol.md instead of .evidence/protocol_compiler.")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing output files.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--build-id", dest="build_id_override")

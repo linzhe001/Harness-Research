@@ -51,17 +51,17 @@ def write_json(path: Path, data: dict) -> None:
 
 def test_init_context_copies_templates_without_overwrite(tmp_path: Path) -> None:
     init_context = load_tool("init_context")
-    existing = tmp_path / "docs" / "10_contract" / "Project_Contract.md"
+    existing = tmp_path / "docs" / "context" / "contracts.md"
     existing.parent.mkdir(parents=True)
     existing.write_text("custom contract\n", encoding="utf-8")
 
     summary = init_context.initialize_context(tmp_path, framework_root=REPO_ROOT)
 
     assert summary["ok"] is True
-    assert (tmp_path / "docs" / "30_evidence" / "Evidence_Index.md").exists()
-    assert (tmp_path / "docs" / "30_evidence" / "Validation_Table.md").exists()
-    assert (tmp_path / "docs" / "20_facts" / "Project_Glossary.md").exists()
-    assert (tmp_path / "docs" / "20_facts" / "Codebase_Map.md").exists()
+    assert (tmp_path / "docs" / "context" / "evidence.md").exists()
+    assert (tmp_path / "docs" / "context" / "facts.md").exists()
+    assert (tmp_path / "docs" / "context" / "protocol.md").exists()
+    assert (tmp_path / "docs" / "context" / "experiments.md").exists()
     assert (tmp_path / "schemas" / "evidence_chain.schema.json").exists()
     assert (tmp_path / "schemas" / "review_packet.schema.json").exists()
     assert (tmp_path / "schemas" / "project_state.schema.json").exists()
@@ -72,7 +72,7 @@ def test_init_context_copies_templates_without_overwrite(tmp_path: Path) -> None
     assert existing.read_text(encoding="utf-8") == "custom contract\n"
     assert any(
         action["action"] == "skip_exists"
-        and action["path"].endswith("Project_Contract.md")
+        and action["path"].endswith("contracts.md")
         for action in summary["actions"]
     )
 
@@ -107,15 +107,15 @@ def test_init_context_can_set_project_state(tmp_path: Path) -> None:
     state = json.loads((tmp_path / "PROJECT_STATE.json").read_text(encoding="utf-8"))
 
     assert state["workflow_mode"] == "dynamic_context"
-    assert state["context_model_version"] == "dynamic-protocol-v1"
+    assert state["context_model_version"] == "dynamic-context-v2"
     assert (
         state["contracts"]["evaluation_contract"]["path"]
-        == "docs/10_contract/Evaluation_Contract.md"
+        == "docs/context/contracts.md"
     )
     assert state["contracts"]["evaluation_contract"]["status"] == "draft"
     assert (
         state["contracts"]["baseline_contract"]["path"]
-        == "docs/10_contract/Baseline_Contract.md"
+        == "docs/context/contracts.md"
     )
     assert state["contracts"]["baseline_contract"]["status"] == "draft"
 
@@ -305,6 +305,50 @@ def test_approve_contract_records_dual_approval_markers(tmp_path: Path) -> None:
     assert updated_state["contracts"]["evaluation_contract"][
         "approval_source"
     ].endswith("review_packet.md")
+    assert gate["ok"] is True
+
+
+def test_approve_contract_updates_dynamic_context_v2_contracts_file(
+    tmp_path: Path,
+) -> None:
+    approve = load_tool("approve_contract")
+    gates = load_tool("check_context_gates")
+    state = minimal_state()
+    state["context_model_version"] = "dynamic-context-v2"
+    state["contracts"] = {
+        "evaluation_contract": {
+            "path": "docs/context/contracts.md",
+            "status": "draft",
+        }
+    }
+    write_json(tmp_path / "PROJECT_STATE.json", state)
+    contract = tmp_path / "docs" / "context" / "contracts.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "\n".join(
+            [
+                "# Contracts",
+                "",
+                "Evaluation Contract status: draft",
+                "Evaluation Contract human approved: no",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    approve.approve_contract(
+        tmp_path,
+        "evaluation_contract",
+        approved_by="expert",
+        approval_source=".evidence/review_packets/wf10/test/review_packet.md",
+        approved_at="2026-04-30T00:00:00Z",
+    )
+
+    updated_contract = contract.read_text(encoding="utf-8")
+    gate = gates.gate_result(tmp_path, stage="wf10-auto")
+    assert "Evaluation Contract status: approved" in updated_contract
+    assert "Evaluation Contract human approved: yes" in updated_contract
     assert gate["ok"] is True
 
 

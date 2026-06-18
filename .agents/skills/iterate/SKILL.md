@@ -64,8 +64,10 @@ If run-local code becomes reusable, recommend `$iterate promote` or
   assurance axis, minimum artifact, claim/figure implication, canonical
   `codex_review`, and implementation scope: `config_only`, `run_local_code`,
   `stable_candidate`, or `delegated_build`. Read
-  `docs/40_iterations/Experiment_Queue.md` when present and consume one queued
-  item or explain the priority choice.
+  `docs/context/experiments.md` when present and consume one queued item or
+  explain the priority choice. Use legacy
+  `docs/40_iterations/Experiment_Queue.md` only when the project has not
+  migrated to dynamic-context-v2.
 - `code`: select latest planned iteration, write context, apply code-style
   checklist, preserve slice/glossary boundaries, route implementation through
   `$code-debug`, and run a `slice` or `experiment` commit checkpoint before
@@ -88,10 +90,13 @@ If run-local code becomes reusable, recommend `$iterate promote` or
   `pre_eval_commit_NOT_CHANGED`; record metrics or documented failure, decision,
   lessons, assurance axis, claim delta evidence, slice/drift/complexity notes,
   reports, and completion state. Write mutable observations to
-  `docs/45_discoveries/Discovery_Ledger.md`, append concrete next experiments
-  to `docs/40_iterations/Experiment_Queue.md`, append stable searchable findings
-  to `docs/45_discoveries/Research_Wiki.md`, or report `NOT_RUN`. Refresh the
-  light Evidence layer with `tooling/evidence/build_light_evidence_index.py`;
+  `docs/context/experiments.md`, including concrete next experiments, mutable
+  observations, and stable searchable findings, or report `NOT_RUN`. Legacy
+  `docs/45_discoveries/Discovery_Ledger.md`,
+  `docs/40_iterations/Experiment_Queue.md`, and
+  `docs/45_discoveries/Research_Wiki.md` may be updated only for
+  not-yet-migrated projects. Refresh the light Evidence layer with
+  `tooling/evidence/build_light_evidence_index.py`;
   run `tooling/evidence/build_experiment_evidence_index.py` only when detailed
   claim/writing evidence is needed, or report `NOT_RUN`.
 - `promote`: read `implementation.code_manifest_path`, write/verify
@@ -103,8 +108,8 @@ If run-local code becomes reusable, recommend `$iterate promote` or
 ## Lesson And Gate Rules
 - Append `MEMORY.md` only for accepted lessons satisfying
   `lesson-quality-rule.md`; raw observations stay in iteration reports or
-  `docs/45_discoveries/Discovery_Ledger.md`; candidates may be promoted into
-  `docs/50_memory/Lessons.md`.
+  `docs/context/experiments.md`; candidates may be promoted into
+  `docs/context/memory.md`.
 - When `iteration_log.json`, lesson files, accepted memory, reports, queue/wiki
   docs, claim delta evidence, or evidence indexes change, report a Gate ledger.
 - Run `check_workflow_state.py` near WF10 handoff points; for routine in-loop

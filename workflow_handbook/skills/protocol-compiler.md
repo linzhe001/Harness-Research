@@ -45,11 +45,11 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 ## Can Write
 
 - `.evidence/protocol_compiler/`
-- `docs/35_protocol/`
+- `docs/context/protocol.md`
 
 ## Final Outputs
 
-- `current_doc: docs/35_protocol/`
+- `current_doc: docs/context/protocol.md`
 
 ## Tool-Owned Outputs
 
@@ -64,6 +64,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/skills/protocol-compiler/SKILL.md`
 - `AGENTS.md`
 - `PROJECT_STATE.json`
+- `docs/context/evidence.md`
+- `docs/context/protocol.md`
 - `docs/30_evidence/Evidence_Index.md`
 - `docs/30_evidence/Open_Questions.md`
 - `docs/35_protocol/Research_Protocol.md`

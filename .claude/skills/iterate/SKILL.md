@@ -9,7 +9,9 @@ iteration records.
 
 - `iteration_log.json`; create from `templates/iteration-log-schema.json` only if missing.
 - `CLAUDE.md` `## Entry Scripts`; `PROJECT_STATE.json` read-only.
-- `docs/10_contract/Evaluation_Contract.md` or protocol docs when present.
+- `docs/context/contracts.md` and `docs/context/protocol.md` when present;
+  legacy `docs/10_contract/Evaluation_Contract.md` is a fallback only before
+  dynamic-context-v2 migration.
 - Shared rules: `code-style.md`, `language-policy.md`,
   `documentation-evidence-rule.md`, `documentation-style.md`,
   `contract-gating-rule.md`, `run-artifact-contract.md`,
@@ -63,8 +65,10 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   assurance axis, minimum artifact, claim/figure implication, Codex review
   status, and implementation scope: `config_only`, `run_local_code`,
   `stable_candidate`, or `delegated_build`. Read
-  `docs/40_iterations/Experiment_Queue.md` when it exists and either consume
-  one queued item or explain the priority choice.
+  `docs/context/experiments.md` when it exists and either consume one queued
+  item or explain the priority choice. Use legacy
+  `docs/40_iterations/Experiment_Queue.md` only before dynamic-context-v2
+  migration.
 - `code`: select latest `planned`; set `coding`; write context; invoke
   `/code-debug`; run a `slice` or `experiment` commit checkpoint before
   `ready_to_run`; for `run_local_code` or `stable_candidate`, write
@@ -86,11 +90,12 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   lessons, decision, and completion.
   Include vertical slice boundary notes and complexity and boundary observations
   when stable code surfaces change. Record mutable observations, phenomena,
-  findings, and next-experiment hypotheses in
-  `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`. Append
-  concrete next experiments to `docs/40_iterations/Experiment_Queue.md` and
-  stable searchable findings to `docs/45_discoveries/Research_Wiki.md`, or
-  report `NOT_RUN`. Refresh
+  findings, next-experiment hypotheses, concrete next experiments, and stable
+  searchable findings in `docs/context/experiments.md`, or report `NOT_RUN`.
+  Legacy `docs/45_discoveries/Discovery_Ledger.md`,
+  `docs/40_iterations/Experiment_Queue.md`, and
+  `docs/45_discoveries/Research_Wiki.md` are fallback paths only before
+  dynamic-context-v2 migration. Refresh
   `.evidence/light/index.json` with
   `tooling/evidence/build_light_evidence_index.py`; run
   `tooling/evidence/build_experiment_evidence_index.py` only for detailed
@@ -127,8 +132,8 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   perform an irreversible external submission.
 - Core train/eval logic stays in `CLAUDE.md` Entry Scripts.
 - Do not promote raw observations to `MEMORY.md`; keep them in
-  `docs/45_discoveries/Discovery_Ledger.md` until lesson-quality rules promote
-  them.
+  `docs/context/experiments.md` until lesson-quality rules promote them into
+  `docs/context/memory.md`.
 - Near WF10 handoff, report Gate ledger and run `check_workflow_state.py` or
   mark it `NOT_RUN`.
 

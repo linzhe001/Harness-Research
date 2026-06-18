@@ -9,9 +9,12 @@ human-facing Markdown.
 
 Apply this rule when compiling or refreshing:
 
-- `docs/10_contract/**/*.md`
-- `docs/20_facts/**/*.md`
-- `docs/35_protocol/**/*.md`
+- `docs/context/contracts.md`
+- `docs/context/facts.md`
+- `docs/context/protocol.md`
+- `docs/context/evidence.md`
+- `docs/context/experiments.md`
+- `docs/context/memory.md`
 - release documents
 - any document whose claims decide workflow direction, evaluation, or final
   research claims
@@ -50,13 +53,15 @@ instead of hand-writing files under `.evidence/**`.
 
 ## Stage Invocation Rule
 
-- When a stage creates or changes current docs under `docs/10_contract/**`,
-  `docs/20_facts/**`, `docs/35_protocol/**`, or release docs, run
+- When a stage creates or changes current docs under `docs/context/**` or
+  release docs, run
   `compile_doc.py` with explicit `--source` paths for the artifacts that support
   the changed claims.
-- When evidence tables under `docs/30_evidence/**` change the draft protocol,
-  run `compile_protocol.py`; use `--apply --overwrite` only after reviewing the
-  generated draft under `.evidence/protocol_compiler/<build_id>/`.
+- When legacy evidence tables under `docs/30_evidence/**` or v2 evidence
+  entries in `docs/context/evidence.md` change the draft protocol, run
+  `compile_protocol.py` or update `docs/context/protocol.md` with an explicit
+  docchain; use `--apply --overwrite` only after reviewing the generated draft
+  under `.evidence/protocol_compiler/<build_id>/`.
 - Before WF10 auto-iteration, WF11, or WF12 readiness, run
   `check_dynamic_context.py --stage <stage> --review-packet` so humans can
   inspect the same gate result the workflow uses.
@@ -65,11 +70,12 @@ instead of hand-writing files under `.evidence/**`.
 
 | Workflow Point | Required Python Tool | Output Used Later |
 |---|---|---|
-| Dynamic-context project init | `init_context.py --set-state` | Numbered docs dirs, root `schemas/**`, `PROJECT_STATE.json` dynamic markers |
-| Evidence tables changed | `compile_protocol.py` | Draft protocol packet under `.evidence/protocol_compiler/**`; optionally applied to `docs/35_protocol/**` after review |
+| Dynamic-context project init | `init_context.py --set-state` | `docs/context/*.md`, root `schemas/**`, `PROJECT_STATE.json` dynamic-context-v2 markers |
+| Legacy context migration | `migrate_context_v2.py --overwrite` | Canonical `docs/context/*.md` compiled from numbered docs and `MEMORY.md` sources |
+| Evidence tables changed | `compile_protocol.py` | Draft protocol packet under `.evidence/protocol_compiler/**`; optionally folded into `docs/context/protocol.md` after review |
 | Current contract/fact/protocol/release doc changed | `compile_doc.py --doc ... --source ...` | `.evidence/chains/**`, Markdown evidence headers, `.evidence/index.json` latest pointer |
 | Daily WF10 evidence refresh | `build_light_evidence_index.py` | `.evidence/light/index.json` compact run/code/promotion/docchain index |
-| Paper-facing experiment evidence | `build_experiment_evidence_index.py` | `docs/30_evidence/Experiment_Evidence_Index.{json,md}` detailed claim-support input |
+| Paper-facing experiment evidence | `build_experiment_evidence_index.py` | Detailed claim-support input; legacy output may still be `docs/30_evidence/Experiment_Evidence_Index.{json,md}` |
 | WF5 contract readiness | `check_dynamic_context.py --stage wf5 --review-packet` | Gate result and review packet for Evaluation Contract approval/revision |
 | Human approves a contract | `approve_contract.py` then `check_dynamic_context.py --stage <stage> --review-packet` | Dual approval markers in Markdown and `PROJECT_STATE.json`; fresh gate result |
 | WF10 auto-iterate readiness | `check_dynamic_context.py --stage wf10 --review-packet` | Controller/orchestrator preflight and human-readable review packet |
@@ -192,8 +198,9 @@ hashes in `git.untracked_snapshots`.
 
 ## Contract Evidence Strength
 
-Contract docs under `docs/10_contract/**` require stronger evidence than
-ordinary draft notes. A ready contract docchain must include:
+Contract docs under `docs/context/contracts.md` and legacy
+`docs/10_contract/**` require stronger evidence than ordinary draft notes. A
+ready contract docchain must include:
 
 - explicit fact markers in the compiled Markdown
 - at least one non-Markdown source artifact

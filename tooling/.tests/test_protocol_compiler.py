@@ -100,7 +100,15 @@ def test_protocol_compiler_writes_draft_under_evidence(tmp_path: Path) -> None:
         generated_date="2026-04-29",
     )
 
-    output = tmp_path / ".evidence" / "protocol_compiler" / "test_build" / "docs" / "35_protocol" / "Research_Protocol.md"
+    output = (
+        tmp_path
+        / ".evidence"
+        / "protocol_compiler"
+        / "test_build"
+        / "docs"
+        / "context"
+        / "protocol.md"
+    )
     text = output.read_text(encoding="utf-8")
 
     assert summary["mode"] == "draft"
@@ -109,7 +117,7 @@ def test_protocol_compiler_writes_draft_under_evidence(tmp_path: Path) -> None:
     assert "Accuracy" in text
     assert "DemoSet" in text
     assert "[U:U005]" in text
-    assert not (tmp_path / "docs" / "35_protocol" / "Research_Protocol.md").exists()
+    assert not (tmp_path / "docs" / "context" / "protocol.md").exists()
 
 
 def test_protocol_compiler_apply_writes_protocol_docs(tmp_path: Path) -> None:
@@ -124,28 +132,34 @@ def test_protocol_compiler_apply_writes_protocol_docs(tmp_path: Path) -> None:
     )
 
     assert summary["mode"] == "apply"
-    assert (tmp_path / "docs" / "35_protocol" / "Research_Protocol.md").exists()
-    assert (tmp_path / "docs" / "35_protocol" / "Protocol_Assumptions.md").exists()
-    assert (tmp_path / "docs" / "35_protocol" / "Protocol_Review.md").exists()
-    assert (tmp_path / "docs" / "35_protocol" / "Protocol_Changelog.md").exists()
+    text = (tmp_path / "docs" / "context" / "protocol.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Research Protocol" in text
+    assert "## Protocol Assumptions" in text
+    assert "## Protocol Review" in text
+    assert "## Protocol Changelog" in text
 
 
 def test_protocol_compiler_apply_does_not_overwrite_without_flag(tmp_path: Path) -> None:
     compiler = load_tool("compile_protocol")
     write_evidence_tables(tmp_path)
-    existing = tmp_path / "docs" / "35_protocol" / "Research_Protocol.md"
+    existing = tmp_path / "docs" / "context" / "protocol.md"
     write(existing, "custom protocol\n")
 
     summary = compiler.compile_protocol(tmp_path, apply=True, build_id_override="test_build")
 
     assert existing.read_text(encoding="utf-8") == "custom protocol\n"
-    assert any(action["action"] == "skip_exists" and action["path"].endswith("Research_Protocol.md") for action in summary["actions"])
+    assert any(
+        action["action"] == "skip_exists" and action["path"].endswith("protocol.md")
+        for action in summary["actions"]
+    )
 
 
 def test_protocol_compiler_apply_can_overwrite(tmp_path: Path) -> None:
     compiler = load_tool("compile_protocol")
     write_evidence_tables(tmp_path)
-    existing = tmp_path / "docs" / "35_protocol" / "Research_Protocol.md"
+    existing = tmp_path / "docs" / "context" / "protocol.md"
     write(existing, "custom protocol\n")
 
     compiler.compile_protocol(tmp_path, apply=True, overwrite=True, build_id_override="test_build")
@@ -166,8 +180,8 @@ def test_protocol_compiler_generates_placeholder_when_evidence_missing(tmp_path:
         / "protocol_compiler"
         / "test_build"
         / "docs"
-        / "35_protocol"
-        / "Research_Protocol.md"
+        / "context"
+        / "protocol.md"
     ).read_text(encoding="utf-8")
     assert "No baseline evidence rows found" in text
     assert "No metric evidence rows found" in text

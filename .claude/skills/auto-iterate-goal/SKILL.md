@@ -31,7 +31,10 @@ Generate `docs/auto_iterate_goal.md` when it does not exist.
 - WF5 baseline metrics and evaluation protocol
 - WF9 validate-run output
 - Project context from `CLAUDE.md` / `PROJECT_STATE.json`
-- Dynamic projects: `docs/10_contract/Evaluation_Contract.md` and `docs/10_contract/Baseline_Contract.md` when present
+- Dynamic projects: `docs/context/contracts.md` when present; legacy
+  `docs/10_contract/Evaluation_Contract.md` and
+  `docs/10_contract/Baseline_Contract.md` are fallback inputs before
+  dynamic-context-v2 migration
 
 **Output:** `docs/auto_iterate_goal.md` with all required structured fields.
 
@@ -72,7 +75,10 @@ Validate the existing goal file without modifying it.
 - Does not write `.auto_iterate/state.json`
 - Does not start, stop, pause, or resume the auto-iterate loop
 - Does not decide `NEXT_ROUND` / `CONTINUE` / etc. (that is `/evaluate`'s job)
-- Does not promote raw auto-run observations into `MEMORY.md`; lesson promotion must follow `lesson-quality-rule.md` through `/iterate eval` or human review
+- Does not promote raw auto-run observations into `MEMORY.md`; lesson promotion
+  must follow `lesson-quality-rule.md` through `/iterate eval` or human review,
+  using `docs/context/experiments.md` and `docs/context/memory.md` as the
+  canonical v2 surfaces.
 - Claude runtime parity for auto-iterate is not in V1 scope
 
 ## Orchestrator Integration

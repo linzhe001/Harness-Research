@@ -131,24 +131,30 @@ Current-project dynamic context files are research-owned:
   `tooling/evidence/init_context.py` may create the dynamic-context directory
   and template layout, and may update `PROJECT_STATE.json` when `--set-state`
   is used, but it does not create or infer `OPERATOR_CONTEXT.md`.
-- `docs/20_facts/**` stores current fact-layer summaries compiled from project
-  artifacts, logs, configs, metrics, or evidence chains. `Codebase_Map.md`
-  is the operator-facing stable codebase map when present.
-- `docs/30_evidence/**` stores operator-readable Conclusion Evidence tables
-  and open questions.
-- `docs/35_protocol/**` stores evidence-derived protocol drafts.
-- `docs/10_contract/**` stores human-approved project, evaluation, baseline,
-  and claim contracts.
+- `docs/context/facts.md` stores current fact-layer summaries compiled from
+  project artifacts, logs, configs, metrics, or evidence chains. A legacy
+  `docs/20_facts/Codebase_Map.md` may still serve as the operator-facing
+  stable codebase map when present.
+- `docs/context/evidence.md` stores operator-readable Conclusion Evidence
+  inputs and open questions.
+- `docs/context/protocol.md` stores evidence-derived protocol drafts.
+- `docs/context/contracts.md` stores human-approved project, evaluation,
+  baseline, and claim contracts.
 - `.evidence/chains/**` stores tool-owned evidence_chain/source_manifest/doc_audit JSON
   for compiled current docs; do not hand-edit `.evidence/**`.
-- `docs/50_memory/**` stores decisions, negative results, and candidate or
-  accepted lessons; `MEMORY.md` stores accepted high-value lessons only.
+- `docs/context/experiments.md` stores the Experiment Queue, Research Wiki,
+  mutable discoveries, run requests, and assurance gaps.
+- `docs/context/memory.md` stores decisions, negative results, and candidate or
+  accepted lessons; root `MEMORY.md` is optional for accepted high-value
+  lessons only.
 
-Legacy flat docs such as `docs/Feasibility_Report.md`,
-`docs/Technical_Spec.md`, and `docs/Baseline_Report.md` are compatibility
-inputs to the fact layer. When refreshed, migrate current facts into
-`docs/20_facts/**` or the numbered context docs, and archive superseded flat
-docs under `docs/90_legacy/`.
+Legacy projects may continue using flat docs such as
+`docs/Feasibility_Report.md`, `docs/Technical_Spec.md`, and
+`docs/Baseline_Report.md`, and numbered context docs such as
+`docs/10_contract/**` or `docs/30_evidence/**`. New projects should enable the
+dynamic context layout by setting
+`PROJECT_STATE.json.context_model_version = "dynamic-context-v2"` and creating
+`docs/context/*.md` through `tooling/evidence/init_context.py`.
 
 ### 1.4 Workflow Overview
 
@@ -211,16 +217,17 @@ The orchestrator does not perform specific research work, but manages the state 
 
 | Stage | Skill | Output | Decision |
 |-------|-------|--------|----------|
-| WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md + optional `docs/30_evidence/**` | PROCEED/PIVOT/ABANDON |
+| WF1 survey-idea | `/survey-idea` | docs/Feasibility_Report.md + optional `docs/context/evidence.md` entries | PROCEED/PIVOT/ABANDON |
 | WF2 idea-debate | `/idea-debate` | docs/Idea_Debate.md + optional protocol updates | SELECT/PILOT_FIRST/MERGE/PIVOT/ABANDON |
 | WF3 refine-idea | `/refine-idea` | docs/Refined_Idea.md + optional protocol drafts | SELECT/PILOT_FIRST/PIVOT/ABANDON |
-| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + `docs/30_evidence/Dataset_Table.md` + data pipeline + CLAUDE.md dataset path sync + AGENTS.md consistency check | — |
+| WF4 data-prep | `/data-prep` | docs/Dataset_Stats.md + `docs/context/evidence.md` dataset entries + data pipeline + CLAUDE.md dataset path sync + AGENTS.md consistency check | — |
 
 WF2 is mandatory for new projects. Legacy projects that predate idea-debate may warn instead of failing, but a new dynamic-context project must hard-fail if it tries to move from WF1 directly to data preparation, baseline reproduction, or architecture design.
 
 When dynamic context is enabled, `/protocol-compiler` can compile
-`docs/30_evidence/**` into a reviewable draft packet before updating
-`docs/35_protocol/**`.
+`docs/context/evidence.md` into a reviewable draft packet before updating
+`docs/context/protocol.md`. Legacy evidence tables under `docs/30_evidence/**`
+remain compatibility inputs.
 Use `/review-packet` when a human approval decision is needed; the packet
 summarizes context gates, protocol drift, docchain status, open questions, and
 the exact approve/revise/reject action.
@@ -230,15 +237,17 @@ the exact approve/revise/reject action.
 | | |
 |---|---|
 | **Skill** | `/baseline-repro [baseline_name or 'all']` |
-| **Output** | `docs/Baseline_Report.md` + `docs/30_evidence/Baseline_Table.md` + baseline_metrics + evaluation_protocol + optional `docs/20_facts/Codebase_Map.md` sync |
+| **Output** | `docs/Baseline_Report.md` + baseline entries in `docs/context/evidence.md` + baseline_metrics + evaluation_protocol + optional `docs/20_facts/Codebase_Map.md` sync |
 | **Gate** | Baseline_Report.md must exist, each baseline's status must be verified/partial (cannot be untested) |
 
 If intentionally skipping certain baselines, they must be marked as `partial` with reasons explained in the report.
 WF5 is also responsible for creating the first runnable environment and syncing `CLAUDE.md`'s `## Environment` and baseline summary.
-When `docs/10_contract/Baseline_Contract.md` or
-`docs/10_contract/Evaluation_Contract.md` exists, WF5 reads it first. If a
-contract is missing, WF5 may derive a draft baseline or evaluation contract
-from baseline evidence and `PROJECT_STATE.json.evaluation_protocol`.
+When `docs/context/contracts.md` exists, WF5 reads its Baseline and Evaluation
+Contract sections first; legacy `docs/10_contract/Baseline_Contract.md` and
+`docs/10_contract/Evaluation_Contract.md` are fallback inputs before
+migration. If a contract is missing, WF5 may derive a draft baseline or
+evaluation contract from baseline evidence and
+`PROJECT_STATE.json.evaluation_protocol`.
 WF5 is the first hard contract approval point: dynamic-context projects should
 run protocol drift, context contract gates, docchain gates, and a review packet
 before unattended WF10 or final experiments rely on the baseline set or
@@ -366,7 +375,7 @@ when detailed claim or writing evidence is needed.
   → Status becomes "running", output metrics summary
 
 /iterate eval experiments/{exp_prefix}_iter27/
-  → Call /evaluate to parse metrics → per-iteration report (docs/40_iterations/iter27.md)
+  → Call /evaluate to parse metrics → update docs/context/experiments.md
   → Compare against baseline + best, make decision
   → Output recommended next command
 
@@ -486,13 +495,16 @@ Core features:
 - Compare against baseline performance + historical best
 - Provide NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
-**Per-iteration reports**: when called from /iterate eval, write to `docs/40_iterations/iter{N}.md`; mirror to legacy `docs/iterations/iter{N}.md` only when compatibility requires it.
+**Per-iteration reports**: when called from /iterate eval, write the current
+iteration analysis into `docs/context/experiments.md`; mirror to legacy
+`docs/40_iterations/iter{N}.md` or `docs/iterations/iter{N}.md` only when
+compatibility requires it.
 `docs/Stage_Report.md` serves as the latest summary index.
-`docs/50_memory/Lessons.md` is the candidate/accepted lesson workspace.
-`MEMORY.md` stores accepted human-readable lessons; `iteration_log.json` remains
-the machine source of truth. Auto-iteration may generate observations, findings,
-and lesson candidates, but raw auto-run output must not be promoted directly
-into `MEMORY.md`.
+`docs/context/memory.md` is the candidate/accepted lesson workspace. Root
+`MEMORY.md` is optional for accepted human-readable lessons;
+`iteration_log.json` remains the machine source of truth. Auto-iteration may
+generate observations, findings, and lesson candidates, but raw auto-run output
+must not be promoted directly into root `MEMORY.md`.
 
 ---
 
@@ -547,7 +559,9 @@ Recorded values: `"used"` / `"skipped_low_value"` / `"unavailable"` (no longer u
 ### 5.5 CLAUDE.md Staged Generation
 
 CLAUDE.md is maintained as a **stable operations guide** (≤80 lines), without fast-changing experiment content.
-Fast-changing content (current best, current risks, next experiment) resides in iteration_log.json and MEMORY.md.
+Fast-changing content (current best, current risks, next experiment) resides in
+`iteration_log.json` and `docs/context/experiments.md`; promoted lessons live
+in `docs/context/memory.md` before any optional root `MEMORY.md` entry.
 
 | Timing | Content Added |
 |--------|--------------|
@@ -687,8 +701,8 @@ Fast-changing content (current best, current risks, next experiment) resides in 
 ### 5.7 Per-iteration Reports
 
 Evaluation reports are stored per iteration:
-- `docs/40_iterations/iter1.md`, `docs/40_iterations/iter2.md`, ...
-- legacy mirrors may exist under `docs/iterations/`
+- canonical analysis is in `docs/context/experiments.md`
+- legacy mirrors may exist under `docs/40_iterations/` or `docs/iterations/`
 - `docs/Stage_Report.md` serves as the latest summary index
 - code-debug reads the latest iteration report rather than an outdated singleton
 
@@ -820,7 +834,7 @@ orchestrator to update CLAUDE.md.
                     │           running              │  Call /evaluate to parse
                     │  Compare against baseline +    │  Generate per-iteration
                     │  historical best               │  report
-                    │  Extract lessons learned        │  docs/40_iterations/iter{N}.md
+                    │  Extract lessons learned        │  docs/context/experiments.md
                     │  Make decision                  │
                     └───────────────┬───────────────┘
                                     │

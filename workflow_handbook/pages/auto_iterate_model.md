@@ -43,7 +43,7 @@ $run
   -> internal auto-iterate goal preflight when delegated looping is requested
   -> plan/code/run/eval phases driven by iteration_log.json action_state
   -> pre_train_commit / pre_eval_commit or pre_eval_commit_NOT_CHANGED
-  -> Experiment Queue, Discovery Ledger, Research Wiki, and run manifests
+  -> docs/context experiments, docs/context memory, and run manifests
   -> iteration_log.json remains experiment source of truth
 ```
 
@@ -51,10 +51,11 @@ $run
 
 - `.auto_iterate/**` 是 controller-owned runtime state。
 - `docs/auto_iterate_goal.md` 是 operator-facing goal source。
-- `docs/40_iterations/Experiment_Queue.md` 记录 next-run questions、
-  falsifiers、controls、paper-driven run requests 和 Assurance Axis 缺口。
-- `docs/45_discoveries/Research_Wiki.md` 记录 searchable findings、method
-  notes、paper context 和 open questions；它不是 Approved Contract。
+- `docs/context/experiments.md` 记录 next-run questions、falsifiers、
+  controls、paper-driven run requests、Research Wiki findings 和 Assurance
+  Axis 缺口。
+- `docs/context/memory.md` 记录 promoted lessons；candidate lessons 留在
+  experiments context，直到分析后被提升。
 - Meaningful train/eval 必须记录 `pre_train_commit`、`pre_eval_commit` 或
   `pre_eval_commit_NOT_CHANGED`。
 - Claim 或 claim-boundary 变化在 Automation Policy 内用 Claim Delta
@@ -66,8 +67,8 @@ $run
 
 - Controller logs 不是 approval。
 - Watchdog status 不是 notification 或 approval；它只是 pollable run health。
-- Experiment Queue 和 Research Wiki 是工作索引，不是 Gate Evidence 或
-  Approved Contract。
+- Experiment Queue 和 Research Wiki 现在是 `docs/context/experiments.md`
+  里的工作区段，不是 Gate Evidence 或 Approved Contract。
 - Auto mode 失败后要从 state 和 logs 恢复，不能补写成功记录。
 - WF10 决策词仍然是 NEXT_ROUND、DEBUG、CONTINUE、PIVOT、ABORT。
 

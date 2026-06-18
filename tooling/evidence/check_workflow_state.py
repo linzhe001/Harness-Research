@@ -78,6 +78,12 @@ CONTRACT_PATHS = {
     "baseline_contract": "docs/10_contract/Baseline_Contract.md",
     "claim_boundary": "docs/10_contract/Claim_Boundary.md",
 }
+CONTRACT_LABELS = {
+    "project_contract": "Project Contract",
+    "evaluation_contract": "Evaluation Contract",
+    "baseline_contract": "Baseline Contract",
+    "claim_boundary": "Claim Boundary",
+}
 WORKFLOW_IDS = {
     "survey_idea": 1,
     "survey": 1,
@@ -216,7 +222,21 @@ def markdown_status(path: Path) -> str:
     return value if value in VALID_CONTRACT_STATUSES else "draft"
 
 
-def markdown_human_approved(path: Path) -> bool:
+def contract_markdown_status(path: Path, key: str) -> str:
+    label = CONTRACT_LABELS[key]
+    value = read_header(path, f"{label} status")
+    if value is not None:
+        value = value.lower()
+        return value if value in VALID_CONTRACT_STATUSES else "draft"
+    return markdown_status(path)
+
+
+def markdown_human_approved(path: Path, key: str | None = None) -> bool:
+    if key is not None:
+        label = CONTRACT_LABELS[key]
+        value = read_header(path, f"{label} human approved")
+        if value is not None:
+            return value.lower() in TRUE_VALUES
     value = read_header(path, "Human approved")
     return value is not None and value.lower() in TRUE_VALUES
 
@@ -238,6 +258,12 @@ def primary_metric_name(protocol: Any) -> str | None:
         name = metric.get("name")
         return name if isinstance(name, str) else None
     return None
+
+
+def expected_contract_path(state: dict[str, Any], key: str) -> str:
+    if state.get("context_model_version") == "dynamic-context-v2":
+        return "docs/context/contracts.md"
+    return CONTRACT_PATHS[key]
 
 
 def tracked_metric_names(protocol: Any) -> set[str]:
@@ -418,7 +444,8 @@ def check_project_state(
 
     contracts = state.get("contracts")
     if isinstance(contracts, dict):
-        for key, expected_path in CONTRACT_PATHS.items():
+        for key in CONTRACT_PATHS:
+            expected_path = expected_contract_path(state, key)
             entry = contracts.get(key)
             if not isinstance(entry, dict):
                 continue
@@ -445,7 +472,7 @@ def check_project_state(
                     "PROJECT_STATE.json",
                 )
             doc_path = root / path
-            doc_status = markdown_status(doc_path)
+            doc_status = contract_markdown_status(doc_path, key)
             if doc_path.exists() and doc_status != state_status:
                 add_check(
                     checks,
@@ -457,7 +484,7 @@ def check_project_state(
                     path,
                 )
             if state_status == "approved":
-                if not markdown_human_approved(doc_path):
+                if not markdown_human_approved(doc_path, key):
                     add_check(
                         checks,
                         f"{key}_markdown_approval",

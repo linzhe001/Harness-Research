@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-
-CONTEXT_MODEL_VERSION = "dynamic-protocol-v1"
+CONTEXT_MODEL_VERSION = "dynamic-context-v2"
+LEGACY_CONTEXT_MODEL_VERSION = "dynamic-protocol-v1"
 WORKFLOW_MODE_DYNAMIC = "dynamic_context"
 WORKFLOW_MODE_STANDARD = "standard"
 WORKFLOW_MODE_COMPATIBILITY = "compatibility"
@@ -16,6 +16,9 @@ VALID_WORKFLOW_MODES = {
     WORKFLOW_MODE_COMPATIBILITY,
 }
 DYNAMIC_CONTEXT_DIRS = (
+    "docs/context",
+)
+LEGACY_DYNAMIC_CONTEXT_DIRS = (
     "docs/10_contract",
     "docs/20_facts",
     "docs/30_evidence",
@@ -24,12 +27,16 @@ DYNAMIC_CONTEXT_DIRS = (
 
 
 def is_dynamic_context_workspace(workspace_root: Path, state: dict[str, Any]) -> bool:
-    """Return True when a workspace has opted into numbered dynamic context."""
+    """Return True when a workspace has opted into Harness dynamic context."""
     if state.get("workflow_mode") == WORKFLOW_MODE_DYNAMIC:
         return True
-    if state.get("context_model_version") == CONTEXT_MODEL_VERSION:
+    if state.get("context_model_version") in {
+        CONTEXT_MODEL_VERSION,
+        LEGACY_CONTEXT_MODEL_VERSION,
+    }:
         return True
-    return any((workspace_root / relative).exists() for relative in DYNAMIC_CONTEXT_DIRS)
+    dirs = DYNAMIC_CONTEXT_DIRS + LEGACY_DYNAMIC_CONTEXT_DIRS
+    return any((workspace_root / relative).exists() for relative in dirs)
 
 
 def workflow_mode(state: dict[str, Any]) -> str | None:

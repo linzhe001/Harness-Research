@@ -537,9 +537,11 @@ python tooling/evidence/build_review_packet.py --workspace-root . --stage status
 ```
 
 Do not overwrite approved contract docs automatically. Treat template changes as
-new guidance and merge them into `docs/10_contract/**`, `docs/30_evidence/**`,
-`docs/35_protocol/**`, `.evidence/schemas/**`, or committed docchains only
-after reviewing the current project state.
+new guidance and merge them into the dynamic-context-v2 docs under
+`docs/context/*.md`, `.evidence/schemas/**`, or committed docchains only after
+reviewing the current project state. Legacy numbered docs such as
+`docs/10_contract/**`, `docs/30_evidence/**`, and `docs/35_protocol/**` are
+migration inputs unless the project intentionally stays on the legacy layout.
 
 When docs layout, contract docs, memory, discovery, protocol, or
 `docs/90_legacy/**` are affected, follow
@@ -547,17 +549,18 @@ When docs layout, contract docs, memory, discovery, protocol, or
 
 - move old `docs/Research_Intent_Draft.md`, `docs/Grill_Round_Log.md`, and
   `docs/Execution_Readiness_Packet.md` into `docs/05_intake/**`
-- migrate old contract text into `docs/10_contract/**` as `Status: draft`
-  unless current Approval Evidence exists
+- migrate old contract text into `docs/context/contracts.md` with named
+  `draft` status headers unless current Approval Evidence exists
 - place current facts, Conclusion Evidence inputs, and Protocol Drafts under
-  `docs/20_facts/**`, `docs/30_evidence/**`, and `docs/35_protocol/**`
+  `docs/context/facts.md`, `docs/context/evidence.md`, and
+  `docs/context/protocol.md`
 - put planned WF10 questions, falsifiers, controls, paper-driven run requests,
-  and assurance gaps in `docs/40_iterations/Experiment_Queue.md`
-- put observations, phenomena, hypotheses, and next-run hints in
-  `docs/45_discoveries/Discovery_Ledger.md`
-- put searchable findings, method notes, paper context, and open questions in
-  `docs/45_discoveries/Research_Wiki.md`
-- promote only accepted lessons to `docs/50_memory/Lessons.md` or `MEMORY.md`
+  and assurance gaps in `docs/context/experiments.md`
+- put observations, phenomena, hypotheses, searchable findings, method notes,
+  paper context, open questions, and next-run hints in
+  `docs/context/experiments.md`
+- promote only accepted lessons to `docs/context/memory.md` or root
+  `MEMORY.md` when the project keeps that optional lessons bank
 - archive superseded narrative docs under `docs/90_legacy/**`
 
 Do not overwrite Approved Contracts automatically. If the migration changes a
@@ -572,6 +575,7 @@ harness update, initialize without overwriting existing docs:
 
 ```bash
 python tooling/evidence/init_context.py --workspace-root . --set-state
+python tooling/evidence/migrate_context_v2.py --workspace-root . --overwrite
 ```
 
 If an updated contract/fact/protocol doc needs an evidence chain, regenerate and
@@ -628,9 +632,8 @@ Current run artifact behavior to remember after a pull:
 - completed metric-bearing iterations need a run artifact bundle with
   `git_commit`, unique `exp_dir`, resolved config, console log, git snapshot,
   and metric artifacts
-- `docs/40_iterations/Experiment_Queue.md` is the durable queue for next-run
-  questions, falsifiers, and assurance gaps
-- `docs/45_discoveries/Research_Wiki.md` is the searchable index for findings,
+- `docs/context/experiments.md` is the durable Experiment Queue and Research
+  Wiki surface for next-run questions, falsifiers, assurance gaps, findings,
   method notes, paper context, and open questions
 - screening/proxy runs store their bundle in `screening.run_manifest`; full runs
   store the final bundle in top-level `run_manifest`

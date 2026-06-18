@@ -26,10 +26,10 @@ supervision/canvas, claim support, commit checkpoints, and lesson quality:
 [supervision](../../shared/research-supervision-patterns.md), [canvas](../../shared/research-supervision/experiment-and-build-canvas.md),
 [commits](../../shared/commit-checkpoint-rule.md), and [lessons](../../shared/lesson-quality-rule.md).
 
-Write observations to `docs/45_discoveries/Discovery_Ledger.md`, queue
-follow-ups in `docs/40_iterations/Experiment_Queue.md`, append stable findings
-to `docs/45_discoveries/Research_Wiki.md`, and write `MEMORY.md` only for
-accepted lessons.
+Write observations, follow-up requests, Assurance Axis gaps, stable findings,
+method notes, and open questions to `docs/context/experiments.md`. Promote only
+qualified lesson candidates to `docs/context/memory.md`; write root `MEMORY.md`
+only for accepted lessons when the project keeps that optional bank.
 
 Context budget: load active iteration plus 5 recent summaries, reference full
 history by path, and keep the report under 1200 words unless requested.
@@ -94,12 +94,13 @@ history by path, and keep the report under 1200 words unless requested.
 6. **Output Report**
    **Per-iteration report** (when called from /iterate eval):
    - Check `.claude/current_iteration.json` to get iteration_id
-   - Write to `docs/40_iterations/iter{N}.md` (create `docs/40_iterations/` if directory doesn't exist)
-   - Mirror `docs/iterations/iter{N}.md` only when legacy compatibility is required
+   - Write analysis to `docs/context/experiments.md`
+   - Mirror `docs/40_iterations/iter{N}.md` or
+     `docs/iterations/iter{N}.md` only when legacy compatibility is required
    - Also update `docs/Stage_Report.md` as a summary index pointing to the latest iteration report
-   - Update `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`
-   - Update `docs/40_iterations/Experiment_Queue.md` and
-     `docs/45_discoveries/Research_Wiki.md`, or report `NOT_RUN`
+   - Update `docs/context/experiments.md` for queue, discovery, and Research
+     Wiki sections, or report `NOT_RUN`
+   - Update `docs/context/memory.md` for qualified lessons, or report `NOT_RUN`
    - Record Claim Delta Evidence when a paper claim, release claim, or claim
      boundary implication changed; otherwise record
      `claim_delta_evidence_NOT_CHANGED`
@@ -147,8 +148,8 @@ history by path, and keep the report under 1200 words unless requested.
 - ALWAYS analyze both training and validation metrics
 - ALWAYS check for common training issues (overfitting, NaN, gradient issues)
 - ALWAYS provide specific actionable recommendations with each decision
-- ALWAYS write per-iteration reports to `docs/40_iterations/iter{N}.md` when called from iterate
-- Use `docs/iterations/iter{N}.md` only as a legacy compatibility mirror
+- ALWAYS write per-iteration analysis to `docs/context/experiments.md` when called from iterate
+- Use `docs/40_iterations/iter{N}.md` and `docs/iterations/iter{N}.md` only as legacy compatibility mirrors
 - NEVER overwrite previous iteration reports — each iteration gets its own file
 </constraints>
 

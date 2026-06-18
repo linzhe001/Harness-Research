@@ -24,6 +24,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tooling" / "auto_iterate" / "scripts"))
 
+import auto_iterate.runtime as runtime_module
 from auto_iterate.lock import LockManager
 from auto_iterate.postcondition import PostconditionValidator, bind_iteration_id
 from auto_iterate.recovery import ADOPT, FAIL, RERUN, RecoveryEngine
@@ -373,6 +374,47 @@ class TestPhaseSupervisorDryRun:
         loaded = load_json(brief_path)
         assert loaded["phase_key"] == "eval"
 
+    def test_run_phase_registers_watchdog_status_json(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        state = load_json(FIXTURES / "state.valid.json")
+        state["automation_policy"] = {"watchdog_policy": "status_json_only"}
+        brief = build_brief(state, "run_full")
+        runtime_dir = tmp_path / ".auto_iterate" / "runtime"
+        command = [
+            sys.executable,
+            "-c",
+            "import sys; sys.stdin.read(); print('phase complete')",
+        ]
+        monkeypatch.setattr(
+            runtime_module,
+            "build_codex_command",
+            lambda *_args, **_kwargs: command,
+        )
+
+        supervisor = PhaseSupervisor(
+            workspace_root=tmp_path,
+            runtime_dir=runtime_dir,
+        )
+        result = supervisor.run_phase(
+            brief=brief,
+            account_id="acc1",
+            codex_home="/tmp/fake",
+            timeout_sec=10,
+            iteration_id="iter3",
+        )
+
+        assert result["runtime_exit_class"] == "success"
+        assert result["watchdog_status_path"]
+        status_path = Path(result["watchdog_status_path"])
+        assert status_path.exists()
+        status = load_json(status_path)
+        assert status["status"] == "COMPLETED"
+        assert status["phase_key"] == "run_full"
+        assert status["iteration_id"] == "iter3"
+
     def test_run_phase_removes_stale_result_file(self, tmp_path: Path) -> None:
         state = load_json(FIXTURES / "state.valid.json")
         brief = build_brief(state, "plan")
@@ -544,6 +586,8 @@ class TestPostconditionValidator:
             f"{exp_dir_value}/git_status/commit.txt",
         )
         manifest.setdefault("git_commit", commit)
+        manifest.setdefault("pre_train_commit", commit)
+        manifest.setdefault("pre_eval_commit_NOT_CHANGED", True)
         manifest.setdefault(
             "eval_artifact_paths",
             [f"{exp_dir_value}/epochs/1/eval.jsonl"],
@@ -1030,6 +1074,29 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "run_manifest" in result["payload"]["error"]
 
+    def test_run_screening_requires_pre_train_commit(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "ready_to_run",
+             "git_commit": "abc123",
+             "screening": {
+                 "recommended": True,
+                 "status": "passed",
+                 "metrics": {"PSNR": 31.2},
+             },
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+        log = load_json(tmp_path / "iteration_log.json")
+        del log["iterations"][0]["screening"]["run_manifest"]["pre_train_commit"]
+        atomic_write_json(tmp_path / "iteration_log.json", log)
+
+        result = v.validate("run_screening", "iter3")
+
+        assert result["ok"] is False
+        assert "pre_train_commit" in result["payload"]["error"]
+
     def test_run_screening_missing(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "ready_to_run"},
@@ -1201,6 +1268,25 @@ class TestPostconditionValidator:
         assert result["ok"] is False
         assert "run_manifest" in result["payload"]["error"]
 
+    def test_run_full_requires_pre_train_commit(self, tmp_path: Path) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "ready_to_run",
+             "git_commit": "abc123",
+             "full_run": {"status": "completed", "metrics": {"PSNR": 31.5}},
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+        log = load_json(tmp_path / "iteration_log.json")
+        del log["iterations"][0]["run_manifest"]["pre_train_commit"]
+        atomic_write_json(tmp_path / "iteration_log.json", log)
+
+        result = v.validate("run_full", "iter3")
+
+        assert result["ok"] is False
+        assert "pre_train_commit" in result["payload"]["error"]
+
     def test_run_full_no_full_run(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
             {"id": "iter3", "status": "ready_to_run"},
@@ -1315,6 +1401,30 @@ class TestPostconditionValidator:
         result = v.validate("eval", "iter3")
         assert result["ok"] is False
         assert "run_manifest" in result["payload"]["error"]
+
+    def test_eval_requires_pre_eval_commit_or_not_changed(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        v = self._make_project(tmp_path, [
+            {"id": "iter3", "status": "completed",
+             "decision": "NEXT_ROUND",
+             "lessons": ["Learned something"],
+             "metrics": {"PSNR": 31.5},
+             "git_commit": "abc123",
+             "run_manifest": {
+                 "command": "python train.py --config configs/iter3.yaml",
+                 "exp_dir": "experiments/iter3",
+             }},
+        ])
+        log = load_json(tmp_path / "iteration_log.json")
+        del log["iterations"][0]["run_manifest"]["pre_eval_commit_NOT_CHANGED"]
+        atomic_write_json(tmp_path / "iteration_log.json", log)
+
+        result = v.validate("eval", "iter3")
+
+        assert result["ok"] is False
+        assert "pre_eval_commit" in result["payload"]["error"]
 
     def test_eval_rejects_conflicting_metric_locations(self, tmp_path: Path) -> None:
         v = self._make_project(tmp_path, [
@@ -1574,6 +1684,8 @@ class TestRecoveryEngine:
             f"{exp_dir_value}/git_status/commit.txt",
         )
         manifest.setdefault("git_commit", commit)
+        manifest.setdefault("pre_train_commit", commit)
+        manifest.setdefault("pre_eval_commit_NOT_CHANGED", True)
         manifest.setdefault(
             "eval_artifact_paths",
             [f"{exp_dir_value}/epochs/1/eval.jsonl"],

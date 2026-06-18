@@ -10,12 +10,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 CONTRACT_PATHS = {
     "project_contract": "docs/10_contract/Project_Contract.md",
     "evaluation_contract": "docs/10_contract/Evaluation_Contract.md",
     "baseline_contract": "docs/10_contract/Baseline_Contract.md",
     "claim_boundary": "docs/10_contract/Claim_Boundary.md",
+}
+CONTRACT_LABELS = {
+    "project_contract": "Project Contract",
+    "evaluation_contract": "Evaluation Contract",
+    "baseline_contract": "Baseline Contract",
+    "claim_boundary": "Claim Boundary",
 }
 APPROVAL_HEADERS = {
     "Status": "approved",
@@ -98,7 +103,41 @@ def contract_path_for(state: dict[str, Any], contract: str) -> str:
         entry = contracts.get(contract)
         if isinstance(entry, dict) and isinstance(entry.get("path"), str) and entry["path"]:
             return entry["path"]
+    if state.get("context_model_version") == "dynamic-context-v2":
+        return "docs/context/contracts.md"
     return CONTRACT_PATHS[contract]
+
+
+def approval_headers_for_contract(
+    contract: str,
+    contract_path: str,
+    *,
+    approval_time: str,
+    approved_by: str,
+    approval_source: str,
+    approval_note: str | None,
+) -> dict[str, str]:
+    if contract_path == "docs/context/contracts.md":
+        label = CONTRACT_LABELS[contract]
+        headers = {
+            f"{label} status": "approved",
+            f"{label} human approved": "yes",
+            f"{label} approved at": approval_time,
+            f"{label} approved by": approved_by,
+            f"{label} approval source": approval_source,
+        }
+        if approval_note:
+            headers[f"{label} approval note"] = approval_note
+        return headers
+    headers = {
+        **APPROVAL_HEADERS,
+        "Approved at": approval_time,
+        "Approved by": approved_by,
+        "Approval source": approval_source,
+    }
+    if approval_note:
+        headers["Approval note"] = approval_note
+    return headers
 
 
 def approve_contract(
@@ -126,14 +165,14 @@ def approve_contract(
         raise FileNotFoundError(f"contract document not found: {relative_contract_path}")
 
     approval_time = approved_at or utc_now()
-    headers = {
-        **APPROVAL_HEADERS,
-        "Approved at": approval_time,
-        "Approved by": approved_by,
-        "Approval source": approval_source,
-    }
-    if approval_note:
-        headers["Approval note"] = approval_note
+    headers = approval_headers_for_contract(
+        contract,
+        relative_contract_path,
+        approval_time=approval_time,
+        approved_by=approved_by,
+        approval_source=approval_source,
+        approval_note=approval_note,
+    )
     updated_markdown = upsert_markdown_headers(
         contract_path.read_text(encoding="utf-8", errors="replace"),
         headers,

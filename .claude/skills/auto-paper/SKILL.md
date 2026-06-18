@@ -20,8 +20,10 @@ tool and you do not invent author evidence.
    paths named there. Direct `iteration_log.json` reads are allowed as weak
    signals for experiment intent, but paper claims require cross-checks against
    reports, configs, logs, metrics, or run artifacts. Read
-   `docs/45_discoveries/Research_Wiki.md` when present for stable searchable
-   observations and open questions; it is context, not approval.
+   `docs/context/experiments.md` when present for Research Wiki context,
+   stable observations, run requests, assurance gaps, and open questions.
+   Legacy `docs/45_discoveries/Research_Wiki.md` is a fallback before
+   dynamic-context-v2 migration; neither file is approval.
 6. Use `tooling/auto_paper/scripts/auto_paper_ctl.sh` for resumable controller
    state when an automatic paper chain is requested; the controller checks
    artifacts and writes `.auto_paper/`, but does not invent manuscript content.

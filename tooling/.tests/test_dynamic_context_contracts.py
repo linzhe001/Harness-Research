@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_tool(name: str):
+    path = REPO_ROOT / "tooling" / "evidence" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_dynamic_context_templates_exist() -> None:
@@ -13,6 +24,12 @@ def test_dynamic_context_templates_exist() -> None:
         "templates/docs/05_intake/Research_Intent_Draft.md",
         "templates/docs/05_intake/Grill_Round_Log.md",
         "templates/docs/05_intake/Execution_Readiness_Packet.md",
+        "templates/docs/context/contracts.md",
+        "templates/docs/context/facts.md",
+        "templates/docs/context/evidence.md",
+        "templates/docs/context/protocol.md",
+        "templates/docs/context/experiments.md",
+        "templates/docs/context/memory.md",
         "templates/docs/10_contract/Project_Contract.md",
         "templates/docs/10_contract/Evaluation_Contract.md",
         "templates/docs/10_contract/Baseline_Contract.md",
@@ -99,6 +116,117 @@ def test_project_state_schema_has_optional_contracts() -> None:
         "baseline_contract",
         "claim_boundary",
     }.issubset(contract_props)
+
+
+def test_init_context_defaults_to_dynamic_context_v2(tmp_path: Path) -> None:
+    init_context = load_tool("init_context")
+    state_path = tmp_path / "PROJECT_STATE.json"
+    state_path.write_text("{}\n", encoding="utf-8")
+
+    summary = init_context.initialize_context(
+        tmp_path,
+        framework_root=REPO_ROOT,
+        set_state=True,
+    )
+
+    assert summary["context_model_version"] == "dynamic-context-v2"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state["context_model_version"] == "dynamic-context-v2"
+    assert state["contracts"]["evaluation_contract"]["path"] == (
+        "docs/context/contracts.md"
+    )
+    assert (tmp_path / "docs" / "context" / "contracts.md").exists()
+    assert not (tmp_path / "docs" / "10_contract").exists()
+
+
+def test_migrate_context_v2_writes_canonical_docs_and_state(tmp_path: Path) -> None:
+    migrate_context = load_tool("migrate_context_v2")
+    state_path = tmp_path / "PROJECT_STATE.json"
+    state_path.write_text(
+        json.dumps(
+            {
+                "context_model_version": "dynamic-protocol-v1",
+                "contracts": {
+                    "evaluation_contract": {
+                        "path": "docs/10_contract/Evaluation_Contract.md",
+                        "status": "draft",
+                    }
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    contract = tmp_path / "docs" / "10_contract" / "Evaluation_Contract.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "# Evaluation Contract\n\nStatus: draft\nHuman approved: no\n\nBody\n",
+        encoding="utf-8",
+    )
+    queue = tmp_path / "docs" / "40_iterations" / "Experiment_Queue.md"
+    queue.parent.mkdir(parents=True)
+    queue.write_text("# Experiment Queue\n\n| ID | Priority |\n", encoding="utf-8")
+
+    summary = migrate_context.migrate_context_v2(tmp_path)
+
+    assert summary["context_model_version"] == "dynamic-context-v2"
+    contracts_text = (
+        tmp_path / "docs" / "context" / "contracts.md"
+    ).read_text(encoding="utf-8")
+    assert "Evaluation Contract status: draft" in contracts_text
+    assert "Source: `docs/10_contract/Evaluation_Contract.md`" in contracts_text
+    assert (tmp_path / "docs" / "context" / "experiments.md").exists()
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state["context_model_version"] == "dynamic-context-v2"
+    assert state["contracts"]["evaluation_contract"]["path"] == (
+        "docs/context/contracts.md"
+    )
+
+
+def test_context_gate_accepts_dynamic_context_v2_contract_file(
+    tmp_path: Path,
+) -> None:
+    gates = load_tool("check_context_gates")
+    state_path = tmp_path / "PROJECT_STATE.json"
+    state_path.write_text(
+        json.dumps(
+            {
+                "context_model_version": "dynamic-context-v2",
+                "contracts": {
+                    "evaluation_contract": {
+                        "path": "docs/context/contracts.md",
+                        "status": "approved",
+                        "approved_at": "2026-06-18T00:00:00Z",
+                        "approved_by": "operator",
+                        "approval_source": "conversation",
+                    }
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    contract = tmp_path / "docs" / "context" / "contracts.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "\n".join(
+            [
+                "# Contracts",
+                "",
+                "Evaluation Contract status: approved",
+                "Evaluation Contract human approved: yes",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = gates.gate_result(tmp_path, stage="wf10-auto")
+
+    assert result["ok"] is True
+    assert result["contracts"]["evaluation_contract"]["path"] == (
+        "docs/context/contracts.md"
+    )
 
 
 def test_core_state_schemas_are_promoted_from_skill_references() -> None:

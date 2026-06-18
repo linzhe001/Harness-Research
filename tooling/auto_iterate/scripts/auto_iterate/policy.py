@@ -54,6 +54,9 @@ DEFAULT_POLICY: dict[str, Any] = {
     "runtime": {
         "run_phase_full_access": True,
     },
+    "automation_policy": {
+        "watchdog_policy": "status_json_only",
+    },
     "heartbeat": {
         "interval_sec": 30,
         "stale_threshold_sec": 120,
@@ -104,6 +107,13 @@ class PolicyConfig:
         goal_screening = parsed_goal.get("screening_policy", {})
         if goal_screening:
             self._data["screening_policy"] = goal_screening
+
+        goal_automation_policy = parsed_goal.get("automation_policy", {})
+        if goal_automation_policy:
+            _deep_merge(
+                self._data.setdefault("automation_policy", {}),
+                goal_automation_policy,
+            )
 
     def merge_with_cli(self, cli_overrides: dict[str, Any]) -> None:
         """Apply CLI overrides (highest precedence)."""

@@ -634,6 +634,44 @@ def test_workflow_state_requires_dual_approval_markers(tmp_path: Path) -> None:
     )
 
 
+def test_workflow_state_accepts_dynamic_context_v2_contract_markers(
+    tmp_path: Path,
+) -> None:
+    checker = load_tool("check_workflow_state")
+    state = base_project_state()
+    state["context_model_version"] = "dynamic-context-v2"
+    state["contracts"] = {
+        "evaluation_contract": {
+            "path": "docs/context/contracts.md",
+            "status": "approved",
+            "approved_at": "2026-04-30T00:00:00Z",
+            "approved_by": "expert",
+            "approval_source": "review packet",
+        }
+    }
+    write_json(tmp_path / "PROJECT_STATE.json", state)
+    contract = tmp_path / "docs" / "context" / "contracts.md"
+    contract.parent.mkdir(parents=True)
+    contract.write_text(
+        "# Contracts\n\n"
+        "Evaluation Contract status: approved\n"
+        "Evaluation Contract human approved: yes\n",
+        encoding="utf-8",
+    )
+
+    result = checker.gate_result(tmp_path)
+
+    assert not any(
+        check["name"] == "evaluation_contract_path" and not check["ok"]
+        for check in result["checks"]
+    )
+    assert not any(
+        check["name"] == "evaluation_contract_markdown_approval"
+        and not check["ok"]
+        for check in result["checks"]
+    )
+
+
 def test_workflow_state_checks_baseline_contract_markers(tmp_path: Path) -> None:
     checker = load_tool("check_workflow_state")
     state = base_project_state()

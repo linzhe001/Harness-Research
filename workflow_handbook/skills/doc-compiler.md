@@ -45,17 +45,16 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Can Write
 
-- `docs/10_contract/`
-- `docs/20_facts/`
-- `docs/35_protocol/`
+- `docs/context/`
 - `.evidence/chains/`
 - `.evidence/index.json`
 
 ## Final Outputs
 
-- `approved_contract: docs/10_contract/`
-- `fact_doc: docs/20_facts/`
-- `current_doc: docs/35_protocol/`
+- `approved_contract: docs/context/contracts.md`
+- `fact_doc: docs/context/facts.md`
+- `conclusion_evidence: docs/context/evidence.md`
+- `current_doc: docs/context/protocol.md`
 
 ## Tool-Owned Outputs
 
@@ -71,6 +70,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/skills/doc-compiler/SKILL.md`
 - `AGENTS.md`
 - `PROJECT_STATE.json`
+- `docs/context/contracts.md`
+- `docs/context/facts.md`
+- `docs/context/evidence.md`
+- `docs/context/protocol.md`
 - `docs/10_contract/Project_Contract.md`
 - `docs/20_facts/Project_Facts.md`
 - `docs/35_protocol/Research_Protocol.md`

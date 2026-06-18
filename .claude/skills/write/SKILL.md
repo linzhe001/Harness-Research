@@ -23,6 +23,9 @@ Treat `iteration_log.json` as a weak planning signal, not Conclusion Evidence.
 Experiment evidence should flow through
 `docs/30_evidence/Experiment_Evidence_Index.*`, whose entries cross-check
 iteration-log signals against reports and run artifacts.
+Research Wiki context and run requests should flow through
+`docs/context/experiments.md`; legacy `docs/45_discoveries/Research_Wiki.md` is
+a pre-migration fallback.
 
 Blogs and review articles are still citation-supported writing unless the
 operator explicitly asks for an uncited opinion memo. Do not set

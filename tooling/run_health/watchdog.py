@@ -329,7 +329,7 @@ def task_status(task: dict[str, Any], status_dir: Path) -> dict[str, Any]:
 
 
 def base_status(task: dict[str, Any], status: str, ts: str) -> dict[str, Any]:
-    return {
+    result = {
         "status": status,
         "task": task.get("name"),
         "type": task.get("type"),
@@ -337,6 +337,21 @@ def base_status(task: dict[str, Any], status: str, ts: str) -> dict[str, Any]:
         "session_type": task.get("session_type", "screen"),
         "ts": ts,
     }
+    for key in (
+        "registered_by",
+        "workspace_root",
+        "phase_key",
+        "loop_id",
+        "round_index",
+        "iteration_id",
+        "result_path",
+        "log_path",
+        "stderr_path",
+        "output_check",
+    ):
+        if key in task:
+            result[key] = task.get(key)
+    return result
 
 
 def write_status(base_dir: str | Path, status: dict[str, Any]) -> None:

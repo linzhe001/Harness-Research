@@ -19,10 +19,12 @@
   irreversible external submit.
 - `iteration_log.json`: experiment history and best iteration. `$iterate` owns writes here.
 - `project_map.json`: stable implementation map for core code and configs.
-- `docs/20_facts/Codebase_Map.md`: operator-facing stable codebase map when present.
+- `docs/context/*.md`: dynamic-context-v2 canonical contracts, facts,
+  evidence, protocol, experiments, and memory docs.
+- `docs/20_facts/Codebase_Map.md`: legacy/operator-facing stable codebase map when present.
 - `docs/_views/` and `docs/_site/`: generated evidence-preview data and
   human-readable HTML views; Markdown remains the source of truth.
-- `MEMORY.md`: human-readable append-only lessons and decisions. `iteration_log.json` remains the machine source of truth.
+- `MEMORY.md`: optional human-readable accepted lessons bank. `iteration_log.json` remains the machine source of truth.
 - `OPERATOR_CONTEXT.md`: optional operator preferences. It may guide defaults, but it is not evidence for project facts. Write it only from explicit operator input; later stages read it without inferring new preferences.
 - `.evidence/`: evidence-chain artifacts for compiled current docs when the dynamic context layout is enabled.
 - `.auto_iterate/`: controller-owned runtime state (if auto-iterate is enabled; do not edit manually).
@@ -33,17 +35,17 @@
 ## Context Layers
 
 - Read `.agents/references/context-layering-policy.md` and `.agents/references/research-invariants.md` before research planning, documentation, iteration, auto-iteration, or release work.
-- Current fact-layer summaries belong in `docs/20_facts/`; they must come from project artifacts or evidence chains.
-- `docs/20_facts/Codebase_Map.md` explains stable files, responsibilities, public interfaces, entry points, and maintenance owners.
-- Research Conclusion Evidence tables belong in `docs/30_evidence/`; they record sources and candidate norms, not permanent rules.
+- Dynamic-context-v2 canonical docs belong in `docs/context/`.
+- Current fact-layer summaries belong in `docs/context/facts.md`; they must come from project artifacts or evidence chains.
+- Research Conclusion Evidence inputs belong in `docs/context/evidence.md`; they record sources and candidate norms, not permanent rules.
 - `.evidence/**` is tool-owned audit state for Evidence Chains, protocol builds, and review packets; do not hand-edit it.
-- Dynamic protocol drafts belong in `docs/35_protocol/`; they are project-local and evidence-derived.
-- Human-approved contracts belong in `docs/10_contract/`; they override protocol drafts and operator preferences.
-- `docs/40_iterations/Experiment_Queue.md` stores concrete next experiments,
-  falsifiers, controls, assurance gaps, and paper-driven run requests.
-- `docs/45_discoveries/Discovery_Ledger.md` stores mutable observations and
-  hypotheses; `docs/45_discoveries/Research_Wiki.md` stores stable searchable
-  findings and open questions.
+- Dynamic protocol drafts belong in `docs/context/protocol.md`; they are project-local and evidence-derived.
+- Human-approved contracts belong in `docs/context/contracts.md`; they override protocol drafts and operator preferences.
+- `docs/context/experiments.md` stores the Experiment Queue, mutable
+  discoveries, Research Wiki notes, falsifiers, controls, assurance gaps,
+  paper-driven run requests, findings, and open questions.
+- `docs/context/memory.md` stores candidate and accepted lessons before any
+  optional promotion to root `MEMORY.md`.
 - Current project facts must come from current repo artifacts, logs, configs, metrics, or evidence chains, not from memory alone.
 
 ## Language Policy
@@ -73,7 +75,7 @@
 - Use `$docs-site` after durable Markdown docs are finalized when
   `docs/_site/**` human-readable HTML should be refreshed; do not use it for
   temporary Markdown drafts.
-- Use `$protocol-compiler` to compile `docs/30_evidence/**` into reviewable `docs/35_protocol/**` drafts without field profiles.
+- Use `$protocol-compiler` to compile `docs/context/evidence.md` into reviewable `docs/context/protocol.md` drafts without field profiles.
 - Use `$protocol-drift-check` before turning protocol drafts into contracts or before WF5/WF10/WF11/WF12 gates in dynamic-context projects.
 - Use `$review-packet` when the operator needs a short approval/revision/rejection packet for a dynamic-context gate.
 - After explicit human approval for a contract, use `tooling/evidence/approve_contract.py` and then re-run the dynamic-context gate.
@@ -91,7 +93,8 @@
 - Use `$idea-debate` as WF2 after WF1 to skeptically compare directions before refinement.
 - Use `$refine-idea` as WF3 to turn survey and debate into a feasible, testable idea without architecture design.
 - Use `$refine-arch` as WF6 after WF4/WF5 evidence to design the MVP architecture.
-- Use `$build-plan` as WF7 to translate architecture into files, tests, `project_map.json`, and `docs/20_facts/Codebase_Map.md`.
+- Use `$build-plan` as WF7 to translate architecture into files, tests,
+  `project_map.json`, and the operator-facing codebase map doc when present.
 - Use the stage-specific skills only for their intended outputs.
 
 ## Entry Scripts
@@ -103,9 +106,9 @@
 
 - Before editing `src/`, `scripts/`, `tests/`, durable configs, or supporting utilities, read `.agents/references/code-style.md` and apply its pre-edit checklist.
 - Read `.agents/references/project-map-rule.md` and `project_map.json` before any non-trivial stable-code change.
-- Use `.agents/references/ubiquitous-language.md` for workflow terms and maintain `docs/20_facts/Project_Glossary.md` for project-specific codebase vocabulary.
+- Use `.agents/references/ubiquitous-language.md` for workflow terms and maintain project-specific codebase vocabulary in `docs/context/facts.md` or the legacy `docs/20_facts/Project_Glossary.md` when present.
 - Distinguish Conclusion Evidence from Gate Evidence; do not use bare `evidence` when the meaning is ambiguous.
-- Update `project_map.json` and the existing `docs/20_facts/Codebase_Map.md` when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
+- Update `project_map.json` and the existing codebase map doc when stable files are added, removed, renamed, or when interfaces, exports, or tensor shapes change.
 - Keep code changes small, readable, and fail-fast; avoid unrelated refactors and broad fallback behavior.
 - Use `.agents/references/project-map-rule.md` to decide stable vs volatile scope.
 
@@ -149,7 +152,7 @@
 - For every stage transition, current-doc write, stable-code change, canonical-state edit, or WF10/WF11/WF12 readiness check, follow the gate ledger format in `.agents/references/workflow-guide.md` and report command, result, reason, and updated artifacts.
 - High-risk skills may have machine-readable contracts in `schemas/skill_contracts.json`; satisfy the required read set before write actions and follow required/forbidden actions.
 - Use `.agents/references/contract-gating-rule.md` before implementation, validation, iteration, auto-iteration, and release.
-- Use `$protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/35_protocol/**`.
+- Use `$protocol-drift-check` when evidence, open questions, negative results, or iteration decisions may have invalidated `docs/context/protocol.md`.
 - Record Claim Delta Evidence when a paper claim, release claim, or claim
   boundary is narrowed, removed, or changed under the active Automation Policy.
 - When writing docs, follow `.agents/references/documentation-evidence-rule.md`: re-read source artifacts and list evidence rather than relying on memory.

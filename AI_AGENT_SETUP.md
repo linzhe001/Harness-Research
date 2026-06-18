@@ -28,9 +28,11 @@ Setup is complete only when all of these are true:
   project files, initialized from reviewed candidate templates when missing
 - incoming template candidates and `README_new.md` have either been merged into
   research-owned project files or removed as temporary setup inputs
-- dynamic-context directories and templates are initialized when the project
-  opts into them, including `Experiment_Queue.md`, `Discovery_Ledger.md`, and
-  `Research_Wiki.md`
+- dynamic-context-v2 docs and templates are initialized when the project opts
+  into them, including `docs/context/contracts.md`,
+  `docs/context/facts.md`, `docs/context/evidence.md`,
+  `docs/context/protocol.md`, `docs/context/experiments.md`, and
+  `docs/context/memory.md`
 - the operator can open Codex in the target workspace and start from a visible
   Entrypoint without needing to manually reconstruct framework paths
 - workflow-supervisor runtime is installed enough for `$prepare` / `$build`
@@ -84,7 +86,7 @@ Before changing files, identify:
 | `TARGET_WORKSPACE` | directory where research will run |
 | `HARNESS_SOURCE` | existing Harness Research checkout to copy from |
 | `PROJECT_NAME` | human-readable research project name |
-| `dynamic_context` | whether to initialize `docs/10_contract`, `docs/30_evidence`, `.evidence`, etc. |
+| `dynamic_context` | whether to initialize `docs/context/*.md`, `.evidence`, schemas, and dynamic-context-v2 state. |
 | `auto_iterate` | whether to prepare `docs/auto_iterate_goal.md` and controller config |
 
 If any of these are ambiguous, stop and ask the operator. The most expensive
@@ -448,7 +450,7 @@ Create common research directories:
 
 ```bash
 mkdir -p src scripts configs baselines experiments tests
-mkdir -p docs docs/40_iterations docs/45_discoveries docs/50_memory docs/90_legacy
+mkdir -p docs/context docs/90_legacy
 ```
 
 At this point the operator can already ask Codex through visible Entrypoints:
@@ -525,18 +527,12 @@ This creates or preserves:
 
 ```text
 docs/00_START_HERE.md
-docs/10_contract/**
-docs/20_facts/**
-docs/20_facts/Codebase_Map.md
-docs/30_evidence/**
-docs/30_evidence/Validation_Table.md
-docs/35_protocol/**
-docs/40_iterations/**
-docs/40_iterations/Experiment_Queue.md
-docs/45_discoveries/**
-docs/45_discoveries/Discovery_Ledger.md
-docs/45_discoveries/Research_Wiki.md
-docs/50_memory/**
+docs/context/contracts.md
+docs/context/facts.md
+docs/context/evidence.md
+docs/context/protocol.md
+docs/context/experiments.md
+docs/context/memory.md
 .evidence/chains/
 schemas/
 ```
@@ -549,8 +545,8 @@ evidence tooling:
 ```bash
 python tooling/evidence/compile_doc.py \
   --workspace-root . \
-  --doc docs/10_contract/Project_Contract.md \
-  --source PROJECT_STATE.json docs/30_evidence/Evidence_Index.md
+  --doc docs/context/contracts.md \
+  --source PROJECT_STATE.json docs/context/evidence.md
 
 python tooling/evidence/validate_docchain.py .evidence/chains/<doc_id>/<build_id>
 python tooling/evidence/check_docchain_gates.py --workspace-root .
@@ -654,14 +650,13 @@ be promoted to stable code. Completed metric-bearing iterations must point
 `exp_dir`, resolved config, console log, git snapshot, and metric artifacts.
 Screening/proxy runs store the bundle in `screening.run_manifest`; full runs
 store the final bundle in top-level `run_manifest` without overwriting
-`screening.run_manifest`. Use `docs/40_iterations/Experiment_Queue.md` for
-next-run requests and assurance gaps, and `docs/45_discoveries/Research_Wiki.md`
-for searchable findings and open questions.
+`screening.run_manifest`. Use `docs/context/experiments.md` for next-run
+requests, assurance gaps, searchable findings, and open questions.
 
 Optional notification-free watchdog check:
 
 ```bash
-python tooling/run_health/watchdog.py --base-dir /tmp/harness-run-health --once --json
+python tooling/run_health/watchdog.py --base-dir .auto_iterate/run_health --once --json
 ```
 
 Optional supervisor smoke check:
@@ -835,10 +830,11 @@ clean stale runtime only after confirming no real controller process is active.
 | `PROJECT_STATE.json` | research git | workflow state |
 | `iteration_log.json` | research git | WF10 experiment state |
 | `project_map.json` | research git | stable implementation map |
-| `docs/20_facts/Codebase_Map.md` | research git | operator-facing stable codebase map |
-| `docs/**` | research git | project docs and dynamic context |
+| `docs/context/*.md` | research git | dynamic-context-v2 canonical contracts, facts, evidence, protocol, experiments, and memory |
+| `docs/20_facts/Codebase_Map.md` | research git | legacy/operator-facing stable codebase map when present |
+| `docs/**` | research git | project docs, legacy context inputs, and archives |
 | `tests/**` | research git | project tests |
-| `docs/30_evidence/**` | research git | operator-readable Conclusion Evidence tables |
+| `docs/30_evidence/**` | research git | legacy operator-readable Conclusion Evidence tables |
 | `.evidence/**` | research git or generated audit artifacts | tool-owned Evidence Chains/review packets; use tooling, do not hand-edit |
 | `.auto_iterate/**` | ignored runtime | controller-owned |
 | `.workflow_supervisor/**` | ignored runtime | supervisor-owned |

@@ -37,7 +37,7 @@ Run the Ralph-style loop: plan, code, run, evaluate, and decide the next round.
 
 ## Completion Effect
 
-`iteration_log.json` and `docs/40_iterations/**` capture runs, lessons, and decisions.
+`iteration_log.json`, `docs/context/experiments.md`, and `docs/context/memory.md` capture runs, lessons, and decisions.
 
 ## Contract Detail
 
@@ -61,16 +61,18 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 
 ## Outputs
 
-- `current_doc: docs/40_iterations/`
-- `current_doc: docs/50_memory/`
+- `current_doc: docs/context/experiments.md`
+- `current_doc: docs/context/memory.md`
 - `canonical_state: iteration_log.json`
-- `canonical_state: MEMORY.md`
 - `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.json`
 - `conclusion_evidence: docs/30_evidence/Experiment_Evidence_Index.md`
-- `legacy_compat: docs/iterations/ -> docs/40_iterations/`
+- `legacy_compat: docs/40_iterations/ -> docs/context/`
+- `legacy_compat: docs/45_discoveries/ -> docs/context/`
+- `legacy_compat: docs/50_memory/ -> docs/context/`
+- `legacy_compat: docs/iterations/ -> docs/context/`
+- `legacy_compat: MEMORY.md -> docs/context/`
 - `tool_trace: .evidence/light/index.json`
 - `implementation: runs/wf10/`
-- `current_doc: docs/45_discoveries/`
 
 ## Required Reads
 
@@ -99,6 +101,9 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `PROJECT_STATE.json`
 - `iteration_log.json`
 - `docs/20_facts/Project_Glossary.md`
+- `docs/context/contracts.md`
+- `docs/context/experiments.md`
+- `docs/context/memory.md`
 - `docs/10_contract/Evaluation_Contract.md`
 - `docs/10_contract/Baseline_Contract.md`
 - `docs/50_memory/Lessons.md`
@@ -120,7 +125,7 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `run_local_promotion_check`
 - `decision_vocabulary`
 - `build_experiment_evidence_index_or_NOT_RUN`
-- `lesson_quality_check_or_NOT_RUN`
+- `memory_context_update_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `iteration_log_v2_strict`
@@ -128,25 +133,21 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `run_code_manifest_or_config_only_record`
 - `promotion_plan_or_NOT_READY`
 - `build_light_evidence_index_or_NOT_RUN`
-- `discovery_ledger_update_or_NOT_RUN`
+- `experiments_context_update_or_NOT_RUN`
 - `pre_train_commit_or_debug_scope`
 - `pre_eval_commit_or_NOT_CHANGED`
 - `claim_delta_evidence_or_NOT_CHANGED`
 - `assurance_axis_recorded`
-- `experiment_queue_update_or_NOT_RUN`
-- `research_wiki_update_or_NOT_RUN`
 - `iteration_log_write`
 - `iteration_report_write`
-- `lesson_promotion`
+- `memory_context_write`
 - `WF11_handoff`
 - `experiment_evidence_index_write`
 - `docs_site_boundary_report`
 - `run_code_manifest_write`
 - `promotion_plan_write`
 - `light_evidence_index_write`
-- `discovery_ledger_write`
-- `research_wiki_write`
-- `experiment_queue_write`
+- `experiments_context_write`
 - `claim_delta_evidence`
 - `pre_train_commit`
 - `pre_eval_commit`
