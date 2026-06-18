@@ -17,7 +17,7 @@ Read and follow:
 Default command:
 
 ```bash
-python tooling/workflow_supervisor/scripts/workflow_ctl.py prepare --complete --json
+python tooling/workflow_supervisor/scripts/workflow_ctl.py start --segment prepare --complete --json
 ```
 
 Use Grill-produced approved readiness from `.workflow_supervisor/readiness.json`

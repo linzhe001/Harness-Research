@@ -19,7 +19,7 @@ Read and follow:
 Default command:
 
 ```bash
-python tooling/workflow_supervisor/scripts/workflow_ctl.py prepare --complete --json
+python tooling/workflow_supervisor/scripts/workflow_ctl.py start --segment prepare --complete --json
 ```
 
 Before the default command, inspect Grill artifacts and readiness for a

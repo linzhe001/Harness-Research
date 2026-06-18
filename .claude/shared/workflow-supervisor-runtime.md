@@ -50,7 +50,9 @@ normal build path.
 
 - `prepare --dry-run`: runtime readiness preflight only; no Review Packet gate.
 - `prepare --complete`: readiness, acquisition plan, data/baseline acquisition,
-  protocol compiler, WF5 Review Packet, then approval pause.
+  protocol compiler, WF5 Review Packet, then `prepare_complete` when gates pass.
+  It pauses only for missing inputs, policy blockers, worker failures, gate
+  failures, or explicit approval/revision checks required by the packet.
 - `build`: `refine-arch -> build-plan -> code-expert -> validate-run`.
   `code-debug` runs only as failure recovery.
 - `iterate`: delegates to auto-iterate and mirrors controller status.
