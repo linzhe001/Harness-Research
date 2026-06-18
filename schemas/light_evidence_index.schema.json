@@ -36,7 +36,9 @@
               "gate",
               "docchain",
               "approval",
-              "discovery"
+              "discovery",
+              "experiment_queue",
+              "research_wiki"
             ]
           },
           "summary": {

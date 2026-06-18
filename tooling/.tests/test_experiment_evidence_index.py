@@ -90,9 +90,44 @@ def test_build_experiment_evidence_index_writes_paper_facing_outputs(
             [
                 "# Discovery Ledger",
                 "",
-                "| ID | Date | Level | Status | Summary | Evidence Refs | Next Experiment Hint |",
+                "| ID | Date | Level | Status | Summary | Evidence Refs | "
+                "Next Experiment Hint |",
                 "| --- | --- | --- | --- | --- | --- | --- |",
-                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after config change | iteration_log.json | ablate config |",
+                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after "
+                "config change | iteration_log.json | ablate config |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    queue = tmp_path / "docs" / "40_iterations" / "Experiment_Queue.md"
+    queue.parent.mkdir(parents=True, exist_ok=True)
+    queue.write_text(
+        "\n".join(
+            [
+                "# Experiment Queue",
+                "",
+                "| ID | Priority | Status | Assurance Axis | Question | "
+                "Falsifier | Evidence Needed |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
+                "| q1 | high | open | ablation | test whether the gain is "
+                "component-specific | no change after ablation | "
+                "ablation metrics |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    wiki = tmp_path / "docs" / "45_discoveries" / "Research_Wiki.md"
+    wiki.write_text(
+        "\n".join(
+            [
+                "# Research Wiki",
+                "",
+                "| ID | Type | Status | Summary | Evidence Refs |",
+                "| --- | --- | --- | --- | --- |",
+                "| w1 | finding | active | component appears responsible for "
+                "accuracy gain | iteration_log.json |",
                 "",
             ]
         ),
@@ -170,9 +205,44 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
             [
                 "# Discovery Ledger",
                 "",
-                "| ID | Date | Level | Status | Summary | Evidence Refs | Next Experiment Hint |",
+                "| ID | Date | Level | Status | Summary | Evidence Refs | "
+                "Next Experiment Hint |",
                 "| --- | --- | --- | --- | --- | --- | --- |",
-                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after config change | iteration_log.json | ablate config |",
+                "| d1 | 2026-06-17 | phenomenon | open | accuracy jump after "
+                "config change | iteration_log.json | ablate config |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    queue = tmp_path / "docs" / "40_iterations" / "Experiment_Queue.md"
+    queue.parent.mkdir(parents=True, exist_ok=True)
+    queue.write_text(
+        "\n".join(
+            [
+                "# Experiment Queue",
+                "",
+                "| ID | Priority | Status | Assurance Axis | Question | "
+                "Falsifier | Evidence Needed |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
+                "| q1 | high | open | ablation | test whether the gain is "
+                "component-specific | no change after ablation | "
+                "ablation metrics |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    wiki = tmp_path / "docs" / "45_discoveries" / "Research_Wiki.md"
+    wiki.write_text(
+        "\n".join(
+            [
+                "# Research Wiki",
+                "",
+                "| ID | Type | Status | Summary | Evidence Refs |",
+                "| --- | --- | --- | --- | --- |",
+                "| w1 | finding | active | component appears responsible for "
+                "accuracy gain | iteration_log.json |",
                 "",
             ]
         ),
@@ -201,6 +271,18 @@ def test_build_light_evidence_index_writes_compact_records(tmp_path: Path) -> No
     assert discoveries
     assert discoveries[0]["kind"] == "discovery"
     assert discoveries[0]["level"] == "phenomenon"
+    queue_records = [
+        item for item in data["records"] if item["id"] == "experiment_queue:q1"
+    ]
+    assert queue_records
+    assert queue_records[0]["kind"] == "experiment_queue"
+    assert queue_records[0]["assurance_axis"] == "ablation"
+    wiki_records = [
+        item for item in data["records"] if item["id"] == "research_wiki:w1"
+    ]
+    assert wiki_records
+    assert wiki_records[0]["kind"] == "research_wiki"
+    assert wiki_records[0]["topic_type"] == "finding"
 
 
 def test_migrate_iteration_log_v2_writes_strict_fields_and_manifest(

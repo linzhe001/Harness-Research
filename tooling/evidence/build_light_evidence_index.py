@@ -315,6 +315,105 @@ def discovery_records(root: Path) -> list[dict[str, Any]]:
     return records
 
 
+def experiment_queue_records(root: Path) -> list[dict[str, Any]]:
+    path = root / "docs" / "40_iterations" / "Experiment_Queue.md"
+    rel = "docs/40_iterations/Experiment_Queue.md"
+    if not path.is_file():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or "---" in stripped:
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 4 or cells[0].lower() in {"id", "queue id", "pending"}:
+            continue
+        identifier = cells[0]
+        status = cells[2] if len(cells) > 2 else "open"
+        axis = cells[3] if len(cells) > 3 else ""
+        summary = cells[4] if len(cells) > 4 else axis or identifier
+        records.append(
+            {
+                "id": f"experiment_queue:{identifier}",
+                "kind": "experiment_queue",
+                "summary": summary or identifier,
+                "status": status or "open",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [source_ref(root, rel, "experiment_queue")],
+                "detail_ref": rel,
+                "priority": cells[1] if len(cells) > 1 else "",
+                "assurance_axis": axis,
+                "evidence_needed": cells[6] if len(cells) > 6 else "",
+            }
+        )
+    if not records:
+        records.append(
+            {
+                "id": "experiment_queue:index",
+                "kind": "experiment_queue",
+                "summary": "Experiment queue exists but has no active entries",
+                "status": "empty",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [source_ref(root, rel, "experiment_queue")],
+                "detail_ref": rel,
+            }
+        )
+    return records
+
+
+def research_wiki_records(root: Path) -> list[dict[str, Any]]:
+    path = root / "docs" / "45_discoveries" / "Research_Wiki.md"
+    rel = "docs/45_discoveries/Research_Wiki.md"
+    if not path.is_file():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or "---" in stripped:
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 4 or cells[0].lower() in {"id", "wiki id", "pending"}:
+            continue
+        identifier = cells[0]
+        topic_type = cells[1] if len(cells) > 1 else "note"
+        status = cells[2] if len(cells) > 2 else "open"
+        summary = cells[3] if len(cells) > 3 else identifier
+        records.append(
+            {
+                "id": f"research_wiki:{identifier}",
+                "kind": "research_wiki",
+                "summary": summary or identifier,
+                "status": status or "open",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [source_ref(root, rel, "research_wiki")],
+                "detail_ref": rel,
+                "topic_type": topic_type,
+                "evidence_refs": cells[4] if len(cells) > 4 else "",
+            }
+        )
+    if not records:
+        records.append(
+            {
+                "id": "research_wiki:index",
+                "kind": "research_wiki",
+                "summary": "Research Wiki exists but has no active entries",
+                "status": "empty",
+                "iteration_id": None,
+                "git_commit": None,
+                "primary_metric": None,
+                "source_refs": [source_ref(root, rel, "research_wiki")],
+                "detail_ref": rel,
+            }
+        )
+    return records
+
+
 def build_light_index(root: Path) -> dict[str, Any]:
     log_path = root / "iteration_log.json"
     log = load_json(log_path) if log_path.is_file() else {"iterations": []}
@@ -336,6 +435,8 @@ def build_light_index(root: Path) -> dict[str, Any]:
             records.append(promotion)
     records.extend(docchain_records(root))
     records.extend(discovery_records(root))
+    records.extend(experiment_queue_records(root))
+    records.extend(research_wiki_records(root))
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
