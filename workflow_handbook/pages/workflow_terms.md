@@ -75,6 +75,29 @@ Proof that a command, test, review, approval check, or workflow gate was attempt
 
 A command/result/reason/artifact report.
 
+### Automation Policy
+
+Grill-scoped operator decision that defines which later non-Grill flows may
+auto-proceed, plus budgets, forbidden directions, external access limits, and
+stop conditions.
+
+### Claim Delta Evidence
+
+Gate Evidence and Conclusion Evidence that record how a paper claim, release
+claim, or claim boundary changed, which Source Artifacts support the change,
+and why the change stays inside the active Automation Policy.
+
+### Experiment Queue
+
+Prioritized queue of pending experiment questions, falsifiers, assurance gaps,
+and run requests that WF10 planning consumes.
+
+### Research Wiki
+
+Mutable researcher-facing index of observations, phenomena, methods, open
+questions, and accepted findings, backed by Source Artifacts and distinct from
+Approved Contracts.
+
 ### Conclusion Evidence
 
 Traceable support from Source Artifacts to a Claim.

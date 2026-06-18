@@ -8,7 +8,7 @@ source_type: "hand_authored"
 source_path: "workflow_handbook/pages/auto_iterate_model.md"
 source_of_truth: true
 status: "current"
-summary: "Explains how the WF10 auto-iterate controller fits into the workflow."
+summary: "Explains how the WF10 auto-iterate controller fits into the Automation Policy workflow."
 nav:
   section: "reference"
   position: 30
@@ -32,14 +32,18 @@ html:
 
 ## Purpose
 
-Auto-iterate 减少 WF10 多轮实验的手工摩擦，但不替代 operator 的 claim、contract 或 release 决策。
+Auto-iterate 减少 WF10 多轮实验的手工摩擦。它在 Grill 记录的
+Automation Policy 内自动推进 non-Grill loop，但不替代 explicit approval
+tools、外部不可逆 submit，或离开 policy 的 steering 决策。
 
 ## Model
 
 ```text
 $run
   -> internal auto-iterate goal preflight when delegated looping is requested
-  -> plan/code/run/eval phases
+  -> plan/code/run/eval phases driven by iteration_log.json action_state
+  -> pre_train_commit / pre_eval_commit or pre_eval_commit_NOT_CHANGED
+  -> Experiment Queue, Discovery Ledger, Research Wiki, and run manifests
   -> iteration_log.json remains experiment source of truth
 ```
 
@@ -47,11 +51,23 @@ $run
 
 - `.auto_iterate/**` 是 controller-owned runtime state。
 - `docs/auto_iterate_goal.md` 是 operator-facing goal source。
-- Human Approval 仍然控制 contracts、Claim Boundary、release readiness 和高风险转向。
+- `docs/40_iterations/Experiment_Queue.md` 记录 next-run questions、
+  falsifiers、controls、paper-driven run requests 和 Assurance Axis 缺口。
+- `docs/45_discoveries/Research_Wiki.md` 记录 searchable findings、method
+  notes、paper context 和 open questions；它不是 Approved Contract。
+- Meaningful train/eval 必须记录 `pre_train_commit`、`pre_eval_commit` 或
+  `pre_eval_commit_NOT_CHANGED`。
+- Claim 或 claim-boundary 变化在 Automation Policy 内用 Claim Delta
+  Evidence 和 Gate ledger 记录；离开 policy 时停下来请求 steering。
+- Human Approval 只用于 Grill exit/delegation、approval-recording tools、
+  policy 外动作和不可逆 external submit。
 
 ## Common Confusions
 
 - Controller logs 不是 approval。
+- Watchdog status 不是 notification 或 approval；它只是 pollable run health。
+- Experiment Queue 和 Research Wiki 是工作索引，不是 Gate Evidence 或
+  Approved Contract。
 - Auto mode 失败后要从 state 和 logs 恢复，不能补写成功记录。
 - WF10 决策词仍然是 NEXT_ROUND、DEBUG、CONTINUE、PIVOT、ABORT。
 

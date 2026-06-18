@@ -58,10 +58,10 @@ what you want
 | 判断能否进入执行 | `$prepare` | workflow-supervisor `prepare --dry-run` | readiness preflight 和 Gate ledger | readiness 输入缺失、无效或过期 |
 | 处理 pending request | `$prepare` / `$build` / `$write` | `workflow_ctl status --json`，然后 scoped `workflow_ctl approve ...` 或 `resume ...` | `.workflow_supervisor/**/pending_request.json` 和 `approval_source` | request 不够 exact、scoped 或 auditable |
 | 推进 planned slice 的 build / validate | `$build` | workflow-supervisor `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、postcondition validation、Validate Run Report | 缺输入、worker 失败、Gate ledger 无效或 validate-run postconditions 未通过 |
-| 跑多轮实验 | `$run` | iterate / auto-iterate | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget 或 goal change |
+| 跑多轮实验 | `$run` | iterate / auto-iterate | `auto_iterate_ctl.sh status --json`、`tail --jsonl`、`iteration_log.json` | `manual_action_required`、PIVOT、ABORT、budget/goal/policy change、缺 `pre_train_commit` / `pre_eval_commit` 记录 |
 | 解释实验结果或决定下一轮 | `$analyze` | evaluate | Stage report、Discovery Ledger、Experiment Evidence Index、decision token | run artifact 缺失、claim support 不足、需要新 control 或 reviewer risk |
 | 成熟代码库收到新需求 | `$change` | change-intake route classification | Change Request JSON 和 route confidence | route 影响 evaluation、claim boundary、architecture 或 new research direction |
-| 写论文、完善 GitHub 或准备 release | `$write` | auto-paper / docs-site / scoped release gate | manuscript artifacts、WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、approval 缺失或 claim 超出证据 |
+| 写论文、完善 GitHub 或准备 release | `$write` | auto-paper / docs-site / scoped release gate | manuscript artifacts、WF12 Review Packet、Claim Boundary、approved contracts | action 不精确、claim 缺 Claim Delta Evidence、离开 Automation Policy、approval tool 或 external submit |
 | 查 supervision 资产是否已吸收 | Detailed Reference | Research Supervision Assets | asset route table、coverage boundary、maintainer watchlist | 资产想进入 runtime 但没有 Skill Contract/read route |
 | 旧 workspace 需要适配新 docs layout | `$change` | docs migration plus dynamic-context gates | `workflow_handbook/pages/legacy_docs_migration.md`、`docs/90_legacy/**`、Gate ledger | old approval 不可审计、Evidence Chain 缺 source、contract 需要重新批准 |
 | 排查内部 node 失败 | Detailed Reference | Stage / Skill lookup | Stage page、Skill page、declared artifacts、Gate ledger | 失败需要 human steering 或 contract change |
@@ -83,6 +83,7 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
 ## Boundaries
 
 - visible alias 只选择 operating mode；它不批准 contracts 或 claims。
+- Automation Policy 允许 non-Grill flows 自动推进，但不是 Approval Evidence。
 - `$prepare/$build/$run/$analyze/$write/$change` 是 visible aliases；
   `workflow-supervisor`, `iterate`, `evaluate`, `auto-paper`, `change-intake`
   等是内部 Skill Contract source，不是 autocomplete 入口。
@@ -102,11 +103,13 @@ tooling/auto_iterate/scripts/auto_iterate_ctl.sh tail --jsonl --lines 50
 - `grill_draft_ready` 只表示 draft intent 存在，不表示 WF1-WF3 complete。
 - `prepare_hitl_poc` 证明 approval plumbing，不表示完整 prepare completion。
 - `prepare_complete` 才表示数据、baseline、protocol / review-packet gate 和
-  required approval/revision checks 已经走完。
+  required gates/pending requests 已经走完。
 - `build_ready_for_iterate` 才表示 build registry 已运行到 validate-run，并且可跑通的
   postconditions 通过。
 - low-confidence change route 应暂停请求 steering，而不是直接 edit code。
 - release readiness 不等于 package 或 submit approval。
+- release validate/package 可以在 Automation Policy 内自动推进；submit 仍然
+  是 explicit approval action。
 - `coverage-matrix.md` 是 maintainer audit，不是 operator 每轮都要读的 asset。
 
 ## Related Pages

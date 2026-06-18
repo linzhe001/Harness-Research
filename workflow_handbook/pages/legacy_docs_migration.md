@@ -79,7 +79,9 @@ Classify each file into one target layer:
 | Tables of papers, baselines, metrics, datasets, open questions | `docs/30_evidence/**` | Conclusion Evidence inputs, not approval. |
 | Protocol procedure, metric plan, failure modes | `docs/35_protocol/**` | Protocol Draft until approved. |
 | Iteration/run summaries | `docs/40_iterations/**` and `iteration_log.json` | Keep run IDs and artifact refs. |
+| Planned experiments, falsifiers, controls, run requests, assurance gaps | `docs/40_iterations/Experiment_Queue.md` | Planning queue, not Conclusion Evidence by itself. |
 | Observations, phenomena, hypotheses, next-run hints | `docs/45_discoveries/Discovery_Ledger.md` | Mutable discovery layer. |
+| Searchable findings, method notes, paper context, open questions | `docs/45_discoveries/Research_Wiki.md` | Research index, not Approved Contract. |
 | Candidate or accepted lessons | `docs/50_memory/Lessons.md`; `MEMORY.md` only for accepted lessons | Follow lesson-quality rule. |
 | Superseded narrative docs | `docs/90_legacy/**` | Preserve for audit, do not load by default. |
 
@@ -145,10 +147,14 @@ Human Approval.
 
 6. Migrate mutable observations before promoting lessons.
 
-Put raw run observations, surprising patterns, hypotheses, and next-experiment
-hints into `docs/45_discoveries/Discovery_Ledger.md`. Promote only reviewed
-lesson candidates to `docs/50_memory/Lessons.md`; write `MEMORY.md` only for
-accepted lessons with scope, evidence refs, alternatives, and future action.
+Put planned experiments, falsifiers, controls, paper-driven run requests, and
+Assurance Axis gaps into `docs/40_iterations/Experiment_Queue.md`. Put raw run
+observations, surprising patterns, hypotheses, and next-experiment hints into
+`docs/45_discoveries/Discovery_Ledger.md`. Put searchable findings, method
+notes, paper context, and open questions into
+`docs/45_discoveries/Research_Wiki.md`. Promote only reviewed lesson
+candidates to `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted
+lessons with scope, evidence refs, alternatives, and future action.
 
 7. Archive superseded files instead of deleting them:
 
@@ -183,7 +189,11 @@ not unrelated experiment or implementation changes.
   approval state.
 - `docs/20_facts/**`, `docs/30_evidence/**`, and `docs/35_protocol/**` contain
   current facts, Conclusion Evidence inputs, and Protocol Drafts.
+- `docs/40_iterations/Experiment_Queue.md` contains pending experiment
+  questions, falsifiers, controls, run requests, and assurance gaps.
 - `docs/45_discoveries/Discovery_Ledger.md` contains mutable discoveries.
+- `docs/45_discoveries/Research_Wiki.md` contains searchable findings, method
+  notes, paper context, and open questions.
 - `docs/50_memory/Lessons.md` and `MEMORY.md` contain only promoted lessons at
   the correct maturity level.
 - `docs/90_legacy/**` preserves superseded narrative docs.
@@ -208,8 +218,11 @@ python tooling/evidence/check_docchain_gates.py --workspace-root .
 python tooling/evidence/build_light_evidence_index.py --workspace-root .
 ```
 
-When a contract or claim boundary is involved, do not report readiness unless
-the Review Packet and Approval Evidence are current.
+When a contract approval is involved, do not report readiness unless the Review
+Packet and Approval Evidence are current. When a claim or claim boundary changes
+inside an accepted Automation Policy, record Claim Delta Evidence and Gate
+ledger output; request Human Approval only when the change leaves the policy or
+uses an approval-recording tool.
 
 ## Troubleshooting
 

@@ -8,7 +8,7 @@ source_type: "hand_authored"
 source_path: "workflow_handbook/pages/workflow_supervisor_model.md"
 source_of_truth: true
 status: "current"
-summary: "How visible aliases route to internal runtime sources without replacing Gate Evidence or Human Approval."
+summary: "How visible aliases route to internal runtime sources while using Automation Policy, Gate Evidence, and scoped Human Approval."
 nav:
   section: "operate"
   position: 10
@@ -33,8 +33,12 @@ model. Operators choose a visible alias first. Some aliases route to the
 internal workflow-supervisor runtime; others route to iterate, evaluate,
 auto-paper, docs-site, or change-intake sources. Existing Skill-owned artifact
 producers remain the internal execution map. Evidence tooling still owns
-Evidence Chains and Review Packets. Human Approval is still required for
-contracts, claim boundaries, high-risk transitions, and release decisions.
+Evidence Chains and Review Packets. After Grill records an Automation Policy,
+non-Grill prepare/build/run/analyze/write/change and release validate/package
+work may auto-proceed inside that policy. Human Approval remains scoped to
+Grill exit/delegation, approval-recording tools, policy-external actions, and
+irreversible external submit. Claim or claim-boundary changes inside the policy
+use Claim Delta Evidence and Gate ledger output.
 
 ## Model
 
@@ -42,8 +46,8 @@ contracts, claim boundaries, high-risk transitions, and release decisions.
 Intent
   -> visible alias: grill | prepare | build | run | analyze | write | change
   -> internal runtime or Skill Contract source
-  -> Gate Evidence or typed HITL interrupt
-  -> Next safe action
+  -> Gate Evidence, Automation Policy ledger, or typed blocker
+  -> auto-proceed inside policy or request the next safe decision
 ```
 
 Visible aliases define the operator surface:
@@ -207,13 +211,17 @@ routed Skill or edit code/contracts by itself.
 `$write` may reach the conservative release gate when the request is about
 release readiness, packaging, or claim boundaries. The registry contains WF11
 `final-exp` and WF12 `release` nodes. Non-dry-run release requires an explicit
-`validate`, `package`, or `submit` action, runs
-`check_dynamic_context.py --stage wf12 --review-packet`, and pauses with an
-exact scoped `APPROVE_ACTION` only when dynamic context is active and Project
-Contract, Evaluation Contract, and Claim Boundary approvals are confirmed. If
-the WF12 gate fails, approvals are missing, or the action is unclear, the
-supervisor creates a typed `STEER` request. Resume records the approval payload
-and reruns WF12 gates; it does not package or submit.
+`validate`, `package`, or `submit` action and runs
+`check_dynamic_context.py --stage wf12 --review-packet`. `validate` and
+`package` may auto-proceed inside an accepted Automation Policy after the
+required final-exp matrix, `pre_eval_commit` / `pre_eval_commit_NOT_CHANGED`,
+WF12 gate, Review Packet, Gate ledger, and any Claim Delta Evidence are
+recorded. `submit` is irreversible external action and still requires an exact
+scoped `APPROVE_ACTION`. If the WF12 gate fails, claim delta support is missing,
+the action is unclear, or the requested action leaves the Automation Policy,
+the supervisor creates a typed `STEER` or `APPROVE_ACTION` request. Resume
+records the scoped decision payload and reruns WF12 gates; it does not invent
+package or submit success.
 
 ## Boundaries
 
@@ -234,8 +242,8 @@ readiness/HITL plumbing only.
 
 `prepare_complete` is the prepare state that later execution can depend on. It
 requires data and baseline artifacts plus the required gates; it is not an
-ordinary manual approval pause when Grill readiness already approved the
-executable inputs.
+ordinary manual approval pause when Grill readiness already authorized the
+executable inputs or Automation Policy already authorizes the flow.
 
 `build_ready_for_iterate` means build has reached validate-run and the
 configured runnable postconditions passed. It does not start WF10 by itself.
