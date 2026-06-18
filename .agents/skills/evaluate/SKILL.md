@@ -26,6 +26,8 @@ Read these first:
 - `../../../PROJECT_STATE.json`
 - `../../../docs/10_contract/Evaluation_Contract.md` if it exists
 - `../../../docs/45_discoveries/Discovery_Ledger.md` if it exists
+- `../../../docs/45_discoveries/Research_Wiki.md` if it exists
+- `../../../docs/40_iterations/Experiment_Queue.md` if it exists
 - `../../../docs/50_memory/Lessons.md` if it exists
 
 ## When To Use
@@ -43,28 +45,42 @@ Use this skill when the user wants training or evaluation results interpreted an
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
 4. Separate metric movement, training health, missing controls, claim support,
    and next-experiment implications.
-5. Produce the canonical report using `./references/stage-report.md`.
-6. Write observations, phenomena, findings, hypotheses, and next-experiment
+5. Verify `pre_eval_commit` for meaningful eval work, or record
+   `pre_eval_commit_NOT_CHANGED` when the committed training source already
+   covers eval code/configs. Do not use eval output as Conclusion Evidence
+   without a committed eval identity.
+6. Produce the canonical report using `./references/stage-report.md`.
+7. Write observations, phenomena, findings, hypotheses, and next-experiment
    hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified
    lesson candidates to `docs/50_memory/Lessons.md`.
-7. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
-8. Recommend exactly one of:
+8. Append or refresh `docs/40_iterations/Experiment_Queue.md` for concrete
+   follow-up experiments, falsifiers, controls, assurance gaps, or paper-driven
+   run requests; report `NOT_RUN` when no queue update is needed.
+9. Append or refresh `docs/45_discoveries/Research_Wiki.md` for searchable
+   stable observations, method notes, open questions, and finding summaries;
+   report `NOT_RUN` when no wiki update is needed.
+10. Record Claim Delta Evidence when a paper claim, release claim, or claim
+   boundary implication changed; otherwise record
+   `claim_delta_evidence_NOT_CHANGED`.
+11. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
+12. Recommend exactly one of:
    - `NEXT_ROUND` — ordinary improvement round, stay in WF10
    - `DEBUG` — fixable technical issue, stay in WF10
    - `CONTINUE` — handoff to orchestrator/WF11, not continue iterating
    - `PIVOT`
    - `ABORT`
-9. If invoked from `$iterate`, do not take over stage-transition ownership.
-10. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
-11. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
+13. If invoked from `$iterate`, do not take over stage-transition ownership.
+14. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
+15. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
     `tooling/evidence/build_experiment_evidence_index.py` after completed run
     evidence is written, or report `NOT_RUN` with the reason.
-12. Use an `experiment` commit checkpoint for completed evaluation/discovery
+16. Use an `experiment` commit checkpoint for completed evaluation/discovery
     slices before long follow-up runs or handoff.
-13. Report a Gate ledger when iteration reports, stage reports, discovery
-    ledgers, lesson files, `MEMORY.md`, `iteration_log.json`, or the experiment
-    evidence index are written. If lesson-quality or workflow-state checks are
-    not run, mark them `NOT_RUN` with the reason.
+17. Report a Gate ledger when iteration reports, stage reports, discovery
+    ledgers, Research Wiki, Experiment Queue, lesson files, `MEMORY.md`,
+    `iteration_log.json`, claim delta evidence, or the experiment evidence
+    index are written. If lesson-quality or workflow-state checks are not run,
+    mark them `NOT_RUN` with the reason.
 
 ## Context Budget
 

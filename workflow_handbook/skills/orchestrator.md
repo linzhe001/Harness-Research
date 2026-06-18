@@ -81,7 +81,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Must Prove
 
-- `explicit_user_approval_for_transition`
+- `automation_policy_respected`
+- `transition_ledger_or_gate_ledger`
 - `workflow_state_gate_or_NOT_RUN`
 - `gate_ledger`
 - `stage_transition`
@@ -92,7 +93,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Constraints
 
-- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
+- `stage_transition_without_automation_policy [ownership_boundary/notice; exception=overlay_allowed]`
 - `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
 - `direct_edit_evidence [hard_invariant/block; exception=never]`
 

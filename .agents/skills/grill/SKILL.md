@@ -13,10 +13,8 @@ conversation-first and draft-only.
 - `../../../AGENTS.md`, `../../../CLAUDE.md`
 - `../../../.agents/references/workflow-supervisor-runtime.md`
 - `../../../.agents/skills/init-project/SKILL.md`
-- Workflow/context/documentation/language rules under
-  `../../../.agents/references/`
-- `../../../.agents/references/research-supervision-patterns.md`
-- stage-specific assets from `../../../.agents/references/research-supervision/README.md`
+- workflow/context/documentation/language rules and research-supervision assets
+  under `../../../.agents/references/`
 
 ## Conversation Contract
 Start with one short restatement of the current intent, then ask 3-5 blocking
@@ -47,15 +45,16 @@ the blocker explicitly:
 - model/teacher/detector weight source, access policy, and cache target
 - compute, budget, registration, and approval assumptions that would stop
   `prepare`
+- Automation Policy candidate: auto-proceed flows after Grill, budget, forbidden
+  directions, external access, watchdog expectations, and narrow human-stop
+  cases such as Grill exit, approval tools, or irreversible external submit
 
-For datasets, require a direct downloadable source, official dataset API,
-Hugging Face dataset id, release/archive URL, or private exact local path. For
-baselines, require a concrete code repository URL, official code entrypoint, or
-private exact local path. For model weights, require a Hugging Face model id,
-clone/download URL, official checkpoint/release URL, or private exact local
-path. Paper pages, method pages, project pages, method names, and model family
-names are non-executable until acquisition source, access policy, and target
-are clear.
+Datasets need a direct downloadable source/API/Hugging Face id/release URL or
+exact private path. Baselines need a concrete repo, official entrypoint, or
+exact private path. Model weights need a Hugging Face id, download/checkpoint
+URL, or exact private path. Paper pages, method pages, project pages, method
+names, and model families are non-executable until source, access policy, and
+target are clear.
 
 ## Outputs
 Grill may create or refresh:
@@ -64,28 +63,29 @@ Grill may create or refresh:
 - `docs/05_intake/Execution_Readiness_Packet.md`
 - `.workflow_supervisor/readiness.json` only through Grill/supervisor tooling
 
-In `docs/05_intake/Execution_Readiness_Packet.md`, keep four compact ledgers:
-- `Dataset Access Ledger`: id, source/entrypoint, access verdict, probe,
-  execution decision, notes.
-- `Baseline Source Ledger`: id/name, role, code repository URL or entrypoint,
-  probe, execution decision, notes.
-- `Model Weight Ledger`: id/name, role, source/entrypoint, access verdict,
-  target/cache, execution decision, notes.
-- `Execution Intent Ledger`: acquisition, clone, and weight policy rows.
+In `docs/05_intake/Execution_Readiness_Packet.md`, keep compact ledgers for:
+Dataset Access, `Baseline Source Ledger`, model weights,
+`Execution Intent Ledger`, and Automation Policy. Each row records id/name,
+source/policy, probe/access verdict, execution decision, target/notes, and for
+automation: auto-proceed verdict, limits, forbidden directions, evidence needs,
+and human-stop condition.
 
 Execution decisions are `candidate`, `rejected`, `requires_approval`, or
 `deferred`. Active rows must not remain `pending`; use blockers such as
 `baseline_repo_missing`, `missing_dataset_source`, `requires_approval`, or
 `deferred`.
 
-For policy rows, use readiness input `kind: policy` and stable keys:
+For policy rows, use readiness input `kind: policy` with stable keys including
 `hf_access_policy`, `non_hf_registration_policy`, `baseline_clone_policy`,
-`baseline_clone_scope`, `hf_model_access_policy`,
-`model_weight_download_policy`, `model_weight_scope`, and
-`external_download_policy`. These are candidate readiness inputs, not Approval
-Evidence or Approved Contracts. When readiness JSON is written, also keep:
-`external_download_policy`, `approved_datasets`, `approved_baselines`,
-`target_paths`, `unknowns`, and `operator_approved_at`.
+`baseline_clone_scope`, model access/download policy/scope, and external
+downloads. These are candidate inputs, not Approval Evidence or Approved
+Contracts. Readiness JSON keeps
+external policy, approved datasets/baselines, targets, unknowns,
+`operator_approved_at`, and an `automation_policy` object after accepted Grill
+handoff. Include
+`auto_proceed_flows`, `manual_approval_flows`, `budget`, `forbidden_directions`,
+`assurance_axes`, `watchdog_policy`, `claim_delta_policy`,
+`commit_checkpoint_policy`, and `stop_conditions`.
 Dataset rows may include `target`, `license`, and `max_size_gb`; baseline rows
 may include `repo`, `ref`, and `target`. Weight targets belong in
 `target_paths` keys such as `model_cache` or `model_<id>` until a native

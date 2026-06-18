@@ -81,10 +81,15 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `respect_evaluation_contract`
 - `respect_claim_boundary`
 - `check_dynamic_context_or_NOT_RUN`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `automation_policy_respected`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `WF11_readiness`
 - `final_experiment_matrix_write`
+- `claim_delta_evidence`
+- `pre_eval_commit`
 - `docs_site_boundary_report`
 
 ## Exit Condition

@@ -7,7 +7,6 @@ description: "Internal Harness instruction source for orchestrator. Route throug
 
 ## References
 
-Read these first:
 - `../../../.agents/references/workflow-guide.md`
 - `../../../.agents/references/context-layering-policy.md`
 - `../../../.agents/references/contract-gating-rule.md`
@@ -17,17 +16,12 @@ Read these first:
 - `./references/stage-gates.md`
 - `../../../CLAUDE.md`
 - `../../../PROJECT_STATE.json`
-Tooling:
-- `../../../tooling/evidence/init_context.py`
-- `../../../tooling/evidence/compile_protocol.py`
-- `../../../tooling/evidence/compile_doc.py`
-- `../../../tooling/evidence/check_context_gates.py`
-- `../../../tooling/evidence/check_protocol_drift.py`
-- `../../../tooling/evidence/check_docchain_gates.py`
-- `../../../tooling/evidence/check_dynamic_context.py`
-- `../../../tooling/evidence/check_workflow_state.py`
-- `../../../tooling/evidence/build_review_packet.py`
-- `../../../tooling/evidence/approve_contract.py`
+
+Tooling: `init_context.py`, `compile_protocol.py`, `compile_doc.py`,
+`check_context_gates.py`, `check_protocol_drift.py`,
+`check_docchain_gates.py`, `check_dynamic_context.py`,
+`check_workflow_state.py`, `build_review_packet.py`, and
+`approve_contract.py` under `../../../tooling/evidence/`.
 
 ## When To Use
 
@@ -82,12 +76,18 @@ Interpret natural-language requests as one of these canonical intents:
    - New projects must pass WF2 `$idea-debate` and WF3 `$refine-idea` before data preparation, baseline reproduction, or architecture design. Skipping WF2 is a hard failure for new projects.
    - WF4 completion requires `PROJECT_STATE.json.dataset_paths` and `CLAUDE.md` dataset paths to be synchronized, plus an `AGENTS.md` stable-pointer consistency check when `AGENTS.md` exists.
    - WF5 must have `docs/Baseline_Report.md` and populated baseline metrics.
-   - WF5 is the first hard contract approval point for dynamic-context projects; baseline/evaluation contracts must be approved or explicitly accepted as draft before unattended WF10.
+   - WF5 prepares baseline/evaluation contract evidence. Contract approval is
+     recorded only by approval tooling after explicit Human Approval; later
+     automation may run under the Grill Automation Policy with draft/fallback
+     evidence recorded in the Gate ledger.
    - WF6 `$refine-arch` must happen after WF5 and must read the refined idea, dataset facts, baseline report, and evaluation protocol or contracts.
    - WF7 `$build-plan` requires `docs/Technical_Spec.md`; if planning exposes a new architecture decision, route back to WF6 or `$deep-check`.
    - WF8 to WF9 requires `$validate-run`.
    - WF9 PASS hook: after `$validate-run` passes, orchestrator should auto-trigger a `$auto-iterate-goal` check so that an iteration goal is set before WF10 begins.
-   - In dynamic-context projects, WF10 auto-iteration requires an approved Evaluation Contract or explicit operator acceptance of a draft. Baseline Contract gaps must be surfaced when the goal depends on required, skipped, or reference-only baselines.
+   - In dynamic-context projects, WF10 auto-iteration requires a valid goal,
+     context gates or explicit `NOT_RUN` reasons, and an Automation Policy or
+     fallback policy reason. Baseline Contract gaps must be surfaced when the
+     goal depends on required, skipped, or reference-only baselines.
    - Prefer `python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10 --review-packet` as the all-in-one dynamic gate when shell access is available.
    - Prefer `python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto` for this check when shell access is available.
    - Also run `python tooling/evidence/check_protocol_drift.py --workspace-root . --stage wf10` or `$protocol-drift-check` before unattended WF10; unresolved drift requires review or explicit operator acceptance.
@@ -99,7 +99,9 @@ Interpret natural-language requests as one of these canonical intents:
      - `CONTINUE` → can advance to WF11
      - `PIVOT` → rollback to WF2 idea debate/refine-idea
      - `ABORT` → terminate project
-4. Never auto-advance without explicit user confirmation in the current conversation.
+4. Auto-advance only when the transition is inside the active Automation Policy
+   and the required Gate ledger records the evidence, commands, and unresolved
+   assumptions. If the transition leaves the policy, stop and ask for steering.
 5. Before reporting a transition as ready or complete, include the gate ledger
    described in the workflow guide. If a required gate could not run, mark it
    `NOT_RUN` and do not call the transition machine-verified.

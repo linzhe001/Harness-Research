@@ -7,7 +7,10 @@ description: "Internal Harness instruction source for workflow-supervisor. Route
 
 Use this Skill for `harness prepare`, `build`, `iterate`, `release`, `change`,
 or direct `workflow_ctl` work. It orchestrates Skills but does not replace Stage
-Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.
+Skills, Evidence Chain tooling, Gate Evidence, or Human Approval. After Grill
+records an Automation Policy, non-Grill segments should auto-proceed within
+that policy and use Gate ledgers, commit checkpoints, and Claim Delta Evidence
+instead of repeated human approval prompts.
 
 ## Read First
 
@@ -26,20 +29,13 @@ Skills, Evidence Chain tooling, Gate Evidence, or Human Approval.
 The supervisor may read `.auto_iterate/**` status but must not write it.
 For stuck workers, follow `Worker Process Safety` in the runtime reference: use `status` / `recover` / `tail` / `stop`; do not `kill` Codex worker PIDs from the active session/process group unless isolation is verified.
 
-Common commands:
-
-```bash
-tooling/workflow_supervisor/scripts/workflow_ctl.sh status --json  # or worker-status --json
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --goal "<goal>" --dry-run
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --goal-file docs/05_intake/Research_Intent_Draft.md --json
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment prepare --complete --dataset-source <path-or-url> --dataset-target <path> --baseline-repo <path-or-url> --allow-external-downloads
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment build --goal "<goal>" --auto
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment iterate --goal "<goal>" --auto-goal docs/auto_iterate_goal.md
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goal "<new request>" --json
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "validate release" --json
-tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-nodes
-tooling/workflow_supervisor/scripts/workflow_ctl.sh validate-postconditions --node-id <node> --run-id <run_id> --worker-result <result.json> --json
-```
+Common commands use `tooling/workflow_supervisor/scripts/workflow_ctl.sh`:
+`status --json`, `worker-status --json`, `start --segment prepare --complete
+--goal-file docs/05_intake/Research_Intent_Draft.md --json`, `start --segment
+prepare --complete ... --allow-external-downloads`, `start --segment build
+--auto`, `start --segment iterate --auto-goal docs/auto_iterate_goal.md`,
+`start --segment change --json`, `start --segment release --json`,
+`validate-nodes`, and `validate-postconditions --json`.
 
 ## Bare Post-Grill Start
 
@@ -49,16 +45,10 @@ draft, do not ask them to hand-build CLI arguments.
 1. Run `status --json` and report active pending-request fields: `question`,
    `allowed_responses`, `reason`, `node_id`, `gate_status_refs`,
    `request_snapshot_hash`, `blocked_by`, `resume_command`, and `recovery`.
-2. If a run/request is active, run `recover --repair-stale-running --auto-resume-answered --json`; if it recommends `resume_answered_pending_request`, resume, otherwise report the input/manual/approval blocker and stop.
-3. If no run is active and Grill docs exist, start:
-
-```bash
-tooling/workflow_supervisor/scripts/workflow_ctl.sh start \
-  --segment prepare \
-  --complete \
-  --goal-file docs/05_intake/Research_Intent_Draft.md \
-  --json
-```
+2. If a run/request is active, run `recover --repair-stale-running --auto-resume-answered --json`; if it recommends `resume_answered_pending_request`, resume, otherwise report the input/manual/policy blocker and stop.
+3. If no run is active and Grill docs exist, start `workflow_ctl.sh start
+   --segment prepare --complete --goal-file
+   docs/05_intake/Research_Intent_Draft.md --json`.
 
 Full prepare reads the Grill bridge. Missing/redacted/ambiguous datasets or
 baselines become typed pending requests. Do not silently add
@@ -81,8 +71,10 @@ baselines become typed pending requests. Do not silently add
 - `change`: deterministic Change Intake; writes a Change Request JSON and
   routes or pauses, but does not edit code/contracts by itself.
 - `release`: conservative WF11 final experiment matrix plus WF12 gate for
-  explicit `validate`, `package`, or `submit` intent; approval resume records
-  approval only.
+  explicit `validate`, `package`, or `submit` intent. Validate/package may
+  auto-proceed under the Automation Policy with claim delta evidence; submit
+  still requires an explicit user request because it is an irreversible
+  external action.
 
 ## Worker Contract
 
@@ -118,11 +110,19 @@ tool-owned/generated paths: `.evidence/**`, `.auto_iterate/**`,
 declared implementation writes under `src/`, `scripts/`, `configs/`,
 `project_map.json`, and owned docs are not hard-blocked by hooks.
 
-## HITL And Exit
+## Automation And Exit
 
 Typed pending requests live in `.workflow_supervisor/pending_request.json`.
+Create them for missing executable inputs, budget/policy violations,
+requires-approval external sources, failed worker recovery, explicit
+approval-tool execution, or irreversible external submit. Do not create them
+only because a non-Grill stage transition occurred inside the active Automation
+Policy.
+
 Review Packets are decision inputs, not Approval Evidence. `approve_contract.py`
-may run only after explicit Human Approval.
+may run only after explicit Human Approval. Claim boundary and paper/release
+claim changes inside the Automation Policy need Claim Delta Evidence and Gate
+ledger records, not default approval pauses.
 
 Report segment, run id, state status, pending request if any, Gate ledger,
 unresolved assumptions, and next safe action.

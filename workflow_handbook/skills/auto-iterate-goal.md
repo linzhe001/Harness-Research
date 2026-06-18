@@ -77,6 +77,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 - `goal_validate_or_init`
 - `context_gate_or_NOT_RUN`
+- `automation_policy_respected`
+- `pre_train_commit_or_debug_scope`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `WF10_auto_readiness`

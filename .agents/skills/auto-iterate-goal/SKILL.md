@@ -62,6 +62,11 @@ Validate the existing goal file without modifying it.
 - `screening_policy.enabled` is boolean
 - No placeholder `{{...}}` markers remain
 - Dynamic projects: Evaluation Contract is approved, or the current operator explicitly accepts running with a draft contract
+  - Grill-derived Automation Policy is present or the Gate ledger records why
+    automation defaults are being used
+  - Commit checkpoint policy requires pre-train and pre-eval execution commits
+  - Claim delta policy records Claim Delta Evidence instead of default approval
+    pauses
   - Prefer `python tooling/evidence/check_context_gates.py --workspace-root . --stage wf10-auto` when shell access is available
 - Report the Gate ledger for goal validation and context-gate readiness before
   handing control to WF10 auto-iterate.

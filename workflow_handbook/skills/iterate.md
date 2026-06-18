@@ -59,6 +59,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `runs/wf10/`
 - `.evidence/light/index.json`
 - `docs/45_discoveries/`
+- `docs/40_iterations/Experiment_Queue.md`
 
 ## Final Outputs
 
@@ -111,6 +112,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.evidence/light/index.json`
 - `runs/wf10/`
 - `docs/45_discoveries/Discovery_Ledger.md`
+- `docs/45_discoveries/Research_Wiki.md`
+- `docs/40_iterations/Experiment_Queue.md`
 
 ## Must Prove
 
@@ -129,6 +132,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `promotion_plan_or_NOT_READY`
 - `build_light_evidence_index_or_NOT_RUN`
 - `discovery_ledger_update_or_NOT_RUN`
+- `pre_train_commit_or_debug_scope`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `assurance_axis_recorded`
+- `experiment_queue_update_or_NOT_RUN`
+- `research_wiki_update_or_NOT_RUN`
 - `iteration_log_write`
 - `iteration_report_write`
 - `lesson_promotion`
@@ -139,6 +148,11 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `promotion_plan_write`
 - `light_evidence_index_write`
 - `discovery_ledger_write`
+- `research_wiki_write`
+- `experiment_queue_write`
+- `claim_delta_evidence`
+- `pre_train_commit`
+- `pre_eval_commit`
 
 ## Constraints
 

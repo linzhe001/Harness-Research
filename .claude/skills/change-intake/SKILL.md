@@ -14,8 +14,10 @@ Routes:
 - `experiment_delta` -> `/iterate`
 - `stable_code_delta` -> build delta plus `/code-debug`
 - `architecture_delta` -> delta grill plus `/refine-arch` or `/build-plan`
-- `evaluation_delta` -> Review Packet and contract gate
-- `claim_boundary_delta` -> Claim Boundary review
+- `evaluation_delta` -> evaluation delta route plus Gate ledger and
+  `pre_eval_commit` requirement before metric-bearing eval
+- `claim_boundary_delta` -> Claim Delta Evidence plus owning claim/release or
+  writing route
 - `new_research_direction` -> new Research Intent Draft branch
 - `harness_guardrail_delta` -> `/harness-maintenance`
 - `unknown` -> `STEER`
@@ -32,7 +34,10 @@ The CLI writes the machine-readable Change Request under
 classifies and routes; it does not invoke `/code-debug`, `/iterate`, Review
 Packet tooling, delta grill, or `/harness-maintenance` by itself.
 
-Fail closed on low confidence, contract impact, claim impact, primary metric
-changes, public interface changes, or Harness guardrail changes. Produce a
-Change Request matching `schemas/change_request.schema.json`, or pause with one
+Fail closed on low confidence, public interface changes, or Harness guardrail
+changes. Evaluation, Baseline, or Claim Boundary impact routes to the owning
+workflow with a Gate ledger, Claim Delta Evidence when claims change, and a
+commit checkpoint requirement before train/eval. It does not pause for approval
+when the change stays inside the active Automation Policy. Produce a Change
+Request matching `schemas/change_request.schema.json`, or pause with one
 concrete steering question and Gate Evidence.

@@ -93,10 +93,12 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `grill_round_contract`
 - `gap_check`
 - `human_exit_decision_status`
+- `automation_policy_respected`
 - `docs_site_boundary_report`
 - `grill_draft_write`
 - `readiness_packet_write`
 - `readiness_json_write`
+- `automation_policy_ledger`
 - `docs_site_boundary_report`
 
 ## Constraints

@@ -60,16 +60,20 @@ If run-local code becomes reusable, recommend `/iterate promote` or
 - `plan`: refuse ordinary new work while an iteration is `coding` or `running`;
   allocate ID; check lessons; record hypothesis, files, `config_diff`, expected
   effect, screening recommendation, dominant improvement axis, falsifier,
-  minimum artifact, claim/figure implication, Codex review status, and
-  implementation scope: `config_only`, `run_local_code`, `stable_candidate`, or
-  `delegated_build`.
+  assurance axis, minimum artifact, claim/figure implication, Codex review
+  status, and implementation scope: `config_only`, `run_local_code`,
+  `stable_candidate`, or `delegated_build`. Read
+  `docs/40_iterations/Experiment_Queue.md` when it exists and either consume
+  one queued item or explain the priority choice.
 - `code`: select latest `planned`; set `coding`; write context; invoke
   `/code-debug`; run a `slice` or `experiment` commit checkpoint before
   `ready_to_run`; for `run_local_code` or `stable_candidate`, write
   `runs/wf10/<iter>/code_manifest.json`.
 - `run_screening` / `run_full`: select latest `ready_to_run`; resolve
   Train/Eval scripts from `CLAUDE.md`; run `config_diff.planned_command`
-  exactly when present; verify run-local config paths; record `run_manifest`,
+  exactly when present; verify run-local config paths; create or verify a
+  Semantic Execution Commit covering stable code, configs, eval logic, and
+  run-local code/configs; record `run_manifest`, `pre_train_commit`,
   `training_trace`, checkpoints, duration, exit code, and protocol metrics.
   Use `register` for manual/cluster runs. Set `ready_to_eval`, `needs_debug`,
   or `needs_more_evidence`; never invent metrics.
@@ -77,11 +81,16 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   set `ready_to_eval` only when the artifact bundle is complete.
 - `eval`: select latest `ready_to_eval` or `running`; call `/evaluate` when
   useful; compare against baseline, previous best, and previous iteration;
-  record metrics or documented failure, lessons, decision, and completion.
+  create or verify `pre_eval_commit`, or record `pre_eval_commit_NOT_CHANGED`;
+  record metrics or documented failure, assurance axis, claim delta evidence,
+  lessons, decision, and completion.
   Include vertical slice boundary notes and complexity and boundary observations
   when stable code surfaces change. Record mutable observations, phenomena,
   findings, and next-experiment hypotheses in
-  `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`. Refresh
+  `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`. Append
+  concrete next experiments to `docs/40_iterations/Experiment_Queue.md` and
+  stable searchable findings to `docs/45_discoveries/Research_Wiki.md`, or
+  report `NOT_RUN`. Refresh
   `.evidence/light/index.json` with
   `tooling/evidence/build_light_evidence_index.py`; run
   `tooling/evidence/build_experiment_evidence_index.py` only for detailed
@@ -108,6 +117,14 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   iteration incomplete with `NOT_RUN`.
 - Decisions are `NEXT_ROUND`, `DEBUG`, `CONTINUE`, `PIVOT`, `ABORT`.
 - `git_commit` is required after `code`; do not update `PROJECT_STATE.json`.
+- Meaningful run/eval commands require `pre_train_commit` and `pre_eval_commit`
+  or explicit `pre_eval_commit_NOT_CHANGED`. Run-local code/configs under
+  `runs/wf10/<iter>/` are part of this execution boundary even when they are
+  never promoted into stable code.
+- After Grill has established an Automation Policy, WF10 auto-proceeds within
+  that policy. Do not ask for human approval during run/eval loops unless the
+  action would leave the Automation Policy, run an explicit approval tool, or
+  perform an irreversible external submission.
 - Core train/eval logic stays in `CLAUDE.md` Entry Scripts.
 - Do not promote raw observations to `MEMORY.md`; keep them in
   `docs/45_discoveries/Discovery_Ledger.md` until lesson-quality rules promote

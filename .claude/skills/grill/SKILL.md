@@ -30,7 +30,12 @@ claim, falsifier, metric/evaluation signal, baseline or negative control,
 dataset/compute assumptions, maximum claim boundary, forbidden claims,
 pivot/abort condition, problem type, dominant improvement axis, reviewer risk,
 fatal-flaw status, required model/teacher/detector weights, and execution
-readiness inputs that would otherwise stop `prepare`. Executable baselines
+readiness inputs that would otherwise stop `prepare`. It must also make the
+Automation Policy candidate-clear: which non-Grill flows may auto-proceed,
+budget/compute/cost limits, forbidden directions, external access policy,
+watchdog expectations, commit checkpoint policy, claim delta policy, and the
+narrow cases that still require explicit human input such as Grill exit,
+approval-tool execution, or irreversible external submit. Executable baselines
 need a code repository URL, official code entrypoint, or exact local path;
 executable datasets need a direct downloadable source, official dataset API,
 Hugging Face dataset id, release/archive URL, or exact local path in private
@@ -101,7 +106,12 @@ verification, Git clone, release/archive download, or no-download reference
 inspection.
 When readiness JSON is written, keep top-level structured fields:
 `external_download_policy`, `approved_datasets`, `approved_baselines`,
-`target_paths`, `unknowns`, and `operator_approved_at`.
+`target_paths`, `unknowns`, `operator_approved_at`, and an
+`automation_policy` object when the operator has explicitly accepted Grill
+handoff. The Automation Policy ledger should include:
+`auto_proceed_flows`, `manual_approval_flows`, `budget`,
+`forbidden_directions`, `assurance_axes`, `watchdog_policy`,
+`claim_delta_policy`, `commit_checkpoint_policy`, and `stop_conditions`.
 Dataset rows may include `target`, `license`, and `max_size_gb`; baseline rows
 may include `repo`, `ref`, and `target`. Weight targets belong in
 `target_paths` keys such as `model_cache` or `model_<id>` until a native

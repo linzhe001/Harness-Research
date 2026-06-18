@@ -19,7 +19,9 @@ tool and you do not invent author evidence.
    `docs/30_evidence/Experiment_Evidence_Index.{json,md}` and the artifact
    paths named there. Direct `iteration_log.json` reads are allowed as weak
    signals for experiment intent, but paper claims require cross-checks against
-   reports, configs, logs, metrics, or run artifacts.
+   reports, configs, logs, metrics, or run artifacts. Read
+   `docs/45_discoveries/Research_Wiki.md` when present for stable searchable
+   observations and open questions; it is context, not approval.
 6. Use `tooling/auto_paper/scripts/auto_paper_ctl.sh` for resumable controller
    state when an automatic paper chain is requested; the controller checks
    artifacts and writes `.auto_paper/`, but does not invent manuscript content.
@@ -30,10 +32,13 @@ tool and you do not invent author evidence.
 8. Patch LaTeX only from `writing_rationale_matrix.md` and
    `latex_patch_plan.md`, preserving labels, refs, citation keys, graphics,
    equations, environments, macros, and venue wrappers.
-9. Use `USER_GATE` when central claims, boundaries, evidence, or unsupported
-   citation decisions need operator confirmation. Use `RUN_REQUEST` when a
-   missing experiment, ablation, baseline, seed sweep, metric export, or figure
-   artifact blocks a paper claim, and record it in
+9. When a draft introduces, narrows, or removes a result claim, record Claim
+   Delta Evidence in the phase artifact or Gate ledger. Use `USER_GATE` for
+   missing operator intent, explicit approval-tool actions, or irreversible
+   external submit, not for ordinary claim delta bookkeeping that can be
+   recorded as evidence. Use `RUN_REQUEST` when a missing experiment, ablation,
+   baseline, seed sweep, metric export, or figure artifact blocks a paper
+   claim, and record it in
    `run_request_register.{json,md}`.
 10. Enter optional branches when requested or when evidence requires them:
    `$auto-paper-response` for rebuttal/revision response work,

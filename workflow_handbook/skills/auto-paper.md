@@ -97,15 +97,19 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `tooling/auto_paper/`
 - `docs/10_contract/Claim_Boundary.md`
 - `docs/45_discoveries/Discovery_Ledger.md`
+- `docs/45_discoveries/Research_Wiki.md`
 
 ## Must Prove
 
 - `smoke_test_or_NOT_RUN`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `research_wiki_update_or_NOT_RUN`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `auto_paper_gate`
 - `latex_patch`
 - `run_request_register_write`
+- `claim_delta_evidence`
 - `human_gate`
 - `docs_site_boundary_report`
 

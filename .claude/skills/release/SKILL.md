@@ -17,10 +17,11 @@ For documentation evidence and anti-hallucination behavior, see [../../shared/do
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md).
 For claim-bearing release docs, also follow [../../shared/evidence-chain-rule.md](../../shared/evidence-chain-rule.md).
-Dynamic-context release claims require approved Project Contract, Evaluation
-Contract, and Claim Boundary; legacy or standard projects must cite the fallback
-release/evaluation evidence source instead of treating missing contracts as
-approval.
+Dynamic-context release claims must cite the current Project Contract,
+Evaluation Contract, and Claim Boundary, or record Claim Delta Evidence when a
+claim is narrowed, removed, or changed under the active Automation Policy.
+Legacy or standard projects must cite the fallback release/evaluation evidence
+source instead of treating missing contracts as approval.
 </context>
 
 <instructions>
@@ -69,6 +70,10 @@ approval.
 4. Call `validate`
 5. Output final submission summary
 
+Before metric-bearing release validation, create or verify `pre_eval_commit`,
+or record `pre_eval_commit_NOT_CHANGED`. Only run the full train-package-
+validate chain or external submit when the user explicitly asks for it.
+
 Validation reports, packaging summaries, and user-facing release notes should follow [../../shared/language-policy.md](../../shared/language-policy.md), while manifest keys, file names, paths, commands, and intent labels remain in English.
 
 ## Update project state
@@ -102,11 +107,11 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh resume --request-id <id> --j
 ```
 
 The supervisor requires an explicit `validate`, `package`, or `submit` action,
-runs `check_dynamic_context.py --stage wf12 --review-packet`, and only then
-creates an exact scoped `APPROVE_ACTION` when dynamic context is active and
-Project Contract, Evaluation Contract, and Claim Boundary approvals are
-confirmed. It records approval and reruns the gate; it does not package or
-submit by itself.
+runs `check_dynamic_context.py --stage wf12 --review-packet`, and may
+auto-proceed for validate/package inside the Automation Policy with Gate ledger
+and Claim Delta Evidence. `approve_contract.py` / `APPROVE_ACTION` still
+records only explicit Human Approval, and submit still requires explicit user
+request.
 
 ## Durable Docs Render
 

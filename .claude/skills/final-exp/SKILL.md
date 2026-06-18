@@ -16,7 +16,7 @@ For the output format, see [templates/experiment-matrix.md](templates/experiment
 For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
-For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md). Dynamic-context projects require approved Project Contract, Evaluation Contract, and Claim Boundary before WF11 work is treated as ready; legacy or standard projects must cite the fallback evidence source.
+For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared/contract-gating-rule.md). Dynamic-context projects must cite the current Project Contract, Evaluation Contract, and Claim Boundary, or record the fallback evidence/policy reason when operating under an Automation Policy; legacy or standard projects must cite the fallback evidence source.
 </context>
 
 <instructions>
@@ -91,6 +91,10 @@ For contract boundaries, see [../../shared/contract-gating-rule.md](../../shared
    - cross_dataset_evaluation (cross-dataset evaluation plan)
    - computation_budget (computation budget summary)
    - execution_order (recommended execution order and parallelization strategy)
+   - claim_delta_evidence when the matrix narrows, removes, or changes a claim
+     implication
+   - `pre_eval_commit` or `pre_eval_commit_NOT_CHANGED` before metric-bearing
+     final experiment evaluation
 
    Preserve the template structure, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
 

@@ -20,6 +20,10 @@ See `tooling/auto_iterate/docs/auto_iterate_goal_template.md` for the canonical 
 
 - `initial_hypotheses[]` — seed hypotheses for first rounds
 - `forbidden_directions[]` — hard boundaries the AI must not cross
+- `automation_policy.*` — Grill-derived delegation, commit, claim delta, and
+  watchdog policy for auto-proceeding non-Grill flow
+- `assurance_axes[]` — evidence dimensions to prioritize during planning and
+  eval
 
 These optional fields are passed into the auto-iterate plan prompt. Seed hypotheses should guide early planning when still viable; forbidden directions are hard constraints.
 
@@ -30,3 +34,5 @@ These optional fields are passed into the auto-iterate plan prompt. Seed hypothe
 | `primary_metric.*` | WF5 evaluation protocol |
 | `screening_policy.*` | Project defaults + validate-run experience |
 | `budget.*`, `patience.*` | Controller policy config + project stage constraints |
+| `automation_policy.*` | Grill Execution Readiness Packet / readiness JSON |
+| `assurance_axes[]` | Grill automation policy + reviewer risk analysis |

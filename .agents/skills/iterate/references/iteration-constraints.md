@@ -67,9 +67,13 @@ Run-local versus stable-code boundary:
   - `hypothesis`
   - `changes_summary`
   - `config_diff`
+  - `assurance_axis`
   - `status=planned`
   - `screening.recommended`
   - `codex_review`
+- Must check `docs/40_iterations/Experiment_Queue.md` when it exists and
+  either consume one queued item or explain why the selected hypothesis is
+  higher priority.
 - Must check prior `lessons` and warn when the new hypothesis repeats a known failed pattern.
 - Must read accepted lessons from `MEMORY.md` and candidate/accepted lessons from `docs/50_memory/Lessons.md` when those files exist.
 
@@ -101,6 +105,11 @@ Run-local versus stable-code boundary:
   the run-local config first. Otherwise record a
   `planned_command_not_runnable` failure and do not launch an unrelated command.
 - Must resolve the tracked metrics from the baseline or evaluation protocol established in WF5.
+- Before launching any meaningful train/screen/full command, must create or
+  verify a Semantic Execution Commit covering stable entry scripts, eval logic
+  used by the command, durable configs, run-local configs, and run-local code
+  under `runs/wf10/<iter-id>/`. Record this hash as `pre_train_commit` in the
+  run manifest or Gate ledger.
 - Must update `run_manifest` in `iteration_log.json` before returning.
 - Must record, when available:
   - `artifact_contract_version`
@@ -112,6 +121,9 @@ Run-local versus stable-code boundary:
   - `stdout_log_path`
   - `git_snapshot_path`
   - `git_commit`
+  - `pre_train_commit`
+  - `pre_eval_commit` or `pre_eval_commit_NOT_CHANGED`
+  - `run_local_code_manifest_path`
   - `started_at`
   - `duration_seconds`
   - `exit_code`
@@ -146,6 +158,11 @@ Run-local versus stable-code boundary:
 ### `eval`
 
 - Must refresh active iteration context before analysis when context exists.
+- Before running meaningful eval commands or using metric outputs as
+  Conclusion Evidence, must create or verify `pre_eval_commit`. If eval logic,
+  configs, run-local eval helpers, claim-support docs, and release-validation
+  code are unchanged since `pre_train_commit`, record
+  `pre_eval_commit_NOT_CHANGED`.
 - Must compare the current results against:
   - baseline metrics
   - previous iteration
@@ -160,6 +177,8 @@ Run-local versus stable-code boundary:
   - slice completion or drift observations when a planned slice changed scope
   - complexity and boundary observations when public APIs, dependencies, or
     naming changed during the iteration
+  - `assurance_axis`
+  - `claim_delta_evidence` or `claim_delta_evidence_NOT_CHANGED`
   - `status=completed` when evaluation is complete
 - Must not mark `status=completed` until the run artifact bundle exists. If
   pieces are missing, report `NOT_RUN` in the Gate ledger and keep the
@@ -169,6 +188,12 @@ Run-local versus stable-code boundary:
   mirror `docs/iterations/<iter-id>.md`.
 - Should produce or refresh `docs/40_iterations/latest.md` when the dynamic context layout is enabled.
 - Should append or refresh candidate lessons in `docs/50_memory/Lessons.md`.
+- Should append or refresh `docs/40_iterations/Experiment_Queue.md` when eval
+  identifies a concrete next experiment, falsifier, assurance gap, or paper
+  run request.
+- Should append or refresh `docs/45_discoveries/Research_Wiki.md` for stable
+  observations, method notes, open questions, and finding summaries that should
+  remain searchable outside one iteration report.
 - Must append to `MEMORY.md` only for accepted lessons that satisfy the lesson quality rule; raw observations and auto-run findings must not enter `MEMORY.md` directly.
 - Must output the recommended next-step command that matches the decision:
   - `NEXT_ROUND` -> `$iterate plan "..."` (ordinary improvement round)
@@ -190,10 +215,23 @@ Run-local versus stable-code boundary:
 
 - Mandatory commit boundary:
   - `$iterate code` must end with a semantic commit before training can begin.
-- Non-mandatory commit boundary:
-  - `$iterate run` and `$iterate eval` primarily update tracked research records such as `iteration_log.json` and reports.
+- Mandatory train/eval execution boundary:
+  - `$iterate run`, `run_screening`, and `run_full` must start from a Semantic
+    Execution Commit recorded as `pre_train_commit`.
+  - `$iterate eval` must start from a Semantic Execution Commit recorded as
+    `pre_eval_commit`, or explicitly record `pre_eval_commit_NOT_CHANGED`.
+  - Run-local code and configs under `runs/wf10/<iter-id>/` are included in
+    this boundary even when they are not intended for stable promotion.
+  - Claim or claim-boundary changes need Claim Delta Evidence, not a new human
+    approval prompt, when they stay inside the active Automation Policy.
+- Research bookkeeping boundary:
+  - `$iterate run` and `$iterate eval` primarily update tracked research records
+    such as `iteration_log.json`, reports, Experiment Queue, Discovery Ledger,
+    and Research Wiki.
   - They should not create unrelated source edits.
-  - If they do change tracked records in the current turn, Codex should leave those changes explicit in the worktree and may commit them only when the user asked for commit discipline on experiment bookkeeping.
+  - If tracked research records or claim-support docs change before a long
+    follow-up run or handoff, create an `experiment` commit checkpoint or
+    report `NOT_RUN`.
 - Never hide missing bookkeeping behind an absent commit. The state file update is mandatory even when no commit is made.
 
 ## Turn-End Output

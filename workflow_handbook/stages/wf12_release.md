@@ -88,11 +88,16 @@ Inputs below are internal contract triggers or readiness signals. For normal ope
 - `check_dynamic_context_wf12_or_NOT_RUN`
 - `release_manifest_validation`
 - `claim_boundary_check`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `automation_policy_respected`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `WF12_readiness`
 - `release_claim`
 - `submission_package_write`
+- `claim_delta_evidence`
+- `pre_eval_commit`
 - `docs_site_boundary_report`
 
 ## Exit Condition

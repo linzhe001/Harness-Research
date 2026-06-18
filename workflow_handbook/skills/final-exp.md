@@ -77,16 +77,21 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `respect_evaluation_contract`
 - `respect_claim_boundary`
 - `check_dynamic_context_or_NOT_RUN`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `automation_policy_respected`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `WF11_readiness`
 - `final_experiment_matrix_write`
+- `claim_delta_evidence`
+- `pre_eval_commit`
 - `docs_site_boundary_report`
 
 ## Constraints
 
-- `final_exp_outside_claim_boundary [workflow_default/ledger; exception=human_approval_required]`
-- `WF11_without_approved_contracts [workflow_default/ledger; exception=human_approval_required]`
+- `final_exp_outside_claim_boundary [workflow_default/ledger; exception=overlay_allowed]`
+- `WF11_without_approved_contracts [workflow_default/ledger; exception=overlay_allowed]`
 
 ## Exit Condition
 

@@ -84,16 +84,21 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `check_dynamic_context_wf12_or_NOT_RUN`
 - `release_manifest_validation`
 - `claim_boundary_check`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
+- `automation_policy_respected`
 - `gate_ledger`
 - `docs_site_boundary_report`
 - `WF12_readiness`
 - `release_claim`
 - `submission_package_write`
+- `claim_delta_evidence`
+- `pre_eval_commit`
 - `docs_site_boundary_report`
 
 ## Constraints
 
-- `release_claim_outside_claim_boundary [workflow_default/ledger; exception=human_approval_required]`
+- `release_claim_outside_claim_boundary [workflow_default/ledger; exception=overlay_allowed]`
 - `submit_without_explicit_user_request [hard_invariant/block; exception=never]`
 - `overwrite_package_without_confirmation [ownership_boundary/notice; exception=owner_delegation_required]`
 

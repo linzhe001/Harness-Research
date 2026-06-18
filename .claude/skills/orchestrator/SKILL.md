@@ -67,8 +67,9 @@ blockers, and recommended next action. If in WF10, also read
 
 Before advancing, verify the current stage is completed, required artifacts
 exist, blockers are resolved, dynamic-context gates have run or are marked
-`NOT_RUN`, and the operator explicitly confirms the transition. Do not
-auto-advance.
+`NOT_RUN`, and the transition is inside the active Automation Policy or has a
+recorded fallback policy reason. If the transition leaves policy, stop and ask
+for steering.
 
 Special gates:
 - New projects must complete WF2 and WF3 before WF4-WF6.
@@ -79,8 +80,9 @@ Special gates:
 - WF6 must read idea, dataset, baseline, and protocol/contract context.
 - WF7 requires `docs/Technical_Spec.md`.
 - WF9 must run `/validate-run`; on PASS, run `/auto-iterate-goal` before WF10.
-- Unattended WF10 requires an approved Evaluation Contract or explicit operator
-  acceptance of a draft, plus surfaced Baseline Contract gaps.
+- Unattended WF10 requires a valid goal, context gates or explicit `NOT_RUN`
+  reasons, and an Automation Policy or fallback policy reason, plus surfaced
+  Baseline Contract gaps.
 - WF10 to WF11 requires latest completed iteration decision `CONTINUE`.
 
 After a successful stage completion, call `/init-project update` for stages
@@ -110,8 +112,9 @@ Ask for decision, rationale, and alternatives considered. Append to
 
 ## Hard Constraints
 
-- Never advance, approve, pivot, or release without explicit operator
-  confirmation or auditable approval artifact.
+- Never approve a contract or record Approval Evidence without explicit
+  operator confirmation or auditable approval artifact. Never advance, pivot,
+  or release outside the active Automation Policy without asking for steering.
 - Never delete artifacts during rollback.
 - Never write `iteration_log.json`.
 - Always validate stage name consistency before reporting readiness.

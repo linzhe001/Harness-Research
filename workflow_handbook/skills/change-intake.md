@@ -86,18 +86,21 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 ## Must Prove
 
 - `workflow_state_gate_or_NOT_RUN`
+- `automation_policy_respected`
+- `transition_ledger_or_gate_ledger`
+- `claim_delta_evidence_or_NOT_CHANGED`
 - `gate_ledger`
 - `change_request_classification`
 - `contract_impact_detected`
 - `change_route_selected`
+- `claim_delta_evidence`
 
 ## Constraints
 
 - `direct_edit_evidence [hard_invariant/block; exception=never]`
 - `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
 - `direct_edit_workflow_supervisor [hard_invariant/block; exception=never]`
-- `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
-- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
+- `stage_transition_without_automation_policy [ownership_boundary/notice; exception=overlay_allowed]`
 - `packet_as_approval [hard_invariant/block; exception=never]`
 
 ## Exit Condition

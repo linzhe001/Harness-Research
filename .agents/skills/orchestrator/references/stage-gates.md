@@ -19,6 +19,8 @@ These Python tools are part of the stage process, not optional decoration:
 - Contract, fact, protocol, or release Markdown changes must trigger `python tooling/evidence/compile_doc.py --workspace-root . --doc <doc> --source <sources...>`.
 - WF5/WF10/WF11/WF12 readiness must run `python tooling/evidence/check_dynamic_context.py --workspace-root . --stage <stage> --review-packet`.
 - Explicit human contract approval must be recorded with `python tooling/evidence/approve_contract.py ...`, followed by another dynamic-context gate run.
+- Non-Grill stage transitions inside the active Automation Policy use Gate
+  ledger evidence and do not require repeated Human Approval.
 - Stage transitions after state edits must run `python tooling/evidence/check_workflow_state.py --workspace-root .`.
 
 If a tool cannot run, report the missing tool execution as an unverified gate.
@@ -103,8 +105,11 @@ WF2 is mandatory for both `dynamic_context` and `standard` projects. Only
   - `iteration_log.json`
   - `PROJECT_STATE.json.current_stage.latest_iteration` synchronized with the latest iteration record
   - `CLAUDE.md` current-stage summary synchronized with iteration progress
-  - dynamic auto-iterate mode: `docs/10_contract/Evaluation_Contract.md` is approved or explicitly accepted by the operator for this run
-  - dynamic auto-iterate mode: protocol drift check for WF10 should pass, or the operator explicitly accepts the review gap
+  - dynamic auto-iterate mode: `docs/auto_iterate_goal.md` is valid, the
+    Automation Policy or fallback policy reason is recorded, and evaluation
+    contract/protocol status is surfaced in the Gate ledger
+  - dynamic auto-iterate mode: protocol drift check for WF10 should pass, or
+    the Gate ledger records `NOT_RUN` / fallback policy reason
   - WF10 → WF11 gate: only a `decision=CONTINUE` on the latest completed iteration allows advancing to WF11. `NEXT_ROUND` and `DEBUG` keep the project in WF10. `PIVOT` triggers rollback to WF2 idea-debate/refine-idea. `ABORT` terminates.
   - If auto-iterate is active, `.auto_iterate/state.json` may be read for loop status (read-only; orchestrator must not write to `.auto_iterate/`)
 - `final_exp`

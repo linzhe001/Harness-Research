@@ -1,6 +1,6 @@
 # Workflow Supervisor
 
-Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and direct `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**`; use tooling, not manual edits. Use `.claude/shared/workflow-supervisor-runtime.md` and `.claude/shared/commit-checkpoint-rule.md` as compact runtime references; skip historical design docs by default.
+Use `/workflow-supervisor` for Harness prepare/build/iterate/release/change and direct `workflow_ctl` work. The supervisor owns `.workflow_supervisor/**`; use tooling, not manual edits. After Grill records an Automation Policy, non-Grill segments should auto-proceed within that policy and use Gate ledgers, commit checkpoints, and Claim Delta Evidence instead of repeated human approval prompts. Use `.claude/shared/workflow-supervisor-runtime.md` and `.claude/shared/commit-checkpoint-rule.md` as compact runtime references; skip historical design docs by default.
 Core commands:
 
 ```bash
@@ -35,7 +35,7 @@ supervisor status and report the recovery Gate ledger. If the recover payload
 reports `recommended_action: resume_answered_pending_request` without resuming,
 run `tooling/workflow_supervisor/scripts/workflow_ctl.sh resume --request-id <id> --json`.
 If it reports `answer_pending_request`, `manual_recover`, an unanswered pending
-request, or a pending `APPROVE_ACTION` without Approval Evidence, report the
+request, a policy blocker, or a pending `APPROVE_ACTION` without Approval Evidence, report the
 pending request and do not start a new run. Do not ask the operator to type a
 separate resume command for a request that already has an `answer_record`. If
 no run is active and `docs/05_intake/Research_Intent_Draft.md` plus either
@@ -149,11 +149,12 @@ high-confidence deltas to the selected Skill entrypoint, and pauses with a
 typed `STEER` request when confidence is low. It does not invoke the routed
 Skill or edit code/contracts by itself.
 
-`start --segment release` is a conservative WF11 -> WF12 approval path. It
+`start --segment release` is a conservative WF11 -> WF12 release path. It
 requires an explicit `validate`, `package`, or `submit` action in the goal,
 runs the WF11 final experiment matrix first, then runs the WF12 dynamic-context
-Review Packet gate, and pauses with `APPROVE_ACTION` only after it passes with
-dynamic context plus approved Project Contract, Evaluation Contract, and Claim
-Boundary. Approval resume reruns WF12 and records approval only; it does not
-package or submit.
+Review Packet gate. Validate/package may auto-proceed under the Automation
+Policy with Claim Delta Evidence and Gate ledger records; submit still requires
+an explicit user request because it is an irreversible external action.
+`approve_contract.py` or any `APPROVE_ACTION` still requires explicit Human
+Approval.
 Exit by reporting run id, segment status, pending request, Gate ledger, and the next safe action.

@@ -101,8 +101,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 
 ## Constraints
 
-- `WF9_PASS_without_semantic_review [workflow_default/ledger; exception=human_approval_required]`
-- `WF9_PASS_without_smoke_evidence [workflow_default/ledger; exception=human_approval_required]`
+- `WF9_PASS_without_semantic_review [workflow_default/ledger; exception=overlay_allowed]`
+- `WF9_PASS_without_smoke_evidence [workflow_default/ledger; exception=overlay_allowed]`
 
 ## Exit Condition
 

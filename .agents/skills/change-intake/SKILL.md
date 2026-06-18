@@ -45,8 +45,10 @@ Read current context when present:
 - `experiment_delta` -> `$iterate`
 - `stable_code_delta` -> build delta plus `$code-debug`
 - `architecture_delta` -> delta grill, `$refine-arch`, `$build-plan`
-- `evaluation_delta` -> Review Packet and contract gate
-- `claim_boundary_delta` -> Claim Boundary review
+- `evaluation_delta` -> evaluation delta route plus Gate ledger and
+  `pre_eval_commit` requirement before metric-bearing eval
+- `claim_boundary_delta` -> Claim Delta Evidence plus owning claim/release or
+  writing route
 - `new_research_direction` -> new Research Intent Draft branch
 - `harness_guardrail_delta` -> `$harness-maintenance`
 - `unknown` -> `STEER`
@@ -72,7 +74,10 @@ Packet tooling, delta grill, or `$harness-maintenance` by itself.
 ## Fail-Closed Rules
 
 - `confidence=low` routes to `STEER`, not code edits.
-- Evaluation, Baseline, or Claim Boundary impact routes to review/approval.
+- Evaluation, Baseline, or Claim Boundary impact routes to the owning workflow
+  with a Gate ledger, Claim Delta Evidence when claims change, and a commit
+  checkpoint requirement before train/eval. It does not pause for approval when
+  the change stays inside the active Automation Policy.
 - Public interface, config schema, data flow, or primary metric changes are not
   plain bugfixes.
 - Harness guardrail changes never route to `$code-debug`.

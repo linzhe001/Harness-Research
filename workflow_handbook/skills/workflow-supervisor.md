@@ -91,12 +91,19 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `build_review_packet_or_NOT_RUN`
 - `gate_ledger`
 - `worker_command_gates_or_NOT_RUN`
+- `automation_policy_respected`
+- `transition_ledger_or_gate_ledger`
+- `pre_train_commit_or_debug_scope`
+- `pre_eval_commit_or_NOT_CHANGED`
+- `claim_delta_evidence_or_NOT_CHANGED`
 - `supervisor_runtime_write`
 - `human_interrupt_created`
 - `approval_resume`
 - `worker_result_validation`
 - `WF10_readiness`
 - `worker_command_gate`
+- `stage_transition`
+- `claim_delta_evidence`
 
 ## Constraints
 
@@ -104,7 +111,7 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `direct_edit_auto_iterate [hard_invariant/block; exception=never]`
 - `direct_edit_workflow_supervisor [hard_invariant/block; exception=never]`
 - `approve_without_explicit_human_approval [hard_invariant/block; exception=never]`
-- `stage_transition_without_user_approval [ownership_boundary/notice; exception=owner_delegation_required]`
+- `stage_transition_without_automation_policy [ownership_boundary/notice; exception=overlay_allowed]`
 - `packet_as_approval [hard_invariant/block; exception=never]`
 - `start_auto_iterate_without_goal_validation [workflow_default/notice; exception=overlay_allowed]`
 

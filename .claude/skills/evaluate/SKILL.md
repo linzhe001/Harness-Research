@@ -16,18 +16,20 @@ Decisions: NEXT_ROUND / DEBUG / CONTINUE / PIVOT / ABORT.
 When called from /iterate, the decision is recorded in iteration_log.json (by iterate).
 When called standalone, the decision is recorded in PROJECT_STATE.json.
 
-**Context sources** (check in order):
-1. `.claude/current_iteration.json` — exists when called by /iterate eval (symlink to persistent context).
-   Contains iteration_id, hypothesis, baseline_metrics, best_iteration, previous_iteration.
-   If present, **prioritize the baseline and best info within it** for comparison.
-2. `PROJECT_STATE.json` — fallback, to get baseline metrics and experiment context.
-For language behavior, see [../../shared/language-policy.md](../../shared/language-policy.md).
-For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
-For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
-For run artifact bundle requirements, see [../../shared/run-artifact-contract.md](../../shared/run-artifact-contract.md).
-For experiment-canvas and claim-support analysis, see [../../shared/research-supervision-patterns.md](../../shared/research-supervision-patterns.md) and [../../shared/research-supervision/experiment-and-build-canvas.md](../../shared/research-supervision/experiment-and-build-canvas.md).
-For commit checkpoints, see [../../shared/commit-checkpoint-rule.md](../../shared/commit-checkpoint-rule.md).
-For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write observations, phenomena, findings, hypotheses, and next-experiment hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified lesson candidates to `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
+**Context sources**: `.claude/current_iteration.json` for /iterate eval, then
+`PROJECT_STATE.json` for baseline metrics and experiment context.
+
+Follow shared rules for language, documentation evidence/style, run artifacts,
+supervision/canvas, claim support, commit checkpoints, and lesson quality:
+[language](../../shared/language-policy.md), [evidence](../../shared/documentation-evidence-rule.md),
+[style](../../shared/documentation-style.md), [run artifacts](../../shared/run-artifact-contract.md),
+[supervision](../../shared/research-supervision-patterns.md), [canvas](../../shared/research-supervision/experiment-and-build-canvas.md),
+[commits](../../shared/commit-checkpoint-rule.md), and [lessons](../../shared/lesson-quality-rule.md).
+
+Write observations to `docs/45_discoveries/Discovery_Ledger.md`, queue
+follow-ups in `docs/40_iterations/Experiment_Queue.md`, append stable findings
+to `docs/45_discoveries/Research_Wiki.md`, and write `MEMORY.md` only for
+accepted lessons.
 
 Context budget: load active iteration plus 5 recent summaries, reference full
 history by path, and keep the report under 1200 words unless requested.
@@ -35,7 +37,6 @@ history by path, and keep the report under 1200 words unless requested.
 
 <instructions>
 1. **Parse Training Logs**
-
    Get the run artifact bundle or log path from $ARGUMENTS, extract key information:
    - Loss curves (train loss, val loss per epoch)
    - Learning rate schedule actual values
@@ -44,9 +45,10 @@ history by path, and keep the report under 1200 words unless requested.
    - Training speed (iterations/sec)
    - Final metrics (based on the evaluation protocol established in WF5)
    - Claim support, missing controls, and next-experiment implications
+   - `pre_eval_commit`, or `pre_eval_commit_NOT_CHANGED` when the committed
+     training source already covers eval code/configs
 
 2. **Diagnose Training Issues**
-
    <thinking>
    Systematically check for potential issues during training:
    - Is the loss converging? (loss change trend in the last 10 epochs)
@@ -58,7 +60,6 @@ history by path, and keep the report under 1200 words unless requested.
    </thinking>
 
 3. **Performance Comparison**
-
    Compare against baseline (using the metric set defined in the protocol):
 
    | Metric | Baseline | Our Method | Difference | Significant |
@@ -68,14 +69,12 @@ history by path, and keep the report under 1200 words unless requested.
    | {metric_3} | D | E | +/-F | - |
 
 4. **Full Training Prediction**
-
    Based on subset/low-resolution data results, predict full-training performance:
    - Extrapolate using scaling laws (if references are available)
    - Reference subset → full improvement margins from similar works
    - Provide confidence intervals
 
 5. **Decision Recommendation**
-
    <thinking>
    Make a decision based on comprehensive analysis:
    - Is the performance gap due to code issues or method limitations?
@@ -93,13 +92,17 @@ history by path, and keep the report under 1200 words unless requested.
    Provide detailed reasoning and specific actionable recommendations.
 
 6. **Output Report**
-
    **Per-iteration report** (when called from /iterate eval):
    - Check `.claude/current_iteration.json` to get iteration_id
    - Write to `docs/40_iterations/iter{N}.md` (create `docs/40_iterations/` if directory doesn't exist)
    - Mirror `docs/iterations/iter{N}.md` only when legacy compatibility is required
    - Also update `docs/Stage_Report.md` as a summary index pointing to the latest iteration report
    - Update `docs/45_discoveries/Discovery_Ledger.md` or report `NOT_RUN`
+   - Update `docs/40_iterations/Experiment_Queue.md` and
+     `docs/45_discoveries/Research_Wiki.md`, or report `NOT_RUN`
+   - Record Claim Delta Evidence when a paper claim, release claim, or claim
+     boundary implication changed; otherwise record
+     `claim_delta_evidence_NOT_CHANGED`
 
    **Standalone invocation report**:
    - Write directly to `docs/Stage_Report.md`
@@ -114,7 +117,10 @@ history by path, and keep the report under 1200 words unless requested.
    - scaling_prediction (full training prediction)
    - recommendation (decision + reasoning + next steps)
 
-   Preserve the template structure and decision vocabulary, but localize headings and narrative text according to [../../shared/language-policy.md](../../shared/language-policy.md) unless a field is explicitly marked English-only.
+   Preserve the template structure and decision vocabulary, but localize
+   headings and narrative text according to
+   [../../shared/language-policy.md](../../shared/language-policy.md) unless a
+   field is explicitly marked English-only.
 
    After completed run evidence is written, refresh
    `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
@@ -123,19 +129,17 @@ history by path, and keep the report under 1200 words unless requested.
    of truth. If not run, report `NOT_RUN` with the reason.
 
    Use an `experiment` commit checkpoint for completed evaluation/discovery
-   slices before long follow-up runs or handoff.
+   slices before long follow-up runs or handoff. Meaningful evaluation output
+   cannot be used as Conclusion Evidence without a committed eval identity.
 
 7. **Update Project State** (standalone invocation only)
-
-   When **not** called from /iterate eval (i.e., `.claude/current_iteration.json` does not exist):
-   Update PROJECT_STATE.json:
+   When **not** called from /iterate eval, update PROJECT_STATE.json:
    - `current_stage.status` → "completed"
    - `artifacts.stage_report` → file path
    - `history` append record
    - `decisions` record NEXT_ROUND/DEBUG/CONTINUE/PIVOT/ABORT decision
 
-   When called from /iterate eval:
-   **Do not update PROJECT_STATE.json** (iterate is responsible for writing iteration_log.json; orchestrator handles stage transitions).
+   When called from /iterate eval, **do not update PROJECT_STATE.json**.
 </instructions>
 
 <constraints>
@@ -147,10 +151,6 @@ history by path, and keep the report under 1200 words unless requested.
 - Use `docs/iterations/iter{N}.md` only as a legacy compatibility mirror
 - NEVER overwrite previous iteration reports — each iteration gets its own file
 </constraints>
-
-## Durable Docs Render
-
-After stable Markdown outputs for this skill are finalized, invoke `/docs-site` or report `docs_site_boundary_report`. Do not render after temporary draft edits; Markdown remains the source of truth.
 
 ## Durable Docs Render
 
