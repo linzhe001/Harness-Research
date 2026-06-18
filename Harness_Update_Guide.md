@@ -45,6 +45,11 @@ When you update harness, the following paths are framework files managed by
 
 Do not add these files to the research repo.
 
+Generated views such as `docs/_views/**` and `docs/_site/**` are tool-owned
+outputs, not ordinary migration docs. Do not stage them through broad `hgit add`
+commands. Refresh and commit them only as an explicit docs-site/generated-view
+slice after the owning renderer runs.
+
 In a target research workspace, root `AGENTS.md`, `CLAUDE.md`, `README.md`, and
 `MEMORY.md` belong to normal `git`. Harness source templates and the framework
 source `README.md` are update candidates only. When there is no dedicated
@@ -345,6 +350,8 @@ Typical blocking files are:
 - `tooling/workflow_supervisor/**`
 - `tooling/evidence/**`
 - `tooling/model_api/**`
+- `docs/_views/**`
+- `docs/_site/workflow_handbook/**`
 
 ## After Pulling
 
@@ -657,6 +664,26 @@ python tooling/codex_hooks/hook_status.py --workspace-root .
 python tooling/codex_hooks/hook_status.py --workspace-root . --trust-status
 python tooling/evidence/validate_workflow_handbook.py --workspace-root .
 ```
+
+If `workflow_handbook/**` source changed and the release intentionally refreshes
+generated handbook views, run the owning generators as a separate docs-site
+slice:
+
+```bash
+python tooling/evidence/build_workflow_handbook_reference_index.py --workspace-root .
+python tooling/evidence/build_docs_site.py \
+  --workspace-root . \
+  --source-root workflow_handbook \
+  --output-root docs/_site/workflow_handbook \
+  --preview-index docs/_views/workflow_handbook_reference_index.json \
+  --nav-config workflow_handbook/config/navigation.json \
+  --site-title "Workflow Handbook" \
+  --reference-mode workflow-handbook
+```
+
+Do not mix generated `docs/_views/**` or `docs/_site/**` changes into ordinary
+source Markdown, template, or migration commits. If generated views are left
+unchanged, report `docs_site_boundary_report: NOT_RUN` with the reason.
 
 Current supervisor behavior to remember after a pull:
 

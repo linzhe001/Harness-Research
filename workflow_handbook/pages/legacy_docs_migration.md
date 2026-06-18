@@ -57,6 +57,8 @@ Use this page when a target workspace has older files such as
   experiment changes.
 - Do not hand-edit `.evidence/**`, `.workflow_supervisor/**`,
   `.auto_iterate/**`, `docs/_views/**`, or `docs/_site/**`.
+- Treat `docs/_views/**` and `docs/_site/**` as generated reading views, not
+  migration inputs. Migrate and review the source Markdown first.
 - Treat old docs as source artifacts until reclassified. Do not assume old
   `approved`, `final`, or `validated` wording is current Human Approval.
 
@@ -175,6 +177,10 @@ python tooling/evidence/check_dynamic_context.py --workspace-root . --stage wf10
 
 Use the stage that matches the next decision (`wf5`, `wf10`, `wf11`, or
 `wf12`). If a tool cannot run, report `NOT_RUN` with the reason.
+Do not make `docs/_views/**` or `docs/_site/**` part of the migration slice.
+If the operator explicitly wants refreshed generated views, run the owning
+renderer as a separate docs-site slice and record `docs_site_boundary_report`;
+otherwise leave generated views unchanged.
 
 9. Create a docs commit checkpoint.
 
