@@ -14,6 +14,9 @@ Read these first:
 - `../../../.agents/references/ubiquitous-language.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/project-map-rule.md`
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `../../../.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `../../../.agents/references/sliced-commit-rule.md`
 - `./references/generation-order.md`
 - `../../../PROJECT_STATE.json`
@@ -49,6 +52,8 @@ Use this skill for WF8 first-pass code generation only.
 6. Write or update the first focused test or smoke check before implementation
    when the slice is automatable. If it cannot be automated, record the manual
    feedback step and `NOT_RUN` reason.
+   Keep each code task tied to inputs, outputs, constraints, non-requirements,
+   and the first feedback command.
 7. Complete roadmap slices in dependency order. After each slice is implemented,
    validated, and any required `project_map.json` update is complete, create a
    semantic commit for that Commit Slice before moving to the next independent

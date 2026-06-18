@@ -15,6 +15,8 @@ conversation-first and draft-only.
 - `../../../.agents/skills/init-project/SKILL.md`
 - Workflow/context/documentation/language rules under
   `../../../.agents/references/`
+- `../../../.agents/references/research-supervision-patterns.md`
+- stage-specific assets from `../../../.agents/references/research-supervision/README.md`
 
 ## Conversation Contract
 Start with one short restatement of the current intent, then ask 3-5 blocking
@@ -36,6 +38,7 @@ decision.
 Before recommending `grill_draft_ready`, make these candidate-clear or record
 the blocker explicitly:
 - concrete operator observation, candidate claim, falsifier, metric/signal
+- problem type, dominant improvement axis, reviewer risk, and fatal-flaw status
 - maximum claim boundary and forbidden claims
 - pivot / abort condition
 - dataset source, access status, and local/private target when known
@@ -123,5 +126,4 @@ from candidate Grill context only, preserves `## Custom`, keeps dataset and
 baseline items candidate until `prepare` / WF4-WF5 verify them, and must not
 mark WF1-WF3 complete. If not run, report
 `init_project_update_from_grill_or_NOT_RUN`.
-
 Report a Gate ledger for durable writes or skipped checks.

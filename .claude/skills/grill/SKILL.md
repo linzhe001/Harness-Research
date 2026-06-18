@@ -28,7 +28,8 @@ artifact.
 The handoff target is candidate-clear intent: concrete observation, candidate
 claim, falsifier, metric/evaluation signal, baseline or negative control,
 dataset/compute assumptions, maximum claim boundary, forbidden claims,
-pivot/abort condition, required model/teacher/detector weights, and execution
+pivot/abort condition, problem type, dominant improvement axis, reviewer risk,
+fatal-flaw status, required model/teacher/detector weights, and execution
 readiness inputs that would otherwise stop `prepare`. Executable baselines
 need a code repository URL, official code entrypoint, or exact local path;
 executable datasets need a direct downloadable source, official dataset API,
@@ -37,8 +38,13 @@ readiness. Missing items stay as unresolved questions.
 
 Read the compact workflow/supervisor runtime reference, workflow guide, context
 layering, contract gating, documentation rules, language policy, and
-ubiquitous language before durable edits. Keep exact local/private values in
-`.workflow_supervisor/readiness.json` through tooling; redact public Markdown.
+ubiquitous language before durable edits. Also read
+`../../../.claude/shared/research-supervision-patterns.md`,
+`../../../.claude/shared/research-supervision/README.md`, and the relevant
+internal Grill assets, especially `phd-research-primer.md` and
+`idea-evaluation.md`.
+Keep exact local/private values in `.workflow_supervisor/readiness.json`
+through tooling; redact public Markdown.
 When datasets are discussed, record a structured `Dataset Access Ledger` or
 equivalent table in `docs/05_intake/Execution_Readiness_Packet.md`: dataset id, source
 URL or official entrypoint, access verdict, non-destructive download probe,

@@ -12,6 +12,7 @@ work. This is not a separate Skill Contract.
 
 Read and follow:
 - `../../../.claude/skills/auto-paper/SKILL.md` for manuscript work
+- `../../../.claude/shared/research-supervision/README.md` for internalized paper, figure, benchmark, case-pattern, and review assets
 - `../../../.claude/skills/docs-site/SKILL.md` only after durable Markdown docs are finalized
 - `../../../CLAUDE.md`
 - `../../../AGENTS.md`

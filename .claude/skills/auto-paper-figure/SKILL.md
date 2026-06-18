@@ -6,7 +6,9 @@
    venue figure rules.
 2. Write `figure_asset_map.md`, `figure_contract.md`,
    `caption_claim_map.md`, and `figure_backend_report.md` under
-   `auto_paper_output/<paper_id>/`.
+   `auto_paper_output/<paper_id>/`. Classify planned figures using
+   `.claude/shared/research-supervision-patterns.md` and
+   `.claude/shared/research-supervision/scientific-plotting.md`.
 3. Map every quantitative or qualitative caption claim to registered evidence
    or citation support.
 4. Conceptual review figures are allowed, but their captions must be framed as

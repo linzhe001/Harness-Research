@@ -1566,7 +1566,10 @@
           ".agents/references/reviewer-independence.md",
           ".agents/references/review-tracing.md",
           ".agents/references/language-policy.md",
-          ".agents/references/commit-checkpoint-rule.md"
+          ".agents/references/commit-checkpoint-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/experiment-and-build-canvas.md",
+          ".agents/references/research-supervision/ai-assisted-research-workflow.md"
         ],
         "skill": [
           ".agents/skills/evaluate/SKILL.md",
@@ -2050,7 +2053,10 @@
           ".agents/references/documentation-style.md",
           ".agents/references/project-map-rule.md",
           ".agents/references/run-artifact-contract.md",
-          ".agents/references/sliced-commit-rule.md"
+          ".agents/references/sliced-commit-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/experiment-and-build-canvas.md",
+          ".agents/references/research-supervision/ai-assisted-research-workflow.md"
         ],
         "skill": [
           ".agents/skills/build-plan/SKILL.md",
@@ -2172,7 +2178,10 @@
           ".agents/references/project-map-rule.md",
           ".agents/references/pre-training-rule.md",
           ".agents/references/sliced-commit-rule.md",
-          ".agents/references/commit-checkpoint-rule.md"
+          ".agents/references/commit-checkpoint-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/experiment-and-build-canvas.md",
+          ".agents/references/research-supervision/ai-assisted-research-workflow.md"
         ],
         "skill": [
           ".agents/skills/code-expert/SKILL.md",
@@ -2991,7 +3000,10 @@
           ".agents/references/documentation-style.md",
           ".agents/references/reviewer-independence.md",
           ".agents/references/review-tracing.md",
-          ".agents/references/commit-checkpoint-rule.md"
+          ".agents/references/commit-checkpoint-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/experiment-and-build-canvas.md",
+          ".agents/references/research-supervision/ai-assisted-research-workflow.md"
         ],
         "skill": [
           ".agents/skills/iterate/SKILL.md",
@@ -3203,7 +3215,16 @@
           ".agents/references/language-policy.md",
           ".agents/references/documentation-style.md",
           ".agents/references/ubiquitous-language.md",
-          ".agents/references/contract-gating-rule.md"
+          ".agents/references/contract-gating-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/README.md",
+          ".agents/references/research-supervision/phd-research-primer.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/paper-writing-layouts.md",
+          ".agents/references/research-supervision/benchmark-evaluation-paper.md",
+          ".agents/references/research-supervision/scientific-plotting.md",
+          ".agents/references/research-supervision/pre-submission-review.md",
+          ".agents/references/research-supervision/case-patterns.md"
         ],
         "skill": [
           ".agents/skills/auto-paper/SKILL.md",
@@ -3453,7 +3474,12 @@
       "required_read_set": {
         "harness": [
           ".agents/references/language-policy.md",
-          ".agents/references/documentation-style.md"
+          ".agents/references/documentation-style.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/phd-research-primer.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/paper-writing-layouts.md",
+          ".agents/references/research-supervision/case-patterns.md"
         ],
         "skill": [
           ".agents/skills/auto-paper-research/SKILL.md",
@@ -3559,7 +3585,12 @@
       "required_read_set": {
         "harness": [
           ".agents/references/language-policy.md",
-          ".agents/references/documentation-style.md"
+          ".agents/references/documentation-style.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/idea-evaluation.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/paper-writing-layouts.md",
+          ".agents/references/research-supervision/case-patterns.md"
         ],
         "skill": [
           ".agents/skills/auto-paper-argument/SKILL.md",
@@ -3765,7 +3796,12 @@
       "required_read_set": {
         "harness": [
           ".agents/references/language-policy.md",
-          ".agents/references/documentation-style.md"
+          ".agents/references/documentation-style.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/paper-writing-layouts.md",
+          ".agents/references/research-supervision/benchmark-evaluation-paper.md",
+          ".agents/references/research-supervision/scientific-plotting.md"
         ],
         "skill": [
           ".agents/skills/auto-paper-layout/SKILL.md",
@@ -3972,7 +4008,11 @@
         "harness": [
           ".agents/references/language-policy.md",
           ".agents/references/documentation-style.md",
-          ".agents/references/ubiquitous-language.md"
+          ".agents/references/ubiquitous-language.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/pre-submission-review.md",
+          ".agents/references/research-supervision/scientific-plotting.md"
         ],
         "skill": [
           ".agents/skills/auto-paper-harden/SKILL.md",
@@ -4292,7 +4332,10 @@
       "required_read_set": {
         "harness": [
           ".agents/references/language-policy.md",
-          ".agents/references/documentation-style.md"
+          ".agents/references/documentation-style.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/paper-and-figure-system.md",
+          ".agents/references/research-supervision/scientific-plotting.md"
         ],
         "skill": [
           ".agents/skills/auto-paper-figure/SKILL.md",
@@ -4720,7 +4763,11 @@
           ".agents/references/documentation-evidence-rule.md",
           ".agents/references/documentation-style.md",
           ".agents/references/language-policy.md",
-          ".agents/references/ubiquitous-language.md"
+          ".agents/references/ubiquitous-language.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/README.md",
+          ".agents/references/research-supervision/phd-research-primer.md",
+          ".agents/references/research-supervision/idea-evaluation.md"
         ],
         "skill": [
           ".agents/skills/grill/SKILL.md"
@@ -5025,7 +5072,9 @@
           ".agents/references/documentation-style.md",
           ".agents/references/language-policy.md",
           ".agents/references/ubiquitous-language.md",
-          ".agents/references/project-map-rule.md"
+          ".agents/references/project-map-rule.md",
+          ".agents/references/research-supervision-patterns.md",
+          ".agents/references/research-supervision/idea-evaluation.md"
         ],
         "skill": [
           ".agents/skills/change-intake/SKILL.md"

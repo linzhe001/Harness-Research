@@ -86,6 +86,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/reviewer-independence.md`
 - `.agents/references/review-tracing.md`
 - `.agents/references/commit-checkpoint-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `.agents/skills/iterate/SKILL.md`
 - `.agents/skills/iterate/references/iteration-log-schema.json`
 - `.agents/skills/iterate/references/iteration-context.md`

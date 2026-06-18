@@ -84,6 +84,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/review-tracing.md`
 - `.agents/references/language-policy.md`
 - `.agents/references/commit-checkpoint-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `.agents/skills/evaluate/SKILL.md`
 - `.agents/skills/evaluate/references/stage-report.md`
 - `schemas/iteration_log.schema.json`

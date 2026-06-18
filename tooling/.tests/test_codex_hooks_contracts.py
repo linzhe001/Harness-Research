@@ -27,8 +27,8 @@ import generate_stage_cards  # noqa: E402
 import harness_contracts  # noqa: E402
 import hook_status  # noqa: E402
 from harness_contracts import (  # noqa: E402
-    CONTRACTS_PATH,
     CONTRACT_OVERLAYS_DIR,
+    CONTRACTS_PATH,
     LAST_ROUTE_PATH,
     READ_LEDGER_PATH,
     READ_LEDGERS_DIR,
@@ -36,17 +36,17 @@ from harness_contracts import (  # noqa: E402
     SLICED_COMMIT_RULE_PATH,
     block_pre_tool,
     classify_prompt_intent,
+    constraints_by_id,
     consume_gate_ledger_notice,
     contract_by_skill,
-    constraints_by_id,
     daily_context_for_workspace,
     detect_skill,
     detect_skill_match,
     external_review_output_paths,
     is_git_commit_command,
     is_harness_workspace,
-    load_contracts,
     load_contract_overlays,
+    load_contracts,
     load_pending,
     load_read_ledger,
     load_read_ledger_for_event,
@@ -553,6 +553,54 @@ def test_run_write_experiment_evidence_bridge_contracts() -> None:
         and output["requires_tool"] is True
         and ".auto_paper/" in output["paths"]
         for output in auto_paper["artifact_outputs"]
+    )
+
+
+def test_research_supervision_assets_are_routed_through_contracts() -> None:
+    def harness_reads(skill: str) -> set[str]:
+        contract = contract_by_skill(REPO_ROOT, skill)
+        assert contract is not None
+        return set(contract["required_read_set"]["harness"])
+
+    idea_assets = {
+        ".agents/references/research-supervision-patterns.md",
+        ".agents/references/research-supervision/idea-evaluation.md",
+    }
+    assert idea_assets <= harness_reads("grill")
+    assert idea_assets <= harness_reads("change-intake")
+    assert (
+        ".agents/references/research-supervision/phd-research-primer.md"
+        in harness_reads("grill")
+    )
+
+    build_run_assets = {
+        ".agents/references/research-supervision-patterns.md",
+        ".agents/references/research-supervision/experiment-and-build-canvas.md",
+        ".agents/references/research-supervision/ai-assisted-research-workflow.md",
+    }
+    for skill in ["build-plan", "code-expert", "iterate", "evaluate"]:
+        assert build_run_assets <= harness_reads(skill)
+
+    paper_assets = {
+        ".agents/references/research-supervision-patterns.md",
+        ".agents/references/research-supervision/README.md",
+        ".agents/references/research-supervision/paper-writing-layouts.md",
+        ".agents/references/research-supervision/benchmark-evaluation-paper.md",
+        ".agents/references/research-supervision/scientific-plotting.md",
+        ".agents/references/research-supervision/paper-and-figure-system.md",
+        ".agents/references/research-supervision/pre-submission-review.md",
+        ".agents/references/research-supervision/case-patterns.md",
+    }
+    assert paper_assets <= harness_reads("auto-paper")
+
+    all_harness_reads = {
+        path
+        for contract in load_contracts(REPO_ROOT)
+        for path in contract["required_read_set"]["harness"]
+    }
+    assert (
+        ".agents/references/research-supervision/coverage-matrix.md"
+        not in all_harness_reads
     )
 
 
@@ -1106,11 +1154,20 @@ def test_workflow_handbook_keeps_visible_alias_entrypoints() -> None:
         "  -> Human Approval or next safe action"
     ) in handbook
     assert "| `$grill` |" in handbook
-    assert "| `$prepare` / `$build` |" in handbook
-    assert "| `$run` / `$analyze` |" in handbook
-    assert "| `$write` / `$change` |" in handbook
+    assert "| `$prepare` |" in handbook
+    assert "| `$build` |" in handbook
+    assert "| `$run` |" in handbook
+    assert "| `$analyze` |" in handbook
+    assert "| `$write` |" in handbook
+    assert "| `$change` |" in handbook
     assert "[[page:workflow_supervisor_model|Runtime Routing Model]]" in handbook
     assert "[[page:operator_task_index|Operator Action Index]]" in handbook
+    assert "Research Supervision Asset Layer" in handbook
+    assert (
+        "[[page:research_supervision_assets|Research Supervision Assets]]"
+        in handbook
+    )
+    assert "Maintainer Watchlist" in handbook
     assert "Daily Run Shape" in handbook
     assert "Detailed Reference" in handbook
     assert "[[page:stage_cards|Stage Reference]]" in handbook

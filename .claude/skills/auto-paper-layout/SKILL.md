@@ -6,7 +6,10 @@
    `figure_contract.md` / `caption_claim_map.md` when figures are required.
 2. Write `original_logic_map.md`, `section_blueprints.md`,
    `writing_rationale_matrix.md`, `citation_plan.md`, and
-   `latex_patch_plan.md`.
+   `latex_patch_plan.md`. Use the technical-paper or benchmark/evaluation
+   skeleton from `.claude/shared/research-supervision-patterns.md`,
+   `paper-writing-layouts.md`, `benchmark-evaluation-paper.md`, and
+   `scientific-plotting.md`.
 3. Make every matrix row explain reader question, evidence, risk, action, and
    done definition.
 4. For Markdown blogs and reviews, still plan citation placement and

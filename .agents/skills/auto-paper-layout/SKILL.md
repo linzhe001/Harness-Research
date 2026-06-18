@@ -18,6 +18,10 @@ Create an executable rewrite plan. Do not edit `.tex` files in layout.
 - `claim_citation_map.md`
 - `figure_requirement_scan.md` when present
 - `figure_contract.md` and `caption_claim_map.md` when figures are required
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/paper-writing-layouts.md`
+- `../../../.agents/references/research-supervision/benchmark-evaluation-paper.md`
+- `../../../.agents/references/research-supervision/scientific-plotting.md`
 - current draft snippets or line anchors
 
 ## Required Artifacts
@@ -27,6 +31,8 @@ job, evidence, citations, weakness, and reader question.
 
 `section_blueprints.md` maps target moves for abstract, introduction, related
 work, method, experiments/results, discussion, and conclusion as applicable.
+Use the technical-paper or benchmark/evaluation skeleton that matches the
+claim register and paper type.
 
 `writing_rationale_matrix.md` must use the columns in
 `.agents/skills/auto-paper/references/writing-rationale-matrix.md`.

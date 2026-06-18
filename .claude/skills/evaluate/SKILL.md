@@ -25,6 +25,7 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
 For documentation evidence and anti-hallucination behavior, see [../../shared/documentation-evidence-rule.md](../../shared/documentation-evidence-rule.md).
 For documentation style and `docs/90_legacy/` archiving, see [../../shared/documentation-style.md](../../shared/documentation-style.md).
 For run artifact bundle requirements, see [../../shared/run-artifact-contract.md](../../shared/run-artifact-contract.md).
+For experiment-canvas and claim-support analysis, see [../../shared/research-supervision-patterns.md](../../shared/research-supervision-patterns.md) and [../../shared/research-supervision/experiment-and-build-canvas.md](../../shared/research-supervision/experiment-and-build-canvas.md).
 For commit checkpoints, see [../../shared/commit-checkpoint-rule.md](../../shared/commit-checkpoint-rule.md).
 For lesson promotion, see [../../shared/lesson-quality-rule.md](../../shared/lesson-quality-rule.md). Write observations, phenomena, findings, hypotheses, and next-experiment hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified lesson candidates to `docs/50_memory/Lessons.md`; write `MEMORY.md` only for accepted lessons.
 
@@ -42,6 +43,7 @@ history by path, and keep the report under 1200 words unless requested.
    - GPU Memory usage
    - Training speed (iterations/sec)
    - Final metrics (based on the evaluation protocol established in WF5)
+   - Claim support, missing controls, and next-experiment implications
 
 2. **Diagnose Training Issues**
 

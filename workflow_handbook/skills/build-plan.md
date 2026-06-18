@@ -71,6 +71,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/project-map-rule.md`
 - `.agents/references/run-artifact-contract.md`
 - `.agents/references/sliced-commit-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `.agents/skills/build-plan/SKILL.md`
 - `.agents/skills/build-plan/references/implementation-roadmap.md`
 - `.agents/skills/build-plan/references/project-map-schema.json`

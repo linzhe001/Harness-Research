@@ -3,7 +3,10 @@
 <instructions>
 1. Audit all R/A/C/L/P artifacts, patched TeX, bibliography, and guard reports.
 2. Check artifact completeness, logic transfer, claim support, LaTeX/compile
-   status, revision quality, and reviewer risk.
+   status, revision quality, reviewer risk, macro logic, writing detail,
+   grammar/wording, format, and figure quality using
+   `.claude/shared/research-supervision/pre-submission-review.md` and
+   `scientific-plotting.md`.
 3. Prefer deterministic scripts: `artifact_check.py`, `integrity_audit.py`,
    `citation_bank_check.py`, `claim_register_check.py`,
    `figure_requirement_scan.py`, `revision_audit.py`, `style_metrics.py`, and

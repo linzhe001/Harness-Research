@@ -16,6 +16,9 @@ Read these first:
 - `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `../../../.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `../../../.agents/references/reviewer-independence.md`
 - `../../../.agents/references/review-tracing.md`
 - `./references/stage-report.md`
@@ -38,25 +41,27 @@ Use this skill when the user wants training or evaluation results interpreted an
    - overfitting
    - gradient and numerical issues
 3. Resolve the tracked metric set from active iteration context or project state, and compare against baseline metrics and prior iterations using that protocol.
-4. Produce the canonical report using `./references/stage-report.md`.
-5. Write observations, phenomena, findings, hypotheses, and next-experiment
+4. Separate metric movement, training health, missing controls, claim support,
+   and next-experiment implications.
+5. Produce the canonical report using `./references/stage-report.md`.
+6. Write observations, phenomena, findings, hypotheses, and next-experiment
    hints to `docs/45_discoveries/Discovery_Ledger.md`; promote only qualified
    lesson candidates to `docs/50_memory/Lessons.md`.
-6. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
-7. Recommend exactly one of:
+7. Append or refresh `MEMORY.md` only when a lesson is accepted and satisfies `lesson-quality-rule.md`.
+8. Recommend exactly one of:
    - `NEXT_ROUND` — ordinary improvement round, stay in WF10
    - `DEBUG` — fixable technical issue, stay in WF10
    - `CONTINUE` — handoff to orchestrator/WF11, not continue iterating
    - `PIVOT`
    - `ABORT`
-8. If invoked from `$iterate`, do not take over stage-transition ownership.
-9. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
-10. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
+9. If invoked from `$iterate`, do not take over stage-transition ownership.
+10. Include run artifact paths as Execution Evidence and keep unverifiable result interpretations under open questions.
+11. Refresh `docs/30_evidence/Experiment_Evidence_Index.{json,md}` with
     `tooling/evidence/build_experiment_evidence_index.py` after completed run
     evidence is written, or report `NOT_RUN` with the reason.
-11. Use an `experiment` commit checkpoint for completed evaluation/discovery
+12. Use an `experiment` commit checkpoint for completed evaluation/discovery
     slices before long follow-up runs or handoff.
-12. Report a Gate ledger when iteration reports, stage reports, discovery
+13. Report a Gate ledger when iteration reports, stage reports, discovery
     ledgers, lesson files, `MEMORY.md`, `iteration_log.json`, or the experiment
     evidence index are written. If lesson-quality or workflow-state checks are
     not run, mark them `NOT_RUN` with the reason.

@@ -16,6 +16,9 @@ claims that are not supported by author evidence.
 - `source_index.md`
 - `tex_inventory.json`
 - local materials and draft sources named by intake
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/paper-writing-layouts.md`
+- `../../../.agents/references/research-supervision/case-patterns.md`
 - `docs/30_evidence/Experiment_Evidence_Index.{json,md}` when present
 
 ## Workstreams
@@ -35,6 +38,8 @@ requirements as writing context even when no image asset exists yet.
 Exemplar Learner reads reference papers. It outputs section ordering,
 paragraph moves, style profile, and useful sentence functions. It must not
 create author claims.
+Also classify source logic as technical, benchmark/evaluation, or mixed so
+later phases choose the right paper skeleton.
 
 SOTA Mapper reads bibliography, related-work notes, and optional external
 search results when the user explicitly requested search. It outputs field map,

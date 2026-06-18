@@ -24,6 +24,8 @@ Read these first:
 - `../../../.agents/references/project-map-rule.md`
 - `../../../.agents/references/language-policy.md`
 - `../../../.agents/references/ubiquitous-language.md`
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/idea-evaluation.md`
 
 ## Classifier Inputs
 
@@ -48,6 +50,10 @@ Read current context when present:
 - `new_research_direction` -> new Research Intent Draft branch
 - `harness_guardrail_delta` -> `$harness-maintenance`
 - `unknown` -> `STEER`
+
+Use `idea-evaluation.md` when the request changes the research direction,
+claim boundary, evaluation target, dominant improvement axis, or feasibility
+story. It provides pressure-test context only; it does not approve the change.
 
 ## Supervisor CLI
 

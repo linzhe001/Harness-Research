@@ -16,6 +16,10 @@ not patch LaTeX in this phase.
 - `exemplar_learning_dossier.md`
 - `style_profile.md`
 - `sota_gap_map.md`
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/idea-evaluation.md`
+- `../../../.agents/references/research-supervision/paper-writing-layouts.md`
+- `../../../.agents/references/research-supervision/case-patterns.md`
 - operator brief or approved claim boundary when present
 
 ## Confirmed Motivation
@@ -23,6 +27,7 @@ not patch LaTeX in this phase.
 `confirmed_motivation.md` must include:
 
 - `one_sentence_argument`
+- `paper_type` and `dominant_improvement_axis` when inferable from evidence
 - `field_need`
 - `unresolved_bottleneck`
 - `proposed_move`

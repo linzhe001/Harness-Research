@@ -20,6 +20,8 @@ figure/caption risk.
 - current `claim_register.md`
 - current `citation_support_bank.md`
 - `tex_inventory.json` figure references
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/scientific-plotting.md`
 - target venue constraints for resolution, format, panels, and captions
 
 ## Outputs
@@ -35,6 +37,8 @@ Write under `auto_paper_output/<paper_id>/`:
 
 - Every quantitative or qualitative caption claim must map to a registered
   claim, local evidence item, or citation support row.
+- Classify each planned figure as motivated example, solution overview,
+  experimental result, or supporting figure.
 - Conceptual review figures are allowed, but their caption must be framed as a
   synthesis or route hypothesis and must cite the source claims it visualizes.
 - Do not generate new plots from unverified data paths or inferred metrics.

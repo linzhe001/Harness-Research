@@ -16,6 +16,9 @@ Read these first:
 - `../../../.agents/references/documentation-evidence-rule.md`
 - `../../../.agents/references/documentation-style.md`
 - `../../../.agents/references/project-map-rule.md`
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `../../../.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `../../../.agents/references/run-artifact-contract.md`
 - `../../../.agents/references/sliced-commit-rule.md`
 - `./references/implementation-roadmap.md`
@@ -47,6 +50,7 @@ This skill does not choose the architecture. WF6 `$refine-arch` owns architectur
 5. Write `docs/Implementation_Roadmap.md` using the canonical template.
 6. Include:
    - vertical slices ordered by dependency and user/research outcome
+   - smallest runnable slice path and first feedback command per slice
    - an explicit `minimal_runnable_slice_set` that distinguishes foundation
      slices from the smallest runnable smoke/eval/training-ready path
    - a `Slice Trace` block for each slice

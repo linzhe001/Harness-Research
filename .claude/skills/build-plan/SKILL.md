@@ -16,6 +16,9 @@ implementation order, stable file structure, interfaces, tests,
   when present
 - shared code-style, project-map, sliced-commit, language, ubiquitous-language,
   run-artifact, documentation evidence, and documentation style rules
+- `../../shared/research-supervision-patterns.md`
+- `../../shared/research-supervision/experiment-and-build-canvas.md`
+- `../../shared/research-supervision/ai-assisted-research-workflow.md`
 - `templates/implementation-roadmap.md`
 - `templates/project-map-schema.json`
 
@@ -39,6 +42,7 @@ implementation order, stable file structure, interfaces, tests,
    slice needs `Slice Trace`, acceptance checks, feedback command, downstream
    validation doc, Commit Slice boundary, semantic commit suggestion, and
    out-of-scope work.
+   Tie each slice to the smallest runnable path and first feedback command.
    Also define an explicit `minimal_runnable_slice_set` that distinguishes
    foundation slices from the smallest runnable smoke/eval/training-ready path.
 7. For planned `src/` files, define signatures, pseudocode, shape examples,

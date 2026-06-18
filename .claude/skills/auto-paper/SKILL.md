@@ -42,6 +42,10 @@ tool and you do not invent author evidence.
    PDFs/Markdown that mention figures, tables, diagrams, charts, plots, `图表`,
    `表格`, `架构图`, or `路线图` require `figure_requirement_scan.md` and
    either `$auto-paper-figure` or a concrete `USER_GATE` / `NOT_RUN` reason.
+11. Use `.claude/shared/research-supervision-patterns.md` and
+    `.claude/shared/research-supervision/README.md` for paper skeletons,
+    benchmark layouts, figure roles, case patterns, and pre-submission review
+    lenses.
 </instructions>
 
 <references>

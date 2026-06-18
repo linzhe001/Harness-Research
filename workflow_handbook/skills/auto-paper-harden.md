@@ -61,6 +61,10 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/language-policy.md`
 - `.agents/references/documentation-style.md`
 - `.agents/references/ubiquitous-language.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/paper-and-figure-system.md`
+- `.agents/references/research-supervision/pre-submission-review.md`
+- `.agents/references/research-supervision/scientific-plotting.md`
 - `.agents/skills/auto-paper-harden/SKILL.md`
 - `.agents/skills/auto-paper/SKILL.md`
 - `.agents/skills/auto-paper/references/auto-paper-loop.md`

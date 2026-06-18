@@ -13,6 +13,9 @@ Use this Skill only for WF10 experiment-loop state. It owns
 
 - Workflow, context, contract, lesson, code-style, review, language, docs, and
   commit checkpoint rules under `../../../.agents/references/`
+- `../../../.agents/references/research-supervision-patterns.md`,
+  `../../../.agents/references/research-supervision/experiment-and-build-canvas.md`,
+  and `../../../.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `../../../.agents/references/commit-checkpoint-rule.md`
 - `../../../.agents/references/run-artifact-contract.md`
 - `./references/iteration-log-schema.json`
@@ -74,9 +77,9 @@ surfaces instead of cloning more `runs/wf10/iter*/` scripts.
   `reason`, and `blocked_by`, then stop.
 - `plan`: ensure no blocking unfinished iteration, allocate ID, check accepted
   lessons and candidate lessons, record hypothesis, changes summary,
-  `config_diff`, screening recommendation, and canonical `codex_review`
-  behavior. Initialize `implementation` with scope `config_only`,
-  `run_local_code`, `stable_candidate`, or `delegated_build`.
+  `config_diff`, screening recommendation, axis, falsifier, minimum artifact,
+  claim/figure implication, canonical `codex_review`, and implementation
+  scope `config_only`, `run_local_code`, `stable_candidate`, or `delegated_build`.
 - `code`: select latest planned iteration, write context, apply code-style
   checklist, preserve slice/glossary boundaries, route implementation through
   `$code-debug`, and run a `slice` or `experiment` commit checkpoint before
@@ -121,9 +124,6 @@ surfaces instead of cloning more `runs/wf10/iter*/` scripts.
   Gate ledger.
 - Run `check_workflow_state.py` near WF10 handoff points; for routine in-loop
   updates, report whether it was run or deferred.
-
 ## Durable Docs Render
-
 After stable Markdown is finalized, invoke `$docs-site` or report
-`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`. Do not render for
-temporary drafts.
+`docs_site_boundary_report` / `docs_site_render_or_NOT_RUN`; do not render temporary drafts.

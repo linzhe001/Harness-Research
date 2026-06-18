@@ -16,6 +16,9 @@ to the owning phase.
 - patched TeX files
 - bibliography files
 - guard or compile reports when present
+- `../../../.agents/references/research-supervision-patterns.md`
+- `../../../.agents/references/research-supervision/pre-submission-review.md`
+- `../../../.agents/references/research-supervision/scientific-plotting.md`
 - `docs/30_evidence/Experiment_Evidence_Index.{json,md}` when paper claims use
   experiment evidence
 
@@ -49,6 +52,8 @@ when available.
 Reviewer-risk audit covers motivation, novelty, evidence, baseline fairness,
 method clarity, result interpretation, limitations, reproducibility,
 ethics/data statements, and template compliance.
+Also run the five-dimension pre-submission lens: macro logic, writing detail,
+grammar/wording, format, and figure quality.
 
 If a claim is blocked by missing or weak experiment evidence, write a concrete
 request to `run_request_register.{json,md}` and return `RUN_REQUEST`. The
@@ -57,10 +62,10 @@ minimum run artifacts, suggested `$run` prompt, and acceptance check. Do not
 silently weaken or remove a central claim unless the operator approves that
 tradeoff.
 
-Borrow the strict analysis bar used by `ref/claude-scholar`: if seed counts,
-raw metrics, statistical comparisons, figure provenance, or comparison units are
-missing, mark the claim as insufficiently supported and request the missing
-evidence instead of polishing it into manuscript prose.
+Use a strict analysis bar: if seed counts, raw metrics, statistical
+comparisons, figure provenance, or comparison units are missing, mark the claim
+as insufficiently supported and request the missing evidence instead of
+polishing it into manuscript prose.
 
 Use deterministic scripts where possible:
 

@@ -69,6 +69,8 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/language-policy.md`
 - `.agents/references/ubiquitous-language.md`
 - `.agents/references/project-map-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/idea-evaluation.md`
 - `.agents/skills/change-intake/SKILL.md`
 - `AGENTS.md`
 - `PROJECT_STATE.json`

@@ -75,6 +75,9 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/pre-training-rule.md`
 - `.agents/references/sliced-commit-rule.md`
 - `.agents/references/commit-checkpoint-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/experiment-and-build-canvas.md`
+- `.agents/references/research-supervision/ai-assisted-research-workflow.md`
 - `.agents/skills/code-expert/SKILL.md`
 - `.agents/skills/code-expert/references/generation-order.md`
 - `AGENTS.md`

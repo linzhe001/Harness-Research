@@ -17,6 +17,9 @@ Inputs (all must be read before generating any code):
 4. `docs/20_facts/Project_Glossary.md` if it exists — project vocabulary for identifiers, configs, metrics, tests, and errors
 5. `docs/20_facts/Codebase_Map.md` if it exists — operator-facing stable codebase map
 6. `../../shared/sliced-commit-rule.md` — Commit one completed roadmap slice at a time
+7. `../../shared/research-supervision-patterns.md` — small verified build pattern
+8. `../../shared/research-supervision/experiment-and-build-canvas.md` and
+   `../../shared/research-supervision/ai-assisted-research-workflow.md` — task contract and feedback discipline
 
 Output: All code files defined in project_map.json.
 On success → WF9 (validate-run), then WF10 (iterate) only after validation passes.
@@ -49,7 +52,8 @@ For language behavior, see [../../shared/language-policy.md](../../shared/langua
    stable files, module responsibilities, entry points, and maintenance owners.
    Write or update the first focused test or smoke check before implementation
    when the slice is automatable; otherwise record the manual feedback step and
-   `NOT_RUN` reason.
+   `NOT_RUN` reason. Keep each code task tied to inputs, outputs, constraints,
+   non-requirements, and the first feedback command.
    Complete roadmap slices in dependency order. After each slice is implemented,
    validated, and any required `project_map.json` update is complete, create a
    semantic commit for that Commit Slice before starting the next independent

@@ -3,6 +3,12 @@
 Use `/change-intake` after WF8/WF9 or on a mature codebase when a new request
 arrives. Classify before editing.
 
+Read `.claude/shared/research-supervision-patterns.md` and
+`.claude/shared/research-supervision/idea-evaluation.md` when the request
+changes the research direction, claim boundary, evaluation target, dominant
+improvement axis, or feasibility story. These assets pressure-test the route;
+they do not approve the change.
+
 Routes:
 - `bugfix` -> `/code-debug`
 - `experiment_delta` -> `/iterate`

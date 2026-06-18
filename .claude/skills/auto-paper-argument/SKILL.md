@@ -2,8 +2,11 @@
 
 <instructions>
 1. Use research artifacts and operator-approved boundaries as sources.
+   Read `.claude/shared/research-supervision/idea-evaluation.md`,
+   `paper-writing-layouts.md`, and `case-patterns.md` before locking claims.
 2. Write `confirmed_motivation.md` with field need, bottleneck, proposed move,
-   decisive evidence, implication, boundary, and claims to avoid.
+   decisive evidence, implication, boundary, paper type, dominant improvement
+   axis, and claims to avoid.
 3. Write `claim_register.md` with claim ID, location, text, evidence source,
    citation need, verb strength, scope limit, and reviewer risk.
 4. Run `.agents/skills/auto-paper/scripts/claim_register_check.py auto_paper_output/<paper_id>/claim_register.md`;

@@ -156,5 +156,4 @@ Review Packet gate, and pauses with `APPROVE_ACTION` only after it passes with
 dynamic context plus approved Project Contract, Evaluation Contract, and Claim
 Boundary. Approval resume reruns WF12 and records approval only; it does not
 package or submit.
-
 Exit by reporting run id, segment status, pending request, Gate ledger, and the next safe action.

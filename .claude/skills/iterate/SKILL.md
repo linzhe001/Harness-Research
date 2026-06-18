@@ -13,7 +13,10 @@ iteration records.
 - Shared rules: `code-style.md`, `language-policy.md`,
   `documentation-evidence-rule.md`, `documentation-style.md`,
   `contract-gating-rule.md`, `run-artifact-contract.md`,
-  `lesson-quality-rule.md`, `commit-checkpoint-rule.md`.
+  `lesson-quality-rule.md`, `commit-checkpoint-rule.md`,
+  `research-supervision-patterns.md`,
+  `research-supervision/experiment-and-build-canvas.md`, and
+  `research-supervision/ai-assisted-research-workflow.md`.
 
 ## State Rules
 
@@ -56,8 +59,9 @@ If run-local code becomes reusable, recommend `/iterate promote` or
   `last_action`, `next_action`, `reason`, and `blocked_by`.
 - `plan`: refuse ordinary new work while an iteration is `coding` or `running`;
   allocate ID; check lessons; record hypothesis, files, `config_diff`, expected
-  effect, screening recommendation, Codex review status, and implementation
-  scope: `config_only`, `run_local_code`, `stable_candidate`, or
+  effect, screening recommendation, dominant improvement axis, falsifier,
+  minimum artifact, claim/figure implication, Codex review status, and
+  implementation scope: `config_only`, `run_local_code`, `stable_candidate`, or
   `delegated_build`.
 - `code`: select latest `planned`; set `coding`; write context; invoke
   `/code-debug`; run a `slice` or `experiment` commit checkpoint before

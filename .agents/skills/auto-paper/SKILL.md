@@ -119,7 +119,10 @@ Use deterministic helpers when available:
 
 - `.agents/skills/auto-paper/scripts/figure_requirement_scan.py` for
   PDF/Markdown/notes figure and table cue discovery
-
+- `../../../.agents/references/research-supervision-patterns.md` for paper
+  logic, figure, and pre-submission review patterns
+- `../../../.agents/references/research-supervision/README.md` for active
+  paper-writing, benchmark, plotting, case-pattern, and hardening assets
 ## Output
 
 Final responses report artifact manifest, modified files, guard/compile

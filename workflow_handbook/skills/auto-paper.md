@@ -67,6 +67,15 @@ This page is an internal Skill Contract reference. Contract triggers below may i
 - `.agents/references/documentation-style.md`
 - `.agents/references/ubiquitous-language.md`
 - `.agents/references/contract-gating-rule.md`
+- `.agents/references/research-supervision-patterns.md`
+- `.agents/references/research-supervision/README.md`
+- `.agents/references/research-supervision/phd-research-primer.md`
+- `.agents/references/research-supervision/paper-and-figure-system.md`
+- `.agents/references/research-supervision/paper-writing-layouts.md`
+- `.agents/references/research-supervision/benchmark-evaluation-paper.md`
+- `.agents/references/research-supervision/scientific-plotting.md`
+- `.agents/references/research-supervision/pre-submission-review.md`
+- `.agents/references/research-supervision/case-patterns.md`
 - `.agents/skills/auto-paper/SKILL.md`
 - `.agents/skills/auto-paper/references/auto-paper-loop.md`
 - `.agents/skills/auto-paper/references/auto-iterate-boundary.md`

@@ -32,7 +32,7 @@ Default command:
 ```bash
 python tooling/workflow_supervisor/scripts/workflow_ctl.py start \
   --segment build \
-  --goal "Implement the minimal runnable SurgST-VLM codebase slice from the approved contracts, current Technical Spec, Implementation Roadmap, project_map.json, prepare outputs, and baseline state. Build must reach a runnable smoke/evaluation/training-ready path, not only a planning or S1 foundation slice." \
+  --goal "Implement the minimal runnable target research codebase slice from the approved contracts, current Technical Spec, Implementation Roadmap, project_map.json, prepare outputs, and baseline state. Build must reach a runnable smoke/evaluation/training-ready path, not only a planning or foundation slice." \
   --auto \
   --json
 ```
