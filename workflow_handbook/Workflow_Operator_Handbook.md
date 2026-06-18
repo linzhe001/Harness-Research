@@ -38,6 +38,7 @@ operator intent
 - [[page:operator_task_index|Operator Action Index]]：按“我想做什么”选择可见入口、内部 runtime、状态命令和停点。
 - [[page:workflow_supervisor_model|Runtime Routing Model]]：理解 visible alias 如何路由到内部 runtime 或 Skill Contract source。
 - [[page:evidence_approval_model|Evidence And Approval Model]]：确认什么是 Gate Evidence，什么才是 Human Approval。
+- [[page:research_supervision_assets|Research Supervision Assets]]：确认从 local supervision material 吸收到 Harness 的匿名化资产、使用阶段和非证据边界。
 - [[page:site_modes|Site Modes]]：确认 GitHub Pages/static HTML 和 localhost live service 的边界。
 - [[page:auto_iterate_model|Auto-Iterate Model]]：只有进入 WF10 loop 或 delegated iteration 时再读。
 - [[page:workflow_layers|Detailed Workflow Map]]、[[page:stage_cards|Stage Reference]] 和 [[page:skill_reference|Skill Reference]]：只在需要细查内部 artifact、Skill 或 Gate 时打开。
@@ -48,9 +49,10 @@ operator intent
 | --- | --- | --- | --- |
 | 把粗糙 idea 问清楚 | `$grill` | Grill drafting and readiness candidate capture | Research Intent Draft、Grill Round Log |
 | 准备数据集和 baseline | `$prepare` | workflow-supervisor `prepare --complete` | Dataset Stats、Baseline Report、Review Packet |
-| 判断能否进入执行 | `$prepare` | workflow-supervisor `prepare --dry-run` | readiness preflight、Review Packet |
+| 判断 readiness 输入是否足够 | `$prepare` | workflow-supervisor `prepare --dry-run` | readiness preflight、Gate ledger |
 | 推进 build / validate | `$build` | workflow-supervisor `build --auto` 或 `build --worker-command ...` | worker result JSON、Gate ledger、Validate Run Report |
-| 跑多轮实验 | `$run`，必要时接 `$analyze` | iterate / auto-iterate, then evaluate | `auto_iterate_ctl.sh status --json`、`iteration_log.json` |
+| 跑多轮实验 | `$run` | iterate / auto-iterate | `auto_iterate_ctl.sh status --json`、`iteration_log.json` |
+| 解释实验结果并决定下一轮 | `$analyze` | evaluate | Stage report、Discovery Ledger、Experiment Evidence Index |
 | 处理成熟代码库的新需求 | `$change` | change-intake route classification | Change Request JSON、route confidence |
 | 写论文、文档或 release claim gate | `$write` | auto-paper / docs-site / scoped release gate | paper artifacts、WF12 Review Packet、Claim Boundary |
 | 排查内部失败 | Detailed Reference | Stage / Skill lookup | Stage Reference、Skill Reference |
@@ -68,14 +70,38 @@ Intent
   -> Human Approval or next safe action
 ```
 
-| Visible alias | 什么时候用 | 内部路由 | 它不会做什么 |
-| --- | --- | --- |
-| `$grill` | 研究意图还不清楚，需要追问、挑战、收敛 Research Intent | Grill drafts and readiness candidates | 不批准 contract，不宣称 WF1-WF3 完成 |
-| `$prepare` / `$build` | intent 已经能进入数据、baseline、实现或验证 | internal workflow-supervisor runtime | 不绕过 Gate，不信任 worker prose，不替人批准 contract |
-| `$run` / `$analyze` | 需要跑实验、调参、消融、可视化或解释结果 | iterate / auto-iterate / evaluate | 不扩大 claim，不替人决定 pivot 或 final claim |
-| `$write` / `$change` | 需要写论文、文档、release gate，或成熟代码库出现新需求 | auto-paper / docs-site / release gate / change-intake | 不替人批准 claim、release 或高风险方向变更 |
+| Visible alias | 内部路由 | 主要顺序或逻辑 | 它不会做什么 |
+| --- | --- | --- | --- |
+| `$grill` | `grill`，accepted draft 后接 `init-project update-from-grill` | 3-5 个 blocking questions -> draft intent/readiness artifacts -> operator exit decision | 不批准 contract，不宣称 WF1-WF3 完成 |
+| `$prepare` | workflow-supervisor `prepare` | `--dry-run` 只做 readiness preflight；`--complete` 走 readiness -> acquisition plan -> data -> baseline -> protocol -> Review Packet | 不猜测 redacted/ambiguous 输入，不绕过 external-download policy |
+| `$build` | workflow-supervisor `build` | `build_refine_arch -> build_plan -> build_code_expert -> build_validate_run`；`build_code_debug` 只在失败恢复时进入 | 不把 foundation-only slice 当成 `build_ready_for_iterate` |
+| `$run` | `iterate` / auto-iterate bridge | 读取 `iteration_log.json` 的 `action_state.next_action`，执行一项 WF10 action，并记录 run artifact bundle | 不写 release claim，不替人 pivot |
+| `$analyze` | `evaluate` | 解析 run artifacts，分离 metric movement、pipeline health、claim support 和 next experiment | 不把弱 `iteration_log.json` 信号升级成论文 claim |
+| `$write` | `auto-paper`，必要时 `docs-site` 或 release gate | `auto-paper-research -> argument -> citation -> layout -> patch -> harden`；缺实验时写 `RUN_REQUEST` 给 `$run` | 不发明实验、citation、结果或超出 Claim Boundary 的 claim |
+| `$change` | `change-intake` | 只分类 route：bugfix、experiment delta、architecture/evaluation/claim delta、new direction、harness guardrail 或 `STEER` | 不直接调用目标 Skill，不直接改 code/contracts |
 
 更完整的边界见 [[page:workflow_supervisor_model|Runtime Routing Model]]。
+
+## Research Supervision Asset Layer
+
+`ref/Supervisor-Skills` 的可复用内容已经被吸收到 Harness 内部资产，而不是让
+workflow 运行时指回 `ref/`。PDF、图片、个人身份、学校、logo、会议讲者和具体
+case prose 没有复制；可复用方法被转成匿名 Markdown、ASCII/流程图、checklist 和
+paper/figure patterns。
+
+当前吸收后的路由是：
+
+| Workflow area | Internalized asset use |
+| --- | --- |
+| `$grill` / `$change` | `phd-research-primer.md`, `idea-evaluation.md`, `research-supervision-patterns.md` 用于 problem type、fatal-flaw、dominant axis、falsifier 和 reviewer risk |
+| `$build` / `$run` / `$analyze` | `experiment-and-build-canvas.md` 和 `ai-assisted-research-workflow.md` 用于小切片、first feedback command、experiment canvas 和分析拆分 |
+| `$write` / `auto-paper-*` | `paper-writing-layouts.md`, `benchmark-evaluation-paper.md`, `paper-and-figure-system.md`, `scientific-plotting.md`, `pre-submission-review.md`, `case-patterns.md` 用于论文结构、图表 contract、caption claim map 和 harden checklist |
+| Maintainer audit | `coverage-matrix.md` 只记录吸收覆盖与匿名化决策，不进入日常 runtime read set |
+
+这些资产是 L1 process guidance。它们可以塑造问题、实验计划、写作结构和审查
+checklist，但不能证明目标项目事实、metric、dataset availability、baseline strength
+或 Human Approval。详细说明见
+[[page:research_supervision_assets|Research Supervision Assets]]。
 
 ## Site Modes
 
@@ -173,6 +199,7 @@ implementation / validation nodes。
 这些页给 agent、maintainer 或正在排查失败的人使用。普通 operator 不需要先读：
 
 - [[page:workflow_layers|Detailed Workflow Map]]：Intent、可见入口、内部 Stage/Skill/Gate 的关系。
+- [[page:research_supervision_assets|Research Supervision Assets]]：匿名化 supervision asset pack 的 stage routing 和 coverage boundary。
 - [[page:stage_cards|Stage Reference]]：WF0-WF12 内部 artifact 和 Stage Skill 索引。
 - [[page:skill_reference|Skill Reference]]：Skill Contract 的 read/write/gate 细节。
 - [[page:hooks_permissions_model|Hooks And Permissions Model]]：为什么某些写入会被拦。
@@ -203,3 +230,20 @@ live service 复用；但 generated HTML 本身不拥有终端、文件写入或
 本手册的 source of truth 是当前仓库里的 Markdown、schemas、Skill Contracts 和
 tooling source。外部网页和长篇设计文档只作为设计背景；在做实现或发布判断前，
 必须重新读当前 source artifacts，并用 validator / tests / Gate ledger 证明结果。
+
+## Maintainer Watchlist
+
+- visible aliases 仍只有 `$grill`, `$prepare`, `$build`, `$run`, `$analyze`,
+  `$write`, `$change`；如果新增入口，必须同步 product policy、hook tests、
+  handbook navigation 和 generated Stage/Skill pages。
+- `workflow_handbook/skills/**`, `workflow_handbook/stages/**` 和
+  `Workflow_Stage_Cards.md` 是 generated views；Skill Contract 或 skill body
+  改动后必须重新运行 generator，不能手补 generated 页面。
+- `prepare --dry-run`, legacy `prepare_hitl_poc`, and `prepare --complete`
+  容易混淆：只有 `prepare_complete` 能作为后续 build/iterate 依赖。
+- `coverage-matrix.md` 没有 runtime route 是有意设计；除它以外，新增
+  supervision asset 若长期没有任何 Skill Contract 或 handbook route，应判定为未吸收。
+- model weight approval 目前通过 `target_paths` 和 policy rows 表达；未来如果加入
+  native `approved_weights` schema，需要同步 Grill、prepare tooling、contracts 和 handbook。
+- `$write` -> `$run` 的 `RUN_REQUEST` 桥依赖
+  `auto_paper_output/*/run_request_register.{json,md}`；`$run` preflight 必须继续扫描这些请求。

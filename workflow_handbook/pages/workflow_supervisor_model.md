@@ -87,6 +87,25 @@ Detailed reference pages are still available, but they are not the first
 question the operator answers. Open them only when you need internal artifact
 ownership, postcondition details, or a Skill Contract field.
 
+## Segment Node Order
+
+The configured supervisor node order comes from
+`tooling/workflow_supervisor/config/default_nodes.json`:
+
+| Segment | Ordered nodes |
+| --- | --- |
+| `prepare --complete` | `prepare_readiness_preflight -> prepare_acquisition_plan -> prepare_data_prep -> prepare_baseline_repro -> prepare_protocol_compiler -> prepare_review_packet` |
+| legacy non-`--complete` `prepare` | `prepare_readiness_preflight -> prepare_protocol_compiler -> prepare_review_packet`, then approval pause as `prepare_hitl_poc` |
+| `prepare --dry-run` | readiness preflight / bootstrap only; no Review Packet gate |
+| `build` | `build_refine_arch -> build_plan -> build_code_expert -> build_validate_run`; `build_code_debug` is `on_failure` recovery |
+| `iterate` | `iterate_delegate_auto_iterate` |
+| `change` | `change_classify_request` |
+| `release` | `release_final_exp_matrix -> release_claim_approval` |
+
+`run_when=always` nodes are normal ordered nodes. `run_when=on_failure` nodes,
+currently `build_code_debug`, may run after a failed node and one retry, but
+they are not part of the ordinary success path.
+
 The workflow-supervisor CLI is the internal runtime surface behind selected
 aliases:
 
@@ -109,9 +128,12 @@ tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment change --goa
 tooling/workflow_supervisor/scripts/workflow_ctl.sh start --segment release --goal "package release artifacts" --json
 ```
 
-The legacy non-`--complete` `prepare` path remains a low-risk HITL plumbing
-check. It verifies
-candidate readiness inputs, compiles a draft protocol packet under
+`prepare --dry-run` is readiness preflight only. It records a low-risk
+`dry_run_completed` status and does not run protocol compiler, WF5 Review
+Packet, data acquisition, or baseline acquisition.
+
+The legacy non-`--complete` `prepare` path remains a HITL plumbing check. It
+verifies candidate readiness inputs, compiles a draft protocol packet under
 `.evidence/protocol_compiler/**`, generates a WF5 Review Packet with
 dynamic-context tooling, writes a pending request under
 `.workflow_supervisor/**`, and waits for approve/revise/reject. Approval resume

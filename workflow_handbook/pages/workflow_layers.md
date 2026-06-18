@@ -41,6 +41,7 @@ WF0-WF12 nodes 和 Skill 是内部执行参考，不是第一层用户界面。
 Intent
   -> visible alias: grill | prepare | build | run | analyze | write | change
   -> Runtime / Skill worker / Evidence tooling
+  -> Internal process assets when relevant
   -> Gate Evidence / Pending Request / Human Approval
   -> Next safe action
 ```
@@ -54,6 +55,9 @@ Intent
   targets, not autocomplete entries.
 - Runtime / worker / tooling 是执行层，例如 supervisor、auto-iterate、
   evidence tooling 或某个 Skill worker。
+- Internal process assets 是被吸收到 Harness 的 `research-supervision`
+  参考层。它们塑造 Grill pressure tests、experiment canvas、paper/figure
+  layout 和 harden checklist，但不是 Conclusion Evidence。
 - Gate 是继续前必须能报告的检查，例如 [[term:Gate Evidence]]、Pending
   Request 或 [[term:Human Approval]]。
 - Stage / Skill 是 detailed reference。只有在需要定位 artifact、contract、
@@ -66,17 +70,23 @@ Intent
 - Stage 决定内部 artifact map，不等于用户必须先选择 Stage。
 - Skill Contract 决定 recommended reads、declared paths 和 required actions。
 - Gate ledger 只报告命令和结果，不替代 Human Approval。
+- `research-supervision` assets 不授权下载、clone、claim、approval 或 stage
+  transition；如果它们影响当前项目 claim，仍需要 Source Artifacts 和
+  Conclusion Evidence。
 
 ## Common Confusions
 
 - Review Packet 是人类决策输入，不是 Approval Evidence。
 - HTML view 是阅读视图，不是 source of truth。
 - Hook notice 是 guardrail，不是 workflow gate 本身。
+- `coverage-matrix.md` 没有 runtime skill route 是有意设计；它只帮助
+  maintainer 审计资产是否被匿名化吸收。
 
 ## Related Pages
 
 - [[page:workflow_supervisor_model|Runtime Routing Model]]
 - [[page:stage_cards|Stage Reference]]
+- [[page:research_supervision_assets|Research Supervision Assets]]
 - [[page:layer_explore|Explore Layer]]
 - [[page:layer_contract_plan|Contract And Plan Layer]]
 - [[page:layer_build_validate|Build And Validate Layer]]

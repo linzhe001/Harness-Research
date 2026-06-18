@@ -112,6 +112,12 @@
           ]
         },
         {
+          "page_id": "research_supervision_assets",
+          "label": "Research Supervision Assets",
+          "source_path": "workflow_handbook/pages/research_supervision_assets.md",
+          "generated": false
+        },
+        {
           "page_id": "stage_cards",
           "label": "Stage Reference",
           "source_path": "workflow_handbook/Workflow_Stage_Cards.md",

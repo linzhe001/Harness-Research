@@ -35,8 +35,12 @@ WF10-WF12 处理多轮实验、final experiment 和 release claim 边界。
 ## Model
 
 ```text
-$run -> $analyze -> $write
-  -> internal WF10 iterate / WF11 final-exp / WF12 release gates
+$run
+  -> iterate / auto-iterate writes or updates iteration_log.json
+  -> $analyze / evaluate interprets artifacts and chooses NEXT_ROUND | DEBUG | CONTINUE | PIVOT | ABORT
+  -> $write / auto-paper consumes Experiment Evidence Index and Claim Boundary
+  -> RUN_REQUEST routes missing experiment evidence back to $run
+  -> WF11 final-exp / WF12 release gates only after evidence and approval are ready
 ```
 
 ## Boundaries
@@ -45,6 +49,15 @@ $run -> $analyze -> $write
 - `$run` executes or delegates experiments; `$analyze` turns results into
   decisions; `$write` handles manuscript, release docs, GitHub readiness, and
   scoped release gates.
+- `$run` also scans `auto_paper_output/*/run_request_register.{json,md}` so
+  paper-discovered missing evidence can become the next WF10 plan.
+- `$analyze` should separate verified metric movement, pipeline health,
+  explanation candidates, missing controls, claim support, and next experiment.
+- `$write` should read detailed paper evidence through
+  `docs/30_evidence/Experiment_Evidence_Index.{json,md}` rather than treating
+  `iteration_log.json` as sufficient Conclusion Evidence.
+- Auto-paper phase order is research, argument, citation, layout, patch,
+  harden, with optional response/data/figure branches.
 - Final experiment 必须服从 approved contracts 和 Claim Boundary。
 - Release claim 不能超出 Human Approval 和 Evidence Chain 支持。
 
@@ -53,6 +66,8 @@ $run -> $analyze -> $write
 - Auto-iterate controller 不替代 Human Approval。
 - NEXT_ROUND、DEBUG、CONTINUE、PIVOT、ABORT 是决策词，不是自由文本标签。
 - Release readiness 不等于 explicit submit request。
+- `RUN_REQUEST` is not a failed paper run; it is a scoped request for `$run` to
+  produce missing experiment, ablation, seed, metric, or figure data.
 
 ## Related Pages
 
@@ -60,3 +75,6 @@ $run -> $analyze -> $write
 - [[stage:WF11]]
 - [[stage:WF12]]
 - [[skill:iterate]]
+- [[skill:evaluate]]
+- [[skill:auto-paper]]
+- [[page:research_supervision_assets|Research Supervision Assets]]

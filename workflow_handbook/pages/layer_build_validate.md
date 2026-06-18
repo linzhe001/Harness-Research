@@ -37,11 +37,20 @@ WF8-WF9 把 plan 中的一个 bounded slice 实现出来，并用 Gate Evidence 
 ```text
 $build
   -> build --auto / build --worker-command
-  -> implementation worker nodes
-  -> focused checks and Gate ledger
-  -> validate-run
+  -> build_refine_arch
+  -> build_plan
+  -> build_code_expert
+  -> build_validate_run
   -> build_ready_for_iterate | typed request | failed postcondition
 ```
+
+`build_code_debug` is `run_when=on_failure`: the supervisor may run it after a
+failed node and retry once, but it is not in the normal build path.
+
+Build, debug, and validation use the absorbed `experiment-and-build-canvas.md`
+and `ai-assisted-research-workflow.md` patterns for smallest runnable slice,
+first feedback command, subtractive MVP, task inputs/outputs/constraints, and
+re-plan after repeated failed fixes.
 
 ## Boundaries
 
@@ -53,6 +62,9 @@ $build
   supervisor runtime state is written by the supervisor after validation.
 - The segment stops successfully only at `build_ready_for_iterate`, after
   validate-run postconditions prove the target can run.
+- Normal build node order is `build_refine_arch -> build_plan ->
+  build_code_expert -> build_validate_run`; failure recovery may insert
+  `build_code_debug`.
 - Harness hooks do not block ordinary build writes under declared implementation
   surfaces such as `src/`, `scripts/`, `configs/`, `project_map.json`, or owned
   docs. Manual writes to tool-owned runtime/generated paths stay blocked.
@@ -67,6 +79,8 @@ $build
 - 通过语法检查不等于 semantic validation。
 - Worker prose 不等于 postcondition pass。
 - Validation report 不自动推进 WF10。
+- Passing a foundation slice is not the same as validating the minimal runnable
+  smoke/eval/training-ready path.
 
 ## Related Pages
 
@@ -74,3 +88,4 @@ $build
 - [[stage:WF9]]
 - [[skill:code-debug]]
 - [[skill:validate-run]]
+- [[page:research_supervision_assets|Research Supervision Assets]]
