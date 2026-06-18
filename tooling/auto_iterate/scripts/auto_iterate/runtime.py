@@ -206,6 +206,8 @@ def build_brief(
         },
         "initial_hypotheses": state.get("initial_hypotheses", []),
         "forbidden_directions": state.get("forbidden_directions", []),
+        "automation_policy": state.get("automation_policy", {}),
+        "assurance_axes": state.get("assurance_axes", []),
         "recent_lessons": recent_lessons or [],
         "failed_hypotheses": failed_hypotheses or [],
         "budget_status": {
@@ -242,10 +244,18 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "\n"
         "Forbidden directions:\n{forbidden_directions}\n"
         "\n"
+        "Assurance axes:\n{assurance_axes}\n"
+        "\n"
+        "Automation policy:\n{automation_policy}\n"
+        "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
         "- Prefer seed hypotheses when they are still viable.\n"
         "- Do not propose any plan that violates a forbidden direction.\n"
+        "- Select and record one assurance_axis for the iteration.\n"
+        "- Check docs/40_iterations/Experiment_Queue.md when present and "
+        "consume one queued item or explain why another hypothesis is higher "
+        "priority.\n"
         "- Write exactly 1 new iteration entry with status=planned.\n"
         "- Include id, date, hypothesis, changes_summary, status=planned, "
         "config_diff object, screening.recommended boolean, and codex_review.\n"
@@ -280,6 +290,10 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "a command.\n"
         "- If config_diff.planned_command exists, run that exact command; do "
         "not substitute a generic training dry-run or training smoke command.\n"
+        "- Before launching the planned command, create or verify a Semantic "
+        "Execution Commit covering stable code, eval logic used by the "
+        "command, durable configs, and run-local code/configs under "
+        "runs/wf10/{iteration_id}/. Record the hash as pre_train_commit.\n"
         "- Before running config_diff.planned_command, check any "
         "config_diff.run_local_config path and any --config path in the "
         "planned command. If the path is missing and config_diff contains "
@@ -298,7 +312,8 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- When screening.status is passed or failed, record "
         "screening.run_manifest with artifact_contract_version, "
         "run_type=screening, command, exp_dir, git_commit, "
-        "resolved_config_path, stdout_log_path, git_snapshot_path, and "
+        "pre_train_commit, resolved_config_path, stdout_log_path, "
+        "git_snapshot_path, run_local_code_manifest_path when present, and "
         "eval_artifact_paths for the screening run.\n"
         "- Mirror the same screening bundle in top-level run_manifest until "
         "a full run replaces it.\n"
@@ -312,6 +327,10 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Before launching the full command, create or verify a Semantic "
+        "Execution Commit covering stable code, eval logic used by the "
+        "command, durable configs, and run-local code/configs under "
+        "runs/wf10/{iteration_id}/. Record the hash as pre_train_commit.\n"
         "- Update full_run.status to completed|recoverable_failed|failed.\n"
         "- Set iteration status to ready_to_eval for completed or terminal "
         "failed full runs; use needs_debug for recoverable implementation or "
@@ -322,9 +341,10 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "- Preserve any screening bundle in screening.run_manifest before "
         "overwriting top-level run_manifest.\n"
         "- Record top-level run_manifest with artifact_contract_version, "
-        "run_type=full, command, exp_dir, git_commit, resolved_config_path, "
-        "stdout_log_path, git_snapshot_path, and eval_artifact_paths for the "
-        "full run.\n"
+        "run_type=full, command, exp_dir, git_commit, pre_train_commit, "
+        "resolved_config_path, stdout_log_path, git_snapshot_path, "
+        "run_local_code_manifest_path when present, and eval_artifact_paths "
+        "for the full run.\n"
     ),
     "eval": (
         "You are in auto_mode. Execute `$iterate eval` for iteration {iteration_id}.\n"
@@ -335,6 +355,10 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "\n"
         "IMPORTANT:\n"
         "- auto_mode=true: do NOT ask for user confirmation.\n"
+        "- Before using metric output as Conclusion Evidence, create or verify "
+        "pre_eval_commit. If eval logic, eval configs, run-local eval helpers, "
+        "claim-support docs, and release-validation code are unchanged since "
+        "pre_train_commit, record pre_eval_commit_NOT_CHANGED.\n"
         "- Decision must be exactly ONE of: NEXT_ROUND, DEBUG, CONTINUE, "
         "PIVOT, ABORT.\n"
         "  - NEXT_ROUND: ordinary improvement, continue loop.\n"
@@ -344,8 +368,14 @@ _PROMPT_TEMPLATES: dict[str, str] = {
         "  - ABORT: terminate this research direction.\n"
         "- Record at least 1 lesson.\n"
         "- Preserve git_commit, the final top-level run_manifest artifact "
-        "bundle, and screening.run_manifest when screening metrics exist "
-        "before completion.\n"
+        "bundle, pre_train_commit, pre_eval_commit or "
+        "pre_eval_commit_NOT_CHANGED, and screening.run_manifest when "
+        "screening metrics exist before completion.\n"
+        "- Record assurance_axis and claim_delta_evidence or "
+        "claim_delta_evidence_NOT_CHANGED.\n"
+        "- Update docs/40_iterations/Experiment_Queue.md and "
+        "docs/45_discoveries/Research_Wiki.md when eval creates follow-up "
+        "experiments or stable searchable findings; otherwise report NOT_RUN.\n"
         "- Update action_state.last_action=eval and action_state.next_action "
         "to plan, debug, promote, discard, or stop.\n"
         "- If screening.status=passed and no full_run exists because the "
@@ -494,6 +524,20 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
         if forbidden_directions
         else "  (none)"
     )
+    assurance_axes = brief.get("assurance_axes", [])
+    assurance_axes_str = (
+        "\n".join(f"  - {axis}" for axis in assurance_axes)
+        if assurance_axes
+        else "  (none)"
+    )
+    automation_policy = brief.get("automation_policy", {})
+    automation_policy_str = (
+        "\n".join(
+            f"  - {key}: {value}" for key, value in sorted(automation_policy.items())
+        )
+        if isinstance(automation_policy, dict) and automation_policy
+        else "  (none)"
+    )
 
     return template.format(
         round_index=brief.get("round_index", "?"),
@@ -508,6 +552,8 @@ def render_prompt(brief: dict[str, Any], iteration_id: str | None = None) -> str
         failed=failed_str,
         initial_hypotheses=initial_hypotheses_str,
         forbidden_directions=forbidden_directions_str,
+        assurance_axes=assurance_axes_str,
+        automation_policy=automation_policy_str,
         screening_steps=sp.get("default_steps", 5000),
         threshold_pct=sp.get("threshold_pct", 90),
     ) + _COMPLETION_INSTRUCTIONS

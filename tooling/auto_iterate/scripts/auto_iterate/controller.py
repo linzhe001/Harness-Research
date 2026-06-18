@@ -238,6 +238,8 @@ class LoopController:
             "objective": obj,
             "initial_hypotheses": parsed_goal.get("initial_hypotheses", []),
             "forbidden_directions": parsed_goal.get("forbidden_directions", []),
+            "automation_policy": parsed_goal.get("automation_policy", {}),
+            "assurance_axes": parsed_goal.get("assurance_axes", []),
             "best": {
                 "iteration_id": None,
                 "round_index": None,
@@ -1692,6 +1694,8 @@ class LoopController:
         )
         self.state["initial_hypotheses"] = parsed_goal.get("initial_hypotheses", [])
         self.state["forbidden_directions"] = parsed_goal.get("forbidden_directions", [])
+        self.state["automation_policy"] = parsed_goal.get("automation_policy", {})
+        self.state["assurance_axes"] = parsed_goal.get("assurance_axes", [])
 
         patience = parsed_goal.get("patience", {})
         if patience:

@@ -32,3 +32,15 @@
 ## Forbidden Directions
 - Do not replace the backbone architecture entirely (keep the current ResNet-based encoder).
 - Do not reduce input resolution below 256x256.
+
+## Automation Policy
+- **auto_proceed_flows**: prepare,build,run,analyze,write,change,release_validate
+- **manual_approval_flows**: grill_exit,approval_tool,external_submit
+- **commit_checkpoint_policy**: pre_train_and_pre_eval_required
+- **claim_delta_policy**: record_claim_delta_evidence
+- **watchdog_policy**: status_json_only
+
+## Assurance Axes
+- metric_quality
+- ablation
+- claim_support

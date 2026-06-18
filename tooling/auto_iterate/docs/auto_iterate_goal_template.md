@@ -25,6 +25,14 @@
 - **evaluation_contract**: {{approved|draft_accepted|legacy_protocol}}
 - **source**: {{docs/10_contract/Evaluation_Contract.md or PROJECT_STATE.json.evaluation_protocol}}
 
+## Automation Policy
+<!-- Human-facing only. This is normally copied from Grill readiness. -->
+- **auto_proceed_flows**: {{prepare,build,run,analyze,write,change,release_validate}}
+- **manual_approval_flows**: {{grill_exit,approval_tool,external_submit}}
+- **commit_checkpoint_policy**: {{pre_train_and_pre_eval_required}}
+- **claim_delta_policy**: {{record_claim_delta_evidence}}
+- **watchdog_policy**: {{status_json_only|disabled}}
+
 ## Patience
 - **max_no_improve_rounds**: {{5}}
 - **min_primary_delta**: {{0.1}}
@@ -49,3 +57,7 @@
 <!-- Hard boundaries the AI must never cross, regardless of potential metric gains. -->
 - {{FORBIDDEN_1}}
 - {{FORBIDDEN_2}}
+
+## Assurance Axes
+<!-- Evidence dimensions that should guide planning and eval. -->
+- {{metric_quality|reproducibility|robustness|ablation|failure_analysis|compute_budget|claim_support}}

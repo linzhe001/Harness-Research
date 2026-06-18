@@ -7,8 +7,8 @@ specification of the research objective.  The controller consumes a
 Supported goal format
 ---------------------
 Markdown with structured ``**key**: value`` field lines under well-known
-headings.  See ``tooling/auto_iterate/docs/auto_iterate_goal_template.md`` for the canonical
-template and ``01_contract_freeze.md`` §5 for the frozen schema.
+headings. See ``tooling/auto_iterate/docs/auto_iterate_goal_template.md`` for
+the canonical template and ``01_contract_freeze.md`` §5 for the frozen schema.
 """
 
 from __future__ import annotations
@@ -58,9 +58,15 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             },
             "patience": {"max_no_improve_rounds": ..., "min_primary_delta": ...},
             "budget": {"max_rounds": ..., "max_gpu_hours": ...},
-            "screening_policy": {"enabled": ..., "threshold_pct": ..., "default_steps": ...},
+            "screening_policy": {
+                "enabled": ...,
+                "threshold_pct": ...,
+                "default_steps": ...,
+            },
             "initial_hypotheses": [...],
-            "forbidden_directions": [...]
+            "forbidden_directions": [...],
+            "automation_policy": {...},
+            "assurance_axes": [...]
         }
     """
     path = Path(goal_path)
@@ -84,6 +90,8 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
         "screening_policy": {},
         "initial_hypotheses": [],
         "forbidden_directions": [],
+        "automation_policy": {},
+        "assurance_axes": [],
     }
 
     current_section: str | None = None
@@ -117,6 +125,12 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             elif "forbidden" in heading:
                 current_section = "forbidden_directions"
                 current_subsection = None
+            elif "automation policy" in heading:
+                current_section = "automation_policy"
+                current_subsection = None
+            elif "assurance" in heading:
+                current_section = "assurance_axes"
+                current_subsection = None
             elif "objective" in heading:
                 current_section = "objective"
                 current_subsection = None
@@ -136,10 +150,15 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
             raw_val = fm.group(2).strip()
             val = _coerce(raw_val)
 
-            if current_section == "objective" and current_subsection == "primary_metric":
+            if (
+                current_section == "objective"
+                and current_subsection == "primary_metric"
+            ):
                 result["objective"]["primary_metric"][key] = val
             elif current_section in ("patience", "budget", "screening_policy"):
                 result[current_section][key] = val
+            elif current_section == "automation_policy":
+                result["automation_policy"][key] = val
             continue
 
         # List items for constraints / hypotheses / forbidden
@@ -165,6 +184,14 @@ def parse(goal_path: str | Path) -> dict[str, Any]:
                 item = cm.group(1).strip()
                 if item and not item.startswith("<!--"):
                     result["forbidden_directions"].append(item)
+            continue
+
+        if current_section == "assurance_axes":
+            cm = _CONSTRAINT_RE.match(stripped)
+            if cm:
+                item = cm.group(1).strip()
+                if item and not item.startswith("<!--"):
+                    result["assurance_axes"].append(item)
             continue
 
     return result
@@ -286,7 +313,8 @@ def check_metric_identity(
         )
     if old_pm.get("direction") and new_pm.get("direction") != old_pm["direction"]:
         errors.append(
-            f"primary_metric.direction changed: {old_pm['direction']!r} -> {new_pm['direction']!r}"
+            "primary_metric.direction changed: "
+            f"{old_pm['direction']!r} -> {new_pm['direction']!r}"
         )
     return errors
 
@@ -416,6 +444,8 @@ def _normalize_goal_dict(data: dict[str, Any]) -> dict[str, Any]:
         "screening_policy": {},
         "initial_hypotheses": [],
         "forbidden_directions": [],
+        "automation_policy": {},
+        "assurance_axes": [],
     }
 
     if isinstance(data.get("objective"), dict):
@@ -435,5 +465,12 @@ def _normalize_goal_dict(data: dict[str, Any]) -> dict[str, Any]:
         value = data.get(key, [])
         if isinstance(value, list):
             result[key] = list(value)
+
+    value = data.get("automation_policy", {})
+    if isinstance(value, dict):
+        result["automation_policy"] = dict(value)
+    value = data.get("assurance_axes", [])
+    if isinstance(value, list):
+        result["assurance_axes"] = list(value)
 
     return result

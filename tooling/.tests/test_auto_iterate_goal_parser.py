@@ -81,6 +81,13 @@ class TestGoalParse:
         result = parse(FIXTURES / "goal.valid.md")
         assert len(result["forbidden_directions"]) >= 1
 
+    def test_parse_automation_policy_and_assurance_axes(self) -> None:
+        result = parse(FIXTURES / "goal.valid.md")
+        assert result["automation_policy"]["commit_checkpoint_policy"] == (
+            "pre_train_and_pre_eval_required"
+        )
+        assert "claim_support" in result["assurance_axes"]
+
     def test_parse_invalid_metric_change_file(self) -> None:
         result = parse(FIXTURES / "goal.invalid_metric_change.md")
         pm = result["objective"]["primary_metric"]
@@ -117,6 +124,10 @@ class TestGoalParse:
           - Try a stronger encoder
         forbidden_directions:
           - Increase latency above 2x baseline
+        automation_policy:
+          commit_checkpoint_policy: pre_train_and_pre_eval_required
+        assurance_axes:
+          - reproducibility
         ---
         """))
 
@@ -124,6 +135,10 @@ class TestGoalParse:
         assert parsed["objective"]["primary_metric"]["target"] == 33.0
         assert parsed["budget"]["max_rounds"] == 10
         assert parsed["screening_policy"]["default_steps"] == 4000
+        assert parsed["automation_policy"]["commit_checkpoint_policy"] == (
+            "pre_train_and_pre_eval_required"
+        )
+        assert parsed["assurance_axes"] == ["reproducibility"]
 
 
 class TestGoalValidation:
