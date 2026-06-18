@@ -25,6 +25,7 @@ REQUIRED_DIRS = [
     "docs/35_protocol",
     "docs/40_iterations",
     "docs/40_iterations/auto",
+    "docs/45_discoveries",
     "docs/50_memory",
     ".evidence",
     ".evidence/chains",
