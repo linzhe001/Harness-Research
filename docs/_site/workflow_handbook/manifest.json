@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1",
-  "generated_at": "2026-06-12T12:37:57Z",
+  "generated_at": "2026-06-18T02:09:52Z",
   "source_root": "workflow_handbook",
   "output_root": "docs/_site/workflow_handbook",
   "site_title": "Harness Workflow Handbook",
@@ -250,6 +250,29 @@
       ]
     },
     {
+      "doc_id": "pages__legacy_docs_migration",
+      "doc_kind": "how_to",
+      "title": "Legacy Docs Migration",
+      "source_path": "workflow_handbook/pages/legacy_docs_migration.md",
+      "html_path": "docs/_site/workflow_handbook/pages/legacy_docs_migration.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "legacy_docs_migration",
+      "page_kind": "how_to",
+      "source_type": "hand_authored",
+      "summary": "How agents should migrate older flat docs and contract text into the current Harness context layout.",
+      "references": [
+        "term:Conclusion Evidence",
+        "term:Evidence Chain",
+        "term:Gate Evidence",
+        "term:Human Approval",
+        "page:evidence_approval_model",
+        "page:workflow_layers"
+      ]
+    },
+    {
       "doc_id": "pages__operator_task_index",
       "doc_kind": "concept",
       "title": "Operator Action Index",
@@ -289,6 +312,31 @@
         "page:operator_handbook",
         "page:codebase",
         "page:cli"
+      ]
+    },
+    {
+      "doc_id": "pages__research_supervision_assets",
+      "doc_kind": "concept",
+      "title": "Research Supervision Assets",
+      "source_path": "workflow_handbook/pages/research_supervision_assets.md",
+      "html_path": "docs/_site/workflow_handbook/pages/research_supervision_assets.html",
+      "status": "current",
+      "evidence_chain_path": null,
+      "preview_index_path": "docs/_views/workflow_handbook_reference_index.json",
+      "related_pages": [],
+      "page_id": "research_supervision_assets",
+      "page_kind": "concept",
+      "source_type": "hand_authored",
+      "summary": "How anonymized research-supervision assets are absorbed into Harness workflow routes without becoming project evidence.",
+      "references": [
+        "skill:grill",
+        "skill:change-intake",
+        "skill:build-plan",
+        "skill:iterate",
+        "skill:evaluate",
+        "skill:auto-paper",
+        "term:Conclusion Evidence",
+        "term:Gate Evidence"
       ]
     },
     {
@@ -1541,6 +1589,7 @@
         "skills__grill",
         "skills__workflow-supervisor",
         "pages__evidence_approval_model",
+        "pages__legacy_docs_migration",
         "pages__site_modes",
         "pages__auto_iterate_model"
       ],
@@ -1578,6 +1627,12 @@
           "children": []
         },
         {
+          "doc_id": "pages__legacy_docs_migration",
+          "label": "Legacy Docs Migration",
+          "source_path": "workflow_handbook/pages/legacy_docs_migration.md",
+          "children": []
+        },
+        {
           "doc_id": "pages__site_modes",
           "label": "Site Modes",
           "source_path": "workflow_handbook/pages/site_modes.md",
@@ -1599,6 +1654,7 @@
         "pages__layer_contract_plan",
         "pages__layer_build_validate",
         "pages__layer_iterate_release",
+        "pages__research_supervision_assets",
         "Workflow_Stage_Cards",
         "stages__wf0_init",
         "stages__wf1_survey_idea",
@@ -1688,6 +1744,12 @@
               "children": []
             }
           ]
+        },
+        {
+          "doc_id": "pages__research_supervision_assets",
+          "label": "Research Supervision Assets",
+          "source_path": "workflow_handbook/pages/research_supervision_assets.md",
+          "children": []
         },
         {
           "doc_id": "Workflow_Stage_Cards",
