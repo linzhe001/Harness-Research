@@ -72,8 +72,9 @@ planning、WF10 iteration 产生或维护。
 Execution Supervisor 下面再选择具体 action。为了让 `$` autocomplete 保持干净，
 Codex 只暴露这些可见 aliases：`$grill`, `$prepare`, `$build`, `$run`,
 `$analyze`, `$write`, `$change`。内部 Codex instruction sources 保留合法
-frontmatter 以通过 loader 扫描，但通过 `agents/openai.yaml` product policy
-从 Codex 可见技能列表中过滤掉。其中 `prepare/build` 会路由到
+frontmatter 以通过 loader 扫描，但通过每个 internal skill 下的
+`agents/openai.yaml` product policy 从 Codex 可见技能列表中过滤掉。其中
+`prepare/build` 会路由到
 `workflow-supervisor`，`run` 路由到 `iterate`，`analyze` 路由到
 `evaluate`，`write` 路由到 `auto-paper` / `docs-site`，`change` 路由到
 `change-intake`；这些 aliases 不是新的 Skill Contracts。
@@ -232,7 +233,7 @@ When auto-paper finds missing experiment evidence, it writes
 | --- | --- |
 | `AGENTS.md` | Codex/native agent guidance for this framework workspace. |
 | `CLAUDE.md` | Claude Code-compatible guidance for this framework workspace. |
-| `.agents/skills/**` | Codex-facing visible aliases plus internal Skill instruction sources. Internal sources keep minimal frontmatter for loader hygiene and use `agents/openai.yaml` product policy so only visible aliases appear in `$` autocomplete. |
+| `.agents/skills/**` | Codex-facing visible aliases plus internal Skill instruction sources. Internal sources keep minimal frontmatter for loader hygiene and use per-skill `agents/openai.yaml` product policy files so only visible aliases appear in `$` autocomplete. |
 | `schemas/skill_contracts.json` | Machine-readable high-risk Skill Contracts. |
 | `.agents/references/**` | Shared workflow rules and terminology. |
 | `.claude/skills/**` | Claude Code-facing visible aliases plus internal Skill instruction sources. Keep internal sources hidden from `/` command autocomplete. |
